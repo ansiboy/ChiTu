@@ -1,0 +1,2 @@
+﻿chitu.register(function (page) {
+});
