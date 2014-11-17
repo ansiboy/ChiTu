@@ -47,7 +47,7 @@
     ns.Page.prototype = {
         _type: 'Page',
         context: function () {
-            /// <returns type="chitu.CntrollerContext"/>
+            /// <returns type="chitu.ControllerContext"/>
             return this._context;
         },
         name: function () {
