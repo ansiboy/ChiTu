@@ -30,9 +30,9 @@
         });
 
         // 记录 page 滚动的位置，返回到该页时，能滚动到指定位置
-        page.scroll.add(function (sender, event) {
-            sender.scrollTop = $(document.body).scrollTop() || $(document).scrollTop();
-        });
+        //page.scroll.add(function (sender, event) {
+        //    sender.scrollTop = $(document.body).scrollTop() || $(document).scrollTop();
+        //});
     };
 
     ns.Application = function (func) {
@@ -123,13 +123,13 @@
             $.proxy(hashchange, this)();
             $(window).bind('hashchange', $.proxy(hashchange, this));
 
-            $(document).scroll(function (event) {
-                var pc = $(app._container).data('PageContainer');
-                if (!pc || !pc.currentPage() || !($(pc.currentPage().node()).is(':visible')))
-                    return;
+            //$(document).scroll(function (event) {
+            //    var pc = $(app._container).data('PageContainer');
+            //    if (!pc || !pc.currentPage() || !($(pc.currentPage().node()).is(':visible')))
+            //        return;
 
-                pc.currentPage().on_scroll(event);
-            });
+            //    pc.currentPage().on_scroll(event);
+            //});
 
             this._runned = true;
         },

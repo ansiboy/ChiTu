@@ -130,6 +130,7 @@
                         // 说明：由于只能显示一个页面，只有为 currentPage 才显示
                         if (this.page != self.currentPage())
                             this.page.visible(false);
+                
                         //=======================================================
 
                         this.result.resolve(this.page);

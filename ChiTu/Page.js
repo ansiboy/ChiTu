@@ -62,8 +62,12 @@
             return this._parent;
         },
         visible: function (value) {
+            var is_visible = $(this.node()).is(':visible');
             if (value === undefined)
-                return this._visible;
+                return is_visible; //this._visible;
+
+            if (value == is_visible)
+                return;
 
             if (!value) {
                 this.on_hiding({});
