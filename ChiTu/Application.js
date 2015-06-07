@@ -19,22 +19,6 @@
         return path1 + '/' + path2;
     };
 
-    function on_pageCreated(sender, page) {
-        page.shown.add(function (sender) {
-            if ($(document.body).scrollTop() != null) {
-                $(document.body).scrollTop(sender.scrollTop || '0px');
-            }
-            else {
-                $(document).scrollTop(sender.scrollTop || '0px');
-            }
-        });
-
-        // 记录 page 滚动的位置，返回到该页时，能滚动到指定位置
-        //page.scroll.add(function (sender, event) {
-        //    sender.scrollTop = $(document.body).scrollTop() || $(document).scrollTop();
-        //});
-    };
-
     ns.Application = function (func) {
         /// <field name="func" type="Function"/>
 
@@ -45,8 +29,11 @@
             container: document.body,
             routes: new ns.RouteCollection(),
             actionPath: ACTION_LOCATION_FORMATER,
-            viewPath: VIEW_LOCATION_FORMATER
+            viewPath: VIEW_LOCATION_FORMATER,
+            viewFileExtension: 'html'
         };
+
+        //ViewEngine.prototype.viewFileExtension = options.viewFileExtension || 'html';
 
         $.proxy(func, this)(options);
 
@@ -80,24 +67,36 @@
             return this._routes;
         },
 
-        controller: function (name) {
-            /// <param name="name" type="string"/>
+        controller: function (routeData) {
+            /// <param name="routeData" type="Object"/>
             /// <returns type="chitu.Controller"/>
-            if (!name) throw e.argumentNull('name');
-            if (typeof name != 'string') throw e.paramTypeError('name', 'String');
+            if (typeof routeData !== 'object')
+                throw e.paramTypeError('routeData', 'object');
 
-            return this.controllerFactory.getController(name);
+            if (!routeData)
+                throw e.argumentNull('routeData');
+            
+            //if (typeof name != 'string') throw e.paramTypeError('name', 'String');
+
+            return this.controllerFactory.getController(routeData);
         },
-        action: function (controllerName, actionName) {
-            /// <param name="controllerName" type="String"/>
-            /// <param name="actionName" type="String"/>
+        action: function (routeData) {
+            /// <param name="routeData" type="Object"/>
+            if (typeof routeData !== 'object')
+                throw e.paramTypeError('routeData', 'object');
+
+            if (!routeData)
+                throw e.argumentNull('routeData');
+
+            var controllerName = routeData.controller;
             if (!controllerName) throw e.argumentNull('name');
-            if (typeof controllerName != 'string') throw e.paramTypeError('name', 'String');
+            if (typeof controllerName != 'string') throw e.routeDataRequireController();
 
+            var actionName = routeData.action;
             if (!actionName) throw e.argumentNull('name');
-            if (typeof actionName != 'string') throw e.paramTypeError('name', 'String');
+            if (typeof actionName != 'string') throw e.routeDataRequireAction();
 
-            var controller = this.controller(controllerName);
+            var controller = this.controller(routeData);
             return controller.action(actionName);
         },
         run: function () {
@@ -123,14 +122,6 @@
             $.proxy(hashchange, this)();
             $(window).bind('hashchange', $.proxy(hashchange, this));
 
-            //$(document).scroll(function (event) {
-            //    var pc = $(app._container).data('PageContainer');
-            //    if (!pc || !pc.currentPage() || !($(pc.currentPage().node()).is(':visible')))
-            //        return;
-
-            //    pc.currentPage().on_scroll(event);
-            //});
-
             this._runned = true;
         },
 
@@ -153,9 +144,9 @@
             if (pc == null) {
                 pc = new ns.PageContainer(this, element);
 
-                if (element === this._container) {
-                    pc.pageCreated.add(on_pageCreated);
-                }
+                //if (element === this._container) {
+                //    pc.pageCreated.add(self.on_pageCreated);
+                //}
 
                 pc.pageCreating.add(function (sender, context) {
                     self.on_pageCreating(context);

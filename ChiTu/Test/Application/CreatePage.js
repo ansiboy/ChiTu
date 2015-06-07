@@ -38,26 +38,26 @@
         var $node = $('<div>').appendTo(document.body);
         app.showPageAt($node[0], 'Test/View4').done(function (p) {
             var text = $(p.node()).text();
-            ok(text.indexOf('Event Test') >= 0);
+            ok(text.indexOf('View4') >= 0);
             start();
         });
     });
 
     test('controller', function () {
-        var ctrl1 = app.controller('Test');
-        var ctrl2 = app.controller('Test');
+        var ctrl1 = app.controller({ controller: 'Test' });
+        var ctrl2 = app.controller({ controller: 'Test' });
         equal(ctrl1, ctrl2);
     });
 
     asyncTest('action', function () {
-        $.when(app.action('Test', 'View1'), app.action('Test', 'View1')).done(function (action1, action2) {
+        $.when(app.action({ controller: 'Test', action: 'View1' }), app.action({ controller: 'Test', action: 'View1' })).done(function (action1, action2) {
             equal(action1, action2);
             start();
         })
     });
 
     asyncTest('action', function () {
-        var ctrl = app.controller('Test');
+        var ctrl = app.controller({ controller: 'Test' });
         $.when(ctrl.action('View1'), ctrl.action('View1')).done(function (action1, action2) {
             equal(action1, action2);
             start();
@@ -75,7 +75,7 @@
                start();
            });
 
-    
+
     });
 
 })();

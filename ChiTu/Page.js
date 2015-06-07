@@ -35,8 +35,8 @@
         //this.on_creating(this, context);
 
         this._context = context;
-        var controllerName = context.routeData().values().controller;
-        var actionName = context.routeData().values().action;
+        var controllerName = context.routeData().controller;
+        var actionName = context.routeData().action;
         var name = controllerName + '.' + actionName;
         var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
         var actionDeferred = context.controller().action(actionName);

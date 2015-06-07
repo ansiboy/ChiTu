@@ -8,6 +8,5 @@
     });
 
     var routeData = app.routes().getRouteData('Home/Index');
-    ok(routeData.values() != null);
-    ok(routeData.route() == route2);
+    ok(routeData != null);
 });

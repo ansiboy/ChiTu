@@ -2,25 +2,6 @@
     var u = ns.utility;
     var e = ns.Error;
 
-    ns.RouteData = function (route, values) {
-        this.init(route, values);
-    };
-    ns.RouteData.prototype = {
-        init: function (route, values) {
-            /// <param name="route" type="ns.Route"/>
-            this._route = route;
-            this._values = values;
-            $.extend(this._values, route.defaults());
-        },
-        route: function () {
-            /// <returns type="chitu.Route"/>
-            return this._route;
-        },
-        values: function () {
-            return this._values;
-        }
-    };
-
     ns.Route = function (source, name, pattern, defaults) {
         /// <param name="source" type="Route"/>
        
@@ -102,19 +83,8 @@
             }
             return route;
         },
-        //parse: function (url) {
-        //    if (!url) {
-        //        var c = this._defaults.controller;
-        //        var a = this._defaults.action;
-        //        if (c != null && a != null)
-        //            this.routeMatched.fire(ns.RouteCollection.defaultRouteName, this._defaults);
-
-        //        return;
-        //    }
-        //    return this._source.parse(url);
-        //},
         getRouteData: function (url) {
-            /// <returns type="chitu.RouteData"/>
+            /// <returns type="Object"/>
             var data = this._source.getRouteData(url);
             if (data == null)
                 throw e.canntParseUrl(url);
@@ -126,8 +96,7 @@
                 values[key] = data.params[0][key];
             }
 
-            var routeData = new ns.RouteData(data.route.newRoute, values);
-            return routeData;
+            return values;
         },
         getUrl: function (route, routeData) {
 

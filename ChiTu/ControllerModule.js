@@ -2,11 +2,14 @@
     var e = ns.Error;
     var u = ns.utility;
 
-    ns.Controller = function (name, actionLocationFormater) {
-        if (!name) throw e.argumentNull('name');
+    ns.Controller = function (routeData, actionLocationFormater) {
+        if (!routeData) throw e.argumentNull('routeData');
+        if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
+
         if (!actionLocationFormater) throw e.argumentNull('actionLocationFormater');
 
-        this._name = name;
+        this._name = routeData.controller;
+        this._routeData = routeData;
         this._actionLocationFormater = actionLocationFormater;
         this._actions = {};
 
@@ -28,8 +31,9 @@
             if (!actionName) throw e.argumentNull('actionName');
             if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
 
-            var controllerName = this.name();
-            return this._actionLocationRoute.interpolate({ controller: controllerName, action: actionName });
+            //var controllerName = this.name();
+            var data = $.extend({ action: actionName }, this._routeData);
+            return this._actionLocationRoute.interpolate(data);
         },
         action: function (name) {
             /// <param name="value" type="chitu.Action" />
@@ -100,22 +104,32 @@
         controllers: function () {
             return this._controllers;
         },
-        createController: function (controllerName) {
-            /// <param name="controllerName" type="String"/>
+        createController: function (routeData) {
+            /// <param name="routeData" type="Object"/>
             /// <returns type="ns.Controller"/>
-            return new ns.Controller(controllerName, this.actionLocationFormater());
+            if (!routeData.controller)
+                throw e.routeDataRequireController();
+
+            return new ns.Controller(routeData, this.actionLocationFormater());
         },
         actionLocationFormater: function () {
             return this._actionLocationFormater;
         },
-        getController: function (controllerName) {
-            /// <summary>Gets the controller by name.</summary>
-            /// <param name="controllerName" type="String"/>
+        getController: function (routeData) {
+            /// <summary>Gets the controller by routeData.</summary>
+            /// <param name="routeData" type="Object"/>
             /// <returns type="chitu.Controller"/>
-            if (!this._controllers[controllerName])
-                this._controllers[controllerName] = this.createController(controllerName);
 
-            return this._controllers[controllerName];
+            if (typeof routeData !== 'object')
+                throw e.paramTypeError('routeData', 'object');
+
+            if (!routeData.controller)
+                throw e.routeDataRequireController();
+
+            if (!this._controllers[routeData.controller])
+                this._controllers[routeData.controller] = this.createController(routeData);
+
+            return this._controllers[routeData.controller];
         }
     };
 
@@ -306,17 +320,6 @@
         );
 
         return func;
-    };
-
-    ns.ActionInterceptor = function () { };
-    ns.ActionInterceptor.prototype = {
-        _type: 'ActionInterceptor',
-        afterExecute: function () {
-
-        },
-        beforeExecute: function () {
-
-        }
     };
 
     ns.ControllerContext = function (controller, view, routeData) {

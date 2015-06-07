@@ -59,9 +59,9 @@
                 throw e.noneRouteMatched(url);
             }
 
-            var controllerName = routeData.values().controller;
-            var actionName = routeData.values().action;
-            var controller = this.application().controller(controllerName);
+            var controllerName = routeData.controller;
+            var actionName = routeData.action;
+            var controller = this.application().controller(routeData);
             var view = this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName);
             var context = new ns.ControllerContext(controller, view, routeData);
 
@@ -87,8 +87,8 @@
 
             var container = this.node();
 
-            var controllerName = routeData.values().controller;
-            var actionName = routeData.values().action;
+            var controllerName = routeData.controller;
+            var actionName = routeData.action;
             var name = controllerName + '.' + actionName;
 
             var pages = $(container).data('pages');
@@ -113,7 +113,7 @@
                 }
             }
 
-            $.extend(args, routeData.values());
+            $.extend(args, routeData);
 
             //this.on_pageShowing(page, args);
 
@@ -162,6 +162,12 @@
             if (item == null)
                 return $.Deferred().reject();
 
+            var hash = '#' + item.url.toLowerCase()
+            if (hash.localeCompare(window.location.hash.toLowerCase()) != 0) {
+                window.location.hash = item.url;
+                window.location.skip = true;
+            }
+
             current.visible(false);
             if (args)
                 item.page.open(args)
@@ -169,13 +175,9 @@
                 item.page.visible(true);
 
             //new chitu.Page().open
-            document.body.scrollTop = item.page.scrollTop || '0px';
+            //document.body.scrollTop = item.page.scrollTop || '0px';
 
-            var hash = '#' + item.url.toLowerCase()
-            if (hash.localeCompare(window.location.hash.toLowerCase()) != 0) {
-                window.location.hash = item.url;
-                window.location.skip = true;
-            }
+
 
             this._currentPage = item.page;
             return $.Deferred().resolve();

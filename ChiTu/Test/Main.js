@@ -23,7 +23,7 @@ app.run();
 
 
 require(['Filters'], function () {
-    var controller = app.controllerFactory.getController('Test');
+    var controller = app.controllerFactory.getController({ controller: 'Test' });
 
     var pageContainerTests = ['PageContainer/showPage', 'PageContainer/back'];
     var controllerTests = [];//['Controller/Filters'];

@@ -55,6 +55,14 @@
         canntParseUrl: function (url) {
             var msg = u.format('Can not parse the url "{0}" to route data.', url);
             return new Error(msg);
+        },
+        routeDataRequireController: function () {
+            var msg = 'The route data does not contains a "controller" file.';
+            return new Error(msg);
+        },
+        routeDataRequireAction: function () {
+            var msg = 'The route data does not contains a "action" file.';
+            return new Error(msg);
         }
 
     }
