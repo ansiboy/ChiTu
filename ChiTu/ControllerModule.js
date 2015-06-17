@@ -84,7 +84,11 @@
                 }, { actionName: actionName, result: result }),
 
                 $.proxy(function (err) {
-                    this.result.reject(err);
+                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
+                    var action = new ns.Action(self, this.actionName, function () { });
+                    self.actionCreated.fire(self, action);
+                    this.result.resolve(action);
+                    //this.result.reject(err);
                 }, { actionName: actionName, result: result })
            );
 
