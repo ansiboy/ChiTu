@@ -14,8 +14,8 @@ require.config({
 
 window.app = new chitu.Application(function (options) {
     options.routes.mapRoute({ name: 'default', url: '{controller}/{action}' });
-    options.viewPath = '../App/{action}';
-    options.actionPath = '../App/{action}';
+    options.viewPath = '../App/{action}.html';
+    options.actionPath = '../App/{action}.js';
 });
 
 

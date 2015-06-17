@@ -174,8 +174,6 @@
         this._views = {};
     };
     ns.ViewEngine.prototype = {
-        //views: {},
-        viewFileExtension: 'html',
         viewLocationFormater: function () {
             return this._viewLocationFormater;
         },
@@ -187,7 +185,7 @@
             /// <returns type="String"/>
 
             var controllerName = this._controllerName;
-            return this._viewLocationRoute.interpolate({ controller: controllerName, action: actionName }) + '.' + this.viewFileExtension;
+            return this._viewLocationRoute.interpolate({ controller: controllerName, action: actionName });
         },
         view: function (actionName) {
             /// <param name="actionName" type="String"/>

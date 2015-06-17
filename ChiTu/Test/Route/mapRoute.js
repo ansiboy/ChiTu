@@ -13,6 +13,9 @@
         start();
     });
 
-
+    app.routes().mapRoute({
+        name: 'User',
+        url: '{controller}/{action}/{part}'
+    });
 
 });
