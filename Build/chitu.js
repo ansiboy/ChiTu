@@ -899,7 +899,11 @@ window.chitu = window.chitu || {};
                 }, { actionName: actionName, result: result }),
 
                 $.proxy(function (err) {
-                    this.result.reject(err);
+                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
+                    var action = new ns.Action(self, this.actionName, function () { });
+                    self.actionCreated.fire(self, action);
+                    this.result.resolve(action);
+                    //this.result.reject(err);
                 }, { actionName: actionName, result: result })
            );
 
@@ -989,8 +993,6 @@ window.chitu = window.chitu || {};
         this._views = {};
     };
     ns.ViewEngine.prototype = {
-        //views: {},
-        viewFileExtension: 'html',
         viewLocationFormater: function () {
             return this._viewLocationFormater;
         },
@@ -1002,7 +1004,7 @@ window.chitu = window.chitu || {};
             /// <returns type="String"/>
 
             var controllerName = this._controllerName;
-            return this._viewLocationRoute.interpolate({ controller: controllerName, action: actionName }) + '.' + this.viewFileExtension;
+            return this._viewLocationRoute.interpolate({ controller: controllerName, action: actionName });
         },
         view: function (actionName) {
             /// <param name="actionName" type="String"/>
@@ -1300,8 +1302,7 @@ window.chitu = window.chitu || {};
             container: document.body,
             routes: new ns.RouteCollection(),
             actionPath: ACTION_LOCATION_FORMATER,
-            viewPath: VIEW_LOCATION_FORMATER,
-            viewFileExtension: 'html'
+            viewPath: VIEW_LOCATION_FORMATER
         };
 
         //ViewEngine.prototype.viewFileExtension = options.viewFileExtension || 'html';

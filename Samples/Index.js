@@ -8,7 +8,7 @@
 requirejs(['chitu'], function () {
     var app = new chitu.Application(function (options) {
         options.actionPath = '../Modules/{controller}/{action}';
-        options.viewPath = '../Modules/{controller}/{action}';
+        options.viewPath = '../Modules/{controller}/{action}.html';
 
         options.routes.mapRoute({
             name: 'default',
