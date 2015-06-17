@@ -1,4 +1,5 @@
-﻿(function (ns) {
+﻿window.chitu = window.chitu || {};
+(function (ns) {
     var e = ns.Error;
     ns.utility = {
         isType: function (type, obj) {
@@ -45,10 +46,12 @@
             return source;
         },
         fileName: function (url, withExt) {
-            /// <param name="url" type="String"/>
+            /// <summary>获取 URL 链接中的文件名</summary>
+            /// <param name="url" type="String">URL 链接</param>
             /// <param name="withExt" type="Boolean" canBeNull="true">
             /// 表示返回的文件名是否包含扩展名，true表示包含，false表示不包含。默认值为true。
             /// </param>
+            /// <returns>返回 URL 链接中的文件名</returns>
             if (!url) throw e.argumentNull('url');
             withExt = withExt || true;
 

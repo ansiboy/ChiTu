@@ -715,17 +715,17 @@
 
         }());
 
-
+        window['crossroads'] = crossroads;
         return crossroads;
     };
 
     if (typeof define === 'function' && define.amd) {
-        define(['signals'], factory);
+        define(['jquery'], factory);
     } else if (typeof module !== 'undefined' && module.exports) { //Node
-        module.exports = factory(require('signals'));
+        module.exports = factory(require('jquery'));
     } else {
         /*jshint sub:true */
-        window['crossroads'] = factory(window['signals']);
+        window['crossroads'] = factory(window['jQuery']);
     }
 
 }());

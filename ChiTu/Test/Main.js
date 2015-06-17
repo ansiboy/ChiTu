@@ -37,7 +37,4 @@ require(['Filters'], function () {
     require(tests);
 });
 
-chitu.buildModul('Product', function () {
-
-});
 
