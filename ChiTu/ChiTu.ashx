@@ -21,7 +21,7 @@ public class ChiTu : IHttpHandler
 
         license = license.Replace("@date", DateTime.Now.ToString("yyyy-MM-dd"));
         context.Response.ContentType = "text/plain";
-        var coreFiles = new[] { "ChiTu.js", "Utility.js", "Error.js", "Extends.js", "PageContainer.js", 
+        var coreFiles = new[] { "Utility.js", "Error.js", "Extends.js", "PageContainer.js", 
                                 "Page.js", "ControllerModule.js", "RouteModule.js", "Application.js" };
 
         var path = context.Request.MapPath(context.Request.Path);

@@ -1,0 +1,10 @@
+﻿(function (factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery', 'crossroads', 'text'], factory);
+    } else if (typeof module !== 'undefined' && module.exports) {
+        module.exports = factory(require(['jquery', 'crossroads', 'text']));
+    } else {
+        window.chitu = factory($, crossroads);
+    }
+
+})(function ($, crossroads) {
