@@ -884,7 +884,6 @@ window.chitu = window.chitu || {};
                     if (!obj) {
                         console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                         obj = { func: function () { } };
-                        //result.reject();
                     }
 
                     var func = obj.func;
@@ -899,7 +898,11 @@ window.chitu = window.chitu || {};
                 }, { actionName: actionName, result: result }),
 
                 $.proxy(function (err) {
-                    this.result.reject(err);
+                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
+                    var action = new ns.Action(self, this.actionName, function () { });
+                    self.actionCreated.fire(self, action);
+                    this.result.resolve(action);
+
                 }, { actionName: actionName, result: result })
            );
 
