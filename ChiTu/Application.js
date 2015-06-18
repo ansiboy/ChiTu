@@ -29,8 +29,7 @@
             container: document.body,
             routes: new ns.RouteCollection(),
             actionPath: ACTION_LOCATION_FORMATER,
-            viewPath: VIEW_LOCATION_FORMATER,
-            viewFileExtension: 'html'
+            viewPath: VIEW_LOCATION_FORMATER
         };
 
         //ViewEngine.prototype.viewFileExtension = options.viewFileExtension || 'html';

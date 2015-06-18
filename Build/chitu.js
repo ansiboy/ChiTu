@@ -153,8 +153,11 @@ window.chitu = window.chitu || {};
         routeDataRequireAction: function () {
             var msg = 'The route data does not contains a "action" file.';
             return new Error(msg);
-        }
+        },
+        parameterRequireField: function (fileName, parameterName) {
+            var msg = u.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
 
+        }
     }
 
 })(chitu);
@@ -453,7 +456,7 @@ window.chitu = window.chitu || {};
             var controllerName = routeData.controller;
             var actionName = routeData.action;
             var controller = this.application().controller(routeData);
-            var view = this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName);
+            var view = this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
             var context = new ns.ControllerContext(controller, view, routeData);
 
             this.on_pageCreating(context);
@@ -521,7 +524,7 @@ window.chitu = window.chitu || {};
                         // 说明：由于只能显示一个页面，只有为 currentPage 才显示
                         if (this.page != self.currentPage())
                             this.page.visible(false);
-                
+
                         //=======================================================
 
                         this.result.resolve(this.page);
@@ -817,6 +820,18 @@ window.chitu = window.chitu || {};
     var e = ns.Error;
     var u = ns.utility;
 
+    function interpolate(pattern, data) {
+        var http_prefix = 'http://'.toLowerCase();
+        if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
+            pattern = pattern.substr(http_prefix.length);
+            var route = crossroads.addRoute(pattern);
+            return http_prefix + route.interpolate(data);
+        }
+
+        var route = crossroads.addRoute(pattern);
+        return route.interpolate(data);
+    }
+
     ns.Controller = function (routeData, actionLocationFormater) {
         if (!routeData) throw e.argumentNull('routeData');
         if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
@@ -828,7 +843,7 @@ window.chitu = window.chitu || {};
         this._actionLocationFormater = actionLocationFormater;
         this._actions = {};
 
-        this._actionLocationRoute = crossroads.addRoute(actionLocationFormater);
+
 
         this.actionCreated = chitu.Callbacks();
     };
@@ -846,9 +861,8 @@ window.chitu = window.chitu || {};
             if (!actionName) throw e.argumentNull('actionName');
             if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
 
-            //var controllerName = this.name();
             var data = $.extend({ action: actionName }, this._routeData);
-            return this._actionLocationRoute.interpolate(data);
+            return interpolate(this.actionLocationFormater(), data);
         },
         action: function (name) {
             /// <param name="value" type="chitu.Action" />
@@ -899,7 +913,11 @@ window.chitu = window.chitu || {};
                 }, { actionName: actionName, result: result }),
 
                 $.proxy(function (err) {
-                    this.result.reject(err);
+                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
+                    var action = new ns.Action(self, this.actionName, function () { });
+                    self.actionCreated.fire(self, action);
+                    this.result.resolve(action);
+                    //this.result.reject(err);
                 }, { actionName: actionName, result: result })
            );
 
@@ -925,7 +943,7 @@ window.chitu = window.chitu || {};
             if (!routeData.controller)
                 throw e.routeDataRequireController();
 
-            return new ns.Controller(routeData, this.actionLocationFormater());
+            return new ns.Controller(routeData, routeData.actionPath || this.actionLocationFormater());
         },
         actionLocationFormater: function () {
             return this._actionLocationFormater;
@@ -985,36 +1003,35 @@ window.chitu = window.chitu || {};
 
         this._controllerName = controllerName;
         this._viewLocationFormater = viewLocationFormater;
-        this._viewLocationRoute = crossroads.addRoute(viewLocationFormater);
         this._views = {};
     };
     ns.ViewEngine.prototype = {
-        //views: {},
-        viewFileExtension: 'html',
         viewLocationFormater: function () {
             return this._viewLocationFormater;
         },
         controllerName: function () {
             return this._controllerName;
         },
-        getLocation: function (actionName) {
+        getLocation: function (actionName, viewPath) {
             /// <param name="actionName" type="String"/>
+            /// <param name="viewPath" type="String"/>
             /// <returns type="String"/>
 
             var controllerName = this._controllerName;
-            return this._viewLocationRoute.interpolate({ controller: controllerName, action: actionName }) + '.' + this.viewFileExtension;
+            return interpolate(viewPath || this.viewLocationFormater(), { controller: controllerName, action: actionName });
         },
-        view: function (actionName) {
+        view: function (actionName, viewPath) {
+            /// <param name="actionName" type="String"/>
+            /// <param name="viewPath" type="String"/>
+            /// <returns type="jQuery.Deferred"/>
+
+            return this._getView(actionName, viewPath);
+        },
+        _getView: function (actionName, viewPath) {
             /// <param name="actionName" type="String"/>
             /// <returns type="jQuery.Deferred"/>
 
-            return this._getView(actionName);
-        },
-        _getView: function (actionName) {
-            /// <param name="actionName" type="String"/>
-            /// <returns type="jQuery.Deferred"/>
-
-            var url = this.getLocation(actionName);
+            var url = this.getLocation(actionName, viewPath);
             var self = this;
             if (!this._views[actionName]) {
 
@@ -1236,6 +1253,9 @@ window.chitu = window.chitu || {};
             }, this._priority);
 
             var route = new chitu.Route(originalRoute, name, url, defaults);
+            route.viewPath = args.viewPath;
+            route.actionPath = args.actionPath;
+
             originalRoute.rules = rules;
             originalRoute.newRoute = route;
 
@@ -1261,10 +1281,10 @@ window.chitu = window.chitu || {};
                 values[key] = data.params[0][key];
             }
 
-            return values;
-        },
-        getUrl: function (route, routeData) {
+            values.viewPath = data.route.newRoute.viewPath;
+            values.actionPath = data.route.newRoute.actionPath;
 
+            return values;
         }
     }
 
@@ -1300,8 +1320,7 @@ window.chitu = window.chitu || {};
             container: document.body,
             routes: new ns.RouteCollection(),
             actionPath: ACTION_LOCATION_FORMATER,
-            viewPath: VIEW_LOCATION_FORMATER,
-            viewFileExtension: 'html'
+            viewPath: VIEW_LOCATION_FORMATER
         };
 
         //ViewEngine.prototype.viewFileExtension = options.viewFileExtension || 'html';

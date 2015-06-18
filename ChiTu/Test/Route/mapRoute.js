@@ -13,6 +13,13 @@
         start();
     });
 
+    var route = app.routes().mapRoute({
+        name: 'User',
+        url: '{controller}/{action}/{part}',
+        viewPath: 'http://alinq.cn/{controller}/{action}.html',
+        actionPath: 'http://alinq.cn/{controller}/{action}'
+    });
 
+    var routeData = app.routes().getRouteData('Home/Index');
 
 });

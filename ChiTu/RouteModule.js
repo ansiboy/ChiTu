@@ -71,6 +71,9 @@
             }, this._priority);
 
             var route = new chitu.Route(originalRoute, name, url, defaults);
+            route.viewPath = args.viewPath;
+            route.actionPath = args.actionPath;
+
             originalRoute.rules = rules;
             originalRoute.newRoute = route;
 
@@ -96,10 +99,10 @@
                 values[key] = data.params[0][key];
             }
 
-            return values;
-        },
-        getUrl: function (route, routeData) {
+            values.viewPath = data.route.newRoute.viewPath;
+            values.actionPath = data.route.newRoute.actionPath;
 
+            return values;
         }
     }
 

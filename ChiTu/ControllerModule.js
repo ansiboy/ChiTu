@@ -2,6 +2,29 @@
     var e = ns.Error;
     var u = ns.utility;
 
+    function interpolate(pattern, data) {
+        var http_prefix = 'http://'.toLowerCase();
+        if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
+            var link = document.createElement('a');
+            //  set href to any path
+            link.setAttribute('href', pattern);
+
+            //  get any piece of the url you're interested in
+            //link.hostname;  //  'example.com'
+            //link.port;      //  12345
+            //link.search;    //  '?startIndex=1&pageSize=10'
+            //link.pathname;  //  '/blog/foo/bar'
+            //link.protocol;  //  'http:'
+
+            pattern = link.pathname; //pattern.substr(http_prefix.length);
+            var route = crossroads.addRoute(pattern);
+            return http_prefix + route.interpolate(data);
+        }
+
+        var route = crossroads.addRoute(pattern);
+        return route.interpolate(data);
+    }
+
     ns.Controller = function (routeData, actionLocationFormater) {
         if (!routeData) throw e.argumentNull('routeData');
         if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
@@ -13,7 +36,7 @@
         this._actionLocationFormater = actionLocationFormater;
         this._actions = {};
 
-        this._actionLocationRoute = crossroads.addRoute(actionLocationFormater);
+
 
         this.actionCreated = chitu.Callbacks();
     };
@@ -31,9 +54,8 @@
             if (!actionName) throw e.argumentNull('actionName');
             if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
 
-            //var controllerName = this.name();
             var data = $.extend({ action: actionName }, this._routeData);
-            return this._actionLocationRoute.interpolate(data);
+            return interpolate(this.actionLocationFormater(), data);
         },
         action: function (name) {
             /// <param name="value" type="chitu.Action" />
@@ -114,7 +136,7 @@
             if (!routeData.controller)
                 throw e.routeDataRequireController();
 
-            return new ns.Controller(routeData, this.actionLocationFormater());
+            return new ns.Controller(routeData, routeData.actionPath || this.actionLocationFormater());
         },
         actionLocationFormater: function () {
             return this._actionLocationFormater;
@@ -174,36 +196,35 @@
 
         this._controllerName = controllerName;
         this._viewLocationFormater = viewLocationFormater;
-        this._viewLocationRoute = crossroads.addRoute(viewLocationFormater);
         this._views = {};
     };
     ns.ViewEngine.prototype = {
-        //views: {},
-        viewFileExtension: 'html',
         viewLocationFormater: function () {
             return this._viewLocationFormater;
         },
         controllerName: function () {
             return this._controllerName;
         },
-        getLocation: function (actionName) {
+        getLocation: function (actionName, viewPath) {
             /// <param name="actionName" type="String"/>
+            /// <param name="viewPath" type="String"/>
             /// <returns type="String"/>
 
             var controllerName = this._controllerName;
-            return this._viewLocationRoute.interpolate({ controller: controllerName, action: actionName }) + '.' + this.viewFileExtension;
+            return interpolate(viewPath || this.viewLocationFormater(), { controller: controllerName, action: actionName });
         },
-        view: function (actionName) {
+        view: function (actionName, viewPath) {
+            /// <param name="actionName" type="String"/>
+            /// <param name="viewPath" type="String"/>
+            /// <returns type="jQuery.Deferred"/>
+
+            return this._getView(actionName, viewPath);
+        },
+        _getView: function (actionName, viewPath) {
             /// <param name="actionName" type="String"/>
             /// <returns type="jQuery.Deferred"/>
 
-            return this._getView(actionName);
-        },
-        _getView: function (actionName) {
-            /// <param name="actionName" type="String"/>
-            /// <returns type="jQuery.Deferred"/>
-
-            var url = this.getLocation(actionName);
+            var url = this.getLocation(actionName, viewPath);
             var self = this;
             if (!this._views[actionName]) {
 

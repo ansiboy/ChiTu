@@ -63,8 +63,11 @@
         routeDataRequireAction: function () {
             var msg = 'The route data does not contains a "action" file.';
             return new Error(msg);
-        }
+        },
+        parameterRequireField: function (fileName, parameterName) {
+            var msg = u.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
 
+        }
     }
 
 })(chitu);

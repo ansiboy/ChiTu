@@ -62,7 +62,7 @@
             var controllerName = routeData.controller;
             var actionName = routeData.action;
             var controller = this.application().controller(routeData);
-            var view = this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName);
+            var view = this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
             var context = new ns.ControllerContext(controller, view, routeData);
 
             this.on_pageCreating(context);
@@ -130,7 +130,7 @@
                         // 说明：由于只能显示一个页面，只有为 currentPage 才显示
                         if (this.page != self.currentPage())
                             this.page.visible(false);
-                
+
                         //=======================================================
 
                         this.result.resolve(this.page);
