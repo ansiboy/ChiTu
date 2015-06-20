@@ -187,48 +187,36 @@
             var result = this._handle.apply(ns.app, [page]);
             return u.isDeferred(result) ? result : $.Deferred().resolve();
         }
-    }
-
-    // #region ViewEngine
-    ns.ViewEngine = function (controllerName, viewLocationFormater) {
-        if (!controllerName) throw e.argumentNull('controllerName');
-        if (!viewLocationFormater) throw e.argumentNull('viewLocationFormater');
-
-        this._controllerName = controllerName;
-        this._viewLocationFormater = viewLocationFormater;
-        this._views = {};
     };
-    ns.ViewEngine.prototype = {
-        viewLocationFormater: function () {
-            return this._viewLocationFormater;
-        },
-        controllerName: function () {
-            return this._controllerName;
-        },
-        getLocation: function (actionName, viewPath) {
-            /// <param name="actionName" type="String"/>
-            /// <param name="viewPath" type="String"/>
-            /// <returns type="String"/>
 
-            var controllerName = this._controllerName;
-            return interpolate(viewPath || this.viewLocationFormater(), { controller: controllerName, action: actionName });
-        },
-        view: function (actionName, viewPath) {
-            /// <param name="actionName" type="String"/>
-            /// <param name="viewPath" type="String"/>
+    ns.ViewFactory = function (viewLocationFormater) {
+        this._viewLocationFormater = viewLocationFormater;
+        this._views = [];
+    };
+
+    ns.ViewFactory.prototype = {
+        view: function (routeData) {
+            /// <param name="routeData" type="Object"/>
             /// <returns type="jQuery.Deferred"/>
 
-            return this._getView(actionName, viewPath);
-        },
-        _getView: function (actionName, viewPath) {
-            /// <param name="actionName" type="String"/>
-            /// <returns type="jQuery.Deferred"/>
+            if (typeof routeData !== 'object')
+                throw e.paramTypeError('routeData', 'object');
 
-            var url = this.getLocation(actionName, viewPath);
+            if (!routeData.controller)
+                throw e.routeDataRequireController();
+
+            if (!routeData.action)
+                throw e.routeDataRequireAction();
+
+            var viewLocationFormater = this._viewLocationFormater || routeData.viewPath;
+            if (!viewLocationFormater)
+                return $.Deferred().resolve('');
+
+            var url = interpolate(viewLocationFormater, routeData);
             var self = this;
-            if (!this._views[actionName]) {
+            if (!this._views[routeData.action]) {
 
-                this._views[actionName] = $.Deferred();
+                this._views[routeData.action] = $.Deferred();
 
                 require(['text!' + url],
                     $.proxy(function (html) {
@@ -237,43 +225,19 @@
                         else
                             this.deferred.reject();
                     },
-                    { deferred: this._views[actionName] }),
+                    { deferred: this._views[routeData.action] }),
 
                     $.proxy(function (err) {
                         this.deferred.reject(err);
                     },
-                    { deferred: this._views[actionName] })
+                    { deferred: this._views[routeData.action] })
                 );
             }
 
-            return this._views[actionName];
+            return this._views[routeData.action];
+
         }
-    };
-    // #endregion
-
-    ns.ViewEngineFacotry = function (viewLocationFormater) {
-        if (!viewLocationFormater)
-            throw e.argumentNull('viewLocationFormater');
-
-        this._viewLocationFormater = viewLocationFormater;
-    };
-    ns.ViewEngineFacotry.prototype = {
-        viewEngines: {
-        },
-        viewLocationFormater: function () {
-            return this._viewLocationFormater;
-        },
-        createViewEngine: function (controllerName) {
-            return new ns.ViewEngine(controllerName, this.viewLocationFormater());
-        },
-        getViewEngine: function (controllerName) {
-            /// <param name="controllerName" type="String"/>
-            if (!this.viewEngines[controllerName])
-                this.viewEngines[controllerName] = this.createViewEngine(controllerName);
-
-            return this.viewEngines[controllerName];
-        }
-    };
+    }
 
     ns.action = ns.register = function (deps, filters, func) {
         /// <param name="deps" type="Array" canBeNull="true"/>

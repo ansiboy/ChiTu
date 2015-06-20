@@ -62,8 +62,8 @@
             var controllerName = routeData.controller;
             var actionName = routeData.action;
             var controller = this.application().controller(routeData);
-            var view = this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
-            var context = new ns.ControllerContext(controller, view, routeData);
+            var view_deferred = this.application().viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
+            var context = new ns.ControllerContext(controller, view_deferred, routeData);
 
             this.on_pageCreating(context);
             var page = new ns.Page(context, element);
@@ -176,8 +176,6 @@
 
             //new chitu.Page().open
             //document.body.scrollTop = item.page.scrollTop || '0px';
-
-
 
             this._currentPage = item.page;
             return $.Deferred().resolve();

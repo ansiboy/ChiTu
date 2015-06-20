@@ -37,7 +37,8 @@
         $.proxy(func, this)(options);
 
         this.controllerFactory = new ns.ControllerFactory(options.actionPath);
-        this.viewEngineFactory = new ns.ViewEngineFacotry(options.viewPath);
+        //this.viewEngineFactory = new ns.ViewEngineFacotry(options.viewPath);
+        this.viewFactory = new ns.ViewFactory(options.viewPath);
 
         this._pages = {};
         this._stack = [];
