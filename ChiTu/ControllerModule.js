@@ -54,7 +54,7 @@
             if (!actionName) throw e.argumentNull('actionName');
             if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
 
-            var data = $.extend({ action: actionName }, this._routeData);
+            var data = $.extend(this._routeData, { action: actionName });
             return interpolate(this.actionLocationFormater(), data);
         },
         action: function (name) {
@@ -214,9 +214,10 @@
 
             var url = interpolate(viewLocationFormater, routeData);
             var self = this;
-            if (!this._views[routeData.action]) {
+            var viewName = routeData.controller + '_' + routeData.action;
+            if (!this._views[viewName]) {
 
-                this._views[routeData.action] = $.Deferred();
+                this._views[viewName] = $.Deferred();
 
                 require(['text!' + url],
                     $.proxy(function (html) {
@@ -225,16 +226,16 @@
                         else
                             this.deferred.reject();
                     },
-                    { deferred: this._views[routeData.action] }),
+                    { deferred: this._views[viewName] }),
 
                     $.proxy(function (err) {
                         this.deferred.reject(err);
                     },
-                    { deferred: this._views[routeData.action] })
+                    { deferred: this._views[viewName] })
                 );
             }
 
-            return this._views[routeData.action];
+            return this._views[viewName];
 
         }
     }
