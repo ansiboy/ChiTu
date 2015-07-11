@@ -3,5 +3,5 @@
 
     $('div').html('Hello Everyone！');
     $('<div>').appendTo(page.node()).html('Good Bye');
-
+    
 });

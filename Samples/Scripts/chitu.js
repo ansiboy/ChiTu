@@ -331,6 +331,9 @@
                     // To know if the callbacks have already been called at least once
                     fired: function () {
                         return !!fired;
+                    },
+                    count: function () {
+                        return list.length;
                     }
                 };
 
@@ -387,8 +390,6 @@
                 return obj;
             }
         });
-
-
 
 
     })(chitu);
