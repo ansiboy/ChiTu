@@ -331,6 +331,9 @@ window.chitu = window.chitu || {};
                 // To know if the callbacks have already been called at least once
                 fired: function () {
                     return !!fired;
+                },
+                count: function () {
+                    return list.length;
                 }
             };
 
@@ -456,8 +459,8 @@ window.chitu = window.chitu || {};
             var controllerName = routeData.controller;
             var actionName = routeData.action;
             var controller = this.application().controller(routeData);
-            var view = this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
-            var context = new ns.ControllerContext(controller, view, routeData);
+            var view_deferred = this.application().viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
+            var context = new ns.ControllerContext(controller, view_deferred, routeData);
 
             this.on_pageCreating(context);
             var page = new ns.Page(context, element);
@@ -570,8 +573,6 @@ window.chitu = window.chitu || {};
 
             //new chitu.Page().open
             //document.body.scrollTop = item.page.scrollTop || '0px';
-
-
 
             this._currentPage = item.page;
             return $.Deferred().resolve();
@@ -823,7 +824,18 @@ window.chitu = window.chitu || {};
     function interpolate(pattern, data) {
         var http_prefix = 'http://'.toLowerCase();
         if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
-            pattern = pattern.substr(http_prefix.length);
+            var link = document.createElement('a');
+            //  set href to any path
+            link.setAttribute('href', pattern);
+
+            //  get any piece of the url you're interested in
+            //link.hostname;  //  'example.com'
+            //link.port;      //  12345
+            //link.search;    //  '?startIndex=1&pageSize=10'
+            //link.pathname;  //  '/blog/foo/bar'
+            //link.protocol;  //  'http:'
+
+            pattern = link.pathname; //pattern.substr(http_prefix.length);
             var route = crossroads.addRoute(pattern);
             return http_prefix + route.interpolate(data);
         }
@@ -861,7 +873,7 @@ window.chitu = window.chitu || {};
             if (!actionName) throw e.argumentNull('actionName');
             if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
 
-            var data = $.extend({ action: actionName }, this._routeData);
+            var data = $.extend(this._routeData, { action: actionName });
             return interpolate(this.actionLocationFormater(), data);
         },
         action: function (name) {
@@ -994,48 +1006,37 @@ window.chitu = window.chitu || {};
             var result = this._handle.apply(ns.app, [page]);
             return u.isDeferred(result) ? result : $.Deferred().resolve();
         }
-    }
-
-    // #region ViewEngine
-    ns.ViewEngine = function (controllerName, viewLocationFormater) {
-        if (!controllerName) throw e.argumentNull('controllerName');
-        if (!viewLocationFormater) throw e.argumentNull('viewLocationFormater');
-
-        this._controllerName = controllerName;
-        this._viewLocationFormater = viewLocationFormater;
-        this._views = {};
     };
-    ns.ViewEngine.prototype = {
-        viewLocationFormater: function () {
-            return this._viewLocationFormater;
-        },
-        controllerName: function () {
-            return this._controllerName;
-        },
-        getLocation: function (actionName, viewPath) {
-            /// <param name="actionName" type="String"/>
-            /// <param name="viewPath" type="String"/>
-            /// <returns type="String"/>
 
-            var controllerName = this._controllerName;
-            return interpolate(viewPath || this.viewLocationFormater(), { controller: controllerName, action: actionName });
-        },
-        view: function (actionName, viewPath) {
-            /// <param name="actionName" type="String"/>
-            /// <param name="viewPath" type="String"/>
+    ns.ViewFactory = function (viewLocationFormater) {
+        this._viewLocationFormater = viewLocationFormater;
+        this._views = [];
+    };
+
+    ns.ViewFactory.prototype = {
+        view: function (routeData) {
+            /// <param name="routeData" type="Object"/>
             /// <returns type="jQuery.Deferred"/>
 
-            return this._getView(actionName, viewPath);
-        },
-        _getView: function (actionName, viewPath) {
-            /// <param name="actionName" type="String"/>
-            /// <returns type="jQuery.Deferred"/>
+            if (typeof routeData !== 'object')
+                throw e.paramTypeError('routeData', 'object');
 
-            var url = this.getLocation(actionName, viewPath);
+            if (!routeData.controller)
+                throw e.routeDataRequireController();
+
+            if (!routeData.action)
+                throw e.routeDataRequireAction();
+
+            var viewLocationFormater = this._viewLocationFormater || routeData.viewPath;
+            if (!viewLocationFormater)
+                return $.Deferred().resolve('');
+
+            var url = interpolate(viewLocationFormater, routeData);
             var self = this;
-            if (!this._views[actionName]) {
+            var viewName = routeData.controller + '_' + routeData.action;
+            if (!this._views[viewName]) {
 
-                this._views[actionName] = $.Deferred();
+                this._views[viewName] = $.Deferred();
 
                 require(['text!' + url],
                     $.proxy(function (html) {
@@ -1044,43 +1045,19 @@ window.chitu = window.chitu || {};
                         else
                             this.deferred.reject();
                     },
-                    { deferred: this._views[actionName] }),
+                    { deferred: this._views[viewName] }),
 
                     $.proxy(function (err) {
                         this.deferred.reject(err);
                     },
-                    { deferred: this._views[actionName] })
+                    { deferred: this._views[viewName] })
                 );
             }
 
-            return this._views[actionName];
+            return this._views[viewName];
+
         }
-    };
-    // #endregion
-
-    ns.ViewEngineFacotry = function (viewLocationFormater) {
-        if (!viewLocationFormater)
-            throw e.argumentNull('viewLocationFormater');
-
-        this._viewLocationFormater = viewLocationFormater;
-    };
-    ns.ViewEngineFacotry.prototype = {
-        viewEngines: {
-        },
-        viewLocationFormater: function () {
-            return this._viewLocationFormater;
-        },
-        createViewEngine: function (controllerName) {
-            return new ns.ViewEngine(controllerName, this.viewLocationFormater());
-        },
-        getViewEngine: function (controllerName) {
-            /// <param name="controllerName" type="String"/>
-            if (!this.viewEngines[controllerName])
-                this.viewEngines[controllerName] = this.createViewEngine(controllerName);
-
-            return this.viewEngines[controllerName];
-        }
-    };
+    }
 
     ns.action = ns.register = function (deps, filters, func) {
         /// <param name="deps" type="Array" canBeNull="true"/>
@@ -1328,7 +1305,8 @@ window.chitu = window.chitu || {};
         $.proxy(func, this)(options);
 
         this.controllerFactory = new ns.ControllerFactory(options.actionPath);
-        this.viewEngineFactory = new ns.ViewEngineFacotry(options.viewPath);
+        //this.viewEngineFactory = new ns.ViewEngineFacotry(options.viewPath);
+        this.viewFactory = new ns.ViewFactory(options.viewPath);
 
         this._pages = {};
         this._stack = [];
