@@ -20,11 +20,9 @@ var chitu;
             return false;
         };
         Utility.format = function (source, params) {
+            if (params === void 0) { params = []; }
             if (arguments.length > 2 && params.constructor !== Array) {
                 params = $.makeArray(arguments).slice(1);
-            }
-            if (params.constructor !== Array) {
-                params = [params];
             }
             $.each(params, function (i, n) {
                 source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {

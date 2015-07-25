@@ -11,9 +11,9 @@ var chitu;
             var link = document.createElement('a');
             //  set href to any path
             link.setAttribute('href', pattern);
-            pattern = link.pathname; //pattern.substr(http_prefix.length);
+            pattern = decodeURI(link.pathname); //pattern.substr(http_prefix.length);
             var route = crossroads.addRoute(pattern);
-            return http_prefix + route.interpolate(data);
+            return http_prefix + link.host + route.interpolate(data);
         }
         var route = crossroads.addRoute(pattern);
         return route.interpolate(data);
@@ -47,7 +47,7 @@ var chitu;
             if (typeof actionName != 'string')
                 throw e.paramTypeError('actionName', 'String');
             var data = $.extend(this._routeData, { action: actionName });
-            return interpolate(this.actionLocationFormater(), data);
+            return interpolate(this._routeData.actionPath || this.actionLocationFormater(), data);
         };
         Controller.prototype.action = function (name) {
             /// <param name="value" type="chitu.Action" />

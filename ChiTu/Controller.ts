@@ -14,9 +14,10 @@ module chitu {
             //  set href to any path
             link.setAttribute('href', pattern);
 
-            pattern = link.pathname; //pattern.substr(http_prefix.length);
+            pattern = decodeURI(link.pathname); //pattern.substr(http_prefix.length);
+ 
             var route = crossroads.addRoute(pattern);
-            return http_prefix + route.interpolate(data);
+            return http_prefix + link.host + route.interpolate(data);
         }
 
         var route = crossroads.addRoute(pattern);
@@ -56,7 +57,7 @@ module chitu {
             if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
 
             var data = $.extend(this._routeData, { action: actionName });
-            return interpolate(this.actionLocationFormater(), data);
+            return interpolate(this._routeData.actionPath || this.actionLocationFormater(), data);
         }
         public action(name) {
             /// <param name="value" type="chitu.Action" />
@@ -85,7 +86,7 @@ module chitu {
             var self = this;
             var url = this.getLocation(actionName);
             var result = $.Deferred();
-           
+
             require([url],
                 $.proxy(function (obj) {
                     //加载脚本失败
@@ -153,8 +154,8 @@ module chitu {
             return u.isDeferred(result) ? result : $.Deferred().resolve();
         }
     }
-    
-    export function action  (deps, filters, func) {
+
+    export function action(deps, filters, func) {
         /// <param name="deps" type="Array" canBeNull="true"/>
         /// <param name="filters" type="Array" canBeNull="true"/>
         /// <param name="func" type="Function" canBeNull="false"/>
@@ -221,7 +222,7 @@ module chitu {
                 }
             },
             { func: func, filters: filters })
-        );
+            );
 
         return func;
     };

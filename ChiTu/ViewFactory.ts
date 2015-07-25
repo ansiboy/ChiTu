@@ -9,9 +9,9 @@
             var link = document.createElement('a');
             link.setAttribute('href', pattern);
 
-            pattern = link.pathname; 
+            pattern = decodeURI(link.pathname);
             var route = crossroads.addRoute(pattern);
-            return http_prefix + route.interpolate(data);
+            return http_prefix + link.host + route.interpolate(data);
         }
 
         var route = crossroads.addRoute(pattern);
@@ -20,14 +20,14 @@
 
     export class ViewFactory {
         _viewLocationFormater: string;
-        _views : any[];
+        _views: any[];
 
         constructor(viewLocationFormater) {
             this._viewLocationFormater = viewLocationFormater;
             this._views = [];
         }
 
-        view (routeData) {
+        view(routeData) {
             /// <param name="routeData" type="Object"/>
             /// <returns type="jQuery.Deferred"/>
 
@@ -44,7 +44,7 @@
             if (!viewLocationFormater)
                 return $.Deferred().resolve('');
 
-            var url = interpolate(viewLocationFormater, routeData);
+            var url = interpolate(routeData.viewPath || viewLocationFormater, routeData);
             var self = this;
             var viewName = routeData.controller + '_' + routeData.action;
             if (!this._views[viewName]) {

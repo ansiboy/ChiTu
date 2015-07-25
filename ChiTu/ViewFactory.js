@@ -7,9 +7,9 @@ var chitu;
         if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
             var link = document.createElement('a');
             link.setAttribute('href', pattern);
-            pattern = link.pathname;
+            pattern = decodeURI(link.pathname);
             var route = crossroads.addRoute(pattern);
-            return http_prefix + route.interpolate(data);
+            return http_prefix + link.host + route.interpolate(data);
         }
         var route = crossroads.addRoute(pattern);
         return route.interpolate(data);
@@ -31,7 +31,7 @@ var chitu;
             var viewLocationFormater = this._viewLocationFormater || routeData.viewPath;
             if (!viewLocationFormater)
                 return $.Deferred().resolve('');
-            var url = interpolate(viewLocationFormater, routeData);
+            var url = interpolate(routeData.viewPath || viewLocationFormater, routeData);
             var self = this;
             var viewName = routeData.controller + '_' + routeData.action;
             if (!this._views[viewName]) {

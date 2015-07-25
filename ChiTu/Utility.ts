@@ -18,12 +18,9 @@ module chitu {
 
             return false;
         }
-        public static format(source: string, params: any[]): string {
+        public static format(source: string, params: string[] = []): string {
             if (arguments.length > 2 && params.constructor !== Array) {
                 params = $.makeArray(arguments).slice(1);
-            }
-            if (params.constructor !== Array) {
-                params = [params];
             }
             $.each(params, function (i, n) {
                 source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {
