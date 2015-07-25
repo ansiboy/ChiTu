@@ -1,66 +1,77 @@
-var chitu;
-(function (chitu) {
+﻿module chitu {
     var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
-    function eventDeferred(callback, sender, args) {
-        if (args === void 0) { args = {}; }
+
+    function eventDeferred(callback, sender, args = {}) {
         return chitu.fireCallback(callback, [sender, args]);
-    }
-    ;
-    var Page = (function () {
-        function Page(context, node) {
-            this._node = HTMLElement;
-            this._visible = true;
-            this._loadViewModelResult = null;
-            this._showResult = null;
-            this._hideResult = null;
-            this.created = ns.Callbacks();
-            this.creating = ns.Callbacks();
-            this.preLoad = ns.Callbacks();
-            this.load = ns.Callbacks();
-            this.closing = ns.Callbacks();
-            this.closed = ns.Callbacks();
-            this.scroll = ns.Callbacks();
-            this.showing = ns.Callbacks();
-            this.shown = ns.Callbacks();
-            this.hiding = ns.Callbacks();
-            this.hidden = ns.Callbacks();
-            this._type = 'Page';
-            if (!context)
-                throw e.argumentNull('context');
+    };
+
+    export class Page {
+
+        _context: chitu.ControllerContext;
+        _name: string;
+        _viewDeferred: any;
+        _actionDeferred: any;
+        _parent;
+        _node = HTMLElement;
+        _visible = true;
+        _loadViewModelResult = null;
+        _showResult = null;
+        _hideResult = null;
+
+        created = ns.Callbacks();
+        creating = ns.Callbacks();
+        preLoad = ns.Callbacks();
+        load = ns.Callbacks();
+        closing = ns.Callbacks();
+        closed = ns.Callbacks();
+        scroll = ns.Callbacks();
+        showing = ns.Callbacks();
+        shown = ns.Callbacks();
+        hiding = ns.Callbacks();
+        hidden = ns.Callbacks();
+
+        constructor(context: chitu.ControllerContext, node) {
+            if (!context) throw e.argumentNull('context');
             //if (context['_type'] != 'ControllerContext') throw e.paramTypeError('context', 'ControllerContext');
-            if (!node)
-                throw e.argumentNull('node');
+            if (!node) throw e.argumentNull('node');
+
             this._context = context;
             var controllerName = context.routeData().controller;
             var actionName = context.routeData().action;
             var name = controllerName + '.' + actionName;
             var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
             var actionDeferred = context.controller().action(actionName);
+
             this.init(name, viewDeferred, actionDeferred, node);
         }
-        Page.prototype.context = function () {
+
+        _type: string = 'Page'
+
+        context() {
             /// <returns type="chitu.ControllerContext"/>
             return this._context;
-        };
-        Page.prototype.name = function () {
+        }
+        name() {
             return this._name;
-        };
-        Page.prototype.node = function () {
+        }
+        node() {
             /// <returns type="HTMLElement"/>
             return this._node;
-        };
-        Page.prototype.parent = function () {
+        }
+        parent() {
             /// <returns type="chitu.Page"/>
             return this._parent;
-        };
-        Page.prototype.visible = function (value) {
+        }
+        visible(value) {
             var is_visible = $(this.node()).is(':visible');
             if (value === undefined)
                 return is_visible; //this._visible;
+
             if (value == is_visible)
                 return;
+
             if (!value) {
                 this.on_hiding({});
                 $(this.node()).hide();
@@ -71,17 +82,15 @@ var chitu;
                 $(this.node()).show();
                 this.on_shown({});
             }
+
             this._visible = value;
-        };
-        Page.prototype.init = function (name, viewDeferred, actionDeferred, node) {
-            if (!name)
-                throw e.argumentNull('name');
-            if (!viewDeferred)
-                throw e.argumentNull('viewDeferred');
-            if (!actionDeferred)
-                throw e.argumentNull('actionDeferred');
-            if (!node)
-                throw e.argumentNull('node');
+        }
+        private init(name, viewDeferred, actionDeferred, node) {
+            if (!name) throw e.argumentNull('name');
+            if (!viewDeferred) throw e.argumentNull('viewDeferred');
+            if (!actionDeferred) throw e.argumentNull('actionDeferred')
+            if (!node) throw e.argumentNull('node');
+
             this._name = name;
             this._viewDeferred = viewDeferred;
             this._actionDeferred = actionDeferred;
@@ -89,49 +98,52 @@ var chitu;
             this._node = node;
             this._visible = true;
             $(this._node).hide();
-        };
-        Page.prototype.on_creating = function (context) {
+        }
+        on_creating(context) {
             return eventDeferred(this.creating, this, context);
-        };
-        Page.prototype.on_created = function () {
+        }
+        on_created() {
             return eventDeferred(this.created, this);
-        };
-        Page.prototype.on_preLoad = function (args) {
+        }
+        on_preLoad(args) {
             return eventDeferred(this.preLoad, this, args);
-        };
-        Page.prototype.on_load = function (args) {
+        }
+        on_load(args) {
             return eventDeferred(this.load, this, args);
-        };
-        Page.prototype.on_closing = function (args) {
+        }
+        on_closing(args) {
             return eventDeferred(this.closing, this, args);
-        };
-        Page.prototype.on_closed = function (args) {
+        }
+        on_closed(args) {
             return eventDeferred(this.closed, this, args);
-        };
-        Page.prototype.on_scroll = function (event) {
+        }
+        on_scroll(event) {
             return eventDeferred(this.scroll, this, event);
-        };
-        Page.prototype.on_showing = function (args) {
+        }
+        on_showing(args) {
             return eventDeferred(this.showing, this, args);
-        };
-        Page.prototype.on_shown = function (args) {
+        }
+        on_shown(args) {
             return eventDeferred(this.shown, this, args);
-        };
-        Page.prototype.on_hiding = function (args) {
+        }
+        on_hiding(args) {
             return eventDeferred(this.hiding, this, args);
-        };
-        Page.prototype.on_hidden = function (args) {
+        }
+        on_hidden(args) {
             return eventDeferred(this.hidden, this, args);
-        };
-        Page.prototype._appendNode = function (childNode) {
+        }
+        _appendNode(childNode) {
             /// <param name="childNode" type="HTMLElement"/>
             if (childNode == null)
                 throw e.argumentNull('childNode');
+
             $(this._node).append(childNode);
-        };
-        Page.prototype._loadViewModel = function () {
+        }
+        _loadViewModel() {
+
             if (this._loadViewModelResult)
                 return this._loadViewModelResult;
+
             var page = this;
             this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
                 u.log('Load view success, page:{0}.', [page['_name']]);
@@ -139,20 +151,22 @@ var chitu;
                 return page._actionDeferred;
             })
                 .pipe(function (action) {
-                /// <param name="action" type="chitu.Action"/>
-                var result = action.execute(page);
-                page.on_created();
-                if (u.isDeferred(result))
-                    return result;
-                return $.Deferred().resolve();
-            })
+                    /// <param name="action" type="chitu.Action"/>
+                    var result = action.execute(page);
+                    page.on_created();
+                    if (u.isDeferred(result))
+                        return result;
+
+                    return $.Deferred().resolve();
+                })
                 .fail(function () {
-                page._loadViewModelResult = null;
-                u.log('Load view or action fail, page：{0}.', [page['_name']]);
-            });
+                    page._loadViewModelResult = null;
+                    u.log('Load view or action fail, page：{0}.', [page['_name']]);
+                });
+
             return this._loadViewModelResult;
-        };
-        Page.prototype.open = function (args) {
+        }
+        open(args) {
             /// <summary>
             /// Show the page.
             /// </summary>
@@ -160,22 +174,26 @@ var chitu;
             /// The value passed to the show event functions.
             /// </param>
             /// <returns type="jQuery.Deferred"/>
+
             var self = this;
             this._showResult = this.on_preLoad(args).pipe(function () {
                 return self._loadViewModel();
             })
                 .pipe(function () {
-                self.on_showing(args);
-                return self.on_load(args);
-            });
+                    self.on_showing(args);
+                    return self.on_load(args);
+                });
+
             this._showResult.done($.proxy(function () {
                 self._hideResult = null;
                 $(self.node()).show();
                 self.on_shown(this.args);
-            }, { args: args }));
+            },
+                { args: args }));
+
             return this._showResult;
-        };
-        Page.prototype.close = function (args) {
+        }
+        close(args) {
             /// <summary>
             /// Hide the page.
             /// </summary>
@@ -183,6 +201,7 @@ var chitu;
             /// The value passed to the hide event functions.
             /// </param>
             /// <returns type="jQuery.Deferred"/>
+
             var self = this;
             if (!this._hideResult) {
                 this._hideResult = self.on_closing(args).pipe(function () {
@@ -190,12 +209,10 @@ var chitu;
                     return self.on_closed(args);
                 });
             }
+
             return this._hideResult.always(function () {
                 self._hideResult = null;
             });
-        };
-        return Page;
-    })();
-    chitu.Page = Page;
-})(chitu || (chitu = {}));
-//# sourceMappingURL=Page.js.map
+        }
+    }
+} 
