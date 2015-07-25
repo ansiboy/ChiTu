@@ -8,3 +8,4 @@
     }
 
 })(function ($, crossroads) {
+	window['crossroads'] = crossroads;
