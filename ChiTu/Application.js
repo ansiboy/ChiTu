@@ -6,31 +6,30 @@ var chitu;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
     var Application = (function () {
-        function Application(func) {
-            /// <field name="func" type="Function"/>
+        function Application(container) {
             this.pageCreating = ns.Callbacks();
             this.pageCreated = ns.Callbacks();
             this.pageShowing = ns.Callbacks();
             this.pageShown = ns.Callbacks();
             this._pages = {};
             this._runned = false;
-            if (!func)
-                throw e.argumentNull('func');
-            if (!$.isFunction(func))
-                throw e.paramTypeError('func', 'Function');
-            var options = {
-                container: document.body,
-                routes: new ns.RouteCollection(),
-                actionPath: ACTION_LOCATION_FORMATER,
-                viewPath: VIEW_LOCATION_FORMATER
-            };
-            $.proxy(func, this)(options);
+            if (container == null)
+                throw e.argumentNull('container');
+            if (!container.tagName)
+                throw new Error('Parameter container is not a html element.');
+            //if (!func) throw e.argumentNull('func');
+            //if (!$.isFunction(func)) throw e.paramTypeError('func', 'Function');
+            //var options = {
+            //    container: document.body,
+            //    routes: new ns.RouteCollection()
+            //};
+            //$.proxy(func, this)(options);
             this.controllerFactory = new ns.ControllerFactory();
             this.viewFactory = new ns.ViewFactory();
             this._pages = {};
             this._stack = [];
-            this._routes = options.routes;
-            this._container = options.container;
+            this._routes = new chitu.RouteCollection();
+            this._container = container;
         }
         ;
         Application.prototype.on_pageCreating = function (context) {
@@ -55,7 +54,6 @@ var chitu;
                 throw e.paramTypeError('routeData', 'object');
             if (!routeData)
                 throw e.argumentNull('routeData');
-            //if (typeof name != 'string') throw e.paramTypeError('name', 'String');
             return this.controllerFactory.getController(routeData);
         };
         Application.prototype.action = function (routeData) {

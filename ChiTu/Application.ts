@@ -22,28 +22,30 @@
         controllerFactory: chitu.ControllerFactory;
         viewFactory: any;
 
-        constructor(func) {
-            /// <field name="func" type="Function"/>
+        constructor(container: HTMLElement) {
+            if (container == null)
+                throw e.argumentNull('container');
 
-            if (!func) throw e.argumentNull('func');
-            if (!$.isFunction(func)) throw e.paramTypeError('func', 'Function');
+            if (!container.tagName)
+                throw new Error('Parameter container is not a html element.');
 
-            var options = {
-                container: document.body,
-                routes: new ns.RouteCollection(),
-                actionPath: ACTION_LOCATION_FORMATER,
-                viewPath: VIEW_LOCATION_FORMATER
-            };
+            //if (!func) throw e.argumentNull('func');
+            //if (!$.isFunction(func)) throw e.paramTypeError('func', 'Function');
 
-            $.proxy(func, this)(options);
+            //var options = {
+            //    container: document.body,
+            //    routes: new ns.RouteCollection()
+            //};
+
+            //$.proxy(func, this)(options);
 
             this.controllerFactory = new ns.ControllerFactory();
             this.viewFactory = new ns.ViewFactory();
 
             this._pages = {};
             this._stack = [];
-            this._routes = options.routes;
-            this._container = options.container;
+            this._routes = new RouteCollection();
+            this._container = container;
 
         };
 
@@ -71,8 +73,6 @@
 
             if (!routeData)
                 throw e.argumentNull('routeData');
-            
-            //if (typeof name != 'string') throw e.paramTypeError('name', 'String');
 
             return this.controllerFactory.getController(routeData);
         }
