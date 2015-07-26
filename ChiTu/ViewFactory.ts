@@ -51,20 +51,36 @@
 
                 this._views[viewName] = $.Deferred();
 
-                require(['text!' + url],
-                    $.proxy(function (html) {
+                //require(['text!' + url],
+                //    $.proxy(function (html) {
+                //        if (html != null)
+                //            this.deferred.resolve(html);
+                //        else
+                //            this.deferred.reject();
+                //    },
+                //        { deferred: this._views[viewName] }),
+
+                //    $.proxy(function (err) {
+                //        this.deferred.reject(err);
+                //    },
+                //        { deferred: this._views[viewName] })
+                //    );
+
+                //=======================================================
+                // 说明：不使用 require text 是因为加载远的 html 文件，会作
+                // 为 script 去解释而导致错误 
+                $.ajax({ url: url })
+                    .done($.proxy(function (html) {
                         if (html != null)
                             this.deferred.resolve(html);
                         else
                             this.deferred.reject();
-                    },
-                        { deferred: this._views[viewName] }),
+                    }, { deferred: this._views[viewName] }))
 
-                    $.proxy(function (err) {
+                    .fail($.proxy(function (err) {
                         this.deferred.reject(err);
-                    },
-                        { deferred: this._views[viewName] })
-                    );
+                    }, { deferred: this._views[viewName] }));
+                  //=======================================================
             }
 
             return this._views[viewName];
