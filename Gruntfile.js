@@ -5,9 +5,9 @@
         concat: {
             options: { separator: ';' },
             dist: {
-                src: ['ChiTu/ScriptBegin.txt','ChiTu2/Utility.js', 'ChiTu2/Errors.js', 'ChiTu2/Extends.js', 'ChiTu2/PageContainer.js',
-                      'ChiTu2/Page.js', 'ChiTu2/Controller.js', 'ChiTu2/ControllerContext.js', 'ChiTu2/ControllerFactory.js',
-                      'ChiTu2/Route.js', 'ChiTu2/RouteCollection.js', 'ChiTu2/ViewFactory.js', 'ChiTu2/Application.js','ChiTu/ScriptEnd.txt'],
+                src: ['ChiTu/ScriptBegin.txt','ChiTu/Utility.js', 'ChiTu/Errors.js', 'ChiTu/Extends.js', 'ChiTu/PageContainer.js',
+                      'ChiTu/Page.js', 'ChiTu/Controller.js', 'ChiTu/ControllerContext.js', 'ChiTu/ControllerFactory.js',
+                      'ChiTu/Route.js', 'ChiTu/RouteCollection.js', 'ChiTu/RouteData.js', 'ChiTu/ViewFactory.js', 'ChiTu/Application.js', 'ChiTu/ScriptEnd.txt'],
                 dest: 'Build/chitu.js'
             }
         },

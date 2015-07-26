@@ -15,25 +15,24 @@ var chitu;
         return route.interpolate(data);
     }
     var ViewFactory = (function () {
-        function ViewFactory(viewLocationFormater) {
-            this._viewLocationFormater = viewLocationFormater;
+        function ViewFactory() {
             this._views = [];
         }
         ViewFactory.prototype.view = function (routeData) {
             /// <param name="routeData" type="Object"/>
             /// <returns type="jQuery.Deferred"/>
-            if (typeof routeData !== 'object')
-                throw e.paramTypeError('routeData', 'object');
-            if (!routeData.controller)
+            //if (typeof routeData !== 'object')
+            //    throw e.paramTypeError('routeData', 'object');
+            if (!routeData.values().controller)
                 throw e.routeDataRequireController();
-            if (!routeData.action)
+            if (!routeData.values().action)
                 throw e.routeDataRequireAction();
-            var viewLocationFormater = this._viewLocationFormater || routeData.viewPath;
-            if (!viewLocationFormater)
-                return $.Deferred().resolve('');
-            var url = interpolate(routeData.viewPath || viewLocationFormater, routeData);
+            //var viewLocationFormater = routeData.viewPath;
+            //if (!viewLocationFormater)
+            //    return $.Deferred().resolve('');
+            var url = interpolate(routeData.viewPath(), routeData.values());
             var self = this;
-            var viewName = routeData.controller + '_' + routeData.action;
+            var viewName = routeData.values().controller + '_' + routeData.values().action;
             if (!this._views[viewName]) {
                 this._views[viewName] = $.Deferred();
                 //require(['text!' + url],

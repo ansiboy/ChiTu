@@ -4,7 +4,6 @@ var chitu;
     var e = chitu.Errors;
     var RouteCollection = (function () {
         function RouteCollection() {
-            this.routeMatched = chitu.Callbacks();
             this._init();
         }
         RouteCollection.prototype._init = function () {
@@ -29,22 +28,24 @@ var chitu;
             if (!url)
                 throw e.argumentNull('url');
             this._priority = this._priority + 1;
-            var self = this;
-            var originalRoute = this._source.addRoute(url, function (args) {
-                var values = $.extend(defaults, args);
-                self.routeMatched.fire([name, values]);
-            }, this._priority);
             var route = new chitu.Route(name, url, defaults);
             route.viewPath = args.viewPath;
             route.actionPath = args.actionPath;
+            var originalRoute = this._source.addRoute(url, function (args) {
+                //var values = $.extend(defaults, args);
+                //self.routeMatched.fire([name, values]);
+            }, this._priority);
             originalRoute.rules = rules;
             originalRoute.newRoute = route;
-            if (this[name])
-                throw e.routeExists(name);
-            this[name] = route;
-            if (name == ns.RouteCollection.defaultRouteName) {
-                this._defaults = defaults;
+            if (this._defaultRoute == null) {
+                this._defaultRoute = route;
+                if (this._defaultRoute.viewPath == null)
+                    throw new Error('default route require view path.');
+                if (this._defaultRoute.actionPath == null)
+                    throw new Error('default route require action path.');
             }
+            route.viewPath = route.viewPath || this._defaultRoute.viewPath;
+            route.actionPath = route.actionPath || this._defaultRoute.actionPath;
             return route;
         };
         RouteCollection.prototype.getRouteData = function (url) {
@@ -58,9 +59,11 @@ var chitu;
                 var key = paramNames[i];
                 values[key] = data.params[0][key];
             }
-            values.viewPath = data.route.newRoute.viewPath;
-            values.actionPath = data.route.newRoute.actionPath;
-            return values;
+            var routeData = new chitu.RouteData();
+            routeData.values(values);
+            routeData.actionPath(data.route.newRoute.actionPath);
+            routeData.viewPath(data.route.newRoute.viewPath);
+            return routeData;
         };
         RouteCollection.defaultRouteName = 'default';
         return RouteCollection;

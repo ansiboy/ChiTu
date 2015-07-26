@@ -7,10 +7,6 @@
 });
 requirejs(['chitu'], function () {
     var app = new chitu.Application(function (options) {
-        //options.actionPath = '../Modules/{controller}/{action}';
-        //options.viewPath = '../Modules/{controller}/{action}.html';
-        //options.actionPath = '/Modules/{controller}/{action}';
-        //options.viewPath = '/Modules/{controller}/{action}.html';
         options.actionPath = 'http://localhost:62632/Modules/{controller}/{action}.js';
         options.viewPath = 'http://localhost:62632/Modules/{controller}/{action}.html';
 
@@ -25,8 +21,8 @@ requirejs(['chitu'], function () {
             rules: {
                 controller: ['Remote']
             },
-            viewPath: 'http://localhost:62632/{controller}_{action}.html',
-            actionPath: 'http://localhost:62632/{controller}_{action}.js'
+            viewPath: 'http://localhost:17354/Samples/{controller}_{action}.html',
+            actionPath: 'http://localhost:17354/Samples/{controller}_{action}.js'
         });
 
     });

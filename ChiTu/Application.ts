@@ -37,8 +37,8 @@
 
             $.proxy(func, this)(options);
 
-            this.controllerFactory = new ns.ControllerFactory(options.actionPath);
-            this.viewFactory = new ns.ViewFactory(options.viewPath);
+            this.controllerFactory = new ns.ControllerFactory();
+            this.viewFactory = new ns.ViewFactory();
 
             this._pages = {};
             this._stack = [];
@@ -63,7 +63,7 @@
             return this._routes;
         }
 
-        public controller(routeData) {
+        public controller(routeData: RouteData) {
             /// <param name="routeData" type="Object"/>
             /// <returns type="chitu.Controller"/>
             if (typeof routeData !== 'object')

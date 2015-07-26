@@ -1,9 +1,10 @@
-﻿module chitu {
+﻿namespace chitu {
     export class ControllerContext {
-        _controller: any;
-        _view: any;
-        _routeData: any;
-        constructor(controller, view, routeData) {
+        private _controller: any;
+        private _view: any;
+        private _routeData: RouteData;
+        constructor(controller, view, routeData: RouteData) {
+            this._routeData = new RouteData();
             this._controller = controller;
             this._view = view;
             this._routeData = routeData;
@@ -16,7 +17,7 @@
             /// <returns type="jQuery.Deferred"/>
             return this._view;
         }
-        public routeData() {
+        public routeData(): RouteData {
             /// <returns type="chitu.RouteData"/>
             return this._routeData;
         }

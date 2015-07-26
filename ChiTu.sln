@@ -1,9 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChiTu", "ChiTu\ChiTu.csproj", "{F29C3CCB-FF2D-44DD-BBE8-E687F0E97EC9}"
+EndProject
 Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "Samples", "http://localhost:62632", "{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}"
 	ProjectSection(WebsiteProperties) = preProject
-		Frontpage = "false"
 		UseIISExpress = "true"
 		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.0"
 		Debug.AspNetCompiler.VirtualPath = "/localhost_62632"
@@ -23,22 +26,20 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "Samples", "http://localhost
 		SlnRelativePath = "Samples\"
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChiTu", "ChiTu\ChiTu.csproj", "{F29C3CCB-FF2D-44DD-BBE8-E687F0E97EC9}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}.Release|Any CPU.ActiveCfg = Debug|Any CPU
-		{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}.Release|Any CPU.Build.0 = Debug|Any CPU
 		{F29C3CCB-FF2D-44DD-BBE8-E687F0E97EC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F29C3CCB-FF2D-44DD-BBE8-E687F0E97EC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F29C3CCB-FF2D-44DD-BBE8-E687F0E97EC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F29C3CCB-FF2D-44DD-BBE8-E687F0E97EC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D33AC2D-D66C-41E5-A2CB-200035BBA3F2}.Release|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

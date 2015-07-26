@@ -3,22 +3,22 @@ var chitu;
     var e = chitu.Errors;
     var ns = chitu;
     var ControllerFactory = (function () {
-        function ControllerFactory(actionLocationFormater) {
+        function ControllerFactory() {
+            //if (!actionLocationFormater)
+            //    throw e.argumentNull('actionLocationFormater');
             this._controllers = {};
-            if (!actionLocationFormater)
-                throw e.argumentNull('actionLocationFormater');
             this._controllers = {};
-            this._actionLocationFormater = actionLocationFormater;
+            //this._actionLocationFormater = actionLocationFormater;
         }
         ControllerFactory.prototype.controllers = function () {
             return this._controllers;
         };
-        ControllerFactory.prototype.createController = function (routeData) {
+        ControllerFactory.prototype.createController = function (name) {
             /// <param name="routeData" type="Object"/>
             /// <returns type="ns.Controller"/>
-            if (!routeData.controller)
-                throw e.routeDataRequireController();
-            return new ns.Controller(routeData, routeData.actionPath || this.actionLocationFormater());
+            //if (!routeData.values().controller)
+            //    throw e.routeDataRequireController();
+            return new ns.Controller(name);
         };
         ControllerFactory.prototype.actionLocationFormater = function () {
             return this._actionLocationFormater;
@@ -27,13 +27,13 @@ var chitu;
             /// <summary>Gets the controller by routeData.</summary>
             /// <param name="routeData" type="Object"/>
             /// <returns type="chitu.Controller"/>
-            if (typeof routeData !== 'object')
-                throw e.paramTypeError('routeData', 'object');
-            if (!routeData.controller)
+            //if (typeof routeData !== 'object')
+            //    throw e.paramTypeError('routeData', 'object');
+            if (!routeData.values().controller)
                 throw e.routeDataRequireController();
-            if (!this._controllers[routeData.controller])
-                this._controllers[routeData.controller] = this.createController(routeData);
-            return this._controllers[routeData.controller];
+            if (!this._controllers[routeData.values().controller])
+                this._controllers[routeData.values().controller] = this.createController(routeData.values().controller);
+            return this._controllers[routeData.values().controller];
         };
         return ControllerFactory;
     })();

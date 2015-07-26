@@ -6,15 +6,15 @@
     export class RouteCollection {
         _source: any
         _priority: number
-
+        _defaultRoute: Route
         static defaultRouteName: string = 'default';
 
         _defaults: {}
 
-        constructor(){
-             this._init();    
+        constructor() {
+            this._init();
         }
-        
+
         _init() {
             var crossroads = window['crossroads']
             this._source = crossroads.create();
@@ -25,7 +25,7 @@
         count() {
             return this._source.getNumRoutes();
         }
-        routeMatched = chitu.Callbacks();
+
         mapRoute(args) {//name, url, defaults
             /// <param name="args" type="Objecct"/>
             args = args || {};
@@ -40,30 +40,34 @@
 
             this._priority = this._priority + 1;
 
-
-            var self = this;
-            var originalRoute = this._source.addRoute(url, function (args) {
-                var values = $.extend(defaults, args);
-                self.routeMatched.fire([name, values]);
-            }, this._priority);
-
             var route = new chitu.Route(name, url, defaults);
             route.viewPath = args.viewPath;
             route.actionPath = args.actionPath;
 
+            var originalRoute = this._source.addRoute(url, function (args) {
+                //var values = $.extend(defaults, args);
+                //self.routeMatched.fire([name, values]);
+            }, this._priority);
+
             originalRoute.rules = rules;
             originalRoute.newRoute = route;
 
-            if (this[name])
-                throw e.routeExists(name);
+            if (this._defaultRoute == null) {
+                this._defaultRoute = route;
+                if (this._defaultRoute.viewPath == null)
+                    throw new Error('default route require view path.');
 
-            this[name] = route;
-            if (name == ns.RouteCollection.defaultRouteName) {
-                this._defaults = defaults;
+                if (this._defaultRoute.actionPath == null)
+                    throw new Error('default route require action path.');
             }
+
+            route.viewPath = route.viewPath || this._defaultRoute.viewPath;
+            route.actionPath = route.actionPath || this._defaultRoute.actionPath;
+
             return route;
         }
-        getRouteData(url) {
+
+        getRouteData(url): RouteData {
             /// <returns type="Object"/>
             var data = this._source.getRouteData(url);
             if (data == null)
@@ -76,10 +80,12 @@
                 values[key] = data.params[0][key];
             }
 
-            values.viewPath = data.route.newRoute.viewPath;
-            values.actionPath = data.route.newRoute.actionPath;
+            var routeData = new RouteData();
+            routeData.values(values);
+            routeData.actionPath(data.route.newRoute.actionPath);
+            routeData.viewPath(data.route.newRoute.viewPath);
 
-            return values;
+            return routeData;
         }
     }
 } 

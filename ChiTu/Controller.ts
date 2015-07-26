@@ -7,7 +7,7 @@ module chitu {
 
     var crossroads = window['crossroads'];
 
-    function interpolate(pattern, data) {
+    function interpolate(pattern: string, data) {
         var http_prefix = 'http://'.toLowerCase();
         if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
             var link = document.createElement('a');
@@ -26,65 +26,74 @@ module chitu {
 
     export class Controller {
         _name: any;
-        _routeData: any;
-        _actionLocationFormater: any;
+        //_routeData: RouteData;
         _actions = {};
         actionCreated: any;
 
-        constructor(routeData, actionLocationFormater) {
-            if (!routeData) throw e.argumentNull('routeData');
-            if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
+        constructor(name: string) {
+            //if (!routeData) throw e.argumentNull('routeData');
+            ////if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
 
-            if (!actionLocationFormater) throw e.argumentNull('actionLocationFormater');
+            //if (!routeData.values().controller)
+            //    throw e.routeDataRequireController();
 
-            this._name = routeData.controller;
-            this._routeData = routeData;
-            this._actionLocationFormater = actionLocationFormater;
+            this._name = name;
+            //this._routeData = routeData;
             this._actions = {};
 
             this.actionCreated = chitu.Callbacks();
         }
-        public actionLocationFormater() {
-            return this._actionLocationFormater;
-        }
         public name() {
             return this._name;
         }
-        public getLocation(actionName) {
-            /// <param name="actionName" type="String"/>
-            /// <returns type="String"/>
-            if (!actionName) throw e.argumentNull('actionName');
-            if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
+        //public getLocation(routeData: RouteData) {
+        //    /// <param name="actionName" type="String"/>
+        //    /// <returns type="String"/>
+        //    //if (!actionName) throw e.argumentNull('actionName');
+        //    //if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
 
-            var data = $.extend(this._routeData, { action: actionName });
-            return interpolate(this._routeData.actionPath || this.actionLocationFormater(), data);
-        }
-        public action(name) {
+        //    var data = $.extend(RouteData.values(), { action: actionName });
+        //    return interpolate(this._routeData.actionPath(), data);
+        //}
+        public action(routeData: RouteData) {
             /// <param name="value" type="chitu.Action" />
             /// <returns type="jQuery.Deferred" />
-            if (!name) throw e.argumentNull('name');
-            if (typeof name != 'string') throw e.paramTypeError('name', 'String');
+            
+            var controller = routeData.values().controller;;
+            if (!controller)
+                throw e.routeDataRequireController();
+
+            if (this._name != controller) {
+                throw new Error('Not same a controller.');
+            }
+
+            var name = routeData.values().action;
+            if (!name) throw e.routeDataRequireAction();
+
+
 
             var self = this;
             if (!this._actions[name]) {
-                this._actions[name] = this._createAction(name).fail($.proxy(
+                this._actions[name] = this._createAction(routeData).fail($.proxy(
                     function () {
                         self._actions[this.actionName] = null;
                     },
-                    { actionName: name })
+                    { actionName: routeData })
                     );
             }
 
             return this._actions[name];
         }
-        public _createAction(actionName) {
+        private _createAction(routeData: RouteData) {
             /// <param name="actionName" type="String"/>
             /// <returns type="jQuery.Deferred"/>
+
+            var actionName = routeData.values().action;
             if (!actionName)
-                throw e.argumentNull('actionName');
+                throw e.routeDataRequireAction();
 
             var self = this;
-            var url = this.getLocation(actionName);
+            var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
             var result = $.Deferred();
 
             require([url],

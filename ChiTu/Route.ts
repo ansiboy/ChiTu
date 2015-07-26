@@ -1,8 +1,9 @@
 ﻿namespace chitu {
     export class Route {
-        _name: string;
-        _pattern: string;
-        _defaults: Object;
+        private _name: string;
+        private _pattern: string;
+        private _defaults: Object;
+
         viewPath: string;
         actionPath: string;
 
@@ -22,5 +23,5 @@
         }
     }
 
- 
+
 } 

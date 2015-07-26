@@ -19,58 +19,58 @@ var chitu;
         return route.interpolate(data);
     }
     var Controller = (function () {
-        function Controller(routeData, actionLocationFormater) {
+        function Controller(name) {
+            //if (!routeData) throw e.argumentNull('routeData');
+            ////if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
+            //_routeData: RouteData;
             this._actions = {};
-            if (!routeData)
-                throw e.argumentNull('routeData');
-            if (typeof routeData !== 'object')
-                throw e.paramTypeError('routeData', 'object');
-            if (!actionLocationFormater)
-                throw e.argumentNull('actionLocationFormater');
-            this._name = routeData.controller;
-            this._routeData = routeData;
-            this._actionLocationFormater = actionLocationFormater;
+            //if (!routeData.values().controller)
+            //    throw e.routeDataRequireController();
+            this._name = name;
+            //this._routeData = routeData;
             this._actions = {};
             this.actionCreated = chitu.Callbacks();
         }
-        Controller.prototype.actionLocationFormater = function () {
-            return this._actionLocationFormater;
-        };
         Controller.prototype.name = function () {
             return this._name;
         };
-        Controller.prototype.getLocation = function (actionName) {
-            /// <param name="actionName" type="String"/>
-            /// <returns type="String"/>
-            if (!actionName)
-                throw e.argumentNull('actionName');
-            if (typeof actionName != 'string')
-                throw e.paramTypeError('actionName', 'String');
-            var data = $.extend(this._routeData, { action: actionName });
-            return interpolate(this._routeData.actionPath || this.actionLocationFormater(), data);
-        };
-        Controller.prototype.action = function (name) {
+        //public getLocation(routeData: RouteData) {
+        //    /// <param name="actionName" type="String"/>
+        //    /// <returns type="String"/>
+        //    //if (!actionName) throw e.argumentNull('actionName');
+        //    //if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
+        //    var data = $.extend(RouteData.values(), { action: actionName });
+        //    return interpolate(this._routeData.actionPath(), data);
+        //}
+        Controller.prototype.action = function (routeData) {
             /// <param name="value" type="chitu.Action" />
             /// <returns type="jQuery.Deferred" />
+            var controller = routeData.values().controller;
+            ;
+            if (!controller)
+                throw e.routeDataRequireController();
+            if (this._name != controller) {
+                throw new Error('Not same a controller.');
+            }
+            var name = routeData.values().action;
             if (!name)
-                throw e.argumentNull('name');
-            if (typeof name != 'string')
-                throw e.paramTypeError('name', 'String');
+                throw e.routeDataRequireAction();
             var self = this;
             if (!this._actions[name]) {
-                this._actions[name] = this._createAction(name).fail($.proxy(function () {
+                this._actions[name] = this._createAction(routeData).fail($.proxy(function () {
                     self._actions[this.actionName] = null;
-                }, { actionName: name }));
+                }, { actionName: routeData }));
             }
             return this._actions[name];
         };
-        Controller.prototype._createAction = function (actionName) {
+        Controller.prototype._createAction = function (routeData) {
             /// <param name="actionName" type="String"/>
             /// <returns type="jQuery.Deferred"/>
+            var actionName = routeData.values().action;
             if (!actionName)
-                throw e.argumentNull('actionName');
+                throw e.routeDataRequireAction();
             var self = this;
-            var url = this.getLocation(actionName);
+            var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
             var result = $.Deferred();
             require([url], $.proxy(function (obj) {
                 //加载脚本失败

@@ -3,7 +3,7 @@
     var e = chitu.Errors;
     var crossroads = window['crossroads'];
 
-    function interpolate(pattern, data) {
+    function interpolate(pattern: string, data) {
         var http_prefix = 'http://'.toLowerCase();
         if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
             var link = document.createElement('a');
@@ -19,34 +19,32 @@
     }
 
     export class ViewFactory {
-        _viewLocationFormater: string;
         _views: any[];
 
-        constructor(viewLocationFormater) {
-            this._viewLocationFormater = viewLocationFormater;
+        constructor() {
             this._views = [];
         }
 
-        view(routeData) {
+        view(routeData: RouteData) {
             /// <param name="routeData" type="Object"/>
             /// <returns type="jQuery.Deferred"/>
 
-            if (typeof routeData !== 'object')
-                throw e.paramTypeError('routeData', 'object');
+            //if (typeof routeData !== 'object')
+            //    throw e.paramTypeError('routeData', 'object');
 
-            if (!routeData.controller)
+            if (!routeData.values().controller)
                 throw e.routeDataRequireController();
 
-            if (!routeData.action)
+            if (!routeData.values().action)
                 throw e.routeDataRequireAction();
 
-            var viewLocationFormater = this._viewLocationFormater || routeData.viewPath;
-            if (!viewLocationFormater)
-                return $.Deferred().resolve('');
+            //var viewLocationFormater = routeData.viewPath;
+            //if (!viewLocationFormater)
+            //    return $.Deferred().resolve('');
 
-            var url = interpolate(routeData.viewPath || viewLocationFormater, routeData);
+            var url = interpolate(routeData.viewPath(), routeData.values());
             var self = this;
-            var viewName = routeData.controller + '_' + routeData.action;
+            var viewName = routeData.values().controller + '_' + routeData.values().action;
             if (!this._views[viewName]) {
 
                 this._views[viewName] = $.Deferred();
@@ -80,7 +78,7 @@
                     .fail($.proxy(function (err) {
                         this.deferred.reject(err);
                     }, { deferred: this._views[viewName] }));
-                  //=======================================================
+                //=======================================================
             }
 
             return this._views[viewName];

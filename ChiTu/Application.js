@@ -25,8 +25,8 @@ var chitu;
                 viewPath: VIEW_LOCATION_FORMATER
             };
             $.proxy(func, this)(options);
-            this.controllerFactory = new ns.ControllerFactory(options.actionPath);
-            this.viewFactory = new ns.ViewFactory(options.viewPath);
+            this.controllerFactory = new ns.ControllerFactory();
+            this.viewFactory = new ns.ViewFactory();
             this._pages = {};
             this._stack = [];
             this._routes = options.routes;

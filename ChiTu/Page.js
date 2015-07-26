@@ -33,11 +33,11 @@ var chitu;
             if (!node)
                 throw e.argumentNull('node');
             this._context = context;
-            var controllerName = context.routeData().controller;
-            var actionName = context.routeData().action;
+            var controllerName = context.routeData().values().controller;
+            var actionName = context.routeData().values().action;
             var name = controllerName + '.' + actionName;
             var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
-            var actionDeferred = context.controller().action(actionName);
+            var actionDeferred = context.controller().action(context.routeData());
             this.init(name, viewDeferred, actionDeferred, node);
         }
         Page.prototype.context = function () {

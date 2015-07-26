@@ -1,1 +1,1 @@
-page 的 showing 事件必须能够阻止 load 事件
+路由设置去掉 name

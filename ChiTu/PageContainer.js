@@ -55,8 +55,8 @@ var chitu;
             if (routeData == null) {
                 throw e.noneRouteMatched(url);
             }
-            var controllerName = routeData.controller;
-            var actionName = routeData.action;
+            var controllerName = routeData.values().controller;
+            var actionName = routeData.values().action;
             var controller = this.application().controller(routeData);
             var view_deferred = this.application().viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
             var context = new ns.ControllerContext(controller, view_deferred, routeData);
@@ -78,8 +78,8 @@ var chitu;
                 throw e.noneRouteMatched(url);
             }
             var container = this.node();
-            var controllerName = routeData.controller;
-            var actionName = routeData.action;
+            var controllerName = routeData.values().controller;
+            var actionName = routeData.values().action;
             var name = controllerName + '.' + actionName;
             var pages = $(container).data('pages');
             if (!pages) {
@@ -99,7 +99,7 @@ var chitu;
                     pages[key].visible(false);
                 }
             }
-            $.extend(args, routeData);
+            $.extend(args, routeData.values());
             //this.on_pageShowing(page, args);
             var self = this;
             var result = $.Deferred();
