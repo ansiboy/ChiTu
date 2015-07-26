@@ -100,7 +100,7 @@ module chitu {
                 $.proxy(function (obj) {
                     //加载脚本失败
                     if (!obj) {
-                        console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', [this.actionName, self.name()]));
+                        console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                         obj = { func: function () { } };
                         //result.reject();
                     }
@@ -117,7 +117,7 @@ module chitu {
                 }, { actionName: actionName, result: result }),
 
                 $.proxy(function (err) {
-                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', [this.actionName, self.name()]));
+                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                     var action = new Action(self, this.actionName, function () { });
                     self.actionCreated.fire(self, action);
                     this.result.resolve(action);

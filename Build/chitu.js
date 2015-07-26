@@ -29,16 +29,15 @@ var chitu;
                 return true;
             return false;
         };
-        Utility.format = function (source, params) {
-            if (params === void 0) { params = []; }
-            if (arguments.length > 2 && params.constructor !== Array) {
-                params = $.makeArray(arguments).slice(1);
-            }
-            $.each(params, function (i, n) {
+        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5) {
+            var params = [arg1, arg2, arg3, arg4, arg5];
+            for (var i = 0; i < params.length; i++) {
+                if (params[i] == null)
+                    break;
                 source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {
-                    return n;
+                    return params[i];
                 });
-            });
+            }
             return source;
         };
         Utility.fileName = function (url, withExt) {
@@ -81,7 +80,7 @@ var chitu;
         function Errors() {
         }
         Errors.argumentNull = function (paramName) {
-            var msg = u.format('The argument "{0}" cannt be null.', [paramName]);
+            var msg = u.format('The argument "{0}" cannt be null.', paramName);
             return new Error(msg);
         };
         Errors.modelFileExpecteFunction = function (script) {
@@ -91,7 +90,7 @@ var chitu;
         Errors.paramTypeError = function (paramName, expectedType) {
             /// <param name="paramName" type="String"/>
             /// <param name="expectedType" type="String"/>
-            var msg = u.format('The param "{0}" is expected "{1}" type.', [paramName, expectedType]);
+            var msg = u.format('The param "{0}" is expected "{1}" type.', paramName, expectedType);
             return new Error(msg);
         };
         Errors.viewNodeNotExists = function (name) {
@@ -119,7 +118,7 @@ var chitu;
             return new Error(msg);
         };
         Errors.ambiguityRouteMatched = function (url, routeName1, routeName2) {
-            var msg = u.format('Ambiguity route matched, {0} is match in {1} and {2}.', [url, routeName1, routeName2]);
+            var msg = u.format('Ambiguity route matched, {0} is match in {1} and {2}.', url, routeName1, routeName2);
             return new Error(msg);
         };
         Errors.noneRouteMatched = function (url) {
@@ -131,7 +130,7 @@ var chitu;
             return new Error('The stack is empty.');
         };
         Errors.canntParseUrl = function (url) {
-            var msg = u.format('Can not parse the url "{0}" to route data.', [url]);
+            var msg = u.format('Can not parse the url "{0}" to route data.', url);
             return new Error(msg);
         };
         Errors.routeDataRequireController = function () {
@@ -143,7 +142,7 @@ var chitu;
             return new Error(msg);
         };
         Errors.parameterRequireField = function (fileName, parameterName) {
-            var msg = u.format('Parameter {1} does not contains field {0}.', [fileName, parameterName]);
+            var msg = u.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
             return new Error(msg);
         };
         return Errors;
@@ -830,7 +829,7 @@ var chitu;
             require([url], $.proxy(function (obj) {
                 //加载脚本失败
                 if (!obj) {
-                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', [this.actionName, self.name()]));
+                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                     obj = { func: function () { } };
                 }
                 var func = obj.func;
@@ -840,7 +839,7 @@ var chitu;
                 self.actionCreated.fire(self, action);
                 this.result.resolve(action);
             }, { actionName: actionName, result: result }), $.proxy(function (err) {
-                console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', [this.actionName, self.name()]));
+                console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                 var action = new Action(self, this.actionName, function () { });
                 self.actionCreated.fire(self, action);
                 this.result.resolve(action);

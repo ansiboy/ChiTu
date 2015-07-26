@@ -19,16 +19,15 @@ var chitu;
                 return true;
             return false;
         };
-        Utility.format = function (source, params) {
-            if (params === void 0) { params = []; }
-            if (arguments.length > 2 && params.constructor !== Array) {
-                params = $.makeArray(arguments).slice(1);
-            }
-            $.each(params, function (i, n) {
+        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5) {
+            var params = [arg1, arg2, arg3, arg4, arg5];
+            for (var i = 0; i < params.length; i++) {
+                if (params[i] == null)
+                    break;
                 source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {
-                    return n;
+                    return params[i];
                 });
-            });
+            }
             return source;
         };
         Utility.fileName = function (url, withExt) {

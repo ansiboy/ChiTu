@@ -5,7 +5,7 @@ var chitu;
         function Errors() {
         }
         Errors.argumentNull = function (paramName) {
-            var msg = u.format('The argument "{0}" cannt be null.', [paramName]);
+            var msg = u.format('The argument "{0}" cannt be null.', paramName);
             return new Error(msg);
         };
         Errors.modelFileExpecteFunction = function (script) {
@@ -15,7 +15,7 @@ var chitu;
         Errors.paramTypeError = function (paramName, expectedType) {
             /// <param name="paramName" type="String"/>
             /// <param name="expectedType" type="String"/>
-            var msg = u.format('The param "{0}" is expected "{1}" type.', [paramName, expectedType]);
+            var msg = u.format('The param "{0}" is expected "{1}" type.', paramName, expectedType);
             return new Error(msg);
         };
         Errors.viewNodeNotExists = function (name) {
@@ -43,7 +43,7 @@ var chitu;
             return new Error(msg);
         };
         Errors.ambiguityRouteMatched = function (url, routeName1, routeName2) {
-            var msg = u.format('Ambiguity route matched, {0} is match in {1} and {2}.', [url, routeName1, routeName2]);
+            var msg = u.format('Ambiguity route matched, {0} is match in {1} and {2}.', url, routeName1, routeName2);
             return new Error(msg);
         };
         Errors.noneRouteMatched = function (url) {
@@ -55,7 +55,7 @@ var chitu;
             return new Error('The stack is empty.');
         };
         Errors.canntParseUrl = function (url) {
-            var msg = u.format('Can not parse the url "{0}" to route data.', [url]);
+            var msg = u.format('Can not parse the url "{0}" to route data.', url);
             return new Error(msg);
         };
         Errors.routeDataRequireController = function () {
@@ -67,7 +67,7 @@ var chitu;
             return new Error(msg);
         };
         Errors.parameterRequireField = function (fileName, parameterName) {
-            var msg = u.format('Parameter {1} does not contains field {0}.', [fileName, parameterName]);
+            var msg = u.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
             return new Error(msg);
         };
         return Errors;

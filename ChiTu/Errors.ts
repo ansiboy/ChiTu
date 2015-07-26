@@ -2,7 +2,7 @@
     var u = chitu.Utility;
     export class Errors {
         public static argumentNull(paramName: string) {
-            var msg = u.format('The argument "{0}" cannt be null.', [paramName]);
+            var msg = u.format('The argument "{0}" cannt be null.', paramName);
 
             return new Error(msg);
         }
@@ -14,7 +14,7 @@
             /// <param name="paramName" type="String"/>
             /// <param name="expectedType" type="String"/>
 
-            var msg = u.format('The param "{0}" is expected "{1}" type.', [paramName, expectedType]);
+            var msg = u.format('The param "{0}" is expected "{1}" type.', paramName, expectedType);
             return new Error(msg);
         }
         public static viewNodeNotExists(name) {
@@ -42,7 +42,7 @@
             return new Error(msg);
         }
         public static ambiguityRouteMatched(url, routeName1, routeName2) {
-            var msg = u.format('Ambiguity route matched, {0} is match in {1} and {2}.', [url, routeName1, routeName2]);
+            var msg = u.format('Ambiguity route matched, {0} is match in {1} and {2}.', url, routeName1, routeName2);
             return new Error(msg);
         }
         public static noneRouteMatched(url): Error {
@@ -54,7 +54,7 @@
             return new Error('The stack is empty.');
         }
         public static canntParseUrl(url: string) {
-            var msg = u.format('Can not parse the url "{0}" to route data.', [url]);
+            var msg = u.format('Can not parse the url "{0}" to route data.', url);
             return new Error(msg);
         }
         public static routeDataRequireController(): Error {
@@ -66,7 +66,7 @@
             return new Error(msg);
         }
         public static parameterRequireField(fileName, parameterName) {
-            var msg = u.format('Parameter {1} does not contains field {0}.', [fileName, parameterName]);
+            var msg = u.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
             return new Error(msg);
         }
     }

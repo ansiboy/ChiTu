@@ -18,15 +18,17 @@ module chitu {
 
             return false;
         }
-        public static format(source: string, params: string[] = []): string {
-            if (arguments.length > 2 && params.constructor !== Array) {
-                params = $.makeArray(arguments).slice(1);
-            }
-            $.each(params, function (i, n) {
+        public static format(source: string, arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string): string {
+            var params: string[] = [arg1, arg2, arg3, arg4, arg5];
+            for (var i = 0; i < params.length; i++) {
+                if (params[i] == null)
+                    break;
+
                 source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {
-                    return n;
+                    return params[i];
                 });
-            });
+            }
+
             return source;
         }
         public static fileName(url, withExt): string {
