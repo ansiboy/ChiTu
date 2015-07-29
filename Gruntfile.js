@@ -5,9 +5,11 @@
         concat: {
             options: { separator: ';' },
             dist: {
-                src: ['ChiTu/ScriptBegin.txt','ChiTu/Utility.js', 'ChiTu/Errors.js', 'ChiTu/Extends.js', 'ChiTu/PageContainer.js',
+                src: ['ChiTu/ScriptBegin.txt', 'ChiTu/Scripts/crossroads.js',
+                      'ChiTu/Utility.js', 'ChiTu/Errors.js', 'ChiTu/Extends.js', 'ChiTu/PageContainer.js',
                       'ChiTu/Page.js', 'ChiTu/Controller.js', 'ChiTu/ControllerContext.js', 'ChiTu/ControllerFactory.js',
-                      'ChiTu/Route.js', 'ChiTu/RouteCollection.js', 'ChiTu/RouteData.js', 'ChiTu/ViewFactory.js', 'ChiTu/Application.js', 'ChiTu/ScriptEnd.txt'],
+                      'ChiTu/Route.js', 'ChiTu/RouteCollection.js', 'ChiTu/RouteData.js', 'ChiTu/ViewFactory.js', 'ChiTu/Application.js',
+                      'ChiTu/ScriptEnd.txt'],
                 dest: 'Build/chitu.js'
             }
         },
