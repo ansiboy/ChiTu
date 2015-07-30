@@ -1,4 +1,4 @@
-﻿namespace chitu {
+﻿module chitu {
     var rnotwhite = (/\S+/g);
 
     // String to Object options format cache
@@ -37,7 +37,7 @@
         }
     }
 
-    export function Callbacks(options: any = null): chitu.Callback {
+    export function Callbacks(options: any = null): Callback {
         // Convert options from String-formatted to Object-formatted if needed
         // (we check in cache first)
         options = typeof options === "string" ?

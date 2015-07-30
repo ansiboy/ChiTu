@@ -1,4 +1,4 @@
-﻿namespace chitu {
+﻿module chitu {
     export class Route {
         private _name: string;
         private _pattern: string;

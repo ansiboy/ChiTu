@@ -134,7 +134,7 @@ var chitu;
                 return this._loadViewModelResult;
             var page = this;
             this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
-                u.log('Load view success, page:{0}.', page['_name']);
+                u.log('Load view success, page:{0}.', [page['_name']]);
                 $(page.node()).html(html);
                 return page._actionDeferred;
             })
