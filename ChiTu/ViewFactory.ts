@@ -3,7 +3,7 @@
     var e = chitu.Errors;
     var crossroads = window['crossroads'];
 
-    function interpolate(pattern: string, data) {
+    function interpolate(pattern: string, data): string {
         var http_prefix = 'http://'.toLowerCase();
         if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
             var link = document.createElement('a');
@@ -49,36 +49,40 @@
 
                 this._views[viewName] = $.Deferred();
 
-                //require(['text!' + url],
-                //    $.proxy(function (html) {
-                //        if (html != null)
-                //            this.deferred.resolve(html);
-                //        else
-                //            this.deferred.reject();
-                //    },
-                //        { deferred: this._views[viewName] }),
-
-                //    $.proxy(function (err) {
-                //        this.deferred.reject(err);
-                //    },
-                //        { deferred: this._views[viewName] })
-                //    );
-
-                //=======================================================
-                // 说明：不使用 require text 是因为加载远的 html 文件，会作
-                // 为 script 去解释而导致错误 
-                $.ajax({ url: url })
-                    .done($.proxy(function (html) {
+                var http = 'http://';
+                if (url.substr(0, http.length).toLowerCase() == http) {
+                    //=======================================================
+                    // 说明：不使用 require text 是因为加载远的 html 文件，会作
+                    // 为 script 去解释而导致错误 
+                    $.ajax({ url: url })
+                        .done($.proxy(function (html) {
                         if (html != null)
                             this.deferred.resolve(html);
                         else
                             this.deferred.reject();
                     }, { deferred: this._views[viewName] }))
 
-                    .fail($.proxy(function (err) {
+                        .fail($.proxy(function (err) {
                         this.deferred.reject(err);
                     }, { deferred: this._views[viewName] }));
-                //=======================================================
+                    //=======================================================
+                }
+                else {
+                    require(['text!' + url],
+                        $.proxy(function (html) {
+                            if (html != null)
+                                this.deferred.resolve(html);
+                            else
+                                this.deferred.reject();
+                        },
+                            { deferred: this._views[viewName] }),
+
+                        $.proxy(function (err) {
+                            this.deferred.reject(err);
+                        },
+                            { deferred: this._views[viewName] })
+                        );
+                }
             }
 
             return this._views[viewName];
