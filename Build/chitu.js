@@ -1,14 +1,14 @@
 (function (factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'crossroads', 'text'], factory);
+        define(['jquery'], factory);
     } else if (typeof module !== 'undefined' && module.exports) {
-        module.exports = factory(require(['jquery', 'crossroads', 'text']));
+        module.exports = factory(require(['jquery']));
     } else {
-        window.chitu = factory($, crossroads);
+        window.chitu = factory();
     }
 
-})(function ($, crossroads) {
-	window['crossroads'] = crossroads;;/** @license
+})(function () {
+;/** @license
  * crossroads <http://millermedeiros.github.com/crossroads.js/>
  * Author: Miller Medeiros | MIT License
  * v0.12.0 (2013/01/21 13:47)
