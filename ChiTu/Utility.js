@@ -19,8 +19,8 @@ var chitu;
                 return true;
             return false;
         };
-        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5) {
-            var params = [arg1, arg2, arg3, arg4, arg5];
+        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
+            var params = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10];
             for (var i = 0; i < params.length; i++) {
                 if (params[i] == null)
                     break;
