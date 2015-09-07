@@ -21,6 +21,12 @@ var chitu;
                 this._actionPath = value;
             return this._actionPath;
         };
+        RouteData.prototype.pageName = function (value) {
+            if (value === void 0) { value = undefined; }
+            if (value !== undefined)
+                this._pageName = value;
+            return this._pageName;
+        };
         return RouteData;
     })();
     chitu.RouteData = RouteData;

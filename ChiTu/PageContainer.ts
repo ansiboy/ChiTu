@@ -93,7 +93,8 @@
 
             var controllerName = routeData.values().controller;
             var actionName = routeData.values().action;
-            var name = controllerName + '.' + actionName;
+
+            var name = Page.getPageName(routeData);
 
             var pages = $(container).data('pages');
             if (!pages) {

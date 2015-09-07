@@ -761,8 +761,8 @@ var chitu;
                 return true;
             return false;
         };
-        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5) {
-            var params = [arg1, arg2, arg3, arg4, arg5];
+        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
+            var params = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10];
             for (var i = 0; i < params.length; i++) {
                 if (params[i] == null)
                     break;
@@ -1212,7 +1212,7 @@ var chitu;
             var container = this.node();
             var controllerName = routeData.values().controller;
             var actionName = routeData.values().action;
-            var name = controllerName + '.' + actionName;
+            var name = chitu.Page.getPageName(routeData);
             var pages = $(container).data('pages');
             if (!pages) {
                 pages = {};
@@ -1321,11 +1321,22 @@ var chitu;
             this._context = context;
             var controllerName = context.routeData().values().controller;
             var actionName = context.routeData().values().action;
-            var name = controllerName + '.' + actionName;
+            var name = Page.getPageName(context.routeData());
             var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
             var actionDeferred = context.controller().action(context.routeData());
             this.init(name, viewDeferred, actionDeferred, node);
         }
+        Page.getPageName = function (routeData) {
+            var name;
+            if (routeData.pageName()) {
+                var route = window['crossroads'].addRoute(routeData.pageName());
+                name = route.interpolate(routeData.values());
+            }
+            else {
+                name = routeData.values().controller + '.' + routeData.values().action;
+            }
+            return name;
+        };
         Page.prototype.context = function () {
             /// <returns type="chitu.ControllerContext"/>
             return this._context;
@@ -1791,6 +1802,7 @@ var chitu;
             var route = new chitu.Route(name, url, defaults);
             route.viewPath = args.viewPath;
             route.actionPath = args.actionPath;
+            route.pageName = args.pageName;
             var originalRoute = this._source.addRoute(url, function (args) {
                 //var values = $.extend(defaults, args);
                 //self.routeMatched.fire([name, values]);
@@ -1823,6 +1835,7 @@ var chitu;
             routeData.values(values);
             routeData.actionPath(data.route.newRoute.actionPath);
             routeData.viewPath(data.route.newRoute.viewPath);
+            routeData.pageName(data.route.newRoute.pageName);
             return routeData;
         };
         RouteCollection.defaultRouteName = 'default';
@@ -1852,6 +1865,12 @@ var chitu;
             if (value !== undefined)
                 this._actionPath = value;
             return this._actionPath;
+        };
+        RouteData.prototype.pageName = function (value) {
+            if (value === void 0) { value = undefined; }
+            if (value !== undefined)
+                this._pageName = value;
+            return this._pageName;
         };
         return RouteData;
     })();

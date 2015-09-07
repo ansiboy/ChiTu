@@ -35,11 +35,22 @@ var chitu;
             this._context = context;
             var controllerName = context.routeData().values().controller;
             var actionName = context.routeData().values().action;
-            var name = controllerName + '.' + actionName;
+            var name = Page.getPageName(context.routeData());
             var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
             var actionDeferred = context.controller().action(context.routeData());
             this.init(name, viewDeferred, actionDeferred, node);
         }
+        Page.getPageName = function (routeData) {
+            var name;
+            if (routeData.pageName()) {
+                var route = window['crossroads'].addRoute(routeData.pageName());
+                name = route.interpolate(routeData.values());
+            }
+            else {
+                name = routeData.values().controller + '.' + routeData.values().action;
+            }
+            return name;
+        };
         Page.prototype.context = function () {
             /// <returns type="chitu.ControllerContext"/>
             return this._context;

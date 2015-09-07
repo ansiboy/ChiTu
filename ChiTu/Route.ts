@@ -4,8 +4,9 @@
         private _pattern: string;
         private _defaults: Object;
 
-        viewPath: string;
-        actionPath: string;
+        public viewPath: string;
+        public actionPath: string;
+        public pageName: string
 
         constructor(name: string, pattern: string, defaults: Object) {
             this._name = name

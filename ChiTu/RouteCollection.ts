@@ -43,6 +43,7 @@
             var route = new chitu.Route(name, url, defaults);
             route.viewPath = args.viewPath;
             route.actionPath = args.actionPath;
+            route.pageName = args.pageName;
 
             var originalRoute = this._source.addRoute(url, function (args) {
                 //var values = $.extend(defaults, args);
@@ -84,6 +85,7 @@
             routeData.values(values);
             routeData.actionPath(data.route.newRoute.actionPath);
             routeData.viewPath(data.route.newRoute.viewPath);
+            routeData.pageName(data.route.newRoute.pageName);
 
             return routeData;
         }
