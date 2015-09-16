@@ -6,7 +6,7 @@ module chitu {
     var u = ns.Utility;
 
     var crossroads = window['crossroads'];
-
+   
     function interpolate(pattern: string, data) {
         var http_prefix = 'http://'.toLowerCase();
         if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {

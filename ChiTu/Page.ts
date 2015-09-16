@@ -145,13 +145,19 @@
                 return this._loadViewModelResult;
 
             var page = this;
-            this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
-                u.log('Load view success, page:{0}.', [page['_name']]);
-                $(page.node()).html(html);
-                return page._actionDeferred;
-            })
-                .pipe(function (action) {
+            this._loadViewModelResult =
+            //this._viewDeferred.pipe(function (html) {
+            //    u.log('Load view success, page:{0}.', [page['_name']]);
+            //    $(page.node()).html(html);
+            //    return page._actionDeferred;
+            //})
+            $.when(this._viewDeferred, this._actionDeferred)
+                .done(function (html, action) {
                     /// <param name="action" type="chitu.Action"/>
+
+                    u.log('Load view success, page:{0}.', [page['_name']]);
+                    $(page.node()).html(html);
+
                     var result = action.execute(page);
                     page.on_created();
                     if (u.isDeferred(result))

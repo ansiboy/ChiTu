@@ -84,7 +84,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
     <TypeScriptSourceMap>true</TypeScriptSourceMap>
-    <TypeScriptModuleKind>amd</TypeScriptModuleKind>
+    <TypeScriptModuleKind>none</TypeScriptModuleKind>
     <TypeScriptTarget>ES5</TypeScriptTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

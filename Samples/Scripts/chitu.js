@@ -1,14 +1,746 @@
 (function (factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['jquery', 'crossroads', 'text'], factory);
+        define(['jquery'], factory);
     } else if (typeof module !== 'undefined' && module.exports) {
-        module.exports = factory(require(['jquery', 'crossroads', 'text']));
+        module.exports = factory(require(['jquery']));
     } else {
-        window.chitu = factory($, crossroads);
+        window.chitu = factory();
     }
 
-})(function ($, crossroads) {
-    window['crossroads'] = crossroads;;/// <reference path="scripts/typings/jquery/jquery.d.ts" />
+})(function () {
+    ;/** @license
+ * crossroads <http://millermedeiros.github.com/crossroads.js/>
+ * Author: Miller Medeiros | MIT License
+ * v0.12.0 (2013/01/21 13:47)
+ */
+
+    //(function () {
+    var factory = function (signals) {
+
+        var crossroads,
+            _hasOptionalGroupBug,
+            UNDEF;
+
+        // Helpers -----------
+        //====================
+
+        // IE 7-8 capture optional groups as empty strings while other browsers
+        // capture as `undefined`
+        _hasOptionalGroupBug = (/t(.+)?/).exec('t')[1] === '';
+
+        function arrayIndexOf(arr, val) {
+            if (arr.indexOf) {
+                return arr.indexOf(val);
+            } else {
+                //Array.indexOf doesn't work on IE 6-7
+                var n = arr.length;
+                while (n--) {
+                    if (arr[n] === val) {
+                        return n;
+                    }
+                }
+                return -1;
+            }
+        }
+
+        function arrayRemove(arr, item) {
+            var i = arrayIndexOf(arr, item);
+            if (i !== -1) {
+                arr.splice(i, 1);
+            }
+        }
+
+        function isKind(val, kind) {
+            return '[object ' + kind + ']' === Object.prototype.toString.call(val);
+        }
+
+        function isRegExp(val) {
+            return isKind(val, 'RegExp');
+        }
+
+        function isArray(val) {
+            return isKind(val, 'Array');
+        }
+
+        function isFunction(val) {
+            return typeof val === 'function';
+        }
+
+        //borrowed from AMD-utils
+        function typecastValue(val) {
+            var r;
+            if (val === null || val === 'null') {
+                r = null;
+            } else if (val === 'true') {
+                r = true;
+            } else if (val === 'false') {
+                r = false;
+            } else if (val === UNDEF || val === 'undefined') {
+                r = UNDEF;
+            } else if (val === '' || isNaN(val)) {
+                //isNaN('') returns false
+                r = val;
+            } else {
+                //parseFloat(null || '') returns NaN
+                r = parseFloat(val);
+            }
+            return r;
+        }
+
+        function typecastArrayValues(values) {
+            var n = values.length,
+                result = [];
+            while (n--) {
+                result[n] = typecastValue(values[n]);
+            }
+            return result;
+        }
+
+        //borrowed from AMD-Utils
+        function decodeQueryString(str, shouldTypecast) {
+            var queryArr = (str || '').replace('?', '').split('&'),
+                n = queryArr.length,
+                obj = {},
+                item, val;
+            while (n--) {
+                item = queryArr[n].split('=');
+                val = shouldTypecast ? typecastValue(item[1]) : item[1];
+                obj[item[0]] = (typeof val === 'string') ? decodeURIComponent(val) : val;
+            }
+            return obj;
+        }
+
+
+        // Crossroads --------
+        //====================
+
+        /**
+         * @constructor
+         */
+        function Crossroads() {
+            //===========================================
+            //this.bypassed = new signals.Signal();
+            //this.routed = new signals.Signal();
+            //=============== My Code ===================
+            this.bypassed = $.Callbacks();
+            this.routed = $.Callbacks();
+            //===========================================
+            this._routes = [];
+            this._prevRoutes = [];
+            this._piped = [];
+            this.resetState();
+        }
+
+        Crossroads.prototype = {
+
+            greedy: false,
+
+            greedyEnabled: true,
+
+            ignoreCase: true,
+
+            ignoreState: false,
+
+            shouldTypecast: false,
+
+            normalizeFn: null,
+
+            resetState: function () {
+                this._prevRoutes.length = 0;
+                this._prevMatchedRequest = null;
+                this._prevBypassedRequest = null;
+            },
+
+            create: function () {
+                return new Crossroads();
+            },
+
+            addRoute: function (pattern, callback, priority) {
+                var route = new Route(pattern, callback, priority, this);
+                this._sortedInsert(route);
+                return route;
+            },
+
+            removeRoute: function (route) {
+                arrayRemove(this._routes, route);
+                route._destroy();
+            },
+
+            removeAllRoutes: function () {
+                var n = this.getNumRoutes();
+                while (n--) {
+                    this._routes[n]._destroy();
+                }
+                this._routes.length = 0;
+            },
+
+            parse: function (request, defaultArgs) {
+                request = request || '';
+                defaultArgs = defaultArgs || [];
+
+                // should only care about different requests if ignoreState isn't true
+                if (!this.ignoreState &&
+                    (request === this._prevMatchedRequest ||
+                     request === this._prevBypassedRequest)) {
+                    return;
+                }
+
+                var routes = this._getMatchedRoutes(request),
+                    i = 0,
+                    n = routes.length,
+                    cur;
+
+                if (n) {
+                    this._prevMatchedRequest = request;
+
+                    this._notifyPrevRoutes(routes, request);
+                    this._prevRoutes = routes;
+                    //should be incremental loop, execute routes in order
+                    while (i < n) {
+                        cur = routes[i];
+                        //======================================================================================
+                        //cur.route.matched.dispatch.apply(cur.route.matched, defaultArgs.concat(cur.params));
+                        //====================== My Code =======================================================
+                        cur.route.matched.fire.apply(cur.route.matched, defaultArgs.concat(cur.params));
+                        //======================================================================================
+
+                        cur.isFirst = !i;
+
+                        //======================================================================================
+                        //this.routed.dispatch.apply(this.routed, defaultArgs.concat([request, cur]));
+                        //====================== My Code =======================================================
+                        this.routed.fire.apply(this.routed, defaultArgs.concat([request, cur]));
+                        //======================================================================================
+                        i += 1;
+                    }
+                } else {
+                    this._prevBypassedRequest = request;
+                    //==========================================================================
+                    //this.bypassed.dispatch.apply(this.bypassed, defaultArgs.concat([request]));
+                    //==========================================================================
+                    this.bypassed.fire.apply(this.bypassed, defaultArgs.concat([request]));
+                    //==========================================================================
+                }
+
+                this._pipeParse(request, defaultArgs);
+            },
+
+            _notifyPrevRoutes: function (matchedRoutes, request) {
+                var i = 0, prev;
+                while (prev = this._prevRoutes[i++]) {
+                    //check if switched exist since route may be disposed
+                    if (prev.route.switched && this._didSwitch(prev.route, matchedRoutes)) {
+                        //==========================================
+                        //prev.route.switched.dispatch(request);
+                        //============= My Code ====================
+                        prev.route.switched.fire(request);
+                        //==========================================
+                    }
+                }
+            },
+
+            _didSwitch: function (route, matchedRoutes) {
+                var matched,
+                    i = 0;
+                while (matched = matchedRoutes[i++]) {
+                    // only dispatch switched if it is going to a different route
+                    if (matched.route === route) {
+                        return false;
+                    }
+                }
+                return true;
+            },
+
+            _pipeParse: function (request, defaultArgs) {
+                var i = 0, route;
+                while (route = this._piped[i++]) {
+                    route.parse(request, defaultArgs);
+                }
+            },
+
+            getNumRoutes: function () {
+                return this._routes.length;
+            },
+
+            _sortedInsert: function (route) {
+                //simplified insertion sort
+                var routes = this._routes,
+                    n = routes.length;
+                do { --n; } while (routes[n] && route._priority <= routes[n]._priority);
+                routes.splice(n + 1, 0, route);
+            },
+
+            _getMatchedRoutes: function (request) {
+                var res = [],
+                    routes = this._routes,
+                    n = routes.length,
+                    route;
+                //should be decrement loop since higher priorities are added at the end of array
+                while (route = routes[--n]) {
+                    if ((!res.length || this.greedy || route.greedy) && route.match(request)) {
+                        res.push({
+                            route: route,
+                            params: route._getParamsArray(request)
+                        });
+                    }
+                    if (!this.greedyEnabled && res.length) {
+                        break;
+                    }
+                }
+                return res;
+            },
+
+            pipe: function (otherRouter) {
+                this._piped.push(otherRouter);
+            },
+
+            unpipe: function (otherRouter) {
+                arrayRemove(this._piped, otherRouter);
+            },
+
+            toString: function () {
+                return '[crossroads numRoutes:' + this.getNumRoutes() + ']';
+            }
+        };
+
+        //"static" instance
+        crossroads = new Crossroads();
+        crossroads.VERSION = '0.12.0';
+
+        crossroads.NORM_AS_ARRAY = function (req, vals) {
+            return [vals.vals_];
+        };
+
+        crossroads.NORM_AS_OBJECT = function (req, vals) {
+            return [vals];
+        };
+
+
+        // Route --------------
+        //=====================
+
+        /**
+         * @constructor
+         */
+        function Route(pattern, callback, priority, router) {
+            var isRegexPattern = isRegExp(pattern),
+                patternLexer = router.patternLexer;
+            this._router = router;
+            this._pattern = pattern;
+            this._paramsIds = isRegexPattern ? null : patternLexer.getParamIds(pattern);
+            this._optionalParamsIds = isRegexPattern ? null : patternLexer.getOptionalParamsIds(pattern);
+            this._matchRegexp = isRegexPattern ? pattern : patternLexer.compilePattern(pattern, router.ignoreCase);
+
+            //===============================================
+            //this.matched = new signals.Signal();
+            //this.switched = new signals.Signal();
+            //============== My Code ========================
+            this.matched = $.Callbacks();
+            this.switched = $.Callbacks();
+            //===============================================
+
+
+            if (callback) {
+                this.matched.add(callback);
+            }
+            this._priority = priority || 0;
+        }
+
+        Route.prototype = {
+
+            greedy: false,
+
+            rules: void (0),
+
+            match: function (request) {
+                request = request || '';
+                return this._matchRegexp.test(request) && this._validateParams(request); //validate params even if regexp because of `request_` rule.
+            },
+
+            _validateParams: function (request) {
+                var rules = this.rules,
+                    values = this._getParamsObject(request),
+                    key;
+                for (key in rules) {
+                    // normalize_ isn't a validation rule... (#39)
+                    if (key !== 'normalize_' && rules.hasOwnProperty(key) && !this._isValidParam(request, key, values)) {
+                        return false;
+                    }
+                }
+                return true;
+            },
+
+            _isValidParam: function (request, prop, values) {
+                var validationRule = this.rules[prop],
+                    val = values[prop],
+                    isValid = false,
+                    isQuery = (prop.indexOf('?') === 0);
+
+                if (val == null && this._optionalParamsIds && arrayIndexOf(this._optionalParamsIds, prop) !== -1) {
+                    isValid = true;
+                }
+                else if (isRegExp(validationRule)) {
+                    if (isQuery) {
+                        val = values[prop + '_']; //use raw string
+                    }
+                    isValid = validationRule.test(val);
+                }
+                else if (isArray(validationRule)) {
+                    if (isQuery) {
+                        val = values[prop + '_']; //use raw string
+                    }
+                    isValid = this._isValidArrayRule(validationRule, val);
+                }
+                else if (isFunction(validationRule)) {
+                    isValid = validationRule(val, request, values);
+                }
+
+                return isValid; //fail silently if validationRule is from an unsupported type
+            },
+
+            _isValidArrayRule: function (arr, val) {
+                if (!this._router.ignoreCase) {
+                    return arrayIndexOf(arr, val) !== -1;
+                }
+
+                if (typeof val === 'string') {
+                    val = val.toLowerCase();
+                }
+
+                var n = arr.length,
+                    item,
+                    compareVal;
+
+                while (n--) {
+                    item = arr[n];
+                    compareVal = (typeof item === 'string') ? item.toLowerCase() : item;
+                    if (compareVal === val) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+
+            _getParamsObject: function (request) {
+                var shouldTypecast = this._router.shouldTypecast,
+                    values = this._router.patternLexer.getParamValues(request, this._matchRegexp, shouldTypecast),
+                    o = {},
+                    n = values.length,
+                    param, val;
+                while (n--) {
+                    val = values[n];
+                    if (this._paramsIds) {
+                        param = this._paramsIds[n];
+                        if (param.indexOf('?') === 0 && val) {
+                            //make a copy of the original string so array and
+                            //RegExp validation can be applied properly
+                            o[param + '_'] = val;
+                            //update vals_ array as well since it will be used
+                            //during dispatch
+                            val = decodeQueryString(val, shouldTypecast);
+                            values[n] = val;
+                        }
+                        // IE will capture optional groups as empty strings while other
+                        // browsers will capture `undefined` so normalize behavior.
+                        // see: #gh-58, #gh-59, #gh-60
+                        if (_hasOptionalGroupBug && val === '' && arrayIndexOf(this._optionalParamsIds, param) !== -1) {
+                            val = void (0);
+                            values[n] = val;
+                        }
+                        o[param] = val;
+                    }
+                    //alias to paths and for RegExp pattern
+                    o[n] = val;
+                }
+                o.request_ = shouldTypecast ? typecastValue(request) : request;
+                o.vals_ = values;
+                return o;
+            },
+
+            _getParamsArray: function (request) {
+                var norm = this.rules ? this.rules.normalize_ : null,
+                    params;
+                norm = norm || this._router.normalizeFn; // default normalize
+                if (norm && isFunction(norm)) {
+                    params = norm(request, this._getParamsObject(request));
+                } else {
+                    params = this._getParamsObject(request).vals_;
+                }
+                return params;
+            },
+
+            interpolate: function (replacements) {
+                var str = this._router.patternLexer.interpolate(this._pattern, replacements);
+                if (!this._validateParams(str)) {
+                    throw new Error('Generated string doesn\'t validate against `Route.rules`.');
+                }
+                return str;
+            },
+
+            dispose: function () {
+                this._router.removeRoute(this);
+            },
+
+            _destroy: function () {
+                //========================================
+                //this.matched.dispose();
+                //this.switched.dispose();
+                //=============== My Code ================
+                this.matched.empty();
+                this.switched.empty();
+                //========================================
+                this.matched = this.switched = this._pattern = this._matchRegexp = null;
+            },
+
+            toString: function () {
+                return '[Route pattern:"' + this._pattern + '", numListeners:' + this.matched.getNumListeners() + ']';
+            }
+
+        };
+
+
+
+        // Pattern Lexer ------
+        //=====================
+
+        Crossroads.prototype.patternLexer = (function () {
+
+            var
+                //match chars that should be escaped on string regexp
+                ESCAPE_CHARS_REGEXP = /[\\.+*?\^$\[\](){}\/'#]/g,
+
+                //trailing slashes (begin/end of string)
+                LOOSE_SLASHES_REGEXP = /^\/|\/$/g,
+                LEGACY_SLASHES_REGEXP = /\/$/g,
+
+                //params - everything between `{ }` or `: :`
+                PARAMS_REGEXP = /(?:\{|:)([^}:]+)(?:\}|:)/g,
+
+                //used to save params during compile (avoid escaping things that
+                //shouldn't be escaped).
+                TOKENS = {
+                    'OS': {
+                        //optional slashes
+                        //slash between `::` or `}:` or `\w:` or `:{?` or `}{?` or `\w{?`
+                        rgx: /([:}]|\w(?=\/))\/?(:|(?:\{\?))/g,
+                        save: '$1{{id}}$2',
+                        res: '\\/?'
+                    },
+                    'RS': {
+                        //required slashes
+                        //used to insert slash between `:{` and `}{`
+                        rgx: /([:}])\/?(\{)/g,
+                        save: '$1{{id}}$2',
+                        res: '\\/'
+                    },
+                    'RQ': {
+                        //required query string - everything in between `{? }`
+                        rgx: /\{\?([^}]+)\}/g,
+                        //everything from `?` till `#` or end of string
+                        res: '\\?([^#]+)'
+                    },
+                    'OQ': {
+                        //optional query string - everything in between `:? :`
+                        rgx: /:\?([^:]+):/g,
+                        //everything from `?` till `#` or end of string
+                        res: '(?:\\?([^#]*))?'
+                    },
+                    'OR': {
+                        //optional rest - everything in between `: *:`
+                        rgx: /:([^:]+)\*:/g,
+                        res: '(.*)?' // optional group to avoid passing empty string as captured
+                    },
+                    'RR': {
+                        //rest param - everything in between `{ *}`
+                        rgx: /\{([^}]+)\*\}/g,
+                        res: '(.+)'
+                    },
+                    // required/optional params should come after rest segments
+                    'RP': {
+                        //required params - everything between `{ }`
+                        rgx: /\{([^}]+)\}/g,
+                        res: '([^\\/?]+)'
+                    },
+                    'OP': {
+                        //optional params - everything between `: :`
+                        rgx: /:([^:]+):/g,
+                        res: '([^\\/?]+)?\/?'
+                    }
+                },
+
+                LOOSE_SLASH = 1,
+                STRICT_SLASH = 2,
+                LEGACY_SLASH = 3,
+
+                _slashMode = LOOSE_SLASH;
+
+
+            function precompileTokens() {
+                var key, cur;
+                for (key in TOKENS) {
+                    if (TOKENS.hasOwnProperty(key)) {
+                        cur = TOKENS[key];
+                        cur.id = '__CR_' + key + '__';
+                        cur.save = ('save' in cur) ? cur.save.replace('{{id}}', cur.id) : cur.id;
+                        cur.rRestore = new RegExp(cur.id, 'g');
+                    }
+                }
+            }
+            precompileTokens();
+
+
+            function captureVals(regex, pattern) {
+                var vals = [], match;
+                // very important to reset lastIndex since RegExp can have "g" flag
+                // and multiple runs might affect the result, specially if matching
+                // same string multiple times on IE 7-8
+                regex.lastIndex = 0;
+                while (match = regex.exec(pattern)) {
+                    vals.push(match[1]);
+                }
+                return vals;
+            }
+
+            function getParamIds(pattern) {
+                return captureVals(PARAMS_REGEXP, pattern);
+            }
+
+            function getOptionalParamsIds(pattern) {
+                return captureVals(TOKENS.OP.rgx, pattern);
+            }
+
+            function compilePattern(pattern, ignoreCase) {
+                pattern = pattern || '';
+
+                if (pattern) {
+                    if (_slashMode === LOOSE_SLASH) {
+                        pattern = pattern.replace(LOOSE_SLASHES_REGEXP, '');
+                    }
+                    else if (_slashMode === LEGACY_SLASH) {
+                        pattern = pattern.replace(LEGACY_SLASHES_REGEXP, '');
+                    }
+
+                    //save tokens
+                    pattern = replaceTokens(pattern, 'rgx', 'save');
+                    //regexp escape
+                    pattern = pattern.replace(ESCAPE_CHARS_REGEXP, '\\$&');
+                    //restore tokens
+                    pattern = replaceTokens(pattern, 'rRestore', 'res');
+
+                    if (_slashMode === LOOSE_SLASH) {
+                        pattern = '\\/?' + pattern;
+                    }
+                }
+
+                if (_slashMode !== STRICT_SLASH) {
+                    //single slash is treated as empty and end slash is optional
+                    pattern += '\\/?';
+                }
+                return new RegExp('^' + pattern + '$', ignoreCase ? 'i' : '');
+            }
+
+            function replaceTokens(pattern, regexpName, replaceName) {
+                var cur, key;
+                for (key in TOKENS) {
+                    if (TOKENS.hasOwnProperty(key)) {
+                        cur = TOKENS[key];
+                        pattern = pattern.replace(cur[regexpName], cur[replaceName]);
+                    }
+                }
+                return pattern;
+            }
+
+            function getParamValues(request, regexp, shouldTypecast) {
+                var vals = regexp.exec(request);
+                if (vals) {
+                    vals.shift();
+                    if (shouldTypecast) {
+                        vals = typecastArrayValues(vals);
+                    }
+                }
+                return vals;
+            }
+
+            function interpolate(pattern, replacements) {
+                if (typeof pattern !== 'string') {
+                    throw new Error('Route pattern should be a string.');
+                }
+
+                var replaceFn = function (match, prop) {
+                    var val;
+                    prop = (prop.substr(0, 1) === '?') ? prop.substr(1) : prop;
+                    if (replacements[prop] != null) {
+                        if (typeof replacements[prop] === 'object') {
+                            var queryParts = [];
+                            for (var key in replacements[prop]) {
+                                queryParts.push(encodeURI(key + '=' + replacements[prop][key]));
+                            }
+                            val = '?' + queryParts.join('&');
+                        } else {
+                            // make sure value is a string see #gh-54
+                            val = String(replacements[prop]);
+                        }
+
+                        if (match.indexOf('*') === -1 && val.indexOf('/') !== -1) {
+                            throw new Error('Invalid value "' + val + '" for segment "' + match + '".');
+                        }
+                    }
+                    else if (match.indexOf('{') !== -1) {
+                        throw new Error('The segment ' + match + ' is required.');
+                    }
+                    else {
+                        val = '';
+                    }
+                    return val;
+                };
+
+                if (!TOKENS.OS.trail) {
+                    TOKENS.OS.trail = new RegExp('(?:' + TOKENS.OS.id + ')+$');
+                }
+
+                return pattern
+                            .replace(TOKENS.OS.rgx, TOKENS.OS.save)
+                            .replace(PARAMS_REGEXP, replaceFn)
+                            .replace(TOKENS.OS.trail, '') // remove trailing
+                            .replace(TOKENS.OS.rRestore, '/'); // add slash between segments
+            }
+
+            //API
+            return {
+                strict: function () {
+                    _slashMode = STRICT_SLASH;
+                },
+                loose: function () {
+                    _slashMode = LOOSE_SLASH;
+                },
+                legacy: function () {
+                    _slashMode = LEGACY_SLASH;
+                },
+                getParamIds: getParamIds,
+                getOptionalParamsIds: getOptionalParamsIds,
+                getParamValues: getParamValues,
+                compilePattern: compilePattern,
+                interpolate: interpolate
+            };
+
+        }());
+
+        window['crossroads'] = crossroads;
+        return crossroads;
+    };
+
+    //if (typeof define === 'function' && define.amd) {
+    //    define(['jquery'], factory);
+    //} else if (typeof module !== 'undefined' && module.exports) { //Node
+    //    module.exports = factory(require('jquery'));
+    //} else {
+    /*jshint sub:true */
+    window['crossroads'] = factory(window['jQuery']);
+    //}
+
+    //}());
+
+    ;/// <reference path="scripts/typings/jquery/jquery.d.ts" />
     var chitu;
     (function (chitu) {
         var e = chitu.Errors;
@@ -29,16 +761,15 @@
                     return true;
                 return false;
             };
-            Utility.format = function (source, params) {
-                if (params === void 0) { params = []; }
-                if (arguments.length > 2 && params.constructor !== Array) {
-                    params = $.makeArray(arguments).slice(1);
-                }
-                $.each(params, function (i, n) {
+            Utility.format = function (source, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
+                var params = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10];
+                for (var i = 0; i < params.length; i++) {
+                    if (params[i] == null)
+                        break;
                     source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {
-                        return n;
+                        return params[i];
                     });
-                });
+                }
                 return source;
             };
             Utility.fileName = function (url, withExt) {
@@ -81,7 +812,7 @@
             function Errors() {
             }
             Errors.argumentNull = function (paramName) {
-                var msg = u.format('The argument "{0}" cannt be null.', [paramName]);
+                var msg = u.format('The argument "{0}" cannt be null.', paramName);
                 return new Error(msg);
             };
             Errors.modelFileExpecteFunction = function (script) {
@@ -91,7 +822,7 @@
             Errors.paramTypeError = function (paramName, expectedType) {
                 /// <param name="paramName" type="String"/>
                 /// <param name="expectedType" type="String"/>
-                var msg = u.format('The param "{0}" is expected "{1}" type.', [paramName, expectedType]);
+                var msg = u.format('The param "{0}" is expected "{1}" type.', paramName, expectedType);
                 return new Error(msg);
             };
             Errors.viewNodeNotExists = function (name) {
@@ -119,7 +850,7 @@
                 return new Error(msg);
             };
             Errors.ambiguityRouteMatched = function (url, routeName1, routeName2) {
-                var msg = u.format('Ambiguity route matched, {0} is match in {1} and {2}.', [url, routeName1, routeName2]);
+                var msg = u.format('Ambiguity route matched, {0} is match in {1} and {2}.', url, routeName1, routeName2);
                 return new Error(msg);
             };
             Errors.noneRouteMatched = function (url) {
@@ -131,7 +862,7 @@
                 return new Error('The stack is empty.');
             };
             Errors.canntParseUrl = function (url) {
-                var msg = u.format('Can not parse the url "{0}" to route data.', [url]);
+                var msg = u.format('Can not parse the url "{0}" to route data.', url);
                 return new Error(msg);
             };
             Errors.routeDataRequireController = function () {
@@ -143,7 +874,7 @@
                 return new Error(msg);
             };
             Errors.parameterRequireField = function (fileName, parameterName) {
-                var msg = u.format('Parameter {1} does not contains field {0}.', [fileName, parameterName]);
+                var msg = u.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
                 return new Error(msg);
             };
             return Errors;
@@ -456,8 +1187,8 @@
                 if (routeData == null) {
                     throw e.noneRouteMatched(url);
                 }
-                var controllerName = routeData.controller;
-                var actionName = routeData.action;
+                var controllerName = routeData.values().controller;
+                var actionName = routeData.values().action;
                 var controller = this.application().controller(routeData);
                 var view_deferred = this.application().viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
                 var context = new ns.ControllerContext(controller, view_deferred, routeData);
@@ -479,8 +1210,8 @@
                     throw e.noneRouteMatched(url);
                 }
                 var container = this.node();
-                var controllerName = routeData.controller;
-                var actionName = routeData.action;
+                var controllerName = routeData.values().controller;
+                var actionName = routeData.values().action;
                 var name = controllerName + '.' + actionName;
                 var pages = $(container).data('pages');
                 if (!pages) {
@@ -500,7 +1231,7 @@
                         pages[key].visible(false);
                     }
                 }
-                $.extend(args, routeData);
+                $.extend(args, routeData.values());
                 //this.on_pageShowing(page, args);
                 var self = this;
                 var result = $.Deferred();
@@ -588,11 +1319,11 @@
                 if (!node)
                     throw e.argumentNull('node');
                 this._context = context;
-                var controllerName = context.routeData().controller;
-                var actionName = context.routeData().action;
+                var controllerName = context.routeData().values().controller;
+                var actionName = context.routeData().values().action;
                 var name = controllerName + '.' + actionName;
                 var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
-                var actionDeferred = context.controller().action(actionName);
+                var actionDeferred = context.controller().action(context.routeData());
                 this.init(name, viewDeferred, actionDeferred, node);
             }
             Page.prototype.context = function () {
@@ -688,23 +1419,28 @@
                 if (this._loadViewModelResult)
                     return this._loadViewModelResult;
                 var page = this;
-                this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
-                    u.log('Load view success, page:{0}.', page['_name']);
-                    $(page.node()).html(html);
-                    return page._actionDeferred;
-                })
-                    .pipe(function (action) {
-                        /// <param name="action" type="chitu.Action"/>
-                        var result = action.execute(page);
-                        page.on_created();
-                        if (u.isDeferred(result))
-                            return result;
-                        return $.Deferred().resolve();
-                    })
-                    .fail(function () {
-                        page._loadViewModelResult = null;
-                        u.log('Load view or action fail, page：{0}.', page['_name']);
-                    });
+                this._loadViewModelResult =
+                    //this._viewDeferred.pipe(function (html) {
+                    //    u.log('Load view success, page:{0}.', [page['_name']]);
+                    //    $(page.node()).html(html);
+                    //    return page._actionDeferred;
+                    //})
+                    $.when(this._viewDeferred, this._actionDeferred)
+                        .done(function (html, action) {
+                            /// <param name="action" type="chitu.Action"/>
+                            debugger;
+                            u.log('Load view success, page:{0}.', [page['_name']]);
+                            $(page.node()).html(html);
+                            var result = action.execute(page);
+                            page.on_created();
+                            if (u.isDeferred(result))
+                                return result;
+                            return $.Deferred().resolve();
+                        })
+                        .fail(function () {
+                            page._loadViewModelResult = null;
+                            u.log('Load view or action fail, page：{0}.', [page['_name']]);
+                        });
                 return this._loadViewModelResult;
             };
             Page.prototype.open = function (args) {
@@ -774,63 +1510,63 @@
             return route.interpolate(data);
         }
         var Controller = (function () {
-            function Controller(routeData, actionLocationFormater) {
+            function Controller(name) {
+                //if (!routeData) throw e.argumentNull('routeData');
+                ////if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
+                //_routeData: RouteData;
                 this._actions = {};
-                if (!routeData)
-                    throw e.argumentNull('routeData');
-                if (typeof routeData !== 'object')
-                    throw e.paramTypeError('routeData', 'object');
-                if (!actionLocationFormater)
-                    throw e.argumentNull('actionLocationFormater');
-                this._name = routeData.controller;
-                this._routeData = routeData;
-                this._actionLocationFormater = actionLocationFormater;
+                //if (!routeData.values().controller)
+                //    throw e.routeDataRequireController();
+                this._name = name;
+                //this._routeData = routeData;
                 this._actions = {};
                 this.actionCreated = chitu.Callbacks();
             }
-            Controller.prototype.actionLocationFormater = function () {
-                return this._actionLocationFormater;
-            };
             Controller.prototype.name = function () {
                 return this._name;
             };
-            Controller.prototype.getLocation = function (actionName) {
-                /// <param name="actionName" type="String"/>
-                /// <returns type="String"/>
-                if (!actionName)
-                    throw e.argumentNull('actionName');
-                if (typeof actionName != 'string')
-                    throw e.paramTypeError('actionName', 'String');
-                var data = $.extend(this._routeData, { action: actionName });
-                return interpolate(this._routeData.actionPath || this.actionLocationFormater(), data);
-            };
-            Controller.prototype.action = function (name) {
+            //public getLocation(routeData: RouteData) {
+            //    /// <param name="actionName" type="String"/>
+            //    /// <returns type="String"/>
+            //    //if (!actionName) throw e.argumentNull('actionName');
+            //    //if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
+            //    var data = $.extend(RouteData.values(), { action: actionName });
+            //    return interpolate(this._routeData.actionPath(), data);
+            //}
+            Controller.prototype.action = function (routeData) {
                 /// <param name="value" type="chitu.Action" />
                 /// <returns type="jQuery.Deferred" />
+                var controller = routeData.values().controller;
+                ;
+                if (!controller)
+                    throw e.routeDataRequireController();
+                if (this._name != controller) {
+                    throw new Error('Not same a controller.');
+                }
+                var name = routeData.values().action;
                 if (!name)
-                    throw e.argumentNull('name');
-                if (typeof name != 'string')
-                    throw e.paramTypeError('name', 'String');
+                    throw e.routeDataRequireAction();
                 var self = this;
                 if (!this._actions[name]) {
-                    this._actions[name] = this._createAction(name).fail($.proxy(function () {
+                    this._actions[name] = this._createAction(routeData).fail($.proxy(function () {
                         self._actions[this.actionName] = null;
-                    }, { actionName: name }));
+                    }, { actionName: routeData }));
                 }
                 return this._actions[name];
             };
-            Controller.prototype._createAction = function (actionName) {
+            Controller.prototype._createAction = function (routeData) {
                 /// <param name="actionName" type="String"/>
                 /// <returns type="jQuery.Deferred"/>
+                var actionName = routeData.values().action;
                 if (!actionName)
-                    throw e.argumentNull('actionName');
+                    throw e.routeDataRequireAction();
                 var self = this;
-                var url = this.getLocation(actionName);
+                var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
                 var result = $.Deferred();
                 require([url], $.proxy(function (obj) {
                     //加载脚本失败
                     if (!obj) {
-                        console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', [this.actionName, self.name()]));
+                        console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                         obj = { func: function () { } };
                     }
                     var func = obj.func;
@@ -840,7 +1576,7 @@
                     self.actionCreated.fire(self, action);
                     this.result.resolve(action);
                 }, { actionName: actionName, result: result }), $.proxy(function (err) {
-                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', [this.actionName, self.name()]));
+                    console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                     var action = new Action(self, this.actionName, function () { });
                     self.actionCreated.fire(self, action);
                     this.result.resolve(action);
@@ -944,6 +1680,7 @@
     (function (chitu) {
         var ControllerContext = (function () {
             function ControllerContext(controller, view, routeData) {
+                this._routeData = new chitu.RouteData();
                 this._controller = controller;
                 this._view = view;
                 this._routeData = routeData;
@@ -969,22 +1706,22 @@
         var e = chitu.Errors;
         var ns = chitu;
         var ControllerFactory = (function () {
-            function ControllerFactory(actionLocationFormater) {
+            function ControllerFactory() {
+                //if (!actionLocationFormater)
+                //    throw e.argumentNull('actionLocationFormater');
                 this._controllers = {};
-                if (!actionLocationFormater)
-                    throw e.argumentNull('actionLocationFormater');
                 this._controllers = {};
-                this._actionLocationFormater = actionLocationFormater;
+                //this._actionLocationFormater = actionLocationFormater;
             }
             ControllerFactory.prototype.controllers = function () {
                 return this._controllers;
             };
-            ControllerFactory.prototype.createController = function (routeData) {
+            ControllerFactory.prototype.createController = function (name) {
                 /// <param name="routeData" type="Object"/>
                 /// <returns type="ns.Controller"/>
-                if (!routeData.controller)
-                    throw e.routeDataRequireController();
-                return new ns.Controller(routeData, routeData.actionPath || this.actionLocationFormater());
+                //if (!routeData.values().controller)
+                //    throw e.routeDataRequireController();
+                return new ns.Controller(name);
             };
             ControllerFactory.prototype.actionLocationFormater = function () {
                 return this._actionLocationFormater;
@@ -993,13 +1730,13 @@
                 /// <summary>Gets the controller by routeData.</summary>
                 /// <param name="routeData" type="Object"/>
                 /// <returns type="chitu.Controller"/>
-                if (typeof routeData !== 'object')
-                    throw e.paramTypeError('routeData', 'object');
-                if (!routeData.controller)
+                //if (typeof routeData !== 'object')
+                //    throw e.paramTypeError('routeData', 'object');
+                if (!routeData.values().controller)
                     throw e.routeDataRequireController();
-                if (!this._controllers[routeData.controller])
-                    this._controllers[routeData.controller] = this.createController(routeData);
-                return this._controllers[routeData.controller];
+                if (!this._controllers[routeData.values().controller])
+                    this._controllers[routeData.values().controller] = this.createController(routeData.values().controller);
+                return this._controllers[routeData.values().controller];
             };
             return ControllerFactory;
         })();
@@ -1032,7 +1769,6 @@
         var e = chitu.Errors;
         var RouteCollection = (function () {
             function RouteCollection() {
-                this.routeMatched = chitu.Callbacks();
                 this._init();
             }
             RouteCollection.prototype._init = function () {
@@ -1057,22 +1793,24 @@
                 if (!url)
                     throw e.argumentNull('url');
                 this._priority = this._priority + 1;
-                var self = this;
-                var originalRoute = this._source.addRoute(url, function (args) {
-                    var values = $.extend(defaults, args);
-                    self.routeMatched.fire([name, values]);
-                }, this._priority);
                 var route = new chitu.Route(name, url, defaults);
                 route.viewPath = args.viewPath;
                 route.actionPath = args.actionPath;
+                var originalRoute = this._source.addRoute(url, function (args) {
+                    //var values = $.extend(defaults, args);
+                    //self.routeMatched.fire([name, values]);
+                }, this._priority);
                 originalRoute.rules = rules;
                 originalRoute.newRoute = route;
-                if (this[name])
-                    throw e.routeExists(name);
-                this[name] = route;
-                if (name == ns.RouteCollection.defaultRouteName) {
-                    this._defaults = defaults;
+                if (this._defaultRoute == null) {
+                    this._defaultRoute = route;
+                    if (this._defaultRoute.viewPath == null)
+                        throw new Error('default route require view path.');
+                    if (this._defaultRoute.actionPath == null)
+                        throw new Error('default route require action path.');
                 }
+                route.viewPath = route.viewPath || this._defaultRoute.viewPath;
+                route.actionPath = route.actionPath || this._defaultRoute.actionPath;
                 return route;
             };
             RouteCollection.prototype.getRouteData = function (url) {
@@ -1086,9 +1824,11 @@
                     var key = paramNames[i];
                     values[key] = data.params[0][key];
                 }
-                values.viewPath = data.route.newRoute.viewPath;
-                values.actionPath = data.route.newRoute.actionPath;
-                return values;
+                var routeData = new chitu.RouteData();
+                routeData.values(values);
+                routeData.actionPath(data.route.newRoute.actionPath);
+                routeData.viewPath(data.route.newRoute.viewPath);
+                return routeData;
             };
             RouteCollection.defaultRouteName = 'default';
             return RouteCollection;
@@ -1096,6 +1836,33 @@
         chitu.RouteCollection = RouteCollection;
     })(chitu || (chitu = {}));
     //# sourceMappingURL=RouteCollection.js.map;var chitu;
+    (function (chitu) {
+        var RouteData = (function () {
+            function RouteData() {
+            }
+            RouteData.prototype.values = function (value) {
+                if (value === void 0) { value = undefined; }
+                if (value !== undefined)
+                    this._values = value;
+                return this._values;
+            };
+            RouteData.prototype.viewPath = function (value) {
+                if (value === void 0) { value = undefined; }
+                if (value !== undefined)
+                    this._viewPath = value;
+                return this._viewPath;
+            };
+            RouteData.prototype.actionPath = function (value) {
+                if (value === void 0) { value = undefined; }
+                if (value !== undefined)
+                    this._actionPath = value;
+                return this._actionPath;
+            };
+            return RouteData;
+        })();
+        chitu.RouteData = RouteData;
+    })(chitu || (chitu = {}));
+    //# sourceMappingURL=RouteData.js.map;var chitu;
     (function (chitu) {
         var e = chitu.Errors;
         var crossroads = window['crossroads'];
@@ -1112,35 +1879,52 @@
             return route.interpolate(data);
         }
         var ViewFactory = (function () {
-            function ViewFactory(viewLocationFormater) {
-                this._viewLocationFormater = viewLocationFormater;
+            function ViewFactory() {
                 this._views = [];
             }
             ViewFactory.prototype.view = function (routeData) {
                 /// <param name="routeData" type="Object"/>
                 /// <returns type="jQuery.Deferred"/>
-                if (typeof routeData !== 'object')
-                    throw e.paramTypeError('routeData', 'object');
-                if (!routeData.controller)
+                //if (typeof routeData !== 'object')
+                //    throw e.paramTypeError('routeData', 'object');
+                if (!routeData.values().controller)
                     throw e.routeDataRequireController();
-                if (!routeData.action)
+                if (!routeData.values().action)
                     throw e.routeDataRequireAction();
-                var viewLocationFormater = this._viewLocationFormater || routeData.viewPath;
-                if (!viewLocationFormater)
-                    return $.Deferred().resolve('');
-                var url = interpolate(routeData.viewPath || viewLocationFormater, routeData);
+                //var viewLocationFormater = routeData.viewPath;
+                //if (!viewLocationFormater)
+                //    return $.Deferred().resolve('');
+                var url = interpolate(routeData.viewPath(), routeData.values());
                 var self = this;
-                var viewName = routeData.controller + '_' + routeData.action;
+                var viewName = routeData.values().controller + '_' + routeData.values().action;
                 if (!this._views[viewName]) {
                     this._views[viewName] = $.Deferred();
-                    require(['text!' + url], $.proxy(function (html) {
-                        if (html != null)
-                            this.deferred.resolve(html);
-                        else
-                            this.deferred.reject();
-                    }, { deferred: this._views[viewName] }), $.proxy(function (err) {
-                        this.deferred.reject(err);
-                    }, { deferred: this._views[viewName] }));
+                    var http = 'http://';
+                    if (url.substr(0, http.length).toLowerCase() == http) {
+                        //=======================================================
+                        // 说明：不使用 require text 是因为加载远的 html 文件，会作
+                        // 为 script 去解释而导致错误 
+                        $.ajax({ url: url })
+                            .done($.proxy(function (html) {
+                                if (html != null)
+                                    this.deferred.resolve(html);
+                                else
+                                    this.deferred.reject();
+                            }, { deferred: this._views[viewName] }))
+                            .fail($.proxy(function (err) {
+                                this.deferred.reject(err);
+                            }, { deferred: this._views[viewName] }));
+                    }
+                    else {
+                        require(['text!' + url], $.proxy(function (html) {
+                            if (html != null)
+                                this.deferred.resolve(html);
+                            else
+                                this.deferred.reject();
+                        }, { deferred: this._views[viewName] }), $.proxy(function (err) {
+                            this.deferred.reject(err);
+                        }, { deferred: this._views[viewName] }));
+                    }
                 }
                 return this._views[viewName];
             };
@@ -1156,31 +1940,30 @@
         var ACTION_LOCATION_FORMATER = '{controller}/{action}';
         var VIEW_LOCATION_FORMATER = '{controller}/{action}';
         var Application = (function () {
-            function Application(func) {
-                /// <field name="func" type="Function"/>
+            function Application(container) {
                 this.pageCreating = ns.Callbacks();
                 this.pageCreated = ns.Callbacks();
                 this.pageShowing = ns.Callbacks();
                 this.pageShown = ns.Callbacks();
                 this._pages = {};
                 this._runned = false;
-                if (!func)
-                    throw e.argumentNull('func');
-                if (!$.isFunction(func))
-                    throw e.paramTypeError('func', 'Function');
-                var options = {
-                    container: document.body,
-                    routes: new ns.RouteCollection(),
-                    actionPath: ACTION_LOCATION_FORMATER,
-                    viewPath: VIEW_LOCATION_FORMATER
-                };
-                $.proxy(func, this)(options);
-                this.controllerFactory = new ns.ControllerFactory(options.actionPath);
-                this.viewFactory = new ns.ViewFactory(options.viewPath);
+                if (container == null)
+                    throw e.argumentNull('container');
+                if (!container.tagName)
+                    throw new Error('Parameter container is not a html element.');
+                //if (!func) throw e.argumentNull('func');
+                //if (!$.isFunction(func)) throw e.paramTypeError('func', 'Function');
+                //var options = {
+                //    container: document.body,
+                //    routes: new ns.RouteCollection()
+                //};
+                //$.proxy(func, this)(options);
+                this.controllerFactory = new ns.ControllerFactory();
+                this.viewFactory = new ns.ViewFactory();
                 this._pages = {};
                 this._stack = [];
-                this._routes = options.routes;
-                this._container = options.container;
+                this._routes = new chitu.RouteCollection();
+                this._container = container;
             }
             ;
             Application.prototype.on_pageCreating = function (context) {
@@ -1205,7 +1988,6 @@
                     throw e.paramTypeError('routeData', 'object');
                 if (!routeData)
                     throw e.argumentNull('routeData');
-                //if (typeof name != 'string') throw e.paramTypeError('name', 'String');
                 return this.controllerFactory.getController(routeData);
             };
             Application.prototype.action = function (routeData) {

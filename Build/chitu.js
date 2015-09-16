@@ -761,8 +761,8 @@ var chitu;
                 return true;
             return false;
         };
-        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5) {
-            var params = [arg1, arg2, arg3, arg4, arg5];
+        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
+            var params = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10];
             for (var i = 0; i < params.length; i++) {
                 if (params[i] == null)
                     break;
@@ -1419,23 +1419,27 @@ var chitu;
             if (this._loadViewModelResult)
                 return this._loadViewModelResult;
             var page = this;
-            this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
-                u.log('Load view success, page:{0}.', [page['_name']]);
-                $(page.node()).html(html);
-                return page._actionDeferred;
-            })
-                .pipe(function (action) {
-                /// <param name="action" type="chitu.Action"/>
-                var result = action.execute(page);
-                page.on_created();
-                if (u.isDeferred(result))
-                    return result;
-                return $.Deferred().resolve();
-            })
-                .fail(function () {
-                page._loadViewModelResult = null;
-                u.log('Load view or action fail, page：{0}.', [page['_name']]);
-            });
+            this._loadViewModelResult =
+                //this._viewDeferred.pipe(function (html) {
+                //    u.log('Load view success, page:{0}.', [page['_name']]);
+                //    $(page.node()).html(html);
+                //    return page._actionDeferred;
+                //})
+                $.when(this._viewDeferred, this._actionDeferred)
+                    .done(function (html, action) {
+                    /// <param name="action" type="chitu.Action"/>
+                    u.log('Load view success, page:{0}.', [page['_name']]);
+                    $(page.node()).html(html);
+                    var result = action.execute(page);
+                    page.on_created();
+                    if (u.isDeferred(result))
+                        return result;
+                    return $.Deferred().resolve();
+                })
+                    .fail(function () {
+                    page._loadViewModelResult = null;
+                    u.log('Load view or action fail, page：{0}.', [page['_name']]);
+                });
             return this._loadViewModelResult;
         };
         Page.prototype.open = function (args) {
