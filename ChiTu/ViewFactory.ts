@@ -56,19 +56,19 @@
                     // 为 script 去解释而导致错误 
                     $.ajax({ url: url })
                         .done($.proxy(function (html) {
-                        if (html != null)
-                            this.deferred.resolve(html);
-                        else
-                            this.deferred.reject();
-                    }, { deferred: this._views[viewName] }))
+                            if (html != null)
+                                this.deferred.resolve(html);
+                            else
+                                this.deferred.reject();
+                        }, { deferred: this._views[viewName] }))
 
                         .fail($.proxy(function (err) {
-                        this.deferred.reject(err);
-                    }, { deferred: this._views[viewName] }));
+                            this.deferred.reject(err);
+                        }, { deferred: this._views[viewName] }));
                     //=======================================================
                 }
                 else {
-                    require(['text!' + url],
+                    requirejs(['text!' + url],
                         $.proxy(function (html) {
                             if (html != null)
                                 this.deferred.resolve(html);

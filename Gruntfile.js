@@ -6,11 +6,17 @@
             options: { separator: ';' },
             dist: {
                 src: ['ChiTu/ScriptBegin.txt', 'ChiTu/Scripts/crossroads.js',
-                      'ChiTu/Utility.js', 'ChiTu/Errors.js', 'ChiTu/Extends.js', 'ChiTu/PageContainer.js',
+                      'ChiTu/Utility.js', 'ChiTu/Errors.js', 'ChiTu/Extends.js', 
                       'ChiTu/Page.js', 'ChiTu/Controller.js', 'ChiTu/ControllerContext.js', 'ChiTu/ControllerFactory.js',
                       'ChiTu/Route.js', 'ChiTu/RouteCollection.js', 'ChiTu/RouteData.js', 'ChiTu/ViewFactory.js', 'ChiTu/Application.js',
                       'ChiTu/ScriptEnd.txt'],
                 dest: 'Build/chitu.js'
+            },
+            chitu_source:{
+                src: ['ChiTu/Utility.ts', 'ChiTu/Errors.ts', 'ChiTu/Extends.ts', 
+                      'ChiTu/Page.ts', 'ChiTu/Controller.ts', 'ChiTu/ControllerContext.ts', 'ChiTu/ControllerFactory.ts',
+                      'ChiTu/Route.ts', 'ChiTu/RouteCollection.ts', 'ChiTu/RouteData.ts', 'ChiTu/ViewFactory.ts', 'ChiTu/Application.ts'],
+                dest: 'Build/chitu.ts'
             }
         },
         uglify: {

@@ -72,13 +72,13 @@ var chitu;
             var self = this;
             var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
             var result = $.Deferred();
-            require([url], $.proxy(function (obj) {
+            requirejs([url], $.proxy(function (obj) {
                 //加载脚本失败
                 if (!obj) {
                     console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                     obj = { func: function () { } };
                 }
-                var func = obj.func;
+                var func = obj.func || obj;
                 if (!$.isFunction(func))
                     throw ns.Errors.modelFileExpecteFunction(this.actionName);
                 var action = new Action(self, this.actionName, func);
@@ -127,6 +127,7 @@ var chitu;
         };
         return Action;
     })();
+    chitu.Action = Action;
     function action(deps, filters, func) {
         /// <param name="deps" type="Array" canBeNull="true"/>
         /// <param name="filters" type="Array" canBeNull="true"/>

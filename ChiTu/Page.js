@@ -10,13 +10,13 @@ var chitu;
     ;
     var Page = (function () {
         function Page(context, node) {
-            this._node = HTMLElement;
             this._visible = true;
             this._loadViewModelResult = null;
             this._showResult = null;
             this._hideResult = null;
-            this.created = ns.Callbacks();
-            this.creating = ns.Callbacks();
+            //created = ns.Callbacks();
+            //creating = ns.Callbacks();
+            this.init = ns.Callbacks();
             this.preLoad = ns.Callbacks();
             this.load = ns.Callbacks();
             this.closing = ns.Callbacks();
@@ -38,7 +38,7 @@ var chitu;
             var name = Page.getPageName(context.routeData());
             var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
             var actionDeferred = context.controller().action(context.routeData());
-            this.init(name, viewDeferred, actionDeferred, node);
+            this._init(name, viewDeferred, actionDeferred, node);
         }
         Page.getPageName = function (routeData) {
             var name;
@@ -67,6 +67,7 @@ var chitu;
             return this._parent;
         };
         Page.prototype.visible = function (value) {
+            if (value === void 0) { value = undefined; }
             var is_visible = $(this.node()).is(':visible');
             if (value === undefined)
                 return is_visible; //this._visible;
@@ -84,7 +85,7 @@ var chitu;
             }
             this._visible = value;
         };
-        Page.prototype.init = function (name, viewDeferred, actionDeferred, node) {
+        Page.prototype._init = function (name, viewDeferred, actionDeferred, node) {
             if (!name)
                 throw e.argumentNull('name');
             if (!viewDeferred)
@@ -101,11 +102,11 @@ var chitu;
             this._visible = true;
             $(this._node).hide();
         };
-        Page.prototype.on_creating = function (context) {
-            return eventDeferred(this.creating, this, context);
-        };
-        Page.prototype.on_created = function () {
-            return eventDeferred(this.created, this);
+        //on_creating(context) {
+        //    return eventDeferred(this.creating, this, context);
+        //}
+        Page.prototype.on_init = function () {
+            return eventDeferred(this.init, this);
         };
         Page.prototype.on_preLoad = function (args) {
             return eventDeferred(this.preLoad, this, args);
@@ -146,13 +147,13 @@ var chitu;
             var page = this;
             this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
                 u.log('Load view success, page:{0}.', [page['_name']]);
-                $(page.node()).html(html);
+                $(page.node()).append(html);
                 return page._actionDeferred;
             })
                 .pipe(function (action) {
                 /// <param name="action" type="chitu.Action"/>
                 var result = action.execute(page);
-                page.on_created();
+                page.on_init();
                 if (u.isDeferred(result))
                     return result;
                 return $.Deferred().resolve();

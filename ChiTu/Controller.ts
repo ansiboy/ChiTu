@@ -96,7 +96,7 @@ module chitu {
             var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
             var result = $.Deferred();
 
-            require([url],
+            requirejs([url],
                 $.proxy(function (obj) {
                     //加载脚本失败
                     if (!obj) {
@@ -105,7 +105,7 @@ module chitu {
                         //result.reject();
                     }
 
-                    var func = obj.func;
+                    var func = obj.func || obj;
 
                     if (!$.isFunction(func))
                         throw ns.Errors.modelFileExpecteFunction(this.actionName);
@@ -131,7 +131,7 @@ module chitu {
 
 
 
-    class Action {
+    export class Action {
         _name: any
         _handle: any
 

@@ -1,4 +1,3 @@
-/// <reference path="scripts/typings/jquery/jquery.d.ts" />
 var chitu;
 (function (chitu) {
     var e = chitu.Errors;

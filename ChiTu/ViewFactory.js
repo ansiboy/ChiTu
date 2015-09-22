@@ -52,7 +52,7 @@ var chitu;
                     }, { deferred: this._views[viewName] }));
                 }
                 else {
-                    require(['text!' + url], $.proxy(function (html) {
+                    requirejs(['text!' + url], $.proxy(function (html) {
                         if (html != null)
                             this.deferred.resolve(html);
                         else

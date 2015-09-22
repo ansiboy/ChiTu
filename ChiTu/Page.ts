@@ -14,14 +14,15 @@
         _viewDeferred: any;
         _actionDeferred: any;
         _parent;
-        _node = HTMLElement;
+        _node: HTMLElement;
         _visible = true;
         _loadViewModelResult = null;
         _showResult = null;
         _hideResult = null;
 
-        created = ns.Callbacks();
-        creating = ns.Callbacks();
+        //created = ns.Callbacks();
+        //creating = ns.Callbacks();
+        init = ns.Callbacks();
         preLoad = ns.Callbacks();
         load = ns.Callbacks();
         closing = ns.Callbacks();
@@ -46,7 +47,7 @@
             var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
             var actionDeferred = context.controller().action(context.routeData());
 
-            this.init(name, viewDeferred, actionDeferred, node);
+            this._init(name, viewDeferred, actionDeferred, node);
         }
 
         static getPageName(routeData: RouteData): string {
@@ -63,14 +64,14 @@
 
         _type: string = 'Page'
 
-        context() {
+        context(): chitu.ControllerContext {
             /// <returns type="chitu.ControllerContext"/>
             return this._context;
         }
-        name() {
+        name(): string {
             return this._name;
         }
-        node() {
+        node(): HTMLElement {
             /// <returns type="HTMLElement"/>
             return this._node;
         }
@@ -78,7 +79,7 @@
             /// <returns type="chitu.Page"/>
             return this._parent;
         }
-        visible(value) {
+        visible(value: boolean = undefined): boolean {
             var is_visible = $(this.node()).is(':visible');
             if (value === undefined)
                 return is_visible; //this._visible;
@@ -99,7 +100,7 @@
 
             this._visible = value;
         }
-        private init(name, viewDeferred, actionDeferred, node) {
+        private _init(name, viewDeferred, actionDeferred, node) {
             if (!name) throw e.argumentNull('name');
             if (!viewDeferred) throw e.argumentNull('viewDeferred');
             if (!actionDeferred) throw e.argumentNull('actionDeferred')
@@ -113,11 +114,11 @@
             this._visible = true;
             $(this._node).hide();
         }
-        on_creating(context) {
-            return eventDeferred(this.creating, this, context);
-        }
-        on_created() {
-            return eventDeferred(this.created, this);
+        //on_creating(context) {
+        //    return eventDeferred(this.creating, this, context);
+        //}
+        on_init() {
+            return eventDeferred(this.init, this);
         }
         on_preLoad(args) {
             return eventDeferred(this.preLoad, this, args);
@@ -161,13 +162,13 @@
             var page = this;
             this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
                 u.log('Load view success, page:{0}.', [page['_name']]);
-                $(page.node()).html(html);
+                $(page.node()).append(html);
                 return page._actionDeferred;
             })
-                .pipe(function (action) {
+                .pipe(function (action: chitu.Action) {
                     /// <param name="action" type="chitu.Action"/>
                     var result = action.execute(page);
-                    page.on_created();
+                    page.on_init();
                     if (u.isDeferred(result))
                         return result;
 
