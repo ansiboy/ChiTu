@@ -1,12 +1,10 @@
-﻿/// <reference path="scripts/typings/requirejs/require.d.ts" />
-
-module chitu {
+﻿module chitu {
     var ns = chitu;
     var e = ns.Errors;
     var u = ns.Utility;
 
     var crossroads = window['crossroads'];
-   
+
     function interpolate(pattern: string, data) {
         var http_prefix = 'http://'.toLowerCase();
         if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
@@ -96,7 +94,7 @@ module chitu {
             var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
             var result = $.Deferred();
 
-            require([url],
+            requirejs([url],
                 $.proxy(function (obj) {
                     //加载脚本失败
                     if (!obj) {
@@ -105,7 +103,7 @@ module chitu {
                         //result.reject();
                     }
 
-                    var func = obj.func;
+                    var func = obj.func || obj;
 
                     if (!$.isFunction(func))
                         throw ns.Errors.modelFileExpecteFunction(this.actionName);
@@ -131,7 +129,7 @@ module chitu {
 
 
 
-    class Action {
+    export class Action {
         _name: any
         _handle: any
 
@@ -153,11 +151,11 @@ module chitu {
             return this._name;
         }
 
-        execute(page) {
+        execute(page: chitu.Page) {
             /// <param name="page" type="chitu.Page"/>
             /// <returns type="jQuery.Deferred"/>
             if (!page) throw e.argumentNull('page');
-            if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
+            //if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
 
             var result = this._handle.apply({}, [page]);
             return u.isDeferred(result) ? result : $.Deferred().resolve();
@@ -236,4 +234,4 @@ module chitu {
         return func;
     };
 
-}  
+};

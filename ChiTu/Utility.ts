@@ -1,5 +1,4 @@
-﻿/// <reference path="scripts/typings/jquery/jquery.d.ts" />
-module chitu {
+﻿module chitu {
     var e = chitu.Errors;
     export class Utility {
         public static isType(targetType: Function, obj: any): boolean {
@@ -63,5 +62,4 @@ module chitu {
         }
     }
 } 
-
 

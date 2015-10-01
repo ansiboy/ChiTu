@@ -8,58 +8,42 @@
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
     export class Application {
-        pageCreating = ns.Callbacks();
-        pageCreated = ns.Callbacks();
-        pageShowing = ns.Callbacks();
-        pageShown = ns.Callbacks();
+        pageCreating: chitu.Callback = ns.Callbacks();
+        pageCreated: chitu.Callback = ns.Callbacks();
 
-        private _pages = {};
-        private _stack: any[];
-        private _routes: chitu.RouteCollection;
-        private _container: any;
-        private _runned: boolean = false
+        private page_stack: chitu.Page[] = [];
 
-        controllerFactory: chitu.ControllerFactory;
-        viewFactory: any;
+        private _routes: chitu.RouteCollection = new RouteCollection();
+        private _container: HTMLElement|Function;
+        private _runned: boolean = false;
+        private _currentPage: chitu.Page;
 
-        constructor(container: HTMLElement) {
-            if (container == null)
+
+        private zindex: number;
+
+        controllerFactory: chitu.ControllerFactory = new chitu.ControllerFactory();
+        viewFactory: chitu.ViewFactory = new chitu.ViewFactory();
+
+        constructor(config: Object) {
+            if (config == null)
                 throw e.argumentNull('container');
 
-            if (!container.tagName)
-                throw new Error('Parameter container is not a html element.');
+            if (!config['container']) {
+                throw new Error('The config has not a container property.');
+            }
 
-            //if (!func) throw e.argumentNull('func');
-            //if (!$.isFunction(func)) throw e.paramTypeError('func', 'Function');
+            if (!$.isFunction(config['container']) && !config['container'].tagName)
+                throw new Error('Parameter container is not a function or html element.');
 
-            //var options = {
-            //    container: document.body,
-            //    routes: new ns.RouteCollection()
-            //};
-
-            //$.proxy(func, this)(options);
-
-            this.controllerFactory = new ns.ControllerFactory();
-            this.viewFactory = new ns.ViewFactory();
-
-            this._pages = {};
-            this._stack = [];
-            this._routes = new RouteCollection();
-            this._container = container;
-
-        };
-
-        public on_pageCreating(context) {
-            this.pageCreating.fire(this, context);
+            this._container = config['container'];
         }
-        public on_pageCreated(page) {
-            this.pageCreated.fire(this, page);
+
+        on_pageCreating(context) {
+            return ns.fireCallback(this.pageCreating, [this, context]);
         }
-        public on_pageShowing(page, args) {
-            this.pageShowing.fire(this, page, args);
-        }
-        public on_pageShown(page, args) {
-            this.pageShown.fire(page, args);
+        on_pageCreated(page) {
+            //this.pageCreated.fire(this, page);
+            return ns.fireCallback(this.pageCreated, [this, page]);
         }
         public routes(): chitu.RouteCollection {
             return this._routes;
@@ -76,7 +60,18 @@
 
             return this.controllerFactory.getController(routeData);
         }
+        public currentPage(): chitu.Page {
+            if (this.page_stack.length > 0)
+                return this.page_stack[this.page_stack.length - 1];
 
+            return null;
+        }
+        private previousPage(): chitu.Page {
+            if (this.page_stack.length > 1)
+                return this.page_stack[this.page_stack.length - 2];
+
+            return null;
+        }
         public action(routeData) {
             /// <param name="routeData" type="Object"/>
             if (typeof routeData !== 'object')
@@ -97,89 +92,146 @@
             return controller.action(actionName);
         }
 
+        hashchange(): any {
+            var hash = window.location.hash;
+            if (!hash) {
+                u.log('The url is not contains hash.');
+                return;
+            }
+
+            if (this.previousPage() != null && this.previousPage().context().routeData().url() == hash.substr(1)) {
+                this.closeCurrentPage();
+            }
+            else {
+                var args = window.location['arguments'] || {};
+                window.location['arguments'] = null;
+
+                this.showPage(hash.substr(1), args);
+
+                window.location['skip'] = false;
+            }
+
+        }
+
         public run() {
             if (this._runned) return;
 
             var app = this;
-            var hashchange = function (event) {
-                var hash = window.location.hash;
-                if (!hash) {
-                    u.log('The url is not contains hash.');
-                    return;
-                }
 
-                var args = window.location['arguments'] || {};
-                var container = window.location['container'] || app._container;
-                window.location['arguments'] = null;
-                window.location['container'] = null;
-                if (window.location['skip'] == null || window.location['skip'] == false)
-                    app.showPageAt(container, hash.substr(1), args);
-
-                window.location['skip'] = false;
-            };
-            $.proxy(hashchange, this)();
-            $(window).bind('hashchange', $.proxy(hashchange, this));
+            $.proxy(this.hashchange, this)();
+            $(window).bind('hashchange', $.proxy(this.hashchange, this));
 
             this._runned = true;
         }
 
-        public showPageAt(element: HTMLElement, url: string, args: any) {
-            /// <param name="element" type="HTMLElement" canBeNull="false"/>
+        public showPage(url: string, args): JQueryDeferred<any> {
+            /// <param name="container" type="HTMLElement" canBeNull="false"/>
             /// <param name="url" type="String" canBeNull="false"/>
             /// <param name="args" type="object" canBeNull="true"/>
             /// <returns type="jQuery.Deferred"/>
 
             args = args || {};
 
-            if (!element) throw e.argumentNull('element');
             if (!url) throw e.argumentNull('url');
 
-            var self = this;
-
-            var pc = <chitu.PageContainer> $(element).data('PageContainer');
-            if (pc == null) {
-                pc = new ns.PageContainer(this, element);
-
-                pc.pageCreating.add(function (sender, context) {
-                    self.on_pageCreating(context);
-                });
-
-                pc.pageCreated.add(function (sender, page) {
-                    self.on_pageCreated(page);
-                });
-
-                pc.pageShowing.add(function (sender, page, args) {
-                    self.on_pageShowing(page, args);
-                });
-
-                pc.pageShown.add(function (sender, page, args) {
-                    self.on_pageShown(page, args);
-                });
-
-                $(element).data('PageContainer', pc);
+            var routeData = this.routes().getRouteData(url);
+            if (routeData == null) {
+                throw e.noneRouteMatched(url);
             }
 
-            var self = this;
-            return pc.showPage(url, args);
-        }
-        public showPage(url, args) {
-            /// <param name="url" type="String" canBeNull="true"/>
-            /// <param name="args" type="object" canBeNull="true"/>
-            /// <returns type="jQuery.Deferred"/>
+            //================================================================
+            // 判断是为返回操作
+            var name = Page.getPageName(routeData);
+            if (this.previousPage() != null && (this.previousPage().name() == name)) {
+            }
 
-            return this.showPageAt(this._container, url, args);
+
+            var container: HTMLElement;
+            if ($.isFunction(this._container)) {
+                container = (<Function>this._container)(routeData.values());
+                if (container == null)
+                    throw new Error('The result of continer function cannt be null');
+            }
+            else {
+                container = <HTMLElement>this._container;
+            }
+
+            var page = this._createPage(url, container);
+            this.page_stack.push(page);
+
+
+            $.extend(args, routeData.values());
+            var result = $.Deferred();
+            page.open(args)
+                .done(() => {
+                    result.resolve();
+                    var f = () => {
+                        if (this.previousPage())
+                            this.previousPage().hide();
+
+                        page.shown.remove(f);
+                    }
+                    page.shown.add(f);
+                })
+                .fail((error) => {
+                    result.reject(this, error);
+                });
+
+            return result;
         }
-        public redirect(url, args) {
+        protected createPageNode(): HTMLElement {
+            var element = document.createElement('div');
+            return element;
+        }
+        private closeCurrentPage() {
+            if (this.currentPage() != null) {
+                this.currentPage().close();
+                if (this.previousPage() != null)
+                    this.previousPage().show();
+
+                this.page_stack.pop();
+            }
+        }
+        private _createPage(url: string, container: HTMLElement) {
+            if (!url)
+                throw e.argumentNull('url');
+
+            if (!container)
+                throw e.argumentNull('element');
+
+            var routeData = this.routes().getRouteData(url);
+            if (routeData == null) {
+                throw e.noneRouteMatched(url);
+            }
+
+            var controllerName = routeData.values().controller;
+            var actionName = routeData.values().action;
+            var controller = this.controller(routeData);
+            var view_deferred = this.viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
+            var context = new ns.ControllerContext(controller, view_deferred, routeData);
+
+            this.on_pageCreating(context);
+            var page = new ns.Page(context, container);
+            this.on_pageCreated(page);
+            return page;
+        }
+        public redirect(url: string, args = {}) {
             window.location['arguments'] = args;
             window.location.hash = url;
         }
-        public back(args) {
+        public back(args = undefined) {
             /// <returns type="jQuery.Deferred"/>
-            var pc = $(this._container).data('PageContainer');
-            if (pc == null)
+            if (window.history.length == 0)
                 return $.Deferred().reject();
 
-            return pc.back(args);
+            window.location['skip'] = true;
+            window.history.back();
+
+
+            this._currentPage.close();
+
+
+            return $.Deferred().resolve();
         }
     }
 } 

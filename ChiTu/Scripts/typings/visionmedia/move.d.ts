@@ -1,0 +1,88 @@
+﻿interface Move {
+
+    /**
+     * Set duration to `n`.
+     *
+     * @param {Number|String} n
+     * @return {Move} for chaining
+     * @api public
+     */
+    duration(n: number|string): Move;
+
+    /**
+     * Set transition easing function to to `fn` string.
+     *
+     * When:
+     *
+     *   - null "ease" is used
+     *   - "in" "ease-in" is used
+     *   - "out" "ease-out" is used
+     *   - "in-out" "ease-in-out" is used
+     *
+     * @param {String} fn
+     * @return {Move} for chaining
+     * @api public
+     */
+    ease(fn: string): Move;
+    ease(): Move;
+
+    /**
+     * Start animation, optionally calling `fn` when complete.
+     *
+     * @param {Function} fn
+     * @return {Move} for chaining
+     * @api public
+     */
+    end();
+
+    /**
+     * Translate `x` and `y` axis.
+     *
+     * @param {Number} x
+     * @param {Number} y
+     * @return {Move} for chaining
+     * @api public
+     */
+    to(x: number, y: number);
+
+    /**
+     * Translate on the x axis to `n`.
+     *
+     * @param {Number} n
+     * @return {Move} for chaining
+     * @api public
+     */
+    x(n: number);
+
+    /**
+     * Translate on the y axis to `n`.
+     *
+     * @param {Number} n
+     * @return {Move} for chaining
+     * @api public
+     */
+    y(n: number): Move;
+
+    /**
+     * Set `prop` to `value`, deferred until `.end()` is invoked
+     * and adds the property to the list of transition props.
+     *
+     * @param {String} prop
+     * @param {String} val
+     * @return {Move} for chaining
+     * @api public
+     */
+    'set'(prop: string, val: string): Move;
+
+
+
+
+}
+
+//declare module "move" {
+ //var move = function(selector: string | HTMLElement){};
+
+//    export = move;
+//}
+
+//function move(selector: string|HTMLElement);

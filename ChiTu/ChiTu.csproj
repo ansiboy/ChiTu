@@ -37,12 +37,12 @@
     <TypeScriptCompile Include="Errors.ts" />
     <TypeScriptCompile Include="Extends.ts" />
     <TypeScriptCompile Include="Page.ts" />
-    <TypeScriptCompile Include="PageContainer.ts" />
     <TypeScriptCompile Include="RouteCollection.ts" />
     <TypeScriptCompile Include="Route.ts" />
     <TypeScriptCompile Include="RouteData.ts" />
     <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\requirejs\require.d.ts" />
+    <TypeScriptCompile Include="Scripts\typings\visionmedia\move.d.ts" />
     <TypeScriptCompile Include="Utility.ts" />
     <TypeScriptCompile Include="ViewFactory.ts" />
   </ItemGroup>

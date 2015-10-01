@@ -740,8 +740,7 @@ window['crossroads'] = factory(window['jQuery']);
 
 //}());
 
-;/// <reference path="scripts/typings/jquery/jquery.d.ts" />
-var chitu;
+;var chitu;
 (function (chitu) {
     var e = chitu.Errors;
     var Utility = (function () {
@@ -1133,160 +1132,6 @@ var chitu;
 //# sourceMappingURL=Extends.js.map;var chitu;
 (function (chitu) {
     var ns = chitu;
-    var e = chitu.Errors;
-    var PageContainer = (function () {
-        function PageContainer(app, node) {
-            this.pageCreating = ns.Callbacks();
-            this.pageCreated = ns.Callbacks();
-            this.pageShowing = ns.Callbacks();
-            this.pageShown = ns.Callbacks();
-            this.init(app, node);
-        }
-        PageContainer.prototype.init = function (app, node) {
-            this._app = app;
-            this._node = node;
-            this._pageStack = [];
-        };
-        PageContainer.prototype.on_pageCreating = function (context) {
-            return ns.fireCallback(this.pageCreating, [this, context]);
-        };
-        PageContainer.prototype.on_pageCreated = function (page) {
-            //this.pageCreated.fire(this, page);
-            return ns.fireCallback(this.pageCreated, [this, page]);
-        };
-        PageContainer.prototype.on_pageShowing = function (page, args) {
-            //this.pageShowing.fire(this, page, args);
-            return ns.fireCallback(this.pageShowing, [this, page, args]);
-        };
-        PageContainer.prototype.on_pageShown = function (page, args) {
-            //this.pageShown.fire(this, page, args);
-            return ns.fireCallback(this.pageShown, [this, page, args]);
-        };
-        PageContainer.prototype.application = function () {
-            /// <returns type="chitu.Application"/>
-            return this._app;
-        };
-        PageContainer.prototype.node = function () {
-            /// <returns type="HTMLElement"/>
-            return this._node;
-        };
-        PageContainer.prototype.currentPage = function () {
-            /// <returns type="chitu.Page"/>
-            return this._currentPage;
-        };
-        PageContainer.prototype._createPage = function (url, element) {
-            if (!url)
-                throw e.argumentNull('url');
-            if (typeof url != 'string')
-                throw e.paramTypeError('url', 'String');
-            if (!element) {
-                element = document.createElement('div');
-                document.body.appendChild(element);
-            }
-            var routeData = this.application().routes().getRouteData(url);
-            if (routeData == null) {
-                throw e.noneRouteMatched(url);
-            }
-            var controllerName = routeData.values().controller;
-            var actionName = routeData.values().action;
-            var controller = this.application().controller(routeData);
-            var view_deferred = this.application().viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
-            var context = new ns.ControllerContext(controller, view_deferred, routeData);
-            this.on_pageCreating(context);
-            var page = new ns.Page(context, element);
-            this.on_pageCreated(page);
-            return page;
-        };
-        PageContainer.prototype.showPage = function (url, args) {
-            /// <param name="container" type="HTMLElement" canBeNull="false"/>
-            /// <param name="url" type="String" canBeNull="false"/>
-            /// <param name="args" type="object" canBeNull="true"/>
-            /// <returns type="jQuery.Deferred"/>
-            args = args || {};
-            if (!url)
-                throw e.argumentNull('url');
-            var routeData = this.application().routes().getRouteData(url);
-            if (routeData == null) {
-                throw e.noneRouteMatched(url);
-            }
-            var container = this.node();
-            var controllerName = routeData.values().controller;
-            var actionName = routeData.values().action;
-            var name = controllerName + '.' + actionName;
-            var pages = $(container).data('pages');
-            if (!pages) {
-                pages = {};
-                $(container).data('pages', pages);
-            }
-            var self = this;
-            var page = pages[name];
-            if (page == null) {
-                var element = $('<div>').appendTo(container)[0];
-                page = this._createPage(url, element);
-                pages[name] = page;
-            }
-            this._currentPage = page;
-            for (var key in pages) {
-                if (pages[key] != this._currentPage) {
-                    pages[key].visible(false);
-                }
-            }
-            $.extend(args, routeData.values());
-            //this.on_pageShowing(page, args);
-            var self = this;
-            var result = $.Deferred();
-            this.on_pageShowing(page, args).pipe(function () {
-                return page.open(args);
-            })
-                .done($.proxy(function () {
-                self._pageStack.push({ page: this.page, url: this.url });
-                //=======================================================
-                // 说明：由于只能显示一个页面，只有为 currentPage 才显示
-                if (this.page != self.currentPage())
-                    this.page.visible(false);
-                //=======================================================
-                this.result.resolve(this.page);
-                self.on_pageShown(this.page, args);
-            }, { page: page, result: result, url: url }))
-                .fail($.proxy(function (error) {
-                this.result.reject(this.page, error);
-            }, { page: page, result: result, url: url }));
-            return result;
-        };
-        PageContainer.prototype.back = function (args) {
-            /// <param name="args" type="Object"/>
-            /// <returns type="jQuery.Deferred"/>
-            var stack = this._pageStack;
-            var current = this.currentPage();
-            if (stack.length == 0 || current == null) {
-                return $.Deferred().reject();
-            }
-            stack.pop();
-            var item = stack[stack.length - 1];
-            if (item == null)
-                return $.Deferred().reject();
-            var hash = '#' + item.url.toLowerCase();
-            if (hash.localeCompare(window.location.hash.toLowerCase()) != 0) {
-                window.location.hash = item.url;
-                window.location['skip'] = true;
-            }
-            current.visible(false);
-            if (args)
-                item.page.open(args);
-            else
-                item.page.visible(true);
-            //new chitu.Page().open
-            //document.body.scrollTop = item.page.scrollTop || '0px';
-            this._currentPage = item.page;
-            return $.Deferred().resolve();
-        };
-        return PageContainer;
-    })();
-    chitu.PageContainer = PageContainer;
-})(chitu || (chitu = {}));
-//# sourceMappingURL=PageContainer.js.map;var chitu;
-(function (chitu) {
-    var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
     function eventDeferred(callback, sender, args) {
@@ -1294,15 +1139,65 @@ var chitu;
         return chitu.fireCallback(callback, [sender, args]);
     }
     ;
+    var PAGE_CLASS_NAME = 'page-node';
+    var PAGE_HEADER_CLASS_NAME = 'page-header';
+    var PAGE_BODY_CLASS_NAME = 'page-body';
+    var PAGE_FOOTER_CLASS_NAME = 'page-footer';
+    var PAGE_LOADING_CLASS_NAME = 'page-loading';
+    //var zindex: number;
+    var ShowTypes;
+    (function (ShowTypes) {
+        ShowTypes[ShowTypes["swipeLeft"] = 0] = "swipeLeft";
+        ShowTypes[ShowTypes["swipeRight"] = 1] = "swipeRight";
+        ShowTypes[ShowTypes["none"] = 2] = "none";
+    })(ShowTypes || (ShowTypes = {}));
+    var PageNodeParts;
+    (function (PageNodeParts) {
+        PageNodeParts[PageNodeParts["header"] = 1] = "header";
+        PageNodeParts[PageNodeParts["body"] = 2] = "body";
+        PageNodeParts[PageNodeParts["loading"] = 4] = "loading";
+        PageNodeParts[PageNodeParts["footer"] = 8] = "footer";
+    })(PageNodeParts || (PageNodeParts = {}));
+    var PageStatus;
+    (function (PageStatus) {
+        PageStatus[PageStatus["open"] = 0] = "open";
+        PageStatus[PageStatus["closed"] = 1] = "closed";
+    })(PageStatus || (PageStatus = {}));
+    var PageNode = (function () {
+        function PageNode(node) {
+            node.className = PAGE_CLASS_NAME;
+            this.node = node;
+            this.headerNode = document.createElement('div');
+            this.headerNode.className = PAGE_HEADER_CLASS_NAME;
+            //this.headerNode.style.display = 'none';
+            node.appendChild(this.headerNode);
+            this.bodyNode = document.createElement('div');
+            this.bodyNode.className = PAGE_BODY_CLASS_NAME;
+            $(this.bodyNode).hide();
+            node.appendChild(this.bodyNode);
+            this.loadingNode = document.createElement('div');
+            this.loadingNode.className = PAGE_LOADING_CLASS_NAME;
+            this.loadingNode.innerHTML = '<div><i class="icon-spinner icon-spin"></i><div>';
+            $(this.loadingNode).hide();
+            node.appendChild(this.loadingNode);
+            this.footerNode = document.createElement('div');
+            this.footerNode.className = PAGE_FOOTER_CLASS_NAME;
+            //this.footerNode.style.display = 'none';
+            node.appendChild(this.footerNode);
+        }
+        return PageNode;
+    })();
     var Page = (function () {
-        function Page(context, node) {
-            this._node = HTMLElement;
-            this._visible = true;
+        function Page(context, container) {
+            //_node: HTMLElement;
+            //_visible = true;
             this._loadViewModelResult = null;
-            this._showResult = null;
+            this._openResult = null;
             this._hideResult = null;
-            this.created = ns.Callbacks();
-            this.creating = ns.Callbacks();
+            this._showDelay = 100;
+            this._moveTime = 1000;
+            this.swipe = true;
+            this.init = ns.Callbacks();
             this.preLoad = ns.Callbacks();
             this.load = ns.Callbacks();
             this.closing = ns.Callbacks();
@@ -1312,20 +1207,38 @@ var chitu;
             this.shown = ns.Callbacks();
             this.hiding = ns.Callbacks();
             this.hidden = ns.Callbacks();
-            this._type = 'Page';
             if (!context)
                 throw e.argumentNull('context');
-            //if (context['_type'] != 'ControllerContext') throw e.paramTypeError('context', 'ControllerContext');
-            if (!node)
-                throw e.argumentNull('node');
+            if (!container)
+                throw e.argumentNull('container');
+            //if (!zindex) {
+            //    zindex = new Number(container.style.zIndex || '0').valueOf();
+            //    zindex = zindex + 1;
+            //}
+            this._container = container;
+            var element = document.createElement('div');
+            //element.style.zIndex = (zindex + 1).toString();
+            container.appendChild(element);
             this._context = context;
             var controllerName = context.routeData().values().controller;
             var actionName = context.routeData().values().action;
-            var name = controllerName + '.' + actionName;
-            var viewDeferred = context.view(); //app.viewEngineFactory.getViewEngine(controllerName).view(actionName);
+            var name = Page.getPageName(context.routeData());
+            var viewDeferred = context.view();
             var actionDeferred = context.controller().action(context.routeData());
-            this.init(name, viewDeferred, actionDeferred, node);
+            this._pageNode = new PageNode(element);
+            this._init(name, viewDeferred, actionDeferred, element);
         }
+        Page.getPageName = function (routeData) {
+            var name;
+            if (routeData.pageName()) {
+                var route = window['crossroads'].addRoute(routeData.pageName());
+                name = route.interpolate(routeData.values());
+            }
+            else {
+                name = routeData.values().controller + '.' + routeData.values().action;
+            }
+            return name;
+        };
         Page.prototype.context = function () {
             /// <returns type="chitu.ControllerContext"/>
             return this._context;
@@ -1335,31 +1248,93 @@ var chitu;
         };
         Page.prototype.node = function () {
             /// <returns type="HTMLElement"/>
-            return this._node;
+            return this._pageNode.node;
         };
-        Page.prototype.parent = function () {
-            /// <returns type="chitu.Page"/>
-            return this._parent;
+        Page.prototype.hide = function () {
+            this.hidePageNode(false);
+            this.on_hidden({});
         };
-        Page.prototype.visible = function (value) {
-            var is_visible = $(this.node()).is(':visible');
-            if (value === undefined)
-                return is_visible; //this._visible;
-            if (value == is_visible)
-                return;
-            if (!value) {
-                this.on_hiding({});
+        Page.prototype.show = function () {
+            this.on_showing({});
+            this.showPageNode(false);
+            this.on_shown({});
+        };
+        Page.prototype.visible = function () {
+            return $(this.node()).is(':visible');
+        };
+        Page.prototype.hidePageNode = function (swipe) {
+            var _this = this;
+            if (swipe) {
+                var container_width = $(this._container).width();
+                var times = 1000;
+                //====================================================
+                // 说明：必须要 setTimeout，移动才有效。
+                window.setTimeout(function () {
+                    window['move'](_this.node()).set('left', container_width + 'px').duration(times).end();
+                }, 100);
+                //====================================================
+                setTimeout(function () {
+                    $(_this.node()).hide();
+                    _this.on_hidden({});
+                }, times);
+            }
+            else {
                 $(this.node()).hide();
                 this.on_hidden({});
             }
-            else {
-                this.on_showing({});
-                $(this.node()).show();
-                this.on_shown({});
-            }
-            this._visible = value;
         };
-        Page.prototype.init = function (name, viewDeferred, actionDeferred, node) {
+        Page.prototype.showPageNode = function (swipe) {
+            var _this = this;
+            var result = $.Deferred();
+            if (swipe) {
+                var container_width = $(this._container).width();
+                this.node().style.left = container_width + 'px';
+                this.node().style.display = 'block';
+                //var times = 1000;
+                //====================================================
+                // 说明：必须要 setTimeout，移动才有效。
+                window.setTimeout(function () {
+                    window['move'](_this.node()).set('left', '0px').duration(_this._moveTime).end();
+                    if (_this._openResult != null) {
+                        $(_this._pageNode.loadingNode).show();
+                        $(_this._pageNode.bodyNode).hide();
+                    }
+                    else {
+                        $(_this._pageNode.loadingNode).hide();
+                        $(_this._pageNode.bodyNode).show();
+                    }
+                }, this._showDelay);
+                //====================================================
+                window.setTimeout(function () {
+                    result.resolve();
+                }, this._moveTime);
+            }
+            else {
+                this.node().style.display = 'block';
+                this.node().style.left = '0px';
+                if (this._openResult != null) {
+                    $(this._pageNode.loadingNode).show();
+                    $(this._pageNode.bodyNode).hide();
+                }
+                else {
+                    $(this._pageNode.loadingNode).hide();
+                    $(this._pageNode.bodyNode).show();
+                }
+                result.resolve();
+            }
+            return result;
+        };
+        Page.prototype.showBodyNode = function () {
+            $(this._pageNode.node).show();
+            $(this._pageNode.loadingNode).hide();
+            $(this._pageNode.bodyNode).show();
+        };
+        //private showLoadingNode() {
+        //    $(this._pageNode.node).show();
+        //    $(this._pageNode.bodyNode).hide();
+        //    $(this._pageNode.loadingNode).show();
+        //}
+        Page.prototype._init = function (name, viewDeferred, actionDeferred, node) {
             if (!name)
                 throw e.argumentNull('name');
             if (!viewDeferred)
@@ -1371,25 +1346,12 @@ var chitu;
             this._name = name;
             this._viewDeferred = viewDeferred;
             this._actionDeferred = actionDeferred;
-            this._parent;
-            this._node = node;
-            this._visible = true;
-            $(this._node).hide();
         };
-        Page.prototype.on_creating = function (context) {
-            return eventDeferred(this.creating, this, context);
-        };
-        Page.prototype.on_created = function () {
-            return eventDeferred(this.created, this);
-        };
-        Page.prototype.on_preLoad = function (args) {
-            return eventDeferred(this.preLoad, this, args);
+        Page.prototype.on_init = function () {
+            return eventDeferred(this.init, this);
         };
         Page.prototype.on_load = function (args) {
             return eventDeferred(this.load, this, args);
-        };
-        Page.prototype.on_closing = function (args) {
-            return eventDeferred(this.closing, this, args);
         };
         Page.prototype.on_closed = function (args) {
             return eventDeferred(this.closed, this, args);
@@ -1409,40 +1371,29 @@ var chitu;
         Page.prototype.on_hidden = function (args) {
             return eventDeferred(this.hidden, this, args);
         };
-        Page.prototype._appendNode = function (childNode) {
-            /// <param name="childNode" type="HTMLElement"/>
-            if (childNode == null)
-                throw e.argumentNull('childNode');
-            $(this._node).append(childNode);
-        };
         Page.prototype._loadViewModel = function () {
+            var _this = this;
             if (this._loadViewModelResult)
                 return this._loadViewModelResult;
-            var page = this;
-            this._loadViewModelResult =
-                //this._viewDeferred.pipe(function (html) {
-                //    u.log('Load view success, page:{0}.', [page['_name']]);
-                //    $(page.node()).html(html);
-                //    return page._actionDeferred;
-                //})
-                $.when(this._viewDeferred, this._actionDeferred)
-                    .done(function (html, action) {
-                    /// <param name="action" type="chitu.Action"/>
-                    u.log('Load view success, page:{0}.', [page['_name']]);
-                    $(page.node()).html(html);
-                    var result = action.execute(page);
-                    page.on_created();
-                    if (u.isDeferred(result))
-                        return result;
-                    return $.Deferred().resolve();
-                })
-                    .fail(function () {
-                    page._loadViewModelResult = null;
-                    u.log('Load view or action fail, page：{0}.', [page['_name']]);
-                });
+            this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
+                u.log('Load view success, page:{0}.', [_this.name()]);
+                $(_this.node()).find('.' + PAGE_BODY_CLASS_NAME).html(html);
+                return _this._actionDeferred;
+            }).pipe(function (action) {
+                /// <param name="action" type="chitu.Action"/>
+                var result = action.execute(_this);
+                _this.on_init();
+                if (u.isDeferred(result))
+                    return result;
+                return $.Deferred().resolve();
+            }).fail(function () {
+                _this._loadViewModelResult = null;
+                u.log('Load view or action fail, page：{0}.', [_this.name()]);
+            });
             return this._loadViewModelResult;
         };
         Page.prototype.open = function (args) {
+            var _this = this;
             /// <summary>
             /// Show the page.
             /// </summary>
@@ -1450,20 +1401,29 @@ var chitu;
             /// The value passed to the show event functions.
             /// </param>
             /// <returns type="jQuery.Deferred"/>
-            var self = this;
-            this._showResult = this.on_preLoad(args).pipe(function () {
-                return self._loadViewModel();
-            })
+            if (this._openResult)
+                return this._openResult;
+            this._openResult = $.Deferred();
+            //var self = this;
+            this.on_showing(args);
+            var pageNodeShown = this.showPageNode(this.swipe);
+            this._loadViewModel()
                 .pipe(function () {
-                self.on_showing(args);
-                return self.on_load(args);
+                return _this.on_load(args);
+            })
+                .done(function () {
+                _this._openResult.resolve();
+                _this.showBodyNode();
+                pageNodeShown.done(function () {
+                    _this.on_shown(args);
+                });
+            })
+                .fail(function () {
+                this._openResult.reject();
             });
-            this._showResult.done($.proxy(function () {
-                self._hideResult = null;
-                $(self.node()).show();
-                self.on_shown(this.args);
-            }, { args: args }));
-            return this._showResult;
+            return this._openResult.always(function () {
+                _this._openResult = null;
+            });
         };
         Page.prototype.close = function (args) {
             /// <summary>
@@ -1473,23 +1433,21 @@ var chitu;
             /// The value passed to the hide event functions.
             /// </param>
             /// <returns type="jQuery.Deferred"/>
-            var self = this;
-            if (!this._hideResult) {
-                this._hideResult = self.on_closing(args).pipe(function () {
-                    self.visible(false);
-                    return self.on_closed(args);
-                });
-            }
-            return this._hideResult.always(function () {
-                self._hideResult = null;
+            var _this = this;
+            if (args === void 0) { args = undefined; }
+            args = args || {};
+            this.hidden.add(function () {
+                _this.node().remove();
             });
+            this.hidePageNode(this.swipe);
+            this.on_closed(args);
         };
         return Page;
     })();
     chitu.Page = Page;
 })(chitu || (chitu = {}));
-//# sourceMappingURL=Page.js.map;/// <reference path="scripts/typings/requirejs/require.d.ts" />
-var chitu;
+;
+//# sourceMappingURL=Page.js.map;var chitu;
 (function (chitu) {
     var ns = chitu;
     var e = ns.Errors;
@@ -1562,13 +1520,13 @@ var chitu;
             var self = this;
             var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
             var result = $.Deferred();
-            require([url], $.proxy(function (obj) {
+            requirejs([url], $.proxy(function (obj) {
                 //加载脚本失败
                 if (!obj) {
                     console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
                     obj = { func: function () { } };
                 }
-                var func = obj.func;
+                var func = obj.func || obj;
                 if (!$.isFunction(func))
                     throw ns.Errors.modelFileExpecteFunction(this.actionName);
                 var action = new Action(self, this.actionName, func);
@@ -1610,13 +1568,13 @@ var chitu;
             /// <returns type="jQuery.Deferred"/>
             if (!page)
                 throw e.argumentNull('page');
-            if (page._type != 'Page')
-                throw e.paramTypeError('page', 'Page');
+            //if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
             var result = this._handle.apply({}, [page]);
             return u.isDeferred(result) ? result : $.Deferred().resolve();
         };
         return Action;
     })();
+    chitu.Action = Action;
     function action(deps, filters, func) {
         /// <param name="deps" type="Array" canBeNull="true"/>
         /// <param name="filters" type="Array" canBeNull="true"/>
@@ -1675,11 +1633,12 @@ var chitu;
     chitu.action = action;
     ;
 })(chitu || (chitu = {}));
+;
 //# sourceMappingURL=Controller.js.map;var chitu;
 (function (chitu) {
     var ControllerContext = (function () {
         function ControllerContext(controller, view, routeData) {
-            this._routeData = new chitu.RouteData();
+            this._routeData = routeData;
             this._controller = controller;
             this._view = view;
             this._routeData = routeData;
@@ -1823,7 +1782,7 @@ var chitu;
                 var key = paramNames[i];
                 values[key] = data.params[0][key];
             }
-            var routeData = new chitu.RouteData();
+            var routeData = new chitu.RouteData(url);
             routeData.values(values);
             routeData.actionPath(data.route.newRoute.actionPath);
             routeData.viewPath(data.route.newRoute.viewPath);
@@ -1837,7 +1796,8 @@ var chitu;
 //# sourceMappingURL=RouteCollection.js.map;var chitu;
 (function (chitu) {
     var RouteData = (function () {
-        function RouteData() {
+        function RouteData(url) {
+            this._url = url;
         }
         RouteData.prototype.values = function (value) {
             if (value === void 0) { value = undefined; }
@@ -1857,10 +1817,20 @@ var chitu;
                 this._actionPath = value;
             return this._actionPath;
         };
+        RouteData.prototype.pageName = function (value) {
+            if (value === void 0) { value = undefined; }
+            if (value !== undefined)
+                this._pageName = value;
+            return this._pageName;
+        };
+        RouteData.prototype.url = function () {
+            return this._url;
+        };
         return RouteData;
     })();
     chitu.RouteData = RouteData;
 })(chitu || (chitu = {}));
+;
 //# sourceMappingURL=RouteData.js.map;var chitu;
 (function (chitu) {
     var e = chitu.Errors;
@@ -1939,43 +1909,29 @@ var chitu;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
     var Application = (function () {
-        function Application(container) {
+        function Application(config) {
             this.pageCreating = ns.Callbacks();
             this.pageCreated = ns.Callbacks();
-            this.pageShowing = ns.Callbacks();
-            this.pageShown = ns.Callbacks();
-            this._pages = {};
-            this._runned = false;
-            if (container == null)
-                throw e.argumentNull('container');
-            if (!container.tagName)
-                throw new Error('Parameter container is not a html element.');
-            //if (!func) throw e.argumentNull('func');
-            //if (!$.isFunction(func)) throw e.paramTypeError('func', 'Function');
-            //var options = {
-            //    container: document.body,
-            //    routes: new ns.RouteCollection()
-            //};
-            //$.proxy(func, this)(options);
-            this.controllerFactory = new ns.ControllerFactory();
-            this.viewFactory = new ns.ViewFactory();
-            this._pages = {};
-            this._stack = [];
+            this.page_stack = [];
             this._routes = new chitu.RouteCollection();
-            this._container = container;
+            this._runned = false;
+            this.controllerFactory = new chitu.ControllerFactory();
+            this.viewFactory = new chitu.ViewFactory();
+            if (config == null)
+                throw e.argumentNull('container');
+            if (!config['container']) {
+                throw new Error('The config has not a container property.');
+            }
+            if (!$.isFunction(config['container']) && !config['container'].tagName)
+                throw new Error('Parameter container is not a function or html element.');
+            this._container = config['container'];
         }
-        ;
         Application.prototype.on_pageCreating = function (context) {
-            this.pageCreating.fire(this, context);
+            return ns.fireCallback(this.pageCreating, [this, context]);
         };
         Application.prototype.on_pageCreated = function (page) {
-            this.pageCreated.fire(this, page);
-        };
-        Application.prototype.on_pageShowing = function (page, args) {
-            this.pageShowing.fire(this, page, args);
-        };
-        Application.prototype.on_pageShown = function (page, args) {
-            this.pageShown.fire(page, args);
+            //this.pageCreated.fire(this, page);
+            return ns.fireCallback(this.pageCreated, [this, page]);
         };
         Application.prototype.routes = function () {
             return this._routes;
@@ -1988,6 +1944,16 @@ var chitu;
             if (!routeData)
                 throw e.argumentNull('routeData');
             return this.controllerFactory.getController(routeData);
+        };
+        Application.prototype.currentPage = function () {
+            if (this.page_stack.length > 0)
+                return this.page_stack[this.page_stack.length - 1];
+            return null;
+        };
+        Application.prototype.previousPage = function () {
+            if (this.page_stack.length > 1)
+                return this.page_stack[this.page_stack.length - 2];
+            return null;
         };
         Application.prototype.action = function (routeData) {
             /// <param name="routeData" type="Object"/>
@@ -2008,75 +1974,121 @@ var chitu;
             var controller = this.controller(routeData);
             return controller.action(actionName);
         };
+        Application.prototype.hashchange = function () {
+            var hash = window.location.hash;
+            if (!hash) {
+                u.log('The url is not contains hash.');
+                return;
+            }
+            if (this.previousPage() != null && this.previousPage().context().routeData().url() == hash.substr(1)) {
+                this.closeCurrentPage();
+            }
+            else {
+                var args = window.location['arguments'] || {};
+                window.location['arguments'] = null;
+                this.showPage(hash.substr(1), args);
+                window.location['skip'] = false;
+            }
+        };
         Application.prototype.run = function () {
             if (this._runned)
                 return;
             var app = this;
-            var hashchange = function (event) {
-                var hash = window.location.hash;
-                if (!hash) {
-                    u.log('The url is not contains hash.');
-                    return;
-                }
-                var args = window.location['arguments'] || {};
-                var container = window.location['container'] || app._container;
-                window.location['arguments'] = null;
-                window.location['container'] = null;
-                if (window.location['skip'] == null || window.location['skip'] == false)
-                    app.showPageAt(container, hash.substr(1), args);
-                window.location['skip'] = false;
-            };
-            $.proxy(hashchange, this)();
-            $(window).bind('hashchange', $.proxy(hashchange, this));
+            $.proxy(this.hashchange, this)();
+            $(window).bind('hashchange', $.proxy(this.hashchange, this));
             this._runned = true;
         };
-        Application.prototype.showPageAt = function (element, url, args) {
-            /// <param name="element" type="HTMLElement" canBeNull="false"/>
+        Application.prototype.showPage = function (url, args) {
+            /// <param name="container" type="HTMLElement" canBeNull="false"/>
             /// <param name="url" type="String" canBeNull="false"/>
             /// <param name="args" type="object" canBeNull="true"/>
             /// <returns type="jQuery.Deferred"/>
+            var _this = this;
             args = args || {};
-            if (!element)
-                throw e.argumentNull('element');
             if (!url)
                 throw e.argumentNull('url');
-            var self = this;
-            var pc = $(element).data('PageContainer');
-            if (pc == null) {
-                pc = new ns.PageContainer(this, element);
-                pc.pageCreating.add(function (sender, context) {
-                    self.on_pageCreating(context);
-                });
-                pc.pageCreated.add(function (sender, page) {
-                    self.on_pageCreated(page);
-                });
-                pc.pageShowing.add(function (sender, page, args) {
-                    self.on_pageShowing(page, args);
-                });
-                pc.pageShown.add(function (sender, page, args) {
-                    self.on_pageShown(page, args);
-                });
-                $(element).data('PageContainer', pc);
+            var routeData = this.routes().getRouteData(url);
+            if (routeData == null) {
+                throw e.noneRouteMatched(url);
             }
-            var self = this;
-            return pc.showPage(url, args);
+            //================================================================
+            // 判断是为返回操作
+            var name = chitu.Page.getPageName(routeData);
+            if (this.previousPage() != null && (this.previousPage().name() == name)) {
+            }
+            var container;
+            if ($.isFunction(this._container)) {
+                container = this._container(routeData.values());
+                if (container == null)
+                    throw new Error('The result of continer function cannt be null');
+            }
+            else {
+                container = this._container;
+            }
+            var page = this._createPage(url, container);
+            this.page_stack.push(page);
+            $.extend(args, routeData.values());
+            var result = $.Deferred();
+            page.open(args)
+                .done(function () {
+                result.resolve();
+                var f = function () {
+                    if (_this.previousPage())
+                        _this.previousPage().hide();
+                    page.shown.remove(f);
+                };
+                page.shown.add(f);
+            })
+                .fail(function (error) {
+                result.reject(_this, error);
+            });
+            return result;
         };
-        Application.prototype.showPage = function (url, args) {
-            /// <param name="url" type="String" canBeNull="true"/>
-            /// <param name="args" type="object" canBeNull="true"/>
-            /// <returns type="jQuery.Deferred"/>
-            return this.showPageAt(this._container, url, args);
+        Application.prototype.createPageNode = function () {
+            var element = document.createElement('div');
+            return element;
+        };
+        Application.prototype.closeCurrentPage = function () {
+            if (this.currentPage() != null) {
+                this.currentPage().close();
+                if (this.previousPage() != null)
+                    this.previousPage().show();
+                this.page_stack.pop();
+            }
+        };
+        Application.prototype._createPage = function (url, container) {
+            if (!url)
+                throw e.argumentNull('url');
+            if (!container)
+                throw e.argumentNull('element');
+            var routeData = this.routes().getRouteData(url);
+            if (routeData == null) {
+                throw e.noneRouteMatched(url);
+            }
+            var controllerName = routeData.values().controller;
+            var actionName = routeData.values().action;
+            var controller = this.controller(routeData);
+            var view_deferred = this.viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
+            var context = new ns.ControllerContext(controller, view_deferred, routeData);
+            this.on_pageCreating(context);
+            var page = new ns.Page(context, container);
+            this.on_pageCreated(page);
+            return page;
         };
         Application.prototype.redirect = function (url, args) {
+            if (args === void 0) { args = {}; }
             window.location['arguments'] = args;
             window.location.hash = url;
         };
         Application.prototype.back = function (args) {
+            if (args === void 0) { args = undefined; }
             /// <returns type="jQuery.Deferred"/>
-            var pc = $(this._container).data('PageContainer');
-            if (pc == null)
+            if (window.history.length == 0)
                 return $.Deferred().reject();
-            return pc.back(args);
+            window.location['skip'] = true;
+            window.history.back();
+            this._currentPage.close();
+            return $.Deferred().resolve();
         };
         return Application;
     })();

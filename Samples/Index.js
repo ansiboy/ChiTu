@@ -1,15 +1,29 @@
 ﻿require.config({
     baseUrl: 'Scripts',
+    shim: {
+        chitu: {
+            deps: ['move']
+        }
+    },
     paths: {
         jquery: 'jquery-2.1.1.min',
         crossroads: 'crossroads'
     }
 });
-requirejs(['chitu'], function () {
-    var app = new chitu.Application(document.body);
+requirejs(['chitu', 'move'], function (c, move) {
+    window['move'] = move;
+    var app = new chitu.Application({
+        container: document.body
+    });
     //function (options) {
     //options.actionPath = 'http://localhost:62632/Modules/{controller}/{action}.js';
     //options.viewPath = 'http://localhost:62632/Modules/{controller}/{action}.html';
+
+
+
+    app.pageCreated.add(function (sender, page) {
+
+    });
 
     app.routes().mapRoute({
         name: 'default',
