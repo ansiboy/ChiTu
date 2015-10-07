@@ -34,6 +34,7 @@
      * @api public
      */
     end();
+    end(func: Function);
 
     /**
      * Translate `x` and `y` axis.
@@ -43,7 +44,9 @@
      * @return {Move} for chaining
      * @api public
      */
-    to(x: number, y: number);
+    to(x: number, y: number): Move;
+    to(x: number): Move;
+
 
     /**
      * Translate on the x axis to `n`.
@@ -80,9 +83,8 @@
 }
 
 //declare module "move" {
- //var move = function(selector: string | HTMLElement){};
 
-//    export = move;
+declare function move(selector: string | HTMLElement): Move;
+
+    //export = move;
 //}
-
-//function move(selector: string|HTMLElement);

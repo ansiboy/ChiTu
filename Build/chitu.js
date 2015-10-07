@@ -1144,6 +1144,7 @@ window['crossroads'] = factory(window['jQuery']);
     var PAGE_BODY_CLASS_NAME = 'page-body';
     var PAGE_FOOTER_CLASS_NAME = 'page-footer';
     var PAGE_LOADING_CLASS_NAME = 'page-loading';
+    var PAGE_CONTENT_CLASS_NAME = 'page-content';
     //var zindex: number;
     var ShowTypes;
     (function (ShowTypes) {
@@ -1163,39 +1164,43 @@ window['crossroads'] = factory(window['jQuery']);
         PageStatus[PageStatus["open"] = 0] = "open";
         PageStatus[PageStatus["closed"] = 1] = "closed";
     })(PageStatus || (PageStatus = {}));
-    var PageNode = (function () {
-        function PageNode(node) {
+    var PageNodes = (function () {
+        function PageNodes(node) {
             node.className = PAGE_CLASS_NAME;
-            this.node = node;
-            this.headerNode = document.createElement('div');
-            this.headerNode.className = PAGE_HEADER_CLASS_NAME;
+            this.container = node;
+            this.header = document.createElement('div');
+            this.header.className = PAGE_HEADER_CLASS_NAME;
             //this.headerNode.style.display = 'none';
-            node.appendChild(this.headerNode);
-            this.bodyNode = document.createElement('div');
-            this.bodyNode.className = PAGE_BODY_CLASS_NAME;
-            $(this.bodyNode).hide();
-            node.appendChild(this.bodyNode);
-            this.loadingNode = document.createElement('div');
-            this.loadingNode.className = PAGE_LOADING_CLASS_NAME;
-            this.loadingNode.innerHTML = '<div><i class="icon-spinner icon-spin"></i><div>';
-            $(this.loadingNode).hide();
-            node.appendChild(this.loadingNode);
-            this.footerNode = document.createElement('div');
-            this.footerNode.className = PAGE_FOOTER_CLASS_NAME;
+            node.appendChild(this.header);
+            this.body = document.createElement('div');
+            this.body.className = PAGE_BODY_CLASS_NAME;
+            $(this.body).hide();
+            node.appendChild(this.body);
+            this.content = document.createElement('div');
+            this.content.className = PAGE_CONTENT_CLASS_NAME;
+            this.body.appendChild(this.content);
+            this.loading = document.createElement('div');
+            this.loading.className = PAGE_LOADING_CLASS_NAME;
+            this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
+            $(this.loading).hide();
+            node.appendChild(this.loading);
+            this.footer = document.createElement('div');
+            this.footer.className = PAGE_FOOTER_CLASS_NAME;
             //this.footerNode.style.display = 'none';
-            node.appendChild(this.footerNode);
+            node.appendChild(this.footer);
         }
-        return PageNode;
+        return PageNodes;
     })();
     var Page = (function () {
-        function Page(context, container) {
+        function Page(context, container, previous) {
             //_node: HTMLElement;
             //_visible = true;
             this._loadViewModelResult = null;
             this._openResult = null;
             this._hideResult = null;
             this._showDelay = 100;
-            this._moveTime = 1000;
+            this._showTime = 600;
+            this._hideTime = 800;
             this.swipe = true;
             this.init = ns.Callbacks();
             this.preLoad = ns.Callbacks();
@@ -1211,13 +1216,9 @@ window['crossroads'] = factory(window['jQuery']);
                 throw e.argumentNull('context');
             if (!container)
                 throw e.argumentNull('container');
-            //if (!zindex) {
-            //    zindex = new Number(container.style.zIndex || '0').valueOf();
-            //    zindex = zindex + 1;
-            //}
             this._container = container;
+            this._prevous = previous;
             var element = document.createElement('div');
-            //element.style.zIndex = (zindex + 1).toString();
             container.appendChild(element);
             this._context = context;
             var controllerName = context.routeData().values().controller;
@@ -1225,7 +1226,7 @@ window['crossroads'] = factory(window['jQuery']);
             var name = Page.getPageName(context.routeData());
             var viewDeferred = context.view();
             var actionDeferred = context.controller().action(context.routeData());
-            this._pageNode = new PageNode(element);
+            this._pageNode = new PageNodes(element);
             this._init(name, viewDeferred, actionDeferred, element);
         }
         Page.getPageName = function (routeData) {
@@ -1248,92 +1249,113 @@ window['crossroads'] = factory(window['jQuery']);
         };
         Page.prototype.node = function () {
             /// <returns type="HTMLElement"/>
-            return this._pageNode.node;
+            return this._pageNode.container;
+        };
+        Page.prototype.nodes = function () {
+            return this._pageNode;
+        };
+        Page.prototype.previous = function () {
+            return this._prevous;
         };
         Page.prototype.hide = function () {
+            if (!$(this.node()).is(':visible'))
+                return;
             this.hidePageNode(false);
-            this.on_hidden({});
         };
         Page.prototype.show = function () {
-            this.on_showing({});
+            if ($(this.node()).is(':visible'))
+                return;
             this.showPageNode(false);
-            this.on_shown({});
         };
         Page.prototype.visible = function () {
             return $(this.node()).is(':visible');
         };
         Page.prototype.hidePageNode = function (swipe) {
             var _this = this;
-            if (swipe) {
-                var container_width = $(this._container).width();
-                var times = 1000;
-                //====================================================
-                // 说明：必须要 setTimeout，移动才有效。
-                window.setTimeout(function () {
-                    window['move'](_this.node()).set('left', container_width + 'px').duration(times).end();
-                }, 100);
-                //====================================================
-                setTimeout(function () {
-                    $(_this.node()).hide();
-                    _this.on_hidden({});
-                }, times);
-            }
-            else {
-                $(this.node()).hide();
-                this.on_hidden({});
-            }
-        };
-        Page.prototype.showPageNode = function (swipe) {
-            var _this = this;
             var result = $.Deferred();
             if (swipe) {
                 var container_width = $(this._container).width();
-                this.node().style.left = container_width + 'px';
-                this.node().style.display = 'block';
-                //var times = 1000;
+                //this.node().style.left = '0px';
                 //====================================================
                 // 说明：必须要 setTimeout，移动才有效。
-                window.setTimeout(function () {
-                    window['move'](_this.node()).set('left', '0px').duration(_this._moveTime).end();
-                    if (_this._openResult != null) {
-                        $(_this._pageNode.loadingNode).show();
-                        $(_this._pageNode.bodyNode).hide();
-                    }
-                    else {
-                        $(_this._pageNode.loadingNode).hide();
-                        $(_this._pageNode.bodyNode).show();
-                    }
-                }, this._showDelay);
-                //====================================================
-                window.setTimeout(function () {
+                //window.setTimeout(() => {
+                window['move'](this.node())
+                    .to(container_width)
+                    .duration(this._hideTime)
+                    .end(function () {
+                    $(_this.node()).hide();
                     result.resolve();
-                }, this._moveTime);
+                    _this.on_hidden({});
+                });
             }
             else {
-                this.node().style.display = 'block';
-                this.node().style.left = '0px';
-                if (this._openResult != null) {
-                    $(this._pageNode.loadingNode).show();
-                    $(this._pageNode.bodyNode).hide();
-                }
-                else {
-                    $(this._pageNode.loadingNode).hide();
-                    $(this._pageNode.bodyNode).show();
-                }
+                $(this.node()).hide();
                 result.resolve();
+                this.on_hidden({});
             }
             return result;
         };
-        Page.prototype.showBodyNode = function () {
-            $(this._pageNode.node).show();
-            $(this._pageNode.loadingNode).hide();
-            $(this._pageNode.bodyNode).show();
+        Page.prototype.showPageNode = function (swipe) {
+            var _this = this;
+            this.on_showing({});
+            var result = $.Deferred();
+            if (swipe) {
+                var container_width = $(this._container).width();
+                this.node().style.left = '0px';
+                this.node().style.display = 'block';
+                move(this.node()).to(container_width).duration(0).end();
+                //====================================================
+                // 说明：必须要 setTimeout，移动才有效。
+                //window.setTimeout(() => {
+                move(this.node())
+                    .to(0)
+                    .duration(this._showTime)
+                    .end(function () {
+                    result.resolve();
+                });
+                if (this._openResult != null) {
+                    $(this._pageNode.loading).show();
+                    $(this._pageNode.body).hide();
+                }
+                else {
+                    this.showBodyNode();
+                }
+            }
+            else {
+                this.node().style.display = 'block';
+                //==================================
+                // 说明：如果坐标是通过变换得到的，不能直接设置 left 位置
+                if (this.node().style.transform) {
+                    //window['move'](this.node()).to(0).duration(0);
+                    move(this.node()).to(0).duration(0);
+                }
+                else {
+                    this.node().style.left = '0px';
+                }
+                //==================================
+                if (this._openResult != null) {
+                    $(this._pageNode.loading).show();
+                    $(this._pageNode.body).hide();
+                }
+                else {
+                    this.showBodyNode();
+                }
+                result.resolve();
+            }
+            result.done(function () {
+                if (_this._prevous != null)
+                    _this._prevous.hide();
+            });
+            //this.setPageSize();
+            return result;
         };
-        //private showLoadingNode() {
-        //    $(this._pageNode.node).show();
-        //    $(this._pageNode.bodyNode).hide();
-        //    $(this._pageNode.loadingNode).show();
-        //}
+        Page.prototype.showBodyNode = function () {
+            $(this._pageNode.container).show();
+            $(this._pageNode.loading).hide();
+            $(this._pageNode.body).show();
+            //this.setPageSize();
+            this.on_shown({});
+        };
         Page.prototype._init = function (name, viewDeferred, actionDeferred, node) {
             if (!name)
                 throw e.argumentNull('name');
@@ -1356,8 +1378,8 @@ window['crossroads'] = factory(window['jQuery']);
         Page.prototype.on_closed = function (args) {
             return eventDeferred(this.closed, this, args);
         };
-        Page.prototype.on_scroll = function (event) {
-            return eventDeferred(this.scroll, this, event);
+        Page.prototype.on_scroll = function (args) {
+            return eventDeferred(this.scroll, this, args);
         };
         Page.prototype.on_showing = function (args) {
             return eventDeferred(this.showing, this, args);
@@ -1377,7 +1399,9 @@ window['crossroads'] = factory(window['jQuery']);
                 return this._loadViewModelResult;
             this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
                 u.log('Load view success, page:{0}.', [_this.name()]);
-                $(_this.node()).find('.' + PAGE_BODY_CLASS_NAME).html(html);
+                $(html).appendTo(_this.nodes().content);
+                $(_this.nodes().content).find('[ch-part="header"]').appendTo(_this.nodes().header);
+                $(_this.nodes().content).find('[ch-part="footer"]').appendTo(_this.nodes().footer);
                 return _this._actionDeferred;
             }).pipe(function (action) {
                 /// <param name="action" type="chitu.Action"/>
@@ -1392,7 +1416,7 @@ window['crossroads'] = factory(window['jQuery']);
             });
             return this._loadViewModelResult;
         };
-        Page.prototype.open = function (args) {
+        Page.prototype.open = function (values) {
             var _this = this;
             /// <summary>
             /// Show the page.
@@ -1403,9 +1427,9 @@ window['crossroads'] = factory(window['jQuery']);
             /// <returns type="jQuery.Deferred"/>
             if (this._openResult)
                 return this._openResult;
+            var args = values;
             this._openResult = $.Deferred();
             //var self = this;
-            this.on_showing(args);
             var pageNodeShown = this.showPageNode(this.swipe);
             this._loadViewModel()
                 .pipe(function () {
@@ -1414,12 +1438,9 @@ window['crossroads'] = factory(window['jQuery']);
                 .done(function () {
                 _this._openResult.resolve();
                 _this.showBodyNode();
-                pageNodeShown.done(function () {
-                    _this.on_shown(args);
-                });
             })
                 .fail(function () {
-                this._openResult.reject();
+                _this._openResult.reject();
             });
             return this._openResult.always(function () {
                 _this._openResult = null;
@@ -1435,11 +1456,10 @@ window['crossroads'] = factory(window['jQuery']);
             /// <returns type="jQuery.Deferred"/>
             var _this = this;
             if (args === void 0) { args = undefined; }
-            args = args || {};
-            this.hidden.add(function () {
+            this.hidePageNode(this.swipe).done(function () {
                 _this.node().remove();
             });
-            this.hidePageNode(this.swipe);
+            args = args || {};
             this.on_closed(args);
         };
         return Page;
@@ -1885,7 +1905,7 @@ window['crossroads'] = factory(window['jQuery']);
                     }, { deferred: this._views[viewName] }));
                 }
                 else {
-                    require(['text!' + url], $.proxy(function (html) {
+                    requirejs(['text!' + url], $.proxy(function (html) {
                         if (html != null)
                             this.deferred.resolve(html);
                         else
@@ -1906,6 +1926,8 @@ window['crossroads'] = factory(window['jQuery']);
     var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
+    //var zindex = 500;
+    var PAGE_STACK_MAX_SIZE = 10;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
     var Application = (function () {
@@ -1980,14 +2002,16 @@ window['crossroads'] = factory(window['jQuery']);
                 u.log('The url is not contains hash.');
                 return;
             }
-            if (this.previousPage() != null && this.previousPage().context().routeData().url() == hash.substr(1)) {
+            var current_page_url = '';
+            if (this.previousPage() != null)
+                current_page_url = this.previousPage().context().routeData().url();
+            if (current_page_url.toLowerCase() == hash.substr(1).toLowerCase()) {
                 this.closeCurrentPage();
             }
             else {
                 var args = window.location['arguments'] || {};
                 window.location['arguments'] = null;
                 this.showPage(hash.substr(1), args);
-                window.location['skip'] = false;
             }
         };
         Application.prototype.run = function () {
@@ -1997,6 +2021,13 @@ window['crossroads'] = factory(window['jQuery']);
             $.proxy(this.hashchange, this)();
             $(window).bind('hashchange', $.proxy(this.hashchange, this));
             this._runned = true;
+        };
+        Application.prototype.getCachePage = function (name) {
+            for (var i = this.page_stack.length - 1; i >= 0; i--) {
+                if (this.page_stack[i].name() == name)
+                    return this.page_stack[i];
+            }
+            return null;
         };
         Application.prototype.showPage = function (url, args) {
             /// <param name="container" type="HTMLElement" canBeNull="false"/>
@@ -2011,11 +2042,6 @@ window['crossroads'] = factory(window['jQuery']);
             if (routeData == null) {
                 throw e.noneRouteMatched(url);
             }
-            //================================================================
-            // 判断是为返回操作
-            var name = chitu.Page.getPageName(routeData);
-            if (this.previousPage() != null && (this.previousPage().name() == name)) {
-            }
             var container;
             if ($.isFunction(this._container)) {
                 container = this._container(routeData.values());
@@ -2025,19 +2051,18 @@ window['crossroads'] = factory(window['jQuery']);
             else {
                 container = this._container;
             }
-            var page = this._createPage(url, container);
+            var page = this._createPage(url, container, this.currentPage());
             this.page_stack.push(page);
+            console.log('page_stack lenght:' + this.page_stack.length);
+            if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
+                var p = this.page_stack.shift();
+                p.close();
+            }
             $.extend(args, routeData.values());
             var result = $.Deferred();
             page.open(args)
                 .done(function () {
                 result.resolve();
-                var f = function () {
-                    if (_this.previousPage())
-                        _this.previousPage().hide();
-                    page.shown.remove(f);
-                };
-                page.shown.add(f);
             })
                 .fail(function (error) {
                 result.reject(_this, error);
@@ -2049,14 +2074,17 @@ window['crossroads'] = factory(window['jQuery']);
             return element;
         };
         Application.prototype.closeCurrentPage = function () {
-            if (this.currentPage() != null) {
-                this.currentPage().close();
-                if (this.previousPage() != null)
-                    this.previousPage().show();
+            var current = this.currentPage();
+            var previous = this.previousPage();
+            if (current != null) {
+                current.close();
+                if (previous != null)
+                    previous.show();
                 this.page_stack.pop();
+                console.log('page_stack lenght:' + this.page_stack.length);
             }
         };
-        Application.prototype._createPage = function (url, container) {
+        Application.prototype._createPage = function (url, container, previous) {
             if (!url)
                 throw e.argumentNull('url');
             if (!container)
@@ -2071,7 +2099,7 @@ window['crossroads'] = factory(window['jQuery']);
             var view_deferred = this.viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
             var context = new ns.ControllerContext(controller, view_deferred, routeData);
             this.on_pageCreating(context);
-            var page = new ns.Page(context, container);
+            var page = new ns.Page(context, container, previous);
             this.on_pageCreated(page);
             return page;
         };
@@ -2085,9 +2113,7 @@ window['crossroads'] = factory(window['jQuery']);
             /// <returns type="jQuery.Deferred"/>
             if (window.history.length == 0)
                 return $.Deferred().reject();
-            window.location['skip'] = true;
             window.history.back();
-            this._currentPage.close();
             return $.Deferred().resolve();
         };
         return Application;

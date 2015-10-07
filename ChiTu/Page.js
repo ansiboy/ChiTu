@@ -13,6 +13,7 @@ var chitu;
     var PAGE_BODY_CLASS_NAME = 'page-body';
     var PAGE_FOOTER_CLASS_NAME = 'page-footer';
     var PAGE_LOADING_CLASS_NAME = 'page-loading';
+    var PAGE_CONTENT_CLASS_NAME = 'page-content';
     //var zindex: number;
     var ShowTypes;
     (function (ShowTypes) {
@@ -32,39 +33,43 @@ var chitu;
         PageStatus[PageStatus["open"] = 0] = "open";
         PageStatus[PageStatus["closed"] = 1] = "closed";
     })(PageStatus || (PageStatus = {}));
-    var PageNode = (function () {
-        function PageNode(node) {
+    var PageNodes = (function () {
+        function PageNodes(node) {
             node.className = PAGE_CLASS_NAME;
-            this.node = node;
-            this.headerNode = document.createElement('div');
-            this.headerNode.className = PAGE_HEADER_CLASS_NAME;
+            this.container = node;
+            this.header = document.createElement('div');
+            this.header.className = PAGE_HEADER_CLASS_NAME;
             //this.headerNode.style.display = 'none';
-            node.appendChild(this.headerNode);
-            this.bodyNode = document.createElement('div');
-            this.bodyNode.className = PAGE_BODY_CLASS_NAME;
-            $(this.bodyNode).hide();
-            node.appendChild(this.bodyNode);
-            this.loadingNode = document.createElement('div');
-            this.loadingNode.className = PAGE_LOADING_CLASS_NAME;
-            this.loadingNode.innerHTML = '<div><i class="icon-spinner icon-spin"></i><div>';
-            $(this.loadingNode).hide();
-            node.appendChild(this.loadingNode);
-            this.footerNode = document.createElement('div');
-            this.footerNode.className = PAGE_FOOTER_CLASS_NAME;
+            node.appendChild(this.header);
+            this.body = document.createElement('div');
+            this.body.className = PAGE_BODY_CLASS_NAME;
+            $(this.body).hide();
+            node.appendChild(this.body);
+            this.content = document.createElement('div');
+            this.content.className = PAGE_CONTENT_CLASS_NAME;
+            this.body.appendChild(this.content);
+            this.loading = document.createElement('div');
+            this.loading.className = PAGE_LOADING_CLASS_NAME;
+            this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
+            $(this.loading).hide();
+            node.appendChild(this.loading);
+            this.footer = document.createElement('div');
+            this.footer.className = PAGE_FOOTER_CLASS_NAME;
             //this.footerNode.style.display = 'none';
-            node.appendChild(this.footerNode);
+            node.appendChild(this.footer);
         }
-        return PageNode;
+        return PageNodes;
     })();
     var Page = (function () {
-        function Page(context, container) {
+        function Page(context, container, previous) {
             //_node: HTMLElement;
             //_visible = true;
             this._loadViewModelResult = null;
             this._openResult = null;
             this._hideResult = null;
             this._showDelay = 100;
-            this._moveTime = 1000;
+            this._showTime = 600;
+            this._hideTime = 800;
             this.swipe = true;
             this.init = ns.Callbacks();
             this.preLoad = ns.Callbacks();
@@ -80,13 +85,9 @@ var chitu;
                 throw e.argumentNull('context');
             if (!container)
                 throw e.argumentNull('container');
-            //if (!zindex) {
-            //    zindex = new Number(container.style.zIndex || '0').valueOf();
-            //    zindex = zindex + 1;
-            //}
             this._container = container;
+            this._prevous = previous;
             var element = document.createElement('div');
-            //element.style.zIndex = (zindex + 1).toString();
             container.appendChild(element);
             this._context = context;
             var controllerName = context.routeData().values().controller;
@@ -94,7 +95,7 @@ var chitu;
             var name = Page.getPageName(context.routeData());
             var viewDeferred = context.view();
             var actionDeferred = context.controller().action(context.routeData());
-            this._pageNode = new PageNode(element);
+            this._pageNode = new PageNodes(element);
             this._init(name, viewDeferred, actionDeferred, element);
         }
         Page.getPageName = function (routeData) {
@@ -117,92 +118,113 @@ var chitu;
         };
         Page.prototype.node = function () {
             /// <returns type="HTMLElement"/>
-            return this._pageNode.node;
+            return this._pageNode.container;
+        };
+        Page.prototype.nodes = function () {
+            return this._pageNode;
+        };
+        Page.prototype.previous = function () {
+            return this._prevous;
         };
         Page.prototype.hide = function () {
+            if (!$(this.node()).is(':visible'))
+                return;
             this.hidePageNode(false);
-            this.on_hidden({});
         };
         Page.prototype.show = function () {
-            this.on_showing({});
+            if ($(this.node()).is(':visible'))
+                return;
             this.showPageNode(false);
-            this.on_shown({});
         };
         Page.prototype.visible = function () {
             return $(this.node()).is(':visible');
         };
         Page.prototype.hidePageNode = function (swipe) {
             var _this = this;
-            if (swipe) {
-                var container_width = $(this._container).width();
-                var times = 1000;
-                //====================================================
-                // 说明：必须要 setTimeout，移动才有效。
-                window.setTimeout(function () {
-                    window['move'](_this.node()).set('left', container_width + 'px').duration(times).end();
-                }, 100);
-                //====================================================
-                setTimeout(function () {
-                    $(_this.node()).hide();
-                    _this.on_hidden({});
-                }, times);
-            }
-            else {
-                $(this.node()).hide();
-                this.on_hidden({});
-            }
-        };
-        Page.prototype.showPageNode = function (swipe) {
-            var _this = this;
             var result = $.Deferred();
             if (swipe) {
                 var container_width = $(this._container).width();
-                this.node().style.left = container_width + 'px';
-                this.node().style.display = 'block';
-                //var times = 1000;
+                //this.node().style.left = '0px';
                 //====================================================
                 // 说明：必须要 setTimeout，移动才有效。
-                window.setTimeout(function () {
-                    window['move'](_this.node()).set('left', '0px').duration(_this._moveTime).end();
-                    if (_this._openResult != null) {
-                        $(_this._pageNode.loadingNode).show();
-                        $(_this._pageNode.bodyNode).hide();
-                    }
-                    else {
-                        $(_this._pageNode.loadingNode).hide();
-                        $(_this._pageNode.bodyNode).show();
-                    }
-                }, this._showDelay);
-                //====================================================
-                window.setTimeout(function () {
+                //window.setTimeout(() => {
+                window['move'](this.node())
+                    .to(container_width)
+                    .duration(this._hideTime)
+                    .end(function () {
+                    $(_this.node()).hide();
                     result.resolve();
-                }, this._moveTime);
+                    _this.on_hidden({});
+                });
             }
             else {
-                this.node().style.display = 'block';
-                this.node().style.left = '0px';
-                if (this._openResult != null) {
-                    $(this._pageNode.loadingNode).show();
-                    $(this._pageNode.bodyNode).hide();
-                }
-                else {
-                    $(this._pageNode.loadingNode).hide();
-                    $(this._pageNode.bodyNode).show();
-                }
+                $(this.node()).hide();
                 result.resolve();
+                this.on_hidden({});
             }
             return result;
         };
-        Page.prototype.showBodyNode = function () {
-            $(this._pageNode.node).show();
-            $(this._pageNode.loadingNode).hide();
-            $(this._pageNode.bodyNode).show();
+        Page.prototype.showPageNode = function (swipe) {
+            var _this = this;
+            this.on_showing({});
+            var result = $.Deferred();
+            if (swipe) {
+                var container_width = $(this._container).width();
+                this.node().style.left = '0px';
+                this.node().style.display = 'block';
+                move(this.node()).to(container_width).duration(0).end();
+                //====================================================
+                // 说明：必须要 setTimeout，移动才有效。
+                //window.setTimeout(() => {
+                move(this.node())
+                    .to(0)
+                    .duration(this._showTime)
+                    .end(function () {
+                    result.resolve();
+                });
+                if (this._openResult != null) {
+                    $(this._pageNode.loading).show();
+                    $(this._pageNode.body).hide();
+                }
+                else {
+                    this.showBodyNode();
+                }
+            }
+            else {
+                this.node().style.display = 'block';
+                //==================================
+                // 说明：如果坐标是通过变换得到的，不能直接设置 left 位置
+                if (this.node().style.transform) {
+                    //window['move'](this.node()).to(0).duration(0);
+                    move(this.node()).to(0).duration(0);
+                }
+                else {
+                    this.node().style.left = '0px';
+                }
+                //==================================
+                if (this._openResult != null) {
+                    $(this._pageNode.loading).show();
+                    $(this._pageNode.body).hide();
+                }
+                else {
+                    this.showBodyNode();
+                }
+                result.resolve();
+            }
+            result.done(function () {
+                if (_this._prevous != null)
+                    _this._prevous.hide();
+            });
+            //this.setPageSize();
+            return result;
         };
-        //private showLoadingNode() {
-        //    $(this._pageNode.node).show();
-        //    $(this._pageNode.bodyNode).hide();
-        //    $(this._pageNode.loadingNode).show();
-        //}
+        Page.prototype.showBodyNode = function () {
+            $(this._pageNode.container).show();
+            $(this._pageNode.loading).hide();
+            $(this._pageNode.body).show();
+            //this.setPageSize();
+            this.on_shown({});
+        };
         Page.prototype._init = function (name, viewDeferred, actionDeferred, node) {
             if (!name)
                 throw e.argumentNull('name');
@@ -225,8 +247,8 @@ var chitu;
         Page.prototype.on_closed = function (args) {
             return eventDeferred(this.closed, this, args);
         };
-        Page.prototype.on_scroll = function (event) {
-            return eventDeferred(this.scroll, this, event);
+        Page.prototype.on_scroll = function (args) {
+            return eventDeferred(this.scroll, this, args);
         };
         Page.prototype.on_showing = function (args) {
             return eventDeferred(this.showing, this, args);
@@ -240,13 +262,15 @@ var chitu;
         Page.prototype.on_hidden = function (args) {
             return eventDeferred(this.hidden, this, args);
         };
-        Page.prototype._loadViewModel = function () {
+        Page.prototype._loadViewAndModel = function () {
             var _this = this;
             if (this._loadViewModelResult)
                 return this._loadViewModelResult;
             this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
                 u.log('Load view success, page:{0}.', [_this.name()]);
-                $(_this.node()).find('.' + PAGE_BODY_CLASS_NAME).html(html);
+                $(html).appendTo(_this.nodes().content);
+                $(_this.nodes().content).find('[ch-part="header"]').appendTo(_this.nodes().header);
+                $(_this.nodes().content).find('[ch-part="footer"]').appendTo(_this.nodes().footer);
                 return _this._actionDeferred;
             }).pipe(function (action) {
                 /// <param name="action" type="chitu.Action"/>
@@ -275,21 +299,17 @@ var chitu;
             var args = values;
             this._openResult = $.Deferred();
             //var self = this;
-            this.on_showing(args);
             var pageNodeShown = this.showPageNode(this.swipe);
-            this._loadViewModel()
+            this._loadViewAndModel()
                 .pipe(function () {
                 return _this.on_load(args);
             })
                 .done(function () {
                 _this._openResult.resolve();
                 _this.showBodyNode();
-                pageNodeShown.done(function () {
-                    _this.on_shown(args);
-                });
             })
                 .fail(function () {
-                this._openResult.reject();
+                _this._openResult.reject();
             });
             return this._openResult.always(function () {
                 _this._openResult = null;
@@ -305,11 +325,10 @@ var chitu;
             /// <returns type="jQuery.Deferred"/>
             var _this = this;
             if (args === void 0) { args = undefined; }
-            args = args || {};
-            this.hidden.add(function () {
+            this.hidePageNode(this.swipe).done(function () {
                 _this.node().remove();
             });
-            this.hidePageNode(this.swipe);
+            args = args || {};
             this.on_closed(args);
         };
         return Page;
