@@ -3,6 +3,8 @@ var chitu;
     var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
+    //var zindex = 500;
+    var PAGE_STACK_MAX_SIZE = 10;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
     var Application = (function () {
@@ -77,14 +79,16 @@ var chitu;
                 u.log('The url is not contains hash.');
                 return;
             }
-            if (this.previousPage() != null && this.previousPage().context().routeData().url() == hash.substr(1)) {
+            var current_page_url = '';
+            if (this.previousPage() != null)
+                current_page_url = this.previousPage().context().routeData().url();
+            if (current_page_url.toLowerCase() == hash.substr(1).toLowerCase()) {
                 this.closeCurrentPage();
             }
             else {
                 var args = window.location['arguments'] || {};
                 window.location['arguments'] = null;
                 this.showPage(hash.substr(1), args);
-                window.location['skip'] = false;
             }
         };
         Application.prototype.run = function () {
@@ -108,11 +112,6 @@ var chitu;
             if (routeData == null) {
                 throw e.noneRouteMatched(url);
             }
-            //================================================================
-            // 判断是为返回操作
-            var name = chitu.Page.getPageName(routeData);
-            if (this.previousPage() != null && (this.previousPage().name() == name)) {
-            }
             var container;
             if ($.isFunction(this._container)) {
                 container = this._container(routeData.values());
@@ -122,19 +121,18 @@ var chitu;
             else {
                 container = this._container;
             }
-            var page = this._createPage(url, container);
+            var page = this._createPage(url, container, this.currentPage());
             this.page_stack.push(page);
+            console.log('page_stack lenght:' + this.page_stack.length);
+            if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
+                var p = this.page_stack.shift();
+                p.close();
+            }
             $.extend(args, routeData.values());
             var result = $.Deferred();
             page.open(args)
                 .done(function () {
                 result.resolve();
-                var f = function () {
-                    if (_this.previousPage())
-                        _this.previousPage().hide();
-                    page.shown.remove(f);
-                };
-                page.shown.add(f);
             })
                 .fail(function (error) {
                 result.reject(_this, error);
@@ -146,14 +144,17 @@ var chitu;
             return element;
         };
         Application.prototype.closeCurrentPage = function () {
-            if (this.currentPage() != null) {
-                this.currentPage().close();
-                if (this.previousPage() != null)
-                    this.previousPage().show();
+            var current = this.currentPage();
+            var previous = this.previousPage();
+            if (current != null) {
+                current.close();
+                if (previous != null)
+                    previous.show();
                 this.page_stack.pop();
+                console.log('page_stack lenght:' + this.page_stack.length);
             }
         };
-        Application.prototype._createPage = function (url, container) {
+        Application.prototype._createPage = function (url, container, previous) {
             if (!url)
                 throw e.argumentNull('url');
             if (!container)
@@ -168,7 +169,7 @@ var chitu;
             var view_deferred = this.viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
             var context = new ns.ControllerContext(controller, view_deferred, routeData);
             this.on_pageCreating(context);
-            var page = new ns.Page(context, container);
+            var page = new ns.Page(context, container, previous);
             this.on_pageCreated(page);
             return page;
         };
@@ -182,9 +183,7 @@ var chitu;
             /// <returns type="jQuery.Deferred"/>
             if (window.history.length == 0)
                 return $.Deferred().reject();
-            window.location['skip'] = true;
             window.history.back();
-            this._currentPage.close();
             return $.Deferred().resolve();
         };
         return Application;

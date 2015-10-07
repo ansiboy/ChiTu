@@ -3,7 +3,8 @@
     var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
-
+    //var zindex = 500;
+    var PAGE_STACK_MAX_SIZE = 10;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
@@ -16,8 +17,6 @@
         private _routes: chitu.RouteCollection = new RouteCollection();
         private _container: HTMLElement|Function;
         private _runned: boolean = false;
-        private _currentPage: chitu.Page;
-
 
         private zindex: number;
 
@@ -99,7 +98,11 @@
                 return;
             }
 
-            if (this.previousPage() != null && this.previousPage().context().routeData().url() == hash.substr(1)) {
+            var current_page_url: string = '';
+            if (this.previousPage() != null)
+                current_page_url = this.previousPage().context().routeData().url();
+
+            if (current_page_url.toLowerCase() == hash.substr(1).toLowerCase()) {
                 this.closeCurrentPage();
             }
             else {
@@ -107,8 +110,6 @@
                 window.location['arguments'] = null;
 
                 this.showPage(hash.substr(1), args);
-
-                window.location['skip'] = false;
             }
 
         }
@@ -139,13 +140,6 @@
                 throw e.noneRouteMatched(url);
             }
 
-            //================================================================
-            // 判断是为返回操作
-            var name = Page.getPageName(routeData);
-            if (this.previousPage() != null && (this.previousPage().name() == name)) {
-            }
-
-
             var container: HTMLElement;
             if ($.isFunction(this._container)) {
                 container = (<Function>this._container)(routeData.values());
@@ -156,22 +150,19 @@
                 container = <HTMLElement>this._container;
             }
 
-            var page = this._createPage(url, container);
+            var page = this._createPage(url, container, this.currentPage());
             this.page_stack.push(page);
-
-
+            console.log('page_stack lenght:' + this.page_stack.length);
+            if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
+                var p = this.page_stack.shift();
+                p.close();
+            }
+            
             $.extend(args, routeData.values());
             var result = $.Deferred();
             page.open(args)
                 .done(() => {
                     result.resolve();
-                    var f = () => {
-                        if (this.previousPage())
-                            this.previousPage().hide();
-
-                        page.shown.remove(f);
-                    }
-                    page.shown.add(f);
                 })
                 .fail((error) => {
                     result.reject(this, error);
@@ -184,15 +175,20 @@
             return element;
         }
         private closeCurrentPage() {
-            if (this.currentPage() != null) {
-                this.currentPage().close();
-                if (this.previousPage() != null)
-                    this.previousPage().show();
+            var current = this.currentPage();
+            var previous = this.previousPage();
+
+            if (current != null) {
+                current.close();
+
+                if (previous != null)
+                    previous.show();
 
                 this.page_stack.pop();
+                console.log('page_stack lenght:' + this.page_stack.length);
             }
         }
-        private _createPage(url: string, container: HTMLElement) {
+        private _createPage(url: string, container: HTMLElement, previous: chitu.Page) {
             if (!url)
                 throw e.argumentNull('url');
 
@@ -211,7 +207,7 @@
             var context = new ns.ControllerContext(controller, view_deferred, routeData);
 
             this.on_pageCreating(context);
-            var page = new ns.Page(context, container);
+            var page = new ns.Page(context, container, previous);
             this.on_pageCreated(page);
             return page;
         }
@@ -224,13 +220,7 @@
             if (window.history.length == 0)
                 return $.Deferred().reject();
 
-            window.location['skip'] = true;
             window.history.back();
-
-
-            this._currentPage.close();
-
-
             return $.Deferred().resolve();
         }
     }

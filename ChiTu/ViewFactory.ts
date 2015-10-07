@@ -68,7 +68,7 @@
                     //=======================================================
                 }
                 else {
-                    require(['text!' + url],
+                    requirejs(['text!' + url],
                         $.proxy(function (html) {
                             if (html != null)
                                 this.deferred.resolve(html);

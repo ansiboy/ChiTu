@@ -15,7 +15,7 @@ module chitu {
     const PAGE_BODY_CLASS_NAME = 'page-body';
     const PAGE_FOOTER_CLASS_NAME = 'page-footer';
     const PAGE_LOADING_CLASS_NAME = 'page-loading';
-
+    const PAGE_CONTENT_CLASS_NAME = 'page-content';
     //var zindex: number;
 
     enum ShowTypes {
@@ -36,38 +36,42 @@ module chitu {
         closed
     }
 
-    class PageNode {
-        node: HTMLElement
-        headerNode: HTMLElement
-        bodyNode: HTMLElement
-        footerNode: HTMLElement
-        loadingNode: HTMLElement
+    class PageNodes {
+        container: HTMLElement
+        header: HTMLElement
+        body: HTMLElement
+        footer: HTMLElement
+        loading: HTMLElement
+        content: HTMLElement
 
         constructor(node: HTMLElement) {
             node.className = PAGE_CLASS_NAME;
-            this.node = node;
+            this.container = node;
 
-            this.headerNode = document.createElement('div');
-            this.headerNode.className = PAGE_HEADER_CLASS_NAME;
+            this.header = document.createElement('div');
+            this.header.className = PAGE_HEADER_CLASS_NAME;
             //this.headerNode.style.display = 'none';
-            node.appendChild(this.headerNode);
+            node.appendChild(this.header);
 
+            this.body = document.createElement('div');
+            this.body.className = PAGE_BODY_CLASS_NAME;
+            $(this.body).hide();
+            node.appendChild(this.body);
 
-            this.bodyNode = document.createElement('div');
-            this.bodyNode.className = PAGE_BODY_CLASS_NAME;
-            $(this.bodyNode).hide();
-            node.appendChild(this.bodyNode);
+            this.content = document.createElement('div');
+            this.content.className = PAGE_CONTENT_CLASS_NAME;
+            this.body.appendChild(this.content);
 
-            this.loadingNode = document.createElement('div');
-            this.loadingNode.className = PAGE_LOADING_CLASS_NAME;
-            this.loadingNode.innerHTML = '<div><i class="icon-spinner icon-spin"></i><div>';
-            $(this.loadingNode).hide();
-            node.appendChild(this.loadingNode);
+            this.loading = document.createElement('div');
+            this.loading.className = PAGE_LOADING_CLASS_NAME;
+            this.loading.innerHTML = '<div><i class="icon-spinner icon-spin"></i><div>';
+            $(this.loading).hide();
+            node.appendChild(this.loading);
 
-            this.footerNode = document.createElement('div');
-            this.footerNode.className = PAGE_FOOTER_CLASS_NAME;
+            this.footer = document.createElement('div');
+            this.footer.className = PAGE_FOOTER_CLASS_NAME;
             //this.footerNode.style.display = 'none';
-            node.appendChild(this.footerNode);
+            node.appendChild(this.footer);
         }
     }
 
@@ -83,10 +87,11 @@ module chitu {
         private _loadViewModelResult = null
         private _openResult: JQueryDeferred<any> = null
         private _hideResult = null;
-        private _pageNode: PageNode;
+        private _pageNode: PageNodes;
         private _container: HTMLElement;
         private _showDelay = 100;
         private _moveTime = 1000;
+        private _prevous: chitu.Page;
 
         public swipe = true;
 
@@ -101,17 +106,13 @@ module chitu {
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
 
-        constructor(context: chitu.ControllerContext, container: HTMLElement) {
+        constructor(context: chitu.ControllerContext, container: HTMLElement, previous: chitu.Page) {
             if (!context) throw e.argumentNull('context');
             if (!container) throw e.argumentNull('container');
 
-            //if (!zindex) {
-            //    zindex = new Number(container.style.zIndex || '0').valueOf();
-            //    zindex = zindex + 1;
-            //}
             this._container = container;
+            this._prevous = previous;
             var element = document.createElement('div');
-            //element.style.zIndex = (zindex + 1).toString();
             container.appendChild(element);
 
             this._context = context;
@@ -123,7 +124,7 @@ module chitu {
             var viewDeferred = context.view();
             var actionDeferred = context.controller().action(context.routeData());
 
-            this._pageNode = new PageNode(element);
+            this._pageNode = new PageNodes(element);
 
             this._init(name, viewDeferred, actionDeferred, element);
         }
@@ -148,21 +149,28 @@ module chitu {
         }
         node(): HTMLElement {
             /// <returns type="HTMLElement"/>
-            return this._pageNode.node;
+            return this._pageNode.container;
+        }
+        nodes(): PageNodes {
+            return this._pageNode;
         }
         hide() {
+            if (!$(this.node()).is(':visible'))
+                return;
+
             this.hidePageNode(false);
-            this.on_hidden({});
         }
         show() {
-            this.on_showing({});
+            if ($(this.node()).is(':visible'))
+                return;
+
             this.showPageNode(false);
-            this.on_shown({});
         }
         visible() {
             return $(this.node()).is(':visible');
         }
-        private hidePageNode(swipe: boolean) {
+        private hidePageNode(swipe: boolean): JQueryDeferred<any> {
+            var result = $.Deferred();
             if (swipe) {
                 var container_width = $(this._container).width();
 
@@ -175,15 +183,19 @@ module chitu {
                 //====================================================
                 setTimeout(() => {
                     $(this.node()).hide();
+                    result.resolve();
                     this.on_hidden({});
                 }, times);
             }
             else {
                 $(this.node()).hide();
+                result.resolve();
                 this.on_hidden({});
             }
+            return result;
         }
         private showPageNode(swipe): JQueryPromise<any> {//, is_loading: boolean
+            this.on_showing({});
             var result = $.Deferred();
             if (swipe) {
                 var container_width = $(this._container).width();
@@ -196,12 +208,13 @@ module chitu {
                 window.setTimeout(() => {
                     window['move'](this.node()).set('left', '0px').duration(this._moveTime).end();
                     if (this._openResult != null) {                 //正在加载中
-                        $(this._pageNode.loadingNode).show();
-                        $(this._pageNode.bodyNode).hide();
+                        $(this._pageNode.loading).show();
+                        $(this._pageNode.body).hide();
                     }
                     else {
-                        $(this._pageNode.loadingNode).hide();
-                        $(this._pageNode.bodyNode).show();
+                        //$(this._pageNode.loadingNode).hide();
+                        //$(this._pageNode.bodyNode).show();
+                        this.showBodyNode();
                     }
                 }, this._showDelay);
                 //====================================================
@@ -214,27 +227,37 @@ module chitu {
                 this.node().style.display = 'block';
                 this.node().style.left = '0px';
                 if (this._openResult != null) {
-                    $(this._pageNode.loadingNode).show();
-                    $(this._pageNode.bodyNode).hide();
+                    $(this._pageNode.loading).show();
+                    $(this._pageNode.body).hide();
                 }
                 else {
-                    $(this._pageNode.loadingNode).hide();
-                    $(this._pageNode.bodyNode).show();
+                    //$(this._pageNode.loadingNode).hide();
+                    //$(this._pageNode.bodyNode).show();
+                    this.showBodyNode();
                 }
+
                 result.resolve();
             }
+
+            result.done(() => {
+                if (this._prevous != null)
+                    this._prevous.hide();
+
+
+            });
+
+            //this.setPageSize();
             return result;
         }
+
         private showBodyNode() {
-            $(this._pageNode.node).show();
-            $(this._pageNode.loadingNode).hide();
-            $(this._pageNode.bodyNode).show();
+            $(this._pageNode.container).show();
+            $(this._pageNode.loading).hide();
+            $(this._pageNode.body).show();
+
+            //this.setPageSize();
+            this.on_shown({});
         }
-        //private showLoadingNode() {
-        //    $(this._pageNode.node).show();
-        //    $(this._pageNode.bodyNode).hide();
-        //    $(this._pageNode.loadingNode).show();
-        //}
         private _init(name, viewDeferred, actionDeferred, node) {
             if (!name) throw e.argumentNull('name');
             if (!viewDeferred) throw e.argumentNull('viewDeferred');
@@ -254,8 +277,8 @@ module chitu {
         on_closed(args) {
             return eventDeferred(this.closed, this, args);
         }
-        on_scroll(event) {
-            return eventDeferred(this.scroll, this, event);
+        on_scroll(args) {
+            return eventDeferred(this.scroll, this, args);
         }
         on_showing(args) {
             return eventDeferred(this.showing, this, args);
@@ -276,7 +299,9 @@ module chitu {
 
             this._loadViewModelResult = this._viewDeferred.pipe((html: string) => {
                 u.log('Load view success, page:{0}.', [this.name()]);
-                $(this.node()).find('.' + PAGE_BODY_CLASS_NAME).html(html);
+                $(html).appendTo(this.nodes().content);
+                $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header);
+
                 return this._actionDeferred;
 
             }).pipe((action: chitu.Action) => {
@@ -310,7 +335,7 @@ module chitu {
             this._openResult = $.Deferred();
 
             //var self = this;
-            this.on_showing(args);
+         
 
             var pageNodeShown = this.showPageNode(this.swipe);
 
@@ -320,12 +345,9 @@ module chitu {
                 })
                 .done(() => {
                     this._openResult.resolve();
-                    this.showBodyNode()
-                    pageNodeShown.done(() => {
-                        this.on_shown(args);
-                    });
+                    this.showBodyNode();
                 })
-                .fail(function () {
+                .fail(() => {
                     this._openResult.reject();
                 });
 
@@ -342,14 +364,25 @@ module chitu {
             /// </param>
             /// <returns type="jQuery.Deferred"/>
 
-            args = args || {};
-
-            this.hidden.add(() => {
+            this.hidePageNode(this.swipe).done(() => {
                 this.node().remove();
             });
-            this.hidePageNode(this.swipe);
 
+            args = args || {};
             this.on_closed(args);
         }
+
+        //setPageSize() {
+        //    //TODO:根据页头和页脚，设置间距
+        //    var $loading_node = $(this._pageNode.loadingNode);
+        //    var $body_node = $(this._pageNode.bodyNode);
+        //    var wh = $(window).height();
+        //    $loading_node.height(wh + 'px');
+
+        //    //HARD CODE:如果使用了 IScroll，则不用设置
+        //    if (!$body_node.parent().hasClass('wrapper')) {
+        //        $body_node[0].style.minHeight = wh + 'px';
+        //    }
+        //}
     }
 };
