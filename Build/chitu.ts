@@ -465,7 +465,7 @@ module chitu {
 
             this.loading = document.createElement('div');
             this.loading.className = PAGE_LOADING_CLASS_NAME;
-            this.loading.innerHTML = '<div><i class="icon-spinner icon-spin"></i><div>';
+            this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
             $(this.loading).hide();
             node.appendChild(this.loading);
 
@@ -491,7 +491,8 @@ module chitu {
         private _pageNode: PageNodes;
         private _container: HTMLElement;
         private _showDelay = 100;
-        private _moveTime = 1000;
+        private _showTime = 600;
+        private _hideTime = 800
         private _prevous: chitu.Page;
 
         public swipe = true;
@@ -555,6 +556,9 @@ module chitu {
         nodes(): PageNodes {
             return this._pageNode;
         }
+        previous(): chitu.Page {
+            return this._prevous;
+        }
         hide() {
             if (!$(this.node()).is(':visible'))
                 return;
@@ -574,19 +578,27 @@ module chitu {
             var result = $.Deferred();
             if (swipe) {
                 var container_width = $(this._container).width();
+                //this.node().style.left = '0px';
 
-                var times = 1000;
                 //====================================================
                 // 说明：必须要 setTimeout，移动才有效。
-                window.setTimeout(() => {
-                    window['move'](this.node()).set('left', container_width + 'px').duration(times).end();
-                }, 100);
+                //window.setTimeout(() => {
+                window['move'](this.node())
+                //.set('left', container_width + 'px').duration(this._moveTime)
+                    .to(container_width)
+                    .duration(this._hideTime)
+                    .end(() => {
+                        $(this.node()).hide();
+                        result.resolve();
+                        this.on_hidden({});
+                    });
+                //}, 100);
                 //====================================================
-                setTimeout(() => {
-                    $(this.node()).hide();
-                    result.resolve();
-                    this.on_hidden({});
-                }, times);
+                //setTimeout(() => {
+                //    $(this.node()).hide();
+                //    result.resolve();
+                //    this.on_hidden({});
+                //}, this._moveTime);
             }
             else {
                 $(this.node()).hide();
@@ -603,37 +615,41 @@ module chitu {
                 this.node().style.left = container_width + 'px';
                 this.node().style.display = 'block';
 
-                //var times = 1000;
                 //====================================================
                 // 说明：必须要 setTimeout，移动才有效。
-                window.setTimeout(() => {
-                    window['move'](this.node()).set('left', '0px').duration(this._moveTime).end();
-                    if (this._openResult != null) {                 //正在加载中
-                        $(this._pageNode.loading).show();
-                        $(this._pageNode.body).hide();
-                    }
-                    else {
-                        //$(this._pageNode.loadingNode).hide();
-                        //$(this._pageNode.bodyNode).show();
-                        this.showBodyNode();
-                    }
-                }, this._showDelay);
+                //window.setTimeout(() => {
+                window['move'](this.node())
+                    .to(0 - container_width)
+                    .duration(this._showTime)
+                    .end(() => {
+                        result.resolve();
+                    });
+
+                if (this._openResult != null) {                 //正在加载中
+                    $(this._pageNode.loading).show();
+                    $(this._pageNode.body).hide();
+                }
+                else {
+                    this.showBodyNode();
+                }
+                //}, this._showDelay);
                 //====================================================
                
-                window.setTimeout(() => {
-                    result.resolve();
-                }, this._moveTime);
             }
             else {
                 this.node().style.display = 'block';
-                this.node().style.left = '0px';
+                if (this.node().style.transform) {
+                    window['move'](this.node()).to(0).duration(0);
+                }
+                else {
+                    this.node().style.left = '0px';
+                }
+
                 if (this._openResult != null) {
                     $(this._pageNode.loading).show();
                     $(this._pageNode.body).hide();
                 }
                 else {
-                    //$(this._pageNode.loadingNode).hide();
-                    //$(this._pageNode.bodyNode).show();
                     this.showBodyNode();
                 }
 
@@ -701,6 +717,8 @@ module chitu {
             this._loadViewModelResult = this._viewDeferred.pipe((html: string) => {
                 u.log('Load view success, page:{0}.', [this.name()]);
                 $(html).appendTo(this.nodes().content);
+                $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header);
+
                 return this._actionDeferred;
 
             }).pipe((action: chitu.Action) => {

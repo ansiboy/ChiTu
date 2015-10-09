@@ -50,7 +50,7 @@ var chitu;
             this.body.appendChild(this.content);
             this.loading = document.createElement('div');
             this.loading.className = PAGE_LOADING_CLASS_NAME;
-            this.loading.innerHTML = '<div><i class="icon-spinner icon-spin"></i><div>';
+            this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
             $(this.loading).hide();
             node.appendChild(this.loading);
             this.footer = document.createElement('div');
@@ -68,7 +68,8 @@ var chitu;
             this._openResult = null;
             this._hideResult = null;
             this._showDelay = 100;
-            this._moveTime = 1000;
+            this._showTime = 600;
+            this._hideTime = 800;
             this.swipe = true;
             this.init = ns.Callbacks();
             this.preLoad = ns.Callbacks();
@@ -122,6 +123,9 @@ var chitu;
         Page.prototype.nodes = function () {
             return this._pageNode;
         };
+        Page.prototype.previous = function () {
+            return this._prevous;
+        };
         Page.prototype.hide = function () {
             if (!$(this.node()).is(':visible'))
                 return;
@@ -140,18 +144,18 @@ var chitu;
             var result = $.Deferred();
             if (swipe) {
                 var container_width = $(this._container).width();
-                var times = 1000;
+                //this.node().style.left = '0px';
                 //====================================================
                 // 说明：必须要 setTimeout，移动才有效。
-                window.setTimeout(function () {
-                    window['move'](_this.node()).set('left', container_width + 'px').duration(times).end();
-                }, 100);
-                //====================================================
-                setTimeout(function () {
+                //window.setTimeout(() => {
+                window['move'](this.node())
+                    .to(container_width)
+                    .duration(this._hideTime)
+                    .end(function () {
                     $(_this.node()).hide();
                     result.resolve();
                     _this.on_hidden({});
-                }, times);
+                });
             }
             else {
                 $(this.node()).hide();
@@ -168,36 +172,39 @@ var chitu;
                 var container_width = $(this._container).width();
                 this.node().style.left = container_width + 'px';
                 this.node().style.display = 'block';
-                //var times = 1000;
                 //====================================================
                 // 说明：必须要 setTimeout，移动才有效。
-                window.setTimeout(function () {
-                    window['move'](_this.node()).set('left', '0px').duration(_this._moveTime).end();
-                    if (_this._openResult != null) {
-                        $(_this._pageNode.loading).show();
-                        $(_this._pageNode.body).hide();
-                    }
-                    else {
-                        //$(this._pageNode.loadingNode).hide();
-                        //$(this._pageNode.bodyNode).show();
-                        _this.showBodyNode();
-                    }
-                }, this._showDelay);
-                //====================================================
-                window.setTimeout(function () {
+                //window.setTimeout(() => {
+                window['move'](this.node())
+                    .to(0 - container_width)
+                    .duration(this._showTime)
+                    .end(function () {
                     result.resolve();
-                }, this._moveTime);
-            }
-            else {
-                this.node().style.display = 'block';
-                this.node().style.left = '0px';
+                });
                 if (this._openResult != null) {
                     $(this._pageNode.loading).show();
                     $(this._pageNode.body).hide();
                 }
                 else {
-                    //$(this._pageNode.loadingNode).hide();
-                    //$(this._pageNode.bodyNode).show();
+                    this.showBodyNode();
+                }
+            }
+            else {
+                this.node().style.display = 'block';
+                //==================================
+                // 说明：如果坐标是通过变换得到的，不能直接设置 left 位置
+                if (this.node().style.transform) {
+                    window['move'](this.node()).to(0).duration(0);
+                }
+                else {
+                    this.node().style.left = '0px';
+                }
+                //==================================
+                if (this._openResult != null) {
+                    $(this._pageNode.loading).show();
+                    $(this._pageNode.body).hide();
+                }
+                else {
                     this.showBodyNode();
                 }
                 result.resolve();
