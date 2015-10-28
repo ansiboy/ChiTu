@@ -893,6 +893,7 @@ window['crossroads'] = factory(window['jQuery']);
         });
         return object;
     }
+    chitu.Application;
     var Callback = (function () {
         function Callback(source) {
             this.source = source;
