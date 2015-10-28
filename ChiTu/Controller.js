@@ -1,3 +1,4 @@
+/// <reference path="scripts/typings/requirejs/require.d.ts" />
 var chitu;
 (function (chitu) {
     var ns = chitu;
@@ -119,7 +120,8 @@ var chitu;
             /// <returns type="jQuery.Deferred"/>
             if (!page)
                 throw e.argumentNull('page');
-            //if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
+            if (page._type != 'Page')
+                throw e.paramTypeError('page', 'Page');
             var result = this._handle.apply({}, [page]);
             return u.isDeferred(result) ? result : $.Deferred().resolve();
         };
@@ -184,5 +186,4 @@ var chitu;
     chitu.action = action;
     ;
 })(chitu || (chitu = {}));
-;
 //# sourceMappingURL=Controller.js.map

@@ -1,4 +1,6 @@
-﻿module chitu {
+﻿/// <reference path="scripts/typings/requirejs/require.d.ts" />
+
+module chitu {
     var ns = chitu;
     var e = ns.Errors;
     var u = ns.Utility;
@@ -151,11 +153,11 @@
             return this._name;
         }
 
-        execute(page: chitu.Page) {
+        execute(page) {
             /// <param name="page" type="chitu.Page"/>
             /// <returns type="jQuery.Deferred"/>
             if (!page) throw e.argumentNull('page');
-            //if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
+            if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
 
             var result = this._handle.apply({}, [page]);
             return u.isDeferred(result) ? result : $.Deferred().resolve();
@@ -234,4 +236,4 @@
         return func;
     };
 
-};
+}  

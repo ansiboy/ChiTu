@@ -37,6 +37,7 @@
         this._actions = {};
 
 
+
         this.actionCreated = chitu.Callbacks();
     };
 
@@ -53,7 +54,7 @@
             if (!actionName) throw e.argumentNull('actionName');
             if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
 
-            var data = $.extend(this._routeData, {action: actionName});
+            var data = $.extend(this._routeData, { action: actionName });
             return interpolate(this.actionLocationFormater(), data);
         },
         action: function (name) {
@@ -65,10 +66,10 @@
             var self = this;
             if (!this._actions[name]) {
                 this._actions[name] = this._createAction(name).fail($.proxy(
-                        function () {
-                            self._actions[this.actionName] = null;
-                        },
-                        {actionName: name})
+                    function () {
+                        self._actions[this.actionName] = null;
+                    },
+                    { actionName: name })
                 );
             }
 
@@ -89,10 +90,7 @@
                     //加载脚本失败
                     if (!obj) {
                         console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
-                        obj = {
-                            func: function () {
-                            }
-                        };
+                        obj = { func: function () { } };
                         //result.reject();
                     }
 
@@ -105,20 +103,16 @@
                     self.actionCreated.fire(self, action);
 
                     this.result.resolve(action);
-                }, {actionName: actionName, result: result}),
+                }, { actionName: actionName, result: result }),
 
                 $.proxy(function (err) {
                     console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
-                    if (err.message)
-                        console.warn(err.message);
-
-                    var action = new ns.Action(self, this.actionName, function () {
-                    });
+                    var action = new ns.Action(self, this.actionName, function () { });
                     self.actionCreated.fire(self, action);
                     this.result.resolve(action);
                     //this.result.reject(err);
-                }, {actionName: actionName, result: result})
-            );
+                }, { actionName: actionName, result: result })
+           );
 
             return result;
         }
@@ -227,17 +221,17 @@
 
                 require(['text!' + url],
                     $.proxy(function (html) {
-                            if (html != null)
-                                this.deferred.resolve(html);
-                            else
-                                this.deferred.reject();
-                        },
-                        {deferred: this._views[viewName]}),
+                        if (html != null)
+                            this.deferred.resolve(html);
+                        else
+                            this.deferred.reject();
+                    },
+                    { deferred: this._views[viewName] }),
 
                     $.proxy(function (err) {
-                            this.deferred.reject(err);
-                        },
-                        {deferred: this._views[viewName]})
+                        this.deferred.reject(err);
+                    },
+                    { deferred: this._views[viewName] })
                 );
             }
 
@@ -299,20 +293,20 @@
             throw e.paramTypeError('func', 'function');
 
         define(deps, $.proxy(
-                function () {
-                    var args = Array.prototype.slice.call(arguments, 0);
-                    var func = this.func;
-                    var filters = this.filters;
+            function () {
+                var args = Array.prototype.slice.call(arguments, 0);
+                var func = this.func;
+                var filters = this.filters;
 
-                    return {
-                        func: function (page) {
-                            args.unshift(page);
-                            return func.apply(func, args);
-                        },
-                        filters: filters
-                    }
-                },
-                {func: func, filters: filters})
+                return {
+                    func: function (page) {
+                        args.unshift(page);
+                        return func.apply(func, args);
+                    },
+                    filters: filters
+                }
+            },
+            { func: func, filters: filters })
         );
 
         return func;
