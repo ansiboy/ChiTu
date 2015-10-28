@@ -60,7 +60,7 @@ var chitu;
                 var key = paramNames[i];
                 values[key] = data.params[0][key];
             }
-            var routeData = new chitu.RouteData();
+            var routeData = new chitu.RouteData(url);
             routeData.values(values);
             routeData.actionPath(data.route.newRoute.actionPath);
             routeData.viewPath(data.route.newRoute.viewPath);

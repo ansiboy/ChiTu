@@ -81,7 +81,7 @@
                 values[key] = data.params[0][key];
             }
 
-            var routeData = new RouteData();
+            var routeData = new RouteData(url);
             routeData.values(values);
             routeData.actionPath(data.route.newRoute.actionPath);
             routeData.viewPath(data.route.newRoute.viewPath);

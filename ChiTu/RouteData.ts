@@ -4,6 +4,11 @@
         private _viewPath: string;
         private _actionPath: string;
         private _pageName: string;
+        private _url: string;
+
+        constructor(url: string) {
+            this._url = url;
+        }
 
         public values(value: any = undefined): any {
             if (value !== undefined)
@@ -32,5 +37,9 @@
 
             return this._pageName;
         }
+
+        public url(): string {
+            return this._url;
+        }
     }
-} 
+};

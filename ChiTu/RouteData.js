@@ -1,7 +1,8 @@
 var chitu;
 (function (chitu) {
     var RouteData = (function () {
-        function RouteData() {
+        function RouteData(url) {
+            this._url = url;
         }
         RouteData.prototype.values = function (value) {
             if (value === void 0) { value = undefined; }
@@ -27,8 +28,12 @@ var chitu;
                 this._pageName = value;
             return this._pageName;
         };
+        RouteData.prototype.url = function () {
+            return this._url;
+        };
         return RouteData;
     })();
     chitu.RouteData = RouteData;
 })(chitu || (chitu = {}));
+;
 //# sourceMappingURL=RouteData.js.map

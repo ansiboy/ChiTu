@@ -4,7 +4,7 @@
         private _view: any;
         private _routeData: RouteData;
         constructor(controller, view, routeData: RouteData) {
-            this._routeData = new RouteData();
+            this._routeData = routeData;
             this._controller = controller;
             this._view = view;
             this._routeData = routeData;

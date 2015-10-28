@@ -2,7 +2,7 @@ var chitu;
 (function (chitu) {
     var ControllerContext = (function () {
         function ControllerContext(controller, view, routeData) {
-            this._routeData = new chitu.RouteData();
+            this._routeData = routeData;
             this._controller = controller;
             this._view = view;
             this._routeData = routeData;
