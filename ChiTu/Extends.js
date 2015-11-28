@@ -11,7 +11,6 @@ var chitu;
         });
         return object;
     }
-    chitu.Application;
     var Callback = (function () {
         function Callback(source) {
             this.source = source;
@@ -41,7 +40,8 @@ var chitu;
         options = typeof options === "string" ?
             (optionsCache[options] || createOptions(options)) :
             jQuery.extend({}, options);
-        var memory, 
+        var // Last fire value (for non-forgettable lists)
+        memory, 
         // Flag to know if list was already fired
         fired, 
         // Flag to know if list is currently firing

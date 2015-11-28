@@ -1,4 +1,4 @@
-﻿module chitu {
+﻿namespace chitu {
     var e = chitu.Errors;
     export class Utility {
         public static isType(targetType: Function, obj: any): boolean {
@@ -18,7 +18,7 @@
             return false;
         }
         public static format(source: string, arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string,
-                             arg6?: string, arg7?: string, arg8?: string, arg9?: string, arg10?: string): string {
+            arg6?: string, arg7?: string, arg8?: string, arg9?: string, arg10?: string): string {
             var params: string[] = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10];
             for (var i = 0; i < params.length; i++) {
                 if (params[i] == null)
@@ -61,6 +61,7 @@
             console.log(txt);
         }
     }
-} 
 
+ 
+} 
 

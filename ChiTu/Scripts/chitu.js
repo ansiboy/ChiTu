@@ -186,21 +186,21 @@ var chitu;
         options = typeof options === "string" ?
             (optionsCache[options] || createOptions(options)) :
             jQuery.extend({}, options);
-        var memory,
+        var memory, 
         // Flag to know if list was already fired
-        fired,
+        fired, 
         // Flag to know if list is currently firing
-        firing,
+        firing, 
         // First callback to fire (used internally by add and fireWith)
-        firingStart,
+        firingStart, 
         // End of the loop when firing
-        firingLength,
+        firingLength, 
         // Index of currently firing callback (modified by remove if needed)
-        firingIndex,
+        firingIndex, 
         // Actual callback list
-        list = [],
+        list = [], 
         // Stack of fire calls for repeatable lists
-        stack = !options.once && [],
+        stack = !options.once && [], 
         // Fire callbacks
         fire = function (data) {
             memory = options.memory && data;
@@ -236,7 +236,7 @@ var chitu;
                     self.disable();
                 }
             }
-        },
+        }, 
         // Actual Callbacks object
         self = {
             results: [],
@@ -503,18 +503,18 @@ var chitu;
                 return page.open(args);
             })
                 .done($.proxy(function () {
-                    self._pageStack.push({ page: this.page, url: this.url });
-                    //=======================================================
-                    // 说明：由于只能显示一个页面，只有为 currentPage 才显示
-                    if (this.page != self.currentPage())
-                        this.page.visible(false);
-                    //=======================================================
-                    this.result.resolve(this.page);
-                    self.on_pageShown(this.page, args);
-                }, { page: page, result: result, url: url }))
+                self._pageStack.push({ page: this.page, url: this.url });
+                //=======================================================
+                // 说明：由于只能显示一个页面，只有为 currentPage 才显示
+                if (this.page != self.currentPage())
+                    this.page.visible(false);
+                //=======================================================
+                this.result.resolve(this.page);
+                self.on_pageShown(this.page, args);
+            }, { page: page, result: result, url: url }))
                 .fail($.proxy(function (error) {
-                    this.result.reject(this.page, error);
-                }, { page: page, result: result, url: url }));
+                this.result.reject(this.page, error);
+            }, { page: page, result: result, url: url }));
             return result;
         };
         PageContainer.prototype.back = function (args) {
@@ -691,17 +691,17 @@ var chitu;
                 return page._actionDeferred;
             })
                 .pipe(function (action) {
-                    /// <param name="action" type="chitu.Action"/>
-                    var result = action.execute(page);
-                    page.on_created();
-                    if (u.isDeferred(result))
-                        return result;
-                    return $.Deferred().resolve();
-                })
+                /// <param name="action" type="chitu.Action"/>
+                var result = action.execute(page);
+                page.on_created();
+                if (u.isDeferred(result))
+                    return result;
+                return $.Deferred().resolve();
+            })
                 .fail(function () {
-                    page._loadViewModelResult = null;
-                    u.log('Load view or action fail, page：{0}.', [page['_name']]);
-                });
+                page._loadViewModelResult = null;
+                u.log('Load view or action fail, page：{0}.', [page['_name']]);
+            });
             return this._loadViewModelResult;
         };
         Page.prototype.open = function (args) {
@@ -717,9 +717,9 @@ var chitu;
                 return self._loadViewModel();
             })
                 .pipe(function () {
-                    self.on_showing(args);
-                    return self.on_load(args);
-                });
+                self.on_showing(args);
+                return self.on_load(args);
+            });
             this._showResult.done($.proxy(function () {
                 self._hideResult = null;
                 $(self.node()).show();
@@ -825,13 +825,13 @@ var chitu;
             var self = this;
             var url = this.getLocation(actionName);
             var result = $.Deferred();
-            requirejs([url], $.proxy(function (obj) {
+            require([url], $.proxy(function (obj) {
                 //加载脚本失败
                 if (!obj) {
                     console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', [this.actionName, self.name()]));
                     obj = { func: function () { } };
                 }
-                var func = obj.func || obj;
+                var func = obj.func;
                 if (!$.isFunction(func))
                     throw ns.Errors.modelFileExpecteFunction(this.actionName);
                 var action = new Action(self, this.actionName, func);
@@ -1026,7 +1026,7 @@ var chitu;
 
             if (!routeData)
                 throw e.argumentNull('routeData');
-
+            
             //if (typeof name != 'string') throw e.paramTypeError('name', 'String');
 
             return this.controllerFactory.getController(routeData);

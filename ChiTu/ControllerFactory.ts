@@ -1,4 +1,4 @@
-﻿module chitu {
+﻿namespace chitu {
     var e = chitu.Errors;
     var ns = chitu;
 

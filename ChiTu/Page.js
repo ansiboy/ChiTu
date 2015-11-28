@@ -62,14 +62,11 @@ var chitu;
     })();
     var Page = (function () {
         function Page(context, container, previous) {
-            //_node: HTMLElement;
-            //_visible = true;
             this._loadViewModelResult = null;
             this._openResult = null;
             this._hideResult = null;
-            this._showDelay = 100;
-            this._showTime = 600;
-            this._hideTime = 800;
+            this._showTime = Page.animationTime;
+            this._hideTime = Page.animationTime;
             this.swipe = true;
             this.init = ns.Callbacks();
             this.preLoad = ns.Callbacks();
@@ -266,14 +263,18 @@ var chitu;
             var _this = this;
             if (this._loadViewModelResult)
                 return this._loadViewModelResult;
-            this._loadViewModelResult = this._viewDeferred.pipe(function (html) {
+            this._loadViewModelResult = $.when(this._viewDeferred, this._actionDeferred)
+                .then(function (html, action) {
                 u.log('Load view success, page:{0}.', [_this.name()]);
                 $(html).appendTo(_this.nodes().content);
-                $(_this.nodes().content).find('[ch-part="header"]').appendTo(_this.nodes().header);
-                $(_this.nodes().content).find('[ch-part="footer"]').appendTo(_this.nodes().footer);
-                return _this._actionDeferred;
-            }).pipe(function (action) {
-                /// <param name="action" type="chitu.Action"/>
+                //$(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header)
+                //    .each((index, item: HTMLElement) => {
+                //        item.style.zIndex = this.nodes().header.style.zIndex;
+                //    });
+                //$(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer)
+                //    .each((index, item: HTMLElement) => {
+                //        item.style.zIndex = this.nodes().footer.style.zIndex;
+                //    });
                 var result = action.execute(_this);
                 _this.on_init();
                 if (u.isDeferred(result))
@@ -283,6 +284,23 @@ var chitu;
                 _this._loadViewModelResult = null;
                 u.log('Load view or action fail, page：{0}.', [_this.name()]);
             });
+            //this._loadViewModelResult = this._viewDeferred.pipe((html: string) => {
+            //    u.log('Load view success, page:{0}.', [this.name()]);
+            //    $(html).appendTo(this.nodes().content);
+            //    $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header);
+            //    $(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer);
+            //    return this._actionDeferred;
+            //}).pipe((action: chitu.Action) => {
+            //    /// <param name="action" type="chitu.Action"/>
+            //    var result = action.execute(this);
+            //    this.on_init();
+            //    if (u.isDeferred(result))
+            //        return result;
+            //    return $.Deferred().resolve();
+            //}).fail(() => {
+            //    this._loadViewModelResult = null;
+            //    u.log('Load view or action fail, page：{0}.', [this.name()]);
+            //});
             return this._loadViewModelResult;
         };
         Page.prototype.open = function (values) {
@@ -326,11 +344,12 @@ var chitu;
             var _this = this;
             if (args === void 0) { args = undefined; }
             this.hidePageNode(this.swipe).done(function () {
-                _this.node().remove();
+                $(_this.node()).remove();
             });
             args = args || {};
             this.on_closed(args);
         };
+        Page.animationTime = 300;
         return Page;
     })();
     chitu.Page = Page;

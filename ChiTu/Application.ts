@@ -1,4 +1,4 @@
-﻿module chitu {
+﻿namespace chitu {
 
     var ns = chitu;
     var u = chitu.Utility;

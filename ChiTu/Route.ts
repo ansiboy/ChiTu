@@ -1,12 +1,11 @@
-﻿module chitu {
+﻿namespace chitu {
     export class Route {
         private _name: string;
         private _pattern: string;
         private _defaults: Object;
 
-        public viewPath: string;
-        public actionPath: string;
-        public pageName: string
+        viewPath: string;
+        actionPath: string;
 
         constructor(name: string, pattern: string, defaults: Object) {
             this._name = name

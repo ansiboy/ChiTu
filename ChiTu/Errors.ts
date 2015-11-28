@@ -1,4 +1,4 @@
-﻿module chitu {
+﻿namespace chitu {
     var u = chitu.Utility;
     export class Errors {
         public static argumentNull(paramName: string) {

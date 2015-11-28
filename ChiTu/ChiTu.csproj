@@ -10,7 +10,7 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <TypeScriptToolsVersion>1.5</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>1.6</TypeScriptToolsVersion>
     <UseIISExpress>true</UseIISExpress>
     <IISExpressSSLPort />
     <IISExpressAnonymousAuthentication />
@@ -18,9 +18,6 @@
     <IISExpressUseClassicPipelineMode />
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="Scripts\chitu.min.js.map">
-      <DependentUpon>chitu.min.js</DependentUpon>
-    </Content>
     <None Include="Scripts\jquery-2.1.4.intellisense.js" />
     <Content Include="Scripts\chitu.js" />
     <Content Include="Scripts\chitu.min.js" />
@@ -38,7 +35,6 @@
     <TypeScriptCompile Include="ControllerFactory.ts" />
     <TypeScriptCompile Include="Controller.ts" />
     <TypeScriptCompile Include="Errors.ts" />
-    <TypeScriptCompile Include="Exports.ts" />
     <TypeScriptCompile Include="Extends.ts" />
     <TypeScriptCompile Include="Page.ts" />
     <TypeScriptCompile Include="RouteCollection.ts" />
@@ -88,8 +84,9 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
     <TypeScriptSourceMap>true</TypeScriptSourceMap>
-    <TypeScriptModuleKind>amd</TypeScriptModuleKind>
+    <TypeScriptModuleKind>none</TypeScriptModuleKind>
     <TypeScriptTarget>ES5</TypeScriptTarget>
+    <TypeScriptOutFile>../Build/chitu.js</TypeScriptOutFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <TypeScriptRemoveComments>true</TypeScriptRemoveComments>

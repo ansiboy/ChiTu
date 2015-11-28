@@ -1,4 +1,4 @@
-﻿module chitu {
+﻿namespace chitu {
     export class ControllerContext {
         private _controller: any;
         private _view: any;

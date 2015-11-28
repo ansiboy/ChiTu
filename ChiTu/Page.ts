@@ -1,5 +1,5 @@
 ﻿
-module chitu {
+namespace chitu {
 
 
     var ns = chitu;
@@ -77,21 +77,19 @@ module chitu {
 
 
     export class Page {
-
+        static animationTime: number = 300
         private _context: chitu.ControllerContext
         private _name: string
         private _viewDeferred: any
         private _actionDeferred: any
-        //_node: HTMLElement;
-        //_visible = true;
+
         private _loadViewModelResult = null
         private _openResult: JQueryDeferred<any> = null
         private _hideResult = null;
         private _pageNode: PageNodes;
         private _container: HTMLElement;
-        private _showDelay = 100;
-        private _showTime = 600;
-        private _hideTime = 800
+        private _showTime = Page.animationTime;
+        private _hideTime = Page.animationTime
         private _prevous: chitu.Page;
 
         public swipe = true;
@@ -317,26 +315,51 @@ module chitu {
             if (this._loadViewModelResult)
                 return this._loadViewModelResult;
 
-            this._loadViewModelResult = this._viewDeferred.pipe((html: string) => {
-                u.log('Load view success, page:{0}.', [this.name()]);
-                $(html).appendTo(this.nodes().content);
-                $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header);
-                $(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer);
-                return this._actionDeferred;
+            this._loadViewModelResult = $.when(this._viewDeferred, this._actionDeferred)
+                .then((html: string, action: chitu.Action) => {
+                    u.log('Load view success, page:{0}.', [this.name()]);
+                    $(html).appendTo(this.nodes().content);
+                    //$(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header)
+                    //    .each((index, item: HTMLElement) => {
+                    //        item.style.zIndex = this.nodes().header.style.zIndex;
+                    //    });
 
-            }).pipe((action: chitu.Action) => {
-                /// <param name="action" type="chitu.Action"/>
-                var result = action.execute(this);
-                this.on_init();
-                if (u.isDeferred(result))
-                    return result;
+                    //$(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer)
+                    //    .each((index, item: HTMLElement) => {
+                    //        item.style.zIndex = this.nodes().footer.style.zIndex;
+                    //    });
 
-                return $.Deferred().resolve();
+                    var result = action.execute(this);
+                    this.on_init();
+                    if (u.isDeferred(result))
+                        return result;
 
-            }).fail(() => {
-                this._loadViewModelResult = null;
-                u.log('Load view or action fail, page：{0}.', [this.name()]);
-            });
+                    return $.Deferred().resolve();
+                }).fail(() => {
+                    this._loadViewModelResult = null;
+                    u.log('Load view or action fail, page：{0}.', [this.name()]);
+                });
+
+            //this._loadViewModelResult = this._viewDeferred.pipe((html: string) => {
+            //    u.log('Load view success, page:{0}.', [this.name()]);
+            //    $(html).appendTo(this.nodes().content);
+            //    $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header);
+            //    $(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer);
+            //    return this._actionDeferred;
+
+            //}).pipe((action: chitu.Action) => {
+            //    /// <param name="action" type="chitu.Action"/>
+            //    var result = action.execute(this);
+            //    this.on_init();
+            //    if (u.isDeferred(result))
+            //        return result;
+
+            //    return $.Deferred().resolve();
+
+            //}).fail(() => {
+            //    this._loadViewModelResult = null;
+            //    u.log('Load view or action fail, page：{0}.', [this.name()]);
+            //});
 
             return this._loadViewModelResult;
         }
@@ -385,7 +408,7 @@ module chitu {
             /// <returns type="jQuery.Deferred"/>
 
             this.hidePageNode(this.swipe).done(() => {
-                this.node().remove();
+                $(this.node()).remove();
             });
 
             args = args || {};

@@ -1,4 +1,4 @@
-﻿module chitu {
+﻿namespace chitu {
     var rnotwhite = (/\S+/g);
 
     // String to Object options format cache
@@ -14,7 +14,7 @@
     }
 
 
-chitu.Application
+
     export class Callback {
         source: any
         constructor(source: any) {

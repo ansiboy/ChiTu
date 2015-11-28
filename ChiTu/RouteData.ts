@@ -1,4 +1,4 @@
-﻿module chitu {
+﻿namespace chitu {
     export class RouteData {
         private _values: any;
         private _viewPath: string;

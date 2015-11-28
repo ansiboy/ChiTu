@@ -80,7 +80,7 @@ var chitu;
             var container = this.node();
             var controllerName = routeData.values().controller;
             var actionName = routeData.values().action;
-            var name = chitu.Page.getPageName(routeData);
+            var name = controllerName + '.' + actionName;
             var pages = $(container).data('pages');
             if (!pages) {
                 pages = {};
