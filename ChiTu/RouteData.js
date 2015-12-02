@@ -36,4 +36,3 @@ var chitu;
     chitu.RouteData = RouteData;
 })(chitu || (chitu = {}));
 ;
-//# sourceMappingURL=RouteData.js.map

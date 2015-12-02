@@ -14,7 +14,6 @@ var chitu;
     var PAGE_FOOTER_CLASS_NAME = 'page-footer';
     var PAGE_LOADING_CLASS_NAME = 'page-loading';
     var PAGE_CONTENT_CLASS_NAME = 'page-content';
-    //var zindex: number;
     var ShowTypes;
     (function (ShowTypes) {
         ShowTypes[ShowTypes["swipeLeft"] = 0] = "swipeLeft";
@@ -39,7 +38,6 @@ var chitu;
             this.container = node;
             this.header = document.createElement('div');
             this.header.className = PAGE_HEADER_CLASS_NAME;
-            //this.headerNode.style.display = 'none';
             node.appendChild(this.header);
             this.body = document.createElement('div');
             this.body.className = PAGE_BODY_CLASS_NAME;
@@ -55,7 +53,6 @@ var chitu;
             node.appendChild(this.loading);
             this.footer = document.createElement('div');
             this.footer.className = PAGE_FOOTER_CLASS_NAME;
-            //this.footerNode.style.display = 'none';
             node.appendChild(this.footer);
         }
         return PageNodes;
@@ -107,14 +104,12 @@ var chitu;
             return name;
         };
         Page.prototype.context = function () {
-            /// <returns type="chitu.ControllerContext"/>
             return this._context;
         };
         Page.prototype.name = function () {
             return this._name;
         };
         Page.prototype.node = function () {
-            /// <returns type="HTMLElement"/>
             return this._pageNode.container;
         };
         Page.prototype.nodes = function () {
@@ -141,10 +136,6 @@ var chitu;
             var result = $.Deferred();
             if (swipe) {
                 var container_width = $(this._container).width();
-                //this.node().style.left = '0px';
-                //====================================================
-                // 说明：必须要 setTimeout，移动才有效。
-                //window.setTimeout(() => {
                 window['move'](this.node())
                     .to(container_width)
                     .duration(this._hideTime)
@@ -170,9 +161,6 @@ var chitu;
                 this.node().style.left = '0px';
                 this.node().style.display = 'block';
                 move(this.node()).to(container_width).duration(0).end();
-                //====================================================
-                // 说明：必须要 setTimeout，移动才有效。
-                //window.setTimeout(() => {
                 move(this.node())
                     .to(0)
                     .duration(this._showTime)
@@ -189,16 +177,12 @@ var chitu;
             }
             else {
                 this.node().style.display = 'block';
-                //==================================
-                // 说明：如果坐标是通过变换得到的，不能直接设置 left 位置
                 if (this.node().style.transform) {
-                    //window['move'](this.node()).to(0).duration(0);
                     move(this.node()).to(0).duration(0);
                 }
                 else {
                     this.node().style.left = '0px';
                 }
-                //==================================
                 if (this._openResult != null) {
                     $(this._pageNode.loading).show();
                     $(this._pageNode.body).hide();
@@ -212,14 +196,12 @@ var chitu;
                 if (_this._prevous != null)
                     _this._prevous.hide();
             });
-            //this.setPageSize();
             return result;
         };
         Page.prototype.showBodyNode = function () {
             $(this._pageNode.container).show();
             $(this._pageNode.loading).hide();
             $(this._pageNode.body).show();
-            //this.setPageSize();
             this.on_shown({});
         };
         Page.prototype._init = function (name, viewDeferred, actionDeferred, node) {
@@ -267,14 +249,6 @@ var chitu;
                 .then(function (html, action) {
                 u.log('Load view success, page:{0}.', [_this.name()]);
                 $(html).appendTo(_this.nodes().content);
-                //$(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header)
-                //    .each((index, item: HTMLElement) => {
-                //        item.style.zIndex = this.nodes().header.style.zIndex;
-                //    });
-                //$(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer)
-                //    .each((index, item: HTMLElement) => {
-                //        item.style.zIndex = this.nodes().footer.style.zIndex;
-                //    });
                 var result = action.execute(_this);
                 _this.on_init();
                 if (u.isDeferred(result))
@@ -284,39 +258,14 @@ var chitu;
                 _this._loadViewModelResult = null;
                 u.log('Load view or action fail, page：{0}.', [_this.name()]);
             });
-            //this._loadViewModelResult = this._viewDeferred.pipe((html: string) => {
-            //    u.log('Load view success, page:{0}.', [this.name()]);
-            //    $(html).appendTo(this.nodes().content);
-            //    $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header);
-            //    $(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer);
-            //    return this._actionDeferred;
-            //}).pipe((action: chitu.Action) => {
-            //    /// <param name="action" type="chitu.Action"/>
-            //    var result = action.execute(this);
-            //    this.on_init();
-            //    if (u.isDeferred(result))
-            //        return result;
-            //    return $.Deferred().resolve();
-            //}).fail(() => {
-            //    this._loadViewModelResult = null;
-            //    u.log('Load view or action fail, page：{0}.', [this.name()]);
-            //});
             return this._loadViewModelResult;
         };
         Page.prototype.open = function (values) {
             var _this = this;
-            /// <summary>
-            /// Show the page.
-            /// </summary>
-            /// <param name="args" type="Object">
-            /// The value passed to the show event functions.
-            /// </param>
-            /// <returns type="jQuery.Deferred"/>
             if (this._openResult)
                 return this._openResult;
             var args = values;
             this._openResult = $.Deferred();
-            //var self = this;
             var pageNodeShown = this.showPageNode(this.swipe);
             this._loadViewAndModel()
                 .pipe(function () {
@@ -355,4 +304,3 @@ var chitu;
     chitu.Page = Page;
 })(chitu || (chitu = {}));
 ;
-//# sourceMappingURL=Page.js.map

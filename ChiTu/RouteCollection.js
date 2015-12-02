@@ -17,7 +17,6 @@ var chitu;
             return this._source.getNumRoutes();
         };
         RouteCollection.prototype.mapRoute = function (args) {
-            /// <param name="args" type="Objecct"/>
             args = args || {};
             var name = args.name;
             var url = args.url;
@@ -32,8 +31,6 @@ var chitu;
             route.viewPath = args.viewPath;
             route.actionPath = args.actionPath;
             var originalRoute = this._source.addRoute(url, function (args) {
-                //var values = $.extend(defaults, args);
-                //self.routeMatched.fire([name, values]);
             }, this._priority);
             originalRoute.rules = rules;
             originalRoute.newRoute = route;
@@ -49,7 +46,6 @@ var chitu;
             return route;
         };
         RouteCollection.prototype.getRouteData = function (url) {
-            /// <returns type="Object"/>
             var data = this._source.getRouteData(url);
             if (data == null)
                 throw e.canntParseUrl(url);
@@ -70,4 +66,3 @@ var chitu;
     })();
     chitu.RouteCollection = RouteCollection;
 })(chitu || (chitu = {}));
-//# sourceMappingURL=RouteCollection.js.map

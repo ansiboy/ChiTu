@@ -8,9 +8,8 @@ var chitu;
         var http_prefix = 'http://'.toLowerCase();
         if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
             var link = document.createElement('a');
-            //  set href to any path
             link.setAttribute('href', pattern);
-            pattern = decodeURI(link.pathname); //pattern.substr(http_prefix.length);
+            pattern = decodeURI(link.pathname);
             var route = crossroads.addRoute(pattern);
             return http_prefix + link.host + route.interpolate(data);
         }
@@ -21,26 +20,14 @@ var chitu;
         function Controller(name) {
             //if (!routeData) throw e.argumentNull('routeData');
             ////if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
-            //_routeData: RouteData;
             this._actions = {};
-            //if (!routeData.values().controller)
-            //    throw e.routeDataRequireController();
             this._name = name;
-            //this._routeData = routeData;
             this._actions = {};
             this.actionCreated = chitu.Callbacks();
         }
         Controller.prototype.name = function () {
             return this._name;
         };
-        //public getLocation(routeData: RouteData) {
-        //    /// <param name="actionName" type="String"/>
-        //    /// <returns type="String"/>
-        //    //if (!actionName) throw e.argumentNull('actionName');
-        //    //if (typeof actionName != 'string') throw e.paramTypeError('actionName', 'String');
-        //    var data = $.extend(RouteData.values(), { action: actionName });
-        //    return interpolate(this._routeData.actionPath(), data);
-        //}
         Controller.prototype.action = function (routeData) {
             /// <param name="value" type="chitu.Action" />
             /// <returns type="jQuery.Deferred" />
@@ -69,13 +56,10 @@ var chitu;
             if (!actionName)
                 throw e.routeDataRequireAction();
             var self = this;
-            var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
+            var url = interpolate(routeData.actionPath(), routeData.values());
             var result = $.Deferred();
             requirejs([url], $.proxy(function (obj) {
-                //加载脚本失败
                 if (!obj) {
-                    //console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
-                    //obj = { func: function () { } };
                     result.reject();
                 }
                 var func = obj.func || obj;
@@ -85,10 +69,6 @@ var chitu;
                 self.actionCreated.fire(self, action);
                 this.result.resolve(action);
             }, { actionName: actionName, result: result }), $.proxy(function (err) {
-                //console.warn(u.format('加载活动“{1}.{0}”失败，为该活动提供默认的值。', this.actionName, self.name()));
-                //var action = new Action(self, this.actionName, function () { });
-                //self.actionCreated.fire(self, action);
-                //this.result.resolve(action);
                 this.result.reject(err);
             }, { actionName: actionName, result: result }));
             return result;
@@ -116,11 +96,8 @@ var chitu;
             return this._name;
         };
         Action.prototype.execute = function (page) {
-            /// <param name="page" type="chitu.Page"/>
-            /// <returns type="jQuery.Deferred"/>
             if (!page)
                 throw e.argumentNull('page');
-            //if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
             var result = this._handle.apply({}, [page]);
             return u.isDeferred(result) ? result : $.Deferred().resolve();
         };
@@ -186,4 +163,3 @@ var chitu;
     ;
 })(chitu || (chitu = {}));
 ;
-//# sourceMappingURL=Controller.js.map

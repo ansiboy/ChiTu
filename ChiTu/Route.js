@@ -19,4 +19,3 @@ var chitu;
     })();
     chitu.Route = Route;
 })(chitu || (chitu = {}));
-//# sourceMappingURL=Route.js.map

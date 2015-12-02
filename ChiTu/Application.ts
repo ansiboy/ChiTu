@@ -15,7 +15,7 @@
         private page_stack: chitu.Page[] = [];
 
         private _routes: chitu.RouteCollection = new RouteCollection();
-        private _container: HTMLElement|Function;
+        private _container: HTMLElement | Function;
         private _runned: boolean = false;
 
         private zindex: number;
@@ -108,6 +108,10 @@
             else {
                 var args = window.location['arguments'] || {};
                 window.location['arguments'] = null;
+                if (window.location['skip'] == true) {
+                    window.location['skip'] = false;
+                    return;
+                }
 
                 this.showPage(hash.substr(1), args);
             }

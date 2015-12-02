@@ -8,7 +8,6 @@ var chitu;
             //    throw e.argumentNull('actionLocationFormater');
             this._controllers = {};
             this._controllers = {};
-            //this._actionLocationFormater = actionLocationFormater;
         }
         ControllerFactory.prototype.controllers = function () {
             return this._controllers;
@@ -27,8 +26,6 @@ var chitu;
             /// <summary>Gets the controller by routeData.</summary>
             /// <param name="routeData" type="Object"/>
             /// <returns type="chitu.Controller"/>
-            //if (typeof routeData !== 'object')
-            //    throw e.paramTypeError('routeData', 'object');
             if (!routeData.values().controller)
                 throw e.routeDataRequireController();
             if (!this._controllers[routeData.values().controller])
@@ -39,4 +36,3 @@ var chitu;
     })();
     chitu.ControllerFactory = ControllerFactory;
 })(chitu || (chitu = {}));
-//# sourceMappingURL=ControllerFactory.js.map

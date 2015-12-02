@@ -3,7 +3,6 @@ var chitu;
     var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
-    //var zindex = 500;
     var PAGE_STACK_MAX_SIZE = 10;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
@@ -29,15 +28,12 @@ var chitu;
             return ns.fireCallback(this.pageCreating, [this, context]);
         };
         Application.prototype.on_pageCreated = function (page) {
-            //this.pageCreated.fire(this, page);
             return ns.fireCallback(this.pageCreated, [this, page]);
         };
         Application.prototype.routes = function () {
             return this._routes;
         };
         Application.prototype.controller = function (routeData) {
-            /// <param name="routeData" type="Object"/>
-            /// <returns type="chitu.Controller"/>
             if (typeof routeData !== 'object')
                 throw e.paramTypeError('routeData', 'object');
             if (!routeData)
@@ -55,7 +51,6 @@ var chitu;
             return null;
         };
         Application.prototype.action = function (routeData) {
-            /// <param name="routeData" type="Object"/>
             if (typeof routeData !== 'object')
                 throw e.paramTypeError('routeData', 'object');
             if (!routeData)
@@ -88,6 +83,10 @@ var chitu;
             else {
                 var args = window.location['arguments'] || {};
                 window.location['arguments'] = null;
+                if (window.location['skip'] == true) {
+                    window.location['skip'] = false;
+                    return;
+                }
                 this.showPage(hash.substr(1), args);
             }
         };
@@ -173,7 +172,7 @@ var chitu;
             var controllerName = routeData.values().controller;
             var actionName = routeData.values().action;
             var controller = this.controller(routeData);
-            var view_deferred = this.viewFactory.view(routeData); //this.application().viewEngineFactory.getViewEngine(controllerName).view(actionName, routeData.viewPath);
+            var view_deferred = this.viewFactory.view(routeData);
             var context = new ns.ControllerContext(controller, view_deferred, routeData);
             this.on_pageCreating(context);
             var page = new ns.Page(context, container, previous);
@@ -187,7 +186,6 @@ var chitu;
         };
         Application.prototype.back = function (args) {
             if (args === void 0) { args = undefined; }
-            /// <returns type="jQuery.Deferred"/>
             if (window.history.length == 0)
                 return $.Deferred().reject();
             window.history.back();
@@ -197,4 +195,3 @@ var chitu;
     })();
     chitu.Application = Application;
 })(chitu || (chitu = {}));
-//# sourceMappingURL=Application.js.map
