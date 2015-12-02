@@ -249,6 +249,14 @@ var chitu;
                 .then(function (html, action) {
                 u.log('Load view success, page:{0}.', [_this.name()]);
                 $(html).appendTo(_this.nodes().content);
+                $(_this.nodes().content).find('[ch-part="header"]').appendTo(_this.nodes().header)
+                    .each(function (index, item) {
+                    item.style.zIndex = _this.nodes().header.style.zIndex;
+                });
+                $(_this.nodes().content).find('[ch-part="footer"]').appendTo(_this.nodes().footer)
+                    .each(function (index, item) {
+                    item.style.zIndex = _this.nodes().footer.style.zIndex;
+                });
                 var result = action.execute(_this);
                 _this.on_init();
                 if (u.isDeferred(result))

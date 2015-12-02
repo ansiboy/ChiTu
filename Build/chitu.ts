@@ -1,4 +1,4 @@
-module chitu {
+namespace chitu {
     var e = chitu.Errors;
     export class Utility {
         public static isType(targetType: Function, obj: any): boolean {
@@ -65,7 +65,7 @@ module chitu {
  
 } 
 
-;module chitu {
+;namespace chitu {
     var u = chitu.Utility;
     export class Errors {
         public static argumentNull(paramName: string) {
@@ -139,7 +139,7 @@ module chitu {
     }
 } 
 
-;module chitu {
+;namespace chitu {
     var rnotwhite = (/\S+/g);
 
     // String to Object options format cache
@@ -402,7 +402,7 @@ module chitu {
     });
 
 } ;
-module chitu {
+namespace chitu {
 
 
     var ns = chitu;
@@ -819,7 +819,7 @@ module chitu {
         }
 
     }
-};;module chitu {
+};;namespace chitu {
     var ns = chitu;
     var e = ns.Errors;
     var u = ns.Utility;
@@ -1055,7 +1055,7 @@ module chitu {
         return func;
     };
 
-};;module chitu {
+};;namespace chitu {
     export class ControllerContext {
         private _controller: any;
         private _view: any;
@@ -1079,7 +1079,7 @@ module chitu {
             return this._routeData;
         }
     }
-};module chitu {
+};namespace chitu {
     var e = chitu.Errors;
     var ns = chitu;
 
@@ -1129,7 +1129,7 @@ module chitu {
             return this._controllers[routeData.values().controller];
         }
     }
-} ;module chitu {
+} ;namespace chitu {
     export class Route {
         private _name: string;
         private _pattern: string;
@@ -1155,7 +1155,7 @@ module chitu {
     }
 
 
-} ;module chitu {
+} ;namespace chitu {
 
     var ns = chitu;
     var e = chitu.Errors;
@@ -1245,7 +1245,7 @@ module chitu {
             return routeData;
         }
     }
-} ;module chitu {
+} ;namespace chitu {
     export class RouteData {
         private _values: any;
         private _viewPath: string;
@@ -1289,7 +1289,7 @@ module chitu {
             return this._url;
         }
     }
-};;module chitu {
+};;namespace chitu {
 
     var e = chitu.Errors;
     var crossroads = window['crossroads'];
@@ -1380,7 +1380,7 @@ module chitu {
 
         }
     }
-} ;module chitu {
+} ;namespace chitu {
 
     var ns = chitu;
     var u = chitu.Utility;
@@ -1397,7 +1397,7 @@ module chitu {
         private page_stack: chitu.Page[] = [];
 
         private _routes: chitu.RouteCollection = new RouteCollection();
-        private _container: HTMLElement|Function;
+        private _container: HTMLElement | Function;
         private _runned: boolean = false;
 
         private zindex: number;
@@ -1490,6 +1490,10 @@ module chitu {
             else {
                 var args = window.location['arguments'] || {};
                 window.location['arguments'] = null;
+                if (window.location['skip'] == true) {
+                    window.location['skip'] = false;
+                    return;
+                }
 
                 this.showPage(hash.substr(1), args);
             }

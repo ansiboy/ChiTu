@@ -319,15 +319,15 @@ namespace chitu {
                 .then((html: string, action: chitu.Action) => {
                     u.log('Load view success, page:{0}.', [this.name()]);
                     $(html).appendTo(this.nodes().content);
-                    //$(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header)
-                    //    .each((index, item: HTMLElement) => {
-                    //        item.style.zIndex = this.nodes().header.style.zIndex;
-                    //    });
+                    $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header)
+                        .each((index, item: HTMLElement) => {
+                            item.style.zIndex = this.nodes().header.style.zIndex;
+                        });
 
-                    //$(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer)
-                    //    .each((index, item: HTMLElement) => {
-                    //        item.style.zIndex = this.nodes().footer.style.zIndex;
-                    //    });
+                    $(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer)
+                        .each((index, item: HTMLElement) => {
+                            item.style.zIndex = this.nodes().footer.style.zIndex;
+                        });
 
                     var result = action.execute(this);
                     this.on_init();
