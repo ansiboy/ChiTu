@@ -1,8 +1,8 @@
 ﻿require.config({
     baseUrl: 'Scripts',
     shim: {
-        chitu: {
-            deps: ['move']
+        '../chitu': {
+            deps: ['move', 'jquery', 'crossroads']
         }
     },
     paths: {
@@ -10,17 +10,24 @@
         crossroads: 'crossroads'
     }
 });
-requirejs(['chitu', 'move'], function (c, move) {
+requirejs(['../chitu', 'move'], function (c, move) {
     window['move'] = move;
     var app = new chitu.Application({
-        container: document.body
+        container: document.getElementById('main'),
+        openSwipe: function () {
+            return chitu.SwipeDirection.None;
+            return chitu.SwipeDirection.Left;
+        },
+        scrollType: function () {
+            return chitu.ScrollType.Document
+        }
     });
     //function (options) {
     //options.actionPath = 'http://localhost:62632/Modules/{controller}/{action}.js';
     //options.viewPath = 'http://localhost:62632/Modules/{controller}/{action}.html';
 
 
-
+    
     app.pageCreated.add(function (sender, page) {
 
     });
@@ -32,17 +39,17 @@ requirejs(['chitu', 'move'], function (c, move) {
         actionPath: '../Modules/{controller}/{action}.js'
     });
 
-    app.routes().mapRoute({
-        name: 'remote',
-        url: '{controller}/{action}',
-        rules: {
-            controller: ['Remote']
-        },
-        viewPath: 'http://localhost:17354/Samples/{controller}_{action}.html',
-        actionPath: 'http://localhost:17354/Samples/{controller}_{action}.js'
-    });
-
+    //app.routes().mapRoute({
+    //    name: 'remote',
+    //    url: '{controller}/{action}',
+    //    rules: {
+    //        controller: ['Remote']
+    //    },
+    //    viewPath: 'http://localhost:17354/Samples/{controller}_{action}.html',
+    //    actionPath: 'http://localhost:17354/Samples/{controller}_{action}.js'
     //});
 
+    //});
+    
     app.run();
 });

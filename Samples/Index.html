@@ -2,8 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <script src="Scripts/require.js" data-main="Index"></script>
-    <link href="Site.css" rel="stylesheet" />
+    <!--<link href="Site.css" rel="stylesheet" />
+    <script src="Scripts/jquery-2.1.1.min.js"></script>
+    <script src="Scripts/crossroads.js"></script>
+    <script src="chitu.js"></script>
+    <script src="Scripts/iscroll-lite.js"></script>
+    <script src="Scripts/require.js"></script>-->
+    <link href="chitu.css" rel="stylesheet" />
+    <link href="Content/css/font-awesome.css" rel="stylesheet" />
 </head>
 <body>
     <div id="main" style="z-index:100;"></div>
@@ -18,5 +27,72 @@
         f({ a: 10 });
         f({ a: 20 });
     </script>-->
+    <script>
+        //define('move', function () {
+        //    return move;
+        //})
+        //$(function () {
+        //require.config({
+        //    baseUrl: 'Scripts',
+        //    shim: {
+        //        chitu: {
+        //            deps: ['move']
+        //        }
+        //    },
+        //    paths: {
+        //        jquery: 'jquery-2.1.1.min',
+        //        crossroads: 'crossroads'
+        //    }
+        //});
+
+        //var app = new chitu.Application({
+        //    container: document.getElementById('main')
+        //});
+
+        //app.routes().mapRoute({
+        //    name: 'default',
+        //    url: '{controller}/{action}',
+        //    viewPath: '../Modules/{controller}/{action}.html',
+        //    actionPath: '../Modules/{controller}/{action}.js'
+        //});
+
+
+
+        //app.showPage('Home/HelloWorld');
+
+        //var page_node = document.createElement('div');
+        //document.body.appendChild(page_node);
+        //chitu.Page.ScrollType = chitu.ScrollType.Div;
+        //var p = new chitu.Page(page_node);
+        //p.nodes().header.innerHTML = 'Hello World';
+        //p.nodes().footer.innerHTML = 'Footer';
+        //p.load.add(function () {
+        //    for (var i = 0; i < 100; i++) {
+        //        $(p.nodes().content).append('<div style="margin-top:10px;height:30px;width:100%;">FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</div>');
+        //    }
+
+        //    var result = $.Deferred();
+        //    window.setTimeout(function () {
+        //        result.resolve();
+        //    }, 200);
+        //    return result;
+        //});
+        //p.open({}, chitu.SwipeDirection.None);
+
+
+
+
+
+        //var iscroll = new IScroll(p.nodes().body);
+        //window.setTimeout(function () {
+        //    iscroll.refresh();
+        //}, 200);
+
+        //window.setTimeout(function () {
+        //    p.close({}, chitu.SwipeDirection.Donw);
+        //}, 2000)
+        //})
+    </script>
+    <!--<script src="Scripts/move.js"></script>-->
 </body>
 </html>

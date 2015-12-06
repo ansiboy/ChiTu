@@ -1,12 +1,12 @@
-﻿namespace chitu {
-
+﻿
+namespace chitu {
     var ns = chitu;
     var e = chitu.Errors;
 
     export class RouteCollection {
         _source: any
         _priority: number
-        _defaultRoute: Route
+        _defaultRoute: chitu.Route
         static defaultRouteName: string = 'default';
 
         _defaults: {}
@@ -67,7 +67,7 @@
             return route;
         }
 
-        getRouteData(url): RouteData {
+        getRouteData(url): chitu.RouteData {
             /// <returns type="Object"/>
             var data = this._source.getRouteData(url);
             if (data == null)
@@ -80,7 +80,7 @@
                 values[key] = data.params[0][key];
             }
 
-            var routeData = new RouteData(url);
+            var routeData = new chitu.RouteData(url);
             routeData.values(values);
             routeData.actionPath(data.route.newRoute.actionPath);
             routeData.viewPath(data.route.newRoute.viewPath);
@@ -88,4 +88,4 @@
             return routeData;
         }
     }
-} 
+}

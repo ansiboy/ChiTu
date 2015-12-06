@@ -1,7 +1,11 @@
-﻿namespace chitu {
-    var ns = chitu;
-    var e = ns.Errors;
-    var u = ns.Utility;
+﻿
+namespace chitu {
+
+
+
+    //var ns = chitu;
+    var e = chitu.Errors;
+    //var u = chitu.Utility;
 
     var crossroads = window['crossroads'];
 
@@ -23,10 +27,10 @@
     }
 
     export class Controller {
-        _name: any;
+        private _name: any;
         //_routeData: RouteData;
-        _actions = {};
-        actionCreated: any;
+        private _actions = {};
+        private actionCreated: any;
 
         constructor(name: string) {
             //if (!routeData) throw e.argumentNull('routeData');
@@ -53,36 +57,37 @@
         //    var data = $.extend(RouteData.values(), { action: actionName });
         //    return interpolate(this._routeData.actionPath(), data);
         //}
-        public action(routeData: RouteData) {
+        public getAction(routeData: chitu.RouteData): JQueryPromise<Action> {
             /// <param name="value" type="chitu.Action" />
             /// <returns type="jQuery.Deferred" />
             
             var controller = routeData.values().controller;;
             if (!controller)
-                throw e.routeDataRequireController();
+                throw chitu.Errors.routeDataRequireController();
 
             if (this._name != controller) {
                 throw new Error('Not same a controller.');
             }
 
             var name = routeData.values().action;
-            if (!name) throw e.routeDataRequireAction();
+            if (!name) throw chitu.Errors.routeDataRequireAction();
 
 
 
             var self = this;
             if (!this._actions[name]) {
-                this._actions[name] = this._createAction(routeData).fail($.proxy(
-                    function () {
-                        self._actions[this.actionName] = null;
-                    },
-                    { actionName: routeData })
-                    );
+                this._actions[name] = this._createAction(routeData);
+                //.fail($.proxy(
+                //    function () {
+                //        self._actions[this.actionName] = null;
+                //    },
+                //    { actionName: routeData })
+                //);
             }
 
             return this._actions[name];
         }
-        private _createAction(routeData: RouteData) {
+        private _createAction(routeData: chitu.RouteData): JQueryPromise<Action> {
             /// <param name="actionName" type="String"/>
             /// <returns type="jQuery.Deferred"/>
 
@@ -106,7 +111,7 @@
                     var func = obj.func || obj;
 
                     if (!$.isFunction(func))
-                        throw ns.Errors.modelFileExpecteFunction(this.actionName);
+                        throw chitu.Errors.modelFileExpecteFunction(this.actionName);
 
                     var action = new Action(self, this.actionName, func);
                     self.actionCreated.fire(self, action);
@@ -121,7 +126,7 @@
                     //this.result.resolve(action);
                     this.result.reject(err);
                 }, { actionName: actionName, result: result })
-                );
+            );
 
             return result;
         }
@@ -130,18 +135,18 @@
 
 
     export class Action {
-        _name: any
-        _handle: any
+        private _name: any
+        private _handle: any
 
         constructor(controller, name, handle) {
             /// <param name="controller" type="chitu.Controller"/>
             /// <param name="name" type="String">Name of the action.</param>
             /// <param name="handle" type="Function"/>
 
-            if (!controller) throw e.argumentNull('controller');
-            if (!name) throw e.argumentNull('name');
-            if (!handle) throw e.argumentNull('handle');
-            if (!$.isFunction(handle)) throw e.paramTypeError('handle', 'Function');
+            if (!controller) throw chitu.Errors.argumentNull('controller');
+            if (!name) throw chitu.Errors.argumentNull('name');
+            if (!handle) throw chitu.Errors.argumentNull('handle');
+            if (!$.isFunction(handle)) throw chitu.Errors.paramTypeError('handle', 'Function');
 
             this._name = name;
             this._handle = handle;
@@ -158,11 +163,11 @@
             //if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
 
             var result = this._handle.apply({}, [page]);
-            return u.isDeferred(result) ? result : $.Deferred().resolve();
+            return chitu.Utility.isDeferred(result) ? result : $.Deferred().resolve();
         }
     }
 
-    export function action(deps, filters, func) {
+    function action(deps, filters, func) {
         /// <param name="deps" type="Array" canBeNull="true"/>
         /// <param name="filters" type="Array" canBeNull="true"/>
         /// <param name="func" type="Function" canBeNull="false"/>
@@ -229,9 +234,9 @@
                 }
             },
             { func: func, filters: filters })
-            );
+        );
 
         return func;
     };
 
-};
+}

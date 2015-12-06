@@ -42,4 +42,4 @@
             return this._url;
         }
     }
-};
+}

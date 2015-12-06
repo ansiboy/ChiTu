@@ -24,14 +24,14 @@
             //if (!routeData.values().controller)
             //    throw e.routeDataRequireController();
 
-            return new ns.Controller(name);
+            return new chitu.Controller(name);
         }
 
         public actionLocationFormater() {
             return this._actionLocationFormater;
         }
 
-        public getController(routeData: RouteData) {
+        public getController(routeData: RouteData): chitu.Controller {
             /// <summary>Gets the controller by routeData.</summary>
             /// <param name="routeData" type="Object"/>
             /// <returns type="chitu.Controller"/>

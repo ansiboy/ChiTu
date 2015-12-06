@@ -34,12 +34,16 @@
     <TypeScriptCompile Include="ControllerContext.ts" />
     <TypeScriptCompile Include="ControllerFactory.ts" />
     <TypeScriptCompile Include="Controller.ts" />
+    <TypeScriptCompile Include="Scroll\DivScroll.ts" />
     <TypeScriptCompile Include="Errors.ts" />
     <TypeScriptCompile Include="Extends.ts" />
+    <TypeScriptCompile Include="Scroll\DocumentScroll.ts" />
+    <TypeScriptCompile Include="Scroll\IOSScroll.ts" />
     <TypeScriptCompile Include="Page.ts" />
     <TypeScriptCompile Include="RouteCollection.ts" />
     <TypeScriptCompile Include="Route.ts" />
     <TypeScriptCompile Include="RouteData.ts" />
+    <TypeScriptCompile Include="Scripts\typings\site.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\requirejs\require.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\visionmedia\move.d.ts" />
@@ -47,7 +51,6 @@
     <TypeScriptCompile Include="ViewFactory.ts" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="packages.config" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
@@ -84,8 +87,9 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <TypeScriptRemoveComments>True</TypeScriptRemoveComments>
     <TypeScriptSourceMap>False</TypeScriptSourceMap>
-    <TypeScriptModuleKind>none</TypeScriptModuleKind>
+    <TypeScriptModuleKind>umd</TypeScriptModuleKind>
     <TypeScriptTarget>ES5</TypeScriptTarget>
+    <TypeScriptOutFile>D:\MyProjects\ChiTu\ChiTu\chitu.js</TypeScriptOutFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <TypeScriptRemoveComments>true</TypeScriptRemoveComments>

@@ -14,6 +14,16 @@ var chitu;
     var PAGE_FOOTER_CLASS_NAME = 'page-footer';
     var PAGE_LOADING_CLASS_NAME = 'page-loading';
     var PAGE_CONTENT_CLASS_NAME = 'page-content';
+    var LOAD_MORE_HTML = '<span>上拉加载更多数据</span>';
+    var LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
+    var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;"></span>';
+    (function (PageLoadType) {
+        PageLoadType[PageLoadType["start"] = 0] = "start";
+        PageLoadType[PageLoadType["scroll"] = 1] = "scroll";
+        PageLoadType[PageLoadType["pullDown"] = 2] = "pullDown";
+        PageLoadType[PageLoadType["pullUp"] = 3] = "pullUp";
+    })(chitu.PageLoadType || (chitu.PageLoadType = {}));
+    var PageLoadType = chitu.PageLoadType;
     var ShowTypes;
     (function (ShowTypes) {
         ShowTypes[ShowTypes["swipeLeft"] = 0] = "swipeLeft";
@@ -32,6 +42,20 @@ var chitu;
         PageStatus[PageStatus["open"] = 0] = "open";
         PageStatus[PageStatus["closed"] = 1] = "closed";
     })(PageStatus || (PageStatus = {}));
+    (function (SwipeDirection) {
+        SwipeDirection[SwipeDirection["None"] = 0] = "None";
+        SwipeDirection[SwipeDirection["Left"] = 1] = "Left";
+        SwipeDirection[SwipeDirection["Right"] = 2] = "Right";
+        SwipeDirection[SwipeDirection["Up"] = 3] = "Up";
+        SwipeDirection[SwipeDirection["Donw"] = 4] = "Donw";
+    })(chitu.SwipeDirection || (chitu.SwipeDirection = {}));
+    var SwipeDirection = chitu.SwipeDirection;
+    (function (ScrollType) {
+        ScrollType[ScrollType["IScroll"] = 0] = "IScroll";
+        ScrollType[ScrollType["Div"] = 1] = "Div";
+        ScrollType[ScrollType["Document"] = 2] = "Document";
+    })(chitu.ScrollType || (chitu.ScrollType = {}));
+    var ScrollType = chitu.ScrollType;
     var PageNodes = (function () {
         function PageNodes(node) {
             node.className = PAGE_CLASS_NAME;
@@ -41,16 +65,15 @@ var chitu;
             node.appendChild(this.header);
             this.body = document.createElement('div');
             this.body.className = PAGE_BODY_CLASS_NAME;
-            $(this.body).hide();
             node.appendChild(this.body);
             this.content = document.createElement('div');
             this.content.className = PAGE_CONTENT_CLASS_NAME;
+            $(this.content).hide();
             this.body.appendChild(this.content);
             this.loading = document.createElement('div');
             this.loading.className = PAGE_LOADING_CLASS_NAME;
             this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
-            $(this.loading).hide();
-            node.appendChild(this.loading);
+            this.body.appendChild(this.loading);
             this.footer = document.createElement('div');
             this.footer.className = PAGE_FOOTER_CLASS_NAME;
             node.appendChild(this.footer);
@@ -58,14 +81,13 @@ var chitu;
         return PageNodes;
     })();
     var Page = (function () {
-        function Page(context, container, previous) {
+        function Page(element, scrollType, previous) {
             this._loadViewModelResult = null;
             this._openResult = null;
             this._hideResult = null;
             this._showTime = Page.animationTime;
             this._hideTime = Page.animationTime;
-            this.swipe = true;
-            this.init = ns.Callbacks();
+            this._isLoadAllData = true;
             this.preLoad = ns.Callbacks();
             this.load = ns.Callbacks();
             this.closing = ns.Callbacks();
@@ -75,23 +97,41 @@ var chitu;
             this.shown = ns.Callbacks();
             this.hiding = ns.Callbacks();
             this.hidden = ns.Callbacks();
-            if (!context)
-                throw e.argumentNull('context');
-            if (!container)
-                throw e.argumentNull('container');
-            this._container = container;
+            this.scrollEnd = ns.Callbacks();
+            if (!element)
+                throw e.argumentNull('element');
+            if (scrollType == null)
+                throw e.argumentNull('scrollType');
             this._prevous = previous;
-            var element = document.createElement('div');
-            container.appendChild(element);
-            this._context = context;
-            var controllerName = context.routeData().values().controller;
-            var actionName = context.routeData().values().action;
-            var name = Page.getPageName(context.routeData());
-            var viewDeferred = context.view();
-            var actionDeferred = context.controller().action(context.routeData());
             this._pageNode = new PageNodes(element);
-            this._init(name, viewDeferred, actionDeferred, element);
+            if (scrollType == ScrollType.IScroll) {
+                $(this.nodes().container).addClass('ios');
+                this.ios_scroller = new IOSScroll(this);
+            }
+            else if (scrollType == ScrollType.Div) {
+                $(this.nodes().container).addClass('div');
+                new DisScroll(this);
+            }
+            else if (scrollType == ScrollType.Document) {
+                $(this.nodes().container).addClass('doc');
+                new DocumentScroll(this);
+            }
+            this.scrollEnd.add(Page.page_scrollEnd);
         }
+        Page.prototype.init = function (routeData) {
+            var controllerName = routeData.values().controller;
+            var actionName = routeData.values().action;
+            var q = this.nodes().content.querySelector('[ch-part="header"]');
+            if (q)
+                this.nodes().header.appendChild(q);
+            q = this.nodes().content.querySelector('[ch-part="footer"]');
+            if (q)
+                this.nodes().footer.appendChild(q);
+            var args = routeData.values();
+            args.loadType = PageLoadType.start;
+            args.loadCompleted = Page.createLoadCompletedFunc(this);
+            this.on_load(args);
+        };
         Page.getPageName = function (routeData) {
             var name;
             if (routeData.pageName()) {
@@ -103,94 +143,129 @@ var chitu;
             }
             return name;
         };
-        Page.prototype.context = function () {
-            return this._context;
-        };
-        Page.prototype.name = function () {
-            return this._name;
-        };
+        Object.defineProperty(Page.prototype, "routeData", {
+            get: function () {
+                return this._routeData;
+            },
+            set: function (value) {
+                this._routeData = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Page.prototype, "name", {
+            get: function () {
+                if (!this._name)
+                    this._name = Page.getPageName(this.routeData);
+                return this._name;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Page.prototype.node = function () {
             return this._pageNode.container;
         };
         Page.prototype.nodes = function () {
             return this._pageNode;
         };
-        Page.prototype.previous = function () {
-            return this._prevous;
-        };
-        Page.prototype.hide = function () {
+        Object.defineProperty(Page.prototype, "parent", {
+            get: function () {
+                return this._prevous;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Page.prototype.hide = function (swipe) {
             if (!$(this.node()).is(':visible'))
                 return;
-            this.hidePageNode(false);
+            swipe = swipe || SwipeDirection.None;
+            this.hidePageNode(swipe);
         };
-        Page.prototype.show = function () {
+        Page.prototype.show = function (swipe) {
             if ($(this.node()).is(':visible'))
                 return;
-            this.showPageNode(false);
+            swipe = swipe || SwipeDirection.None;
+            this.showPageNode(swipe);
         };
         Page.prototype.visible = function () {
             return $(this.node()).is(':visible');
         };
         Page.prototype.hidePageNode = function (swipe) {
             var _this = this;
-            var result = $.Deferred();
-            if (swipe) {
-                var container_width = $(this._container).width();
-                window['move'](this.node())
-                    .to(container_width)
-                    .duration(this._hideTime)
-                    .end(function () {
-                    $(_this.node()).hide();
-                    result.resolve();
-                    _this.on_hidden({});
-                });
+            if (!window['move']) {
+                swipe = SwipeDirection.None;
+                console.warn('Move is not loaded and swipe is auto disabled.');
             }
-            else {
-                $(this.node()).hide();
+            var result = $.Deferred();
+            var container_width = $(this.nodes().container).width();
+            var container_height = $(this.nodes().container).height();
+            var on_end = function () {
+                $(_this.node()).hide();
                 result.resolve();
-                this.on_hidden({});
+                _this.on_hidden({});
+            };
+            switch (swipe) {
+                case SwipeDirection.None:
+                default:
+                    on_end();
+                    break;
+                case SwipeDirection.Up:
+                    move(this.nodes().container).y(container_height).end()
+                        .y(0 - container_height).duration(this._hideTime).end(on_end);
+                    break;
+                case SwipeDirection.Donw:
+                    move(this.nodes().container).y(container_height).duration(this._hideTime).end(on_end);
+                    break;
+                case SwipeDirection.Right:
+                    move(this.node())
+                        .x(container_width)
+                        .duration(this._hideTime)
+                        .end(on_end);
+                    break;
+                case SwipeDirection.Left:
+                    move(this.node())
+                        .x(0 - container_width)
+                        .duration(this._hideTime)
+                        .end(on_end);
+                    break;
             }
             return result;
         };
         Page.prototype.showPageNode = function (swipe) {
             var _this = this;
+            if (!window['move']) {
+                swipe = SwipeDirection.None;
+                console.warn('Move is not loaded and swipe is auto disabled.');
+            }
             this.on_showing({});
             var result = $.Deferred();
-            if (swipe) {
-                var container_width = $(this._container).width();
-                this.node().style.left = '0px';
-                this.node().style.display = 'block';
-                move(this.node()).to(container_width).duration(0).end();
-                move(this.node())
-                    .to(0)
-                    .duration(this._showTime)
-                    .end(function () {
-                    result.resolve();
-                });
-                if (this._openResult != null) {
-                    $(this._pageNode.loading).show();
-                    $(this._pageNode.body).hide();
-                }
-                else {
-                    this.showBodyNode();
-                }
-            }
-            else {
-                this.node().style.display = 'block';
-                if (this.node().style.transform) {
-                    move(this.node()).to(0).duration(0);
-                }
-                else {
-                    this.node().style.left = '0px';
-                }
-                if (this._openResult != null) {
-                    $(this._pageNode.loading).show();
-                    $(this._pageNode.body).hide();
-                }
-                else {
-                    this.showBodyNode();
-                }
+            this.node().style.display = 'block';
+            var container_width = $(this.nodes().container).width();
+            var container_height = $(this.nodes().container).height();
+            var on_end = function () {
                 result.resolve();
+            };
+            switch (swipe) {
+                case SwipeDirection.None:
+                default:
+                    on_end();
+                    break;
+                case SwipeDirection.Donw:
+                    move(this.node()).y(0 - container_height).duration(0).end(on_end);
+                    move(this.node()).y(0).duration(0).end(on_end);
+                    break;
+                case SwipeDirection.Up:
+                    move(this.node()).y(container_height).duration(0).end();
+                    move(this.node()).y(0).duration(this._showTime).end(on_end);
+                    break;
+                case SwipeDirection.Right:
+                    move(this.node()).x(0 - container_width).duration(0).end();
+                    move(this.node()).x(0).duration(this._showTime).end(on_end);
+                    break;
+                case SwipeDirection.Left:
+                    move(this.node()).x(container_width).duration(0).end();
+                    move(this.node()).x(0).duration(this._showTime).end(on_end);
+                    break;
             }
             result.done(function () {
                 if (_this._prevous != null)
@@ -204,24 +279,21 @@ var chitu;
             $(this._pageNode.body).show();
             this.on_shown({});
         };
-        Page.prototype._init = function (name, viewDeferred, actionDeferred, node) {
-            if (!name)
-                throw e.argumentNull('name');
-            if (!viewDeferred)
-                throw e.argumentNull('viewDeferred');
-            if (!actionDeferred)
-                throw e.argumentNull('actionDeferred');
-            if (!node)
-                throw e.argumentNull('node');
-            this._name = name;
-            this._viewDeferred = viewDeferred;
-            this._actionDeferred = actionDeferred;
-        };
-        Page.prototype.on_init = function () {
-            return eventDeferred(this.init, this);
-        };
         Page.prototype.on_load = function (args) {
-            return eventDeferred(this.load, this, args);
+            var _this = this;
+            var result = eventDeferred(this.load, this, args);
+            if (args.loadType == PageLoadType.start) {
+                result.done(function () {
+                    $(_this.nodes().loading).hide();
+                    $(_this.nodes().content).show();
+                });
+            }
+            result.done(function () {
+                if (_this.ios_scroller) {
+                    window.setTimeout(function () { return _this.ios_scroller.refresh(); }, 100);
+                }
+            });
+            return result;
         };
         Page.prototype.on_closed = function (args) {
             return eventDeferred(this.closed, this, args);
@@ -241,70 +313,72 @@ var chitu;
         Page.prototype.on_hidden = function (args) {
             return eventDeferred(this.hidden, this, args);
         };
-        Page.prototype._loadViewAndModel = function () {
-            var _this = this;
-            if (this._loadViewModelResult)
-                return this._loadViewModelResult;
-            this._loadViewModelResult = $.when(this._viewDeferred, this._actionDeferred)
-                .then(function (html, action) {
-                u.log('Load view success, page:{0}.', [_this.name()]);
-                $(html).appendTo(_this.nodes().content);
-                $(_this.nodes().content).find('[ch-part="header"]').appendTo(_this.nodes().header)
-                    .each(function (index, item) {
-                    item.style.zIndex = _this.nodes().header.style.zIndex;
-                });
-                $(_this.nodes().content).find('[ch-part="footer"]').appendTo(_this.nodes().footer)
-                    .each(function (index, item) {
-                    item.style.zIndex = _this.nodes().footer.style.zIndex;
-                });
-                var result = action.execute(_this);
-                _this.on_init();
-                if (u.isDeferred(result))
-                    return result;
-                return $.Deferred().resolve();
-            }).fail(function () {
-                _this._loadViewModelResult = null;
-                u.log('Load view or action fail, page：{0}.', [_this.name()]);
-            });
-            return this._loadViewModelResult;
+        Page.prototype.on_scrollEnd = function (args) {
+            return eventDeferred(this.scrollEnd, this, args);
         };
-        Page.prototype.open = function (values) {
-            var _this = this;
+        Page.prototype.open = function (args, swipe) {
             if (this._openResult)
                 return this._openResult;
-            var args = values;
-            this._openResult = $.Deferred();
-            var pageNodeShown = this.showPageNode(this.swipe);
-            this._loadViewAndModel()
-                .pipe(function () {
-                return _this.on_load(args);
-            })
-                .done(function () {
-                _this._openResult.resolve();
-                _this.showBodyNode();
-            })
-                .fail(function () {
-                _this._openResult.reject();
-            });
-            return this._openResult.always(function () {
-                _this._openResult = null;
-            });
+            args = args || {};
+            swipe = swipe || SwipeDirection.None;
+            this.showPageNode(swipe);
         };
-        Page.prototype.close = function (args) {
+        Page.prototype.close = function (args, swipe) {
             /// <summary>
-            /// Hide the page.
+            /// Colse the page.
             /// </summary>
             /// <param name="args" type="Object" canBeNull="true">
             /// The value passed to the hide event functions.
             /// </param>
             /// <returns type="jQuery.Deferred"/>
             var _this = this;
-            if (args === void 0) { args = undefined; }
-            this.hidePageNode(this.swipe).done(function () {
+            this.hidePageNode(swipe).done(function () {
                 $(_this.node()).remove();
             });
             args = args || {};
             this.on_closed(args);
+        };
+        Page.page_scrollEnd = function (sender, args) {
+            //scrollStatus = ScrollStatus.ScrollEnd;
+            var scrollTop = args.scrollTop;
+            var scrollHeight = args.scrollHeight;
+            var clientHeight = args.clientHeight;
+            var marginBottom = clientHeight / 3;
+            if (clientHeight + scrollTop < scrollHeight - marginBottom)
+                return;
+            if (sender._isLoadAllData == true)
+                return;
+            var scroll_arg = $.extend(sender.routeData.values(), {
+                loadType: PageLoadType.scroll,
+                loadCompleted: Page.createLoadCompletedFunc(sender)
+            });
+            var result = sender.on_load(scroll_arg);
+        };
+        Page.createLoadCompletedFunc = function (sender) {
+            var $scrollLoad_loading = $(sender.nodes().content).find('[name="scrollLoad_loading"]');
+            if ($scrollLoad_loading.length == 0) {
+                var node = sender.nodes().content;
+                $scrollLoad_loading = $('<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>')
+                    .appendTo(node)
+                    .hide();
+            }
+            $scrollLoad_loading.find('h5').html(LOADDING_HTML);
+            return function (load_completed) {
+                sender._isLoadAllData = load_completed;
+                if (load_completed && $scrollLoad_loading.is(':visible')) {
+                    $scrollLoad_loading.hide();
+                    sender.refreshUI();
+                }
+                else if (!load_completed && !$scrollLoad_loading.is(':visible')) {
+                    $scrollLoad_loading.show();
+                    sender.refreshUI();
+                }
+            };
+        };
+        Page.prototype.refreshUI = function () {
+            if (this.ios_scroller) {
+                this.ios_scroller.refresh();
+            }
         };
         Page.animationTime = 300;
         return Page;

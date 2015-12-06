@@ -69,6 +69,10 @@
             var msg = u.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
             return new Error(msg);
         }
+        public static viewCanntNull() {
+            var msg = 'The view or viewDeferred of the page cannt null.';
+            return new Error(msg);
+        }
     }
 } 
 

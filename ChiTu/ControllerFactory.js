@@ -17,7 +17,7 @@ var chitu;
             /// <returns type="ns.Controller"/>
             //if (!routeData.values().controller)
             //    throw e.routeDataRequireController();
-            return new ns.Controller(name);
+            return new chitu.Controller(name);
         };
         ControllerFactory.prototype.actionLocationFormater = function () {
             return this._actionLocationFormater;

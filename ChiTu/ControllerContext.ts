@@ -1,9 +1,10 @@
-﻿namespace chitu {
+﻿
+namespace chitu {
     export class ControllerContext {
-        private _controller: any;
-        private _view: any;
+        private _controller: chitu.Controller;
+        private _view: JQueryPromise<string>;
         private _routeData: RouteData;
-        constructor(controller, view, routeData: RouteData) {
+        constructor(controller: chitu.Controller, view: JQueryPromise<string>, routeData: RouteData) {
             this._routeData = routeData;
             this._controller = controller;
             this._view = view;
@@ -13,7 +14,7 @@
             /// <returns type="chitu.Controller"/>
             return this._controller;
         }
-        public view() {
+        public view(): JQueryPromise<string> {
             /// <returns type="jQuery.Deferred"/>
             return this._view;
         }

@@ -800,6 +800,427 @@ window['crossroads'] = factory(window['jQuery']);
 })(chitu || (chitu = {}));
 ;var chitu;
 (function (chitu) {
+    var ns = chitu;
+    var u = chitu.Utility;
+    var e = chitu.Errors;
+    var PAGE_STACK_MAX_SIZE = 10;
+    var ACTION_LOCATION_FORMATER = '{controller}/{action}';
+    var VIEW_LOCATION_FORMATER = '{controller}/{action}';
+    var Application = (function () {
+        function Application(config) {
+            this.pageCreating = ns.Callbacks();
+            this.pageCreated = ns.Callbacks();
+            this.page_stack = [];
+            this._routes = new chitu.RouteCollection();
+            this._runned = false;
+            this.controllerFactory = new chitu.ControllerFactory();
+            this.viewFactory = new chitu.ViewFactory();
+            if (config == null)
+                throw e.argumentNull('container');
+            if (!config.container) {
+                throw new Error('The config has not a container property.');
+            }
+            if (!$.isFunction(config.container) && !config.container['tagName'])
+                throw new Error('Parameter container is not a function or html element.');
+            config.openSwipe = config.openSwipe || function (routeData) { return chitu.SwipeDirection.None; };
+            config.closeSwipe = config.closeSwipe || function (routeData) { return chitu.SwipeDirection.None; };
+            config.scrollType = config.scrollType || function (routeData) { return chitu.ScrollType.Document; };
+            this.config = config;
+        }
+        Application.prototype.on_pageCreating = function (context) {
+            return chitu.fireCallback(this.pageCreating, [this, context]);
+        };
+        Application.prototype.on_pageCreated = function (page) {
+            return chitu.fireCallback(this.pageCreated, [this, page]);
+        };
+        Application.prototype.routes = function () {
+            return this._routes;
+        };
+        Application.prototype.controller = function (routeData) {
+            if (typeof routeData !== 'object')
+                throw chitu.Errors.paramTypeError('routeData', 'object');
+            if (!routeData)
+                throw chitu.Errors.argumentNull('routeData');
+            return this.controllerFactory.getController(routeData);
+        };
+        Application.prototype.currentPage = function () {
+            if (this.page_stack.length > 0)
+                return this.page_stack[this.page_stack.length - 1];
+            return null;
+        };
+        Application.prototype.previousPage = function () {
+            if (this.page_stack.length > 1)
+                return this.page_stack[this.page_stack.length - 2];
+            return null;
+        };
+        Application.prototype.action = function (routeData) {
+            if (typeof routeData !== 'object')
+                throw chitu.Errors.paramTypeError('routeData', 'object');
+            if (!routeData)
+                throw chitu.Errors.argumentNull('routeData');
+            var controllerName = routeData.controller;
+            if (!controllerName)
+                throw e.argumentNull('name');
+            if (typeof controllerName != 'string')
+                throw e.routeDataRequireController();
+            var actionName = routeData.action;
+            if (!actionName)
+                throw e.argumentNull('name');
+            if (typeof actionName != 'string')
+                throw e.routeDataRequireAction();
+            var controller = this.controller(routeData);
+            return controller.getAction(actionName);
+        };
+        Application.prototype.hashchange = function () {
+            if (window.location['skip'] == true) {
+                window.location['skip'] = false;
+                return;
+            }
+            var hash = window.location.hash;
+            if (!hash) {
+                chitu.Utility.log('The url is not contains hash.');
+                return;
+            }
+            var current_page_url = '';
+            if (this.previousPage() != null)
+                current_page_url = this.previousPage().routeData.url();
+            if (current_page_url.toLowerCase() == hash.substr(1).toLowerCase()) {
+                this.closeCurrentPage();
+            }
+            else {
+                var args = window.location['arguments'] || {};
+                window.location['arguments'] = null;
+                this.showPage(hash.substr(1), args);
+            }
+        };
+        Application.prototype.run = function () {
+            if (this._runned)
+                return;
+            var app = this;
+            $.proxy(this.hashchange, this)();
+            $(window).bind('hashchange', $.proxy(this.hashchange, this));
+            this._runned = true;
+        };
+        Application.prototype.getCachePage = function (name) {
+            for (var i = this.page_stack.length - 1; i >= 0; i--) {
+                if (this.page_stack[i].name == name)
+                    return this.page_stack[i];
+            }
+            return null;
+        };
+        Application.prototype.showPage = function (url, args) {
+            /// <param name="container" type="HTMLElement" canBeNull="false"/>
+            /// <param name="url" type="String" canBeNull="false"/>
+            /// <param name="args" type="object" canBeNull="true"/>
+            /// <returns type="jQuery.Deferred"/>
+            args = args || {};
+            if (!url)
+                throw e.argumentNull('url');
+            var routeData = this.routes().getRouteData(url);
+            if (routeData == null) {
+                throw e.noneRouteMatched(url);
+            }
+            var container;
+            if ($.isFunction(this.config.container)) {
+                container = this.config.container(routeData.values());
+                if (container == null)
+                    throw new Error('The result of continer function cannt be null');
+            }
+            else {
+                container = this.config.container;
+            }
+            var page_node = document.createElement('div');
+            container.appendChild(page_node);
+            var page = this.createPage(url, page_node, this.currentPage());
+            this.page_stack.push(page);
+            console.log('page_stack lenght:' + this.page_stack.length);
+            if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
+                var p = this.page_stack.shift();
+                p.close({});
+            }
+            var swipe = this.config.openSwipe(routeData);
+            $.extend(args, routeData.values());
+            page.open(args, swipe);
+            return page;
+        };
+        Application.prototype.createPageNode = function () {
+            var element = document.createElement('div');
+            return element;
+        };
+        Application.prototype.closeCurrentPage = function () {
+            var current = this.currentPage();
+            var previous = this.previousPage();
+            if (current != null) {
+                var swipe = this.config.closeSwipe(current.routeData);
+                current.close({}, swipe);
+                if (previous != null)
+                    previous.show();
+                this.page_stack.pop();
+                console.log('page_stack lenght:' + this.page_stack.length);
+            }
+        };
+        Application.prototype.createPage = function (url, container, parent) {
+            if (!url)
+                throw e.argumentNull('url');
+            if (!container)
+                throw e.argumentNull('element');
+            var routeData = this.routes().getRouteData(url);
+            if (routeData == null) {
+                throw e.noneRouteMatched(url);
+            }
+            var controllerName = routeData.values().controller;
+            var actionName = routeData.values().action;
+            var controller = this.controller(routeData);
+            var view_deferred = this.viewFactory.getView(routeData);
+            var action_deferred = controller.getAction(routeData);
+            var context = new ns.ControllerContext(controller, view_deferred, routeData);
+            this.on_pageCreating(context);
+            var scrollType = this.config.scrollType(routeData);
+            var page = new ns.Page(container, scrollType, parent);
+            page.routeData = routeData;
+            page.viewDeferred = view_deferred;
+            page.actionDeferred = action_deferred;
+            this.on_pageCreated(page);
+            return page;
+        };
+        Application.prototype.redirect = function (url, args) {
+            if (args === void 0) { args = {}; }
+            window.location['skip'] = true;
+            window.location.hash = url;
+            return this.showPage(url, args);
+        };
+        Application.prototype.back = function (args) {
+            if (args === void 0) { args = undefined; }
+            if (window.history.length == 0)
+                return $.Deferred().reject();
+            window.history.back();
+            return $.Deferred().resolve();
+        };
+        return Application;
+    })();
+    chitu.Application = Application;
+})(chitu || (chitu = {}));
+var chitu;
+(function (chitu) {
+    var e = chitu.Errors;
+    var crossroads = window['crossroads'];
+    function interpolate(pattern, data) {
+        var http_prefix = 'http://'.toLowerCase();
+        if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
+            var link = document.createElement('a');
+            link.setAttribute('href', pattern);
+            pattern = decodeURI(link.pathname);
+            var route = crossroads.addRoute(pattern);
+            return http_prefix + link.host + route.interpolate(data);
+        }
+        var route = crossroads.addRoute(pattern);
+        return route.interpolate(data);
+    }
+    var Controller = (function () {
+        function Controller(name) {
+            //if (!routeData) throw e.argumentNull('routeData');
+            ////if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
+            this._actions = {};
+            this._name = name;
+            this._actions = {};
+            this.actionCreated = chitu.Callbacks();
+        }
+        Controller.prototype.name = function () {
+            return this._name;
+        };
+        Controller.prototype.getAction = function (routeData) {
+            /// <param name="value" type="chitu.Action" />
+            /// <returns type="jQuery.Deferred" />
+            var controller = routeData.values().controller;
+            ;
+            if (!controller)
+                throw chitu.Errors.routeDataRequireController();
+            if (this._name != controller) {
+                throw new Error('Not same a controller.');
+            }
+            var name = routeData.values().action;
+            if (!name)
+                throw chitu.Errors.routeDataRequireAction();
+            var self = this;
+            if (!this._actions[name]) {
+                this._actions[name] = this._createAction(routeData);
+            }
+            return this._actions[name];
+        };
+        Controller.prototype._createAction = function (routeData) {
+            /// <param name="actionName" type="String"/>
+            /// <returns type="jQuery.Deferred"/>
+            var actionName = routeData.values().action;
+            if (!actionName)
+                throw e.routeDataRequireAction();
+            var self = this;
+            var url = interpolate(routeData.actionPath(), routeData.values());
+            var result = $.Deferred();
+            requirejs([url], $.proxy(function (obj) {
+                if (!obj) {
+                    result.reject();
+                }
+                var func = obj.func || obj;
+                if (!$.isFunction(func))
+                    throw chitu.Errors.modelFileExpecteFunction(this.actionName);
+                var action = new Action(self, this.actionName, func);
+                self.actionCreated.fire(self, action);
+                this.result.resolve(action);
+            }, { actionName: actionName, result: result }), $.proxy(function (err) {
+                this.result.reject(err);
+            }, { actionName: actionName, result: result }));
+            return result;
+        };
+        return Controller;
+    })();
+    chitu.Controller = Controller;
+    var Action = (function () {
+        function Action(controller, name, handle) {
+            /// <param name="controller" type="chitu.Controller"/>
+            /// <param name="name" type="String">Name of the action.</param>
+            /// <param name="handle" type="Function"/>
+            if (!controller)
+                throw chitu.Errors.argumentNull('controller');
+            if (!name)
+                throw chitu.Errors.argumentNull('name');
+            if (!handle)
+                throw chitu.Errors.argumentNull('handle');
+            if (!$.isFunction(handle))
+                throw chitu.Errors.paramTypeError('handle', 'Function');
+            this._name = name;
+            this._handle = handle;
+        }
+        Action.prototype.name = function () {
+            return this._name;
+        };
+        Action.prototype.execute = function (page) {
+            if (!page)
+                throw e.argumentNull('page');
+            var result = this._handle.apply({}, [page]);
+            return chitu.Utility.isDeferred(result) ? result : $.Deferred().resolve();
+        };
+        return Action;
+    })();
+    chitu.Action = Action;
+    function action(deps, filters, func) {
+        /// <param name="deps" type="Array" canBeNull="true"/>
+        /// <param name="filters" type="Array" canBeNull="true"/>
+        /// <param name="func" type="Function" canBeNull="false"/>
+        switch (arguments.length) {
+            case 0:
+                throw e.argumentNull('func');
+            case 1:
+                if (typeof arguments[0] != 'function')
+                    throw e.paramTypeError('arguments[0]', 'Function');
+                func = deps;
+                filters = deps = [];
+                break;
+            case 2:
+                func = filters;
+                if (typeof func != 'function')
+                    throw e.paramTypeError('func', 'Function');
+                if (!$.isArray(deps))
+                    throw e.paramTypeError('deps', 'Array');
+                if (deps.length == 0) {
+                    deps = filters = [];
+                }
+                else if (typeof deps[0] == 'function') {
+                    filters = deps;
+                    deps = [];
+                }
+                else {
+                    filters = [];
+                }
+                break;
+        }
+        for (var i = 0; i < deps.length; i++) {
+            if (typeof deps[i] != 'string')
+                throw e.paramTypeError('deps[' + i + ']', 'string');
+        }
+        for (var i = 0; i < filters.length; i++) {
+            if (typeof filters[i] != 'function')
+                throw e.paramTypeError('filters[' + i + ']', 'function');
+        }
+        if (!$.isFunction(func))
+            throw e.paramTypeError('func', 'function');
+        define(deps, $.proxy(function () {
+            var args = Array.prototype.slice.call(arguments, 0);
+            var func = this.func;
+            var filters = this.filters;
+            return {
+                func: function (page) {
+                    args.unshift(page);
+                    return func.apply(func, args);
+                },
+                filters: filters
+            };
+        }, { func: func, filters: filters }));
+        return func;
+    }
+    ;
+})(chitu || (chitu = {}));
+var chitu;
+(function (chitu) {
+    var ControllerContext = (function () {
+        function ControllerContext(controller, view, routeData) {
+            this._routeData = routeData;
+            this._controller = controller;
+            this._view = view;
+            this._routeData = routeData;
+        }
+        ControllerContext.prototype.controller = function () {
+            return this._controller;
+        };
+        ControllerContext.prototype.view = function () {
+            return this._view;
+        };
+        ControllerContext.prototype.routeData = function () {
+            return this._routeData;
+        };
+        return ControllerContext;
+    })();
+    chitu.ControllerContext = ControllerContext;
+})(chitu || (chitu = {}));
+var chitu;
+(function (chitu) {
+    var e = chitu.Errors;
+    var ns = chitu;
+    var ControllerFactory = (function () {
+        function ControllerFactory() {
+            //if (!actionLocationFormater)
+            //    throw e.argumentNull('actionLocationFormater');
+            this._controllers = {};
+            this._controllers = {};
+        }
+        ControllerFactory.prototype.controllers = function () {
+            return this._controllers;
+        };
+        ControllerFactory.prototype.createController = function (name) {
+            /// <param name="routeData" type="Object"/>
+            /// <returns type="ns.Controller"/>
+            //if (!routeData.values().controller)
+            //    throw e.routeDataRequireController();
+            return new chitu.Controller(name);
+        };
+        ControllerFactory.prototype.actionLocationFormater = function () {
+            return this._actionLocationFormater;
+        };
+        ControllerFactory.prototype.getController = function (routeData) {
+            /// <summary>Gets the controller by routeData.</summary>
+            /// <param name="routeData" type="Object"/>
+            /// <returns type="chitu.Controller"/>
+            if (!routeData.values().controller)
+                throw e.routeDataRequireController();
+            if (!this._controllers[routeData.values().controller])
+                this._controllers[routeData.values().controller] = this.createController(routeData.values().controller);
+            return this._controllers[routeData.values().controller];
+        };
+        return ControllerFactory;
+    })();
+    chitu.ControllerFactory = ControllerFactory;
+})(chitu || (chitu = {}));
+var chitu;
+(function (chitu) {
     var u = chitu.Utility;
     var Errors = (function () {
         function Errors() {
@@ -870,11 +1291,15 @@ window['crossroads'] = factory(window['jQuery']);
             var msg = u.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
             return new Error(msg);
         };
+        Errors.viewCanntNull = function () {
+            var msg = 'The view or viewDeferred of the page cannt null.';
+            return new Error(msg);
+        };
         return Errors;
     })();
     chitu.Errors = Errors;
 })(chitu || (chitu = {}));
-;var chitu;
+var chitu;
 (function (chitu) {
     var rnotwhite = (/\S+/g);
     var optionsCache = {};
@@ -1079,7 +1504,7 @@ window['crossroads'] = factory(window['jQuery']);
         }
     });
 })(chitu || (chitu = {}));
-;var chitu;
+var chitu;
 (function (chitu) {
     var ns = chitu;
     var u = chitu.Utility;
@@ -1095,6 +1520,17 @@ window['crossroads'] = factory(window['jQuery']);
     var PAGE_FOOTER_CLASS_NAME = 'page-footer';
     var PAGE_LOADING_CLASS_NAME = 'page-loading';
     var PAGE_CONTENT_CLASS_NAME = 'page-content';
+    var LOAD_MORE_HTML = '<span>上拉加载更多数据</span>';
+    var LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
+    var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;"></span>';
+    (function (PageLoadType) {
+        PageLoadType[PageLoadType["open"] = 0] = "open";
+        PageLoadType[PageLoadType["scroll"] = 1] = "scroll";
+        PageLoadType[PageLoadType["pullDown"] = 2] = "pullDown";
+        PageLoadType[PageLoadType["pullUp"] = 3] = "pullUp";
+        PageLoadType[PageLoadType["custom"] = 4] = "custom";
+    })(chitu.PageLoadType || (chitu.PageLoadType = {}));
+    var PageLoadType = chitu.PageLoadType;
     var ShowTypes;
     (function (ShowTypes) {
         ShowTypes[ShowTypes["swipeLeft"] = 0] = "swipeLeft";
@@ -1113,6 +1549,20 @@ window['crossroads'] = factory(window['jQuery']);
         PageStatus[PageStatus["open"] = 0] = "open";
         PageStatus[PageStatus["closed"] = 1] = "closed";
     })(PageStatus || (PageStatus = {}));
+    (function (SwipeDirection) {
+        SwipeDirection[SwipeDirection["None"] = 0] = "None";
+        SwipeDirection[SwipeDirection["Left"] = 1] = "Left";
+        SwipeDirection[SwipeDirection["Right"] = 2] = "Right";
+        SwipeDirection[SwipeDirection["Up"] = 3] = "Up";
+        SwipeDirection[SwipeDirection["Donw"] = 4] = "Donw";
+    })(chitu.SwipeDirection || (chitu.SwipeDirection = {}));
+    var SwipeDirection = chitu.SwipeDirection;
+    (function (ScrollType) {
+        ScrollType[ScrollType["IScroll"] = 0] = "IScroll";
+        ScrollType[ScrollType["Div"] = 1] = "Div";
+        ScrollType[ScrollType["Document"] = 2] = "Document";
+    })(chitu.ScrollType || (chitu.ScrollType = {}));
+    var ScrollType = chitu.ScrollType;
     var PageNodes = (function () {
         function PageNodes(node) {
             node.className = PAGE_CLASS_NAME;
@@ -1122,16 +1572,15 @@ window['crossroads'] = factory(window['jQuery']);
             node.appendChild(this.header);
             this.body = document.createElement('div');
             this.body.className = PAGE_BODY_CLASS_NAME;
-            $(this.body).hide();
             node.appendChild(this.body);
             this.content = document.createElement('div');
             this.content.className = PAGE_CONTENT_CLASS_NAME;
+            $(this.content).hide();
             this.body.appendChild(this.content);
             this.loading = document.createElement('div');
             this.loading.className = PAGE_LOADING_CLASS_NAME;
             this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
-            $(this.loading).hide();
-            node.appendChild(this.loading);
+            this.body.appendChild(this.loading);
             this.footer = document.createElement('div');
             this.footer.className = PAGE_FOOTER_CLASS_NAME;
             node.appendChild(this.footer);
@@ -1139,14 +1588,15 @@ window['crossroads'] = factory(window['jQuery']);
         return PageNodes;
     })();
     var Page = (function () {
-        function Page(context, container, previous) {
+        function Page(element, scrollType, parent) {
+            var _this = this;
             this._loadViewModelResult = null;
             this._openResult = null;
             this._hideResult = null;
             this._showTime = Page.animationTime;
             this._hideTime = Page.animationTime;
-            this.swipe = true;
-            this.init = ns.Callbacks();
+            this._enableScrollLoad = false;
+            this.is_closed = false;
             this.preLoad = ns.Callbacks();
             this.load = ns.Callbacks();
             this.closing = ns.Callbacks();
@@ -1156,23 +1606,88 @@ window['crossroads'] = factory(window['jQuery']);
             this.shown = ns.Callbacks();
             this.hiding = ns.Callbacks();
             this.hidden = ns.Callbacks();
-            if (!context)
-                throw e.argumentNull('context');
-            if (!container)
-                throw e.argumentNull('container');
-            this._container = container;
-            this._prevous = previous;
-            var element = document.createElement('div');
-            container.appendChild(element);
-            this._context = context;
-            var controllerName = context.routeData().values().controller;
-            var actionName = context.routeData().values().action;
-            var name = Page.getPageName(context.routeData());
-            var viewDeferred = context.view();
-            var actionDeferred = context.controller().action(context.routeData());
+            this.scrollEnd = ns.Callbacks();
+            this.viewChanged = $.Callbacks();
+            if (!element)
+                throw e.argumentNull('element');
+            if (scrollType == null)
+                throw e.argumentNull('scrollType');
+            this._prevous = parent;
             this._pageNode = new PageNodes(element);
-            this._init(name, viewDeferred, actionDeferred, element);
+            if (scrollType == ScrollType.IScroll) {
+                $(this.nodes().container).addClass('ios');
+                this.ios_scroller = new IOSScroll(this);
+            }
+            else if (scrollType == ScrollType.Div) {
+                $(this.nodes().container).addClass('div');
+                new DisScroll(this);
+            }
+            else if (scrollType == ScrollType.Document) {
+                $(this.nodes().container).addClass('doc');
+                new DocumentScroll(this);
+            }
+            this.scrollEnd.add(Page.page_scrollEnd);
+            if (parent)
+                parent.closing.add(function () { return _this.close(); });
         }
+        Object.defineProperty(Page.prototype, "viewDeferred", {
+            get: function () {
+                return this._viewDeferred;
+            },
+            set: function (value) {
+                this._viewDeferred = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Page.prototype, "actionDeferred", {
+            get: function () {
+                return this._actionDeferred;
+            },
+            set: function (value) {
+                this._actionDeferred = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Page.prototype, "enableScrollLoad", {
+            get: function () {
+                return this._enableScrollLoad;
+            },
+            set: function (value) {
+                this._enableScrollLoad = value;
+                if (this.scrollLoad_loading_bar == null) {
+                    this.scrollLoad_loading_bar = document.createElement('div');
+                    this.scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
+                    this.scrollLoad_loading_bar.style.display = 'none';
+                    $(this.scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
+                    this.nodes().content.appendChild(this.scrollLoad_loading_bar);
+                }
+                if (!value && this.scrollLoad_loading_bar != null) {
+                    $(this.scrollLoad_loading_bar).hide();
+                    this.refreshUI();
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Page.prototype, "view", {
+            get: function () {
+                return this.nodes().container.innerHTML;
+            },
+            set: function (value) {
+                this.nodes().content.innerHTML = value;
+                var q = this.nodes().content.querySelector('[ch-part="header"]');
+                if (q)
+                    this.nodes().header.appendChild(q);
+                q = this.nodes().content.querySelector('[ch-part="footer"]');
+                if (q)
+                    this.nodes().footer.appendChild(q);
+                this.viewChanged.fire();
+            },
+            enumerable: true,
+            configurable: true
+        });
         Page.getPageName = function (routeData) {
             var name;
             if (routeData.pageName()) {
@@ -1184,125 +1699,151 @@ window['crossroads'] = factory(window['jQuery']);
             }
             return name;
         };
-        Page.prototype.context = function () {
-            return this._context;
-        };
-        Page.prototype.name = function () {
-            return this._name;
-        };
+        Object.defineProperty(Page.prototype, "routeData", {
+            get: function () {
+                return this._routeData;
+            },
+            set: function (value) {
+                this._routeData = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Page.prototype, "name", {
+            get: function () {
+                if (!this._name)
+                    this._name = Page.getPageName(this.routeData);
+                return this._name;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Page.prototype.node = function () {
             return this._pageNode.container;
         };
         Page.prototype.nodes = function () {
             return this._pageNode;
         };
-        Page.prototype.previous = function () {
-            return this._prevous;
-        };
-        Page.prototype.hide = function () {
+        Object.defineProperty(Page.prototype, "parent", {
+            get: function () {
+                return this._prevous;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Page.prototype.hide = function (swipe) {
             if (!$(this.node()).is(':visible'))
                 return;
-            this.hidePageNode(false);
+            swipe = swipe || SwipeDirection.None;
+            this.hidePageNode(swipe);
         };
-        Page.prototype.show = function () {
+        Page.prototype.show = function (swipe) {
             if ($(this.node()).is(':visible'))
                 return;
-            this.showPageNode(false);
+            swipe = swipe || SwipeDirection.None;
+            this.showPageNode(swipe);
         };
         Page.prototype.visible = function () {
             return $(this.node()).is(':visible');
         };
         Page.prototype.hidePageNode = function (swipe) {
             var _this = this;
-            var result = $.Deferred();
-            if (swipe) {
-                var container_width = $(this._container).width();
-                window['move'](this.node())
-                    .to(container_width)
-                    .duration(this._hideTime)
-                    .end(function () {
-                    $(_this.node()).hide();
-                    result.resolve();
-                    _this.on_hidden({});
-                });
+            this.on_hiding({});
+            if (!window['move']) {
+                swipe = SwipeDirection.None;
+                console.warn('Move is not loaded and swipe is auto disabled.');
             }
-            else {
-                $(this.node()).hide();
+            var result = $.Deferred();
+            var container_width = $(this.nodes().container).width();
+            var container_height = $(this.nodes().container).height();
+            var on_end = function () {
+                $(_this.node()).hide();
                 result.resolve();
-                this.on_hidden({});
+                _this.on_hidden({});
+            };
+            switch (swipe) {
+                case SwipeDirection.None:
+                default:
+                    on_end();
+                    break;
+                case SwipeDirection.Up:
+                    move(this.nodes().container).y(container_height).end()
+                        .y(0 - container_height).duration(this._hideTime).end(on_end);
+                    break;
+                case SwipeDirection.Donw:
+                    move(this.nodes().container).y(container_height).duration(this._hideTime).end(on_end);
+                    break;
+                case SwipeDirection.Right:
+                    move(this.node())
+                        .x(container_width)
+                        .duration(this._hideTime)
+                        .end(on_end);
+                    break;
+                case SwipeDirection.Left:
+                    move(this.node())
+                        .x(0 - container_width)
+                        .duration(this._hideTime)
+                        .end(on_end);
+                    break;
             }
             return result;
         };
         Page.prototype.showPageNode = function (swipe) {
             var _this = this;
+            if (!window['move']) {
+                swipe = SwipeDirection.None;
+                console.warn('Move is not loaded and swipe is auto disabled.');
+            }
             this.on_showing({});
             var result = $.Deferred();
-            if (swipe) {
-                var container_width = $(this._container).width();
-                this.node().style.left = '0px';
-                this.node().style.display = 'block';
-                move(this.node()).to(container_width).duration(0).end();
-                move(this.node())
-                    .to(0)
-                    .duration(this._showTime)
-                    .end(function () {
-                    result.resolve();
-                });
-                if (this._openResult != null) {
-                    $(this._pageNode.loading).show();
-                    $(this._pageNode.body).hide();
-                }
-                else {
-                    this.showBodyNode();
-                }
-            }
-            else {
-                this.node().style.display = 'block';
-                if (this.node().style.transform) {
-                    move(this.node()).to(0).duration(0);
-                }
-                else {
-                    this.node().style.left = '0px';
-                }
-                if (this._openResult != null) {
-                    $(this._pageNode.loading).show();
-                    $(this._pageNode.body).hide();
-                }
-                else {
-                    this.showBodyNode();
-                }
+            this.node().style.display = 'block';
+            var container_width = $(this.nodes().container).width();
+            var container_height = $(this.nodes().container).height();
+            var on_end = function () {
                 result.resolve();
+            };
+            switch (swipe) {
+                case SwipeDirection.None:
+                default:
+                    on_end();
+                    break;
+                case SwipeDirection.Donw:
+                    move(this.node()).y(0 - container_height).duration(0).end(on_end);
+                    move(this.node()).y(0).duration(0).end(on_end);
+                    break;
+                case SwipeDirection.Up:
+                    move(this.node()).y(container_height).duration(0).end();
+                    move(this.node()).y(0).duration(this._showTime).end(on_end);
+                    break;
+                case SwipeDirection.Right:
+                    move(this.node()).x(0 - container_width).duration(0).end();
+                    move(this.node()).x(0).duration(this._showTime).end(on_end);
+                    break;
+                case SwipeDirection.Left:
+                    move(this.node()).x(container_width).duration(0).end();
+                    move(this.node()).x(0).duration(this._showTime).end(on_end);
+                    break;
             }
             result.done(function () {
                 if (_this._prevous != null)
                     _this._prevous.hide();
+                _this.on_shown({});
             });
             return result;
         };
-        Page.prototype.showBodyNode = function () {
-            $(this._pageNode.container).show();
-            $(this._pageNode.loading).hide();
-            $(this._pageNode.body).show();
-            this.on_shown({});
-        };
-        Page.prototype._init = function (name, viewDeferred, actionDeferred, node) {
-            if (!name)
-                throw e.argumentNull('name');
-            if (!viewDeferred)
-                throw e.argumentNull('viewDeferred');
-            if (!actionDeferred)
-                throw e.argumentNull('actionDeferred');
-            if (!node)
-                throw e.argumentNull('node');
-            this._name = name;
-            this._viewDeferred = viewDeferred;
-            this._actionDeferred = actionDeferred;
-        };
-        Page.prototype.on_init = function () {
-            return eventDeferred(this.init, this);
-        };
         Page.prototype.on_load = function (args) {
-            return eventDeferred(this.load, this, args);
+            var _this = this;
+            var result = eventDeferred(this.load, this, args);
+            if (args.loadType == PageLoadType.open) {
+                result.done(function () {
+                    $(_this.nodes().loading).hide();
+                    $(_this.nodes().content).show();
+                });
+            }
+            result.done(function () {
+                window.setTimeout(function () { return _this.refreshUI(); }, 100);
+            });
+            return result;
         };
         Page.prototype.on_closed = function (args) {
             return eventDeferred(this.closed, this, args);
@@ -1322,70 +1863,74 @@ window['crossroads'] = factory(window['jQuery']);
         Page.prototype.on_hidden = function (args) {
             return eventDeferred(this.hidden, this, args);
         };
-        Page.prototype._loadViewAndModel = function () {
-            var _this = this;
-            if (this._loadViewModelResult)
-                return this._loadViewModelResult;
-            this._loadViewModelResult = $.when(this._viewDeferred, this._actionDeferred)
-                .then(function (html, action) {
-                u.log('Load view success, page:{0}.', [_this.name()]);
-                $(html).appendTo(_this.nodes().content);
-                $(_this.nodes().content).find('[ch-part="header"]').appendTo(_this.nodes().header)
-                    .each(function (index, item) {
-                    item.style.zIndex = _this.nodes().header.style.zIndex;
-                });
-                $(_this.nodes().content).find('[ch-part="footer"]').appendTo(_this.nodes().footer)
-                    .each(function (index, item) {
-                    item.style.zIndex = _this.nodes().footer.style.zIndex;
-                });
-                var result = action.execute(_this);
-                _this.on_init();
-                if (u.isDeferred(result))
-                    return result;
-                return $.Deferred().resolve();
-            }).fail(function () {
-                _this._loadViewModelResult = null;
-                u.log('Load view or action fail, page：{0}.', [_this.name()]);
-            });
-            return this._loadViewModelResult;
+        Page.prototype.on_scrollEnd = function (args) {
+            return eventDeferred(this.scrollEnd, this, args);
         };
-        Page.prototype.open = function (values) {
+        Page.prototype.open = function (args, swipe) {
             var _this = this;
             if (this._openResult)
                 return this._openResult;
-            var args = values;
-            this._openResult = $.Deferred();
-            var pageNodeShown = this.showPageNode(this.swipe);
-            this._loadViewAndModel()
-                .pipe(function () {
-                return _this.on_load(args);
-            })
-                .done(function () {
-                _this._openResult.resolve();
-                _this.showBodyNode();
-            })
-                .fail(function () {
-                _this._openResult.reject();
+            swipe = swipe || SwipeDirection.None;
+            this.showPageNode(swipe);
+            args = $.extend(args || {}, {
+                loadType: chitu.PageLoadType.open,
             });
-            return this._openResult.always(function () {
-                _this._openResult = null;
-            });
+            if (this.viewDeferred == null && this.view == null) {
+                throw chitu.Errors.viewCanntNull();
+            }
+            if (this.actionDeferred) {
+                this.actionDeferred.done(function (action) {
+                    action.execute(_this);
+                    if (_this.viewDeferred) {
+                        _this.viewDeferred.done(function (html) { return _this.view = html; });
+                    }
+                    var load_args = args;
+                    load_args.loadType = chitu.PageLoadType.open;
+                    _this.on_load(load_args);
+                });
+            }
         };
-        Page.prototype.close = function (args) {
+        Page.prototype.close = function (args, swipe) {
             /// <summary>
-            /// Hide the page.
+            /// Colse the page.
             /// </summary>
             /// <param name="args" type="Object" canBeNull="true">
             /// The value passed to the hide event functions.
             /// </param>
             /// <returns type="jQuery.Deferred"/>
             var _this = this;
-            if (args === void 0) { args = undefined; }
-            this.hidePageNode(this.swipe).done(function () {
+            if (this.is_closed)
+                return;
+            this.hidePageNode(swipe).done(function () {
                 $(_this.node()).remove();
             });
             args = args || {};
             this.on_closed(args);
+            this.is_closed = true;
+        };
+        Page.page_scrollEnd = function (sender, args) {
+            //scrollStatus = ScrollStatus.ScrollEnd;
+            var scrollTop = args.scrollTop;
+            var scrollHeight = args.scrollHeight;
+            var clientHeight = args.clientHeight;
+            var marginBottom = clientHeight / 3;
+            if (clientHeight + scrollTop < scrollHeight - marginBottom)
+                return;
+            if (!sender.enableScrollLoad)
+                return;
+            if (sender.scrollLoad_loading_bar != null && sender.scrollLoad_loading_bar.style.display == 'none') {
+                sender.scrollLoad_loading_bar.style.display = 'block';
+                sender.refreshUI();
+            }
+            var scroll_arg = $.extend(sender.routeData.values(), {
+                loadType: PageLoadType.scroll,
+            });
+            var result = sender.on_load(scroll_arg);
+        };
+        Page.prototype.refreshUI = function () {
+            if (this.ios_scroller) {
+                this.ios_scroller.refresh();
+            }
         };
         Page.animationTime = 300;
         return Page;
@@ -1393,232 +1938,7 @@ window['crossroads'] = factory(window['jQuery']);
     chitu.Page = Page;
 })(chitu || (chitu = {}));
 ;
-;var chitu;
-(function (chitu) {
-    var ns = chitu;
-    var e = ns.Errors;
-    var u = ns.Utility;
-    var crossroads = window['crossroads'];
-    function interpolate(pattern, data) {
-        var http_prefix = 'http://'.toLowerCase();
-        if (pattern.substr(0, http_prefix.length).toLowerCase() == http_prefix) {
-            var link = document.createElement('a');
-            link.setAttribute('href', pattern);
-            pattern = decodeURI(link.pathname);
-            var route = crossroads.addRoute(pattern);
-            return http_prefix + link.host + route.interpolate(data);
-        }
-        var route = crossroads.addRoute(pattern);
-        return route.interpolate(data);
-    }
-    var Controller = (function () {
-        function Controller(name) {
-            //if (!routeData) throw e.argumentNull('routeData');
-            ////if (typeof routeData !== 'object') throw e.paramTypeError('routeData', 'object');
-            this._actions = {};
-            this._name = name;
-            this._actions = {};
-            this.actionCreated = chitu.Callbacks();
-        }
-        Controller.prototype.name = function () {
-            return this._name;
-        };
-        Controller.prototype.action = function (routeData) {
-            /// <param name="value" type="chitu.Action" />
-            /// <returns type="jQuery.Deferred" />
-            var controller = routeData.values().controller;
-            ;
-            if (!controller)
-                throw e.routeDataRequireController();
-            if (this._name != controller) {
-                throw new Error('Not same a controller.');
-            }
-            var name = routeData.values().action;
-            if (!name)
-                throw e.routeDataRequireAction();
-            var self = this;
-            if (!this._actions[name]) {
-                this._actions[name] = this._createAction(routeData).fail($.proxy(function () {
-                    self._actions[this.actionName] = null;
-                }, { actionName: routeData }));
-            }
-            return this._actions[name];
-        };
-        Controller.prototype._createAction = function (routeData) {
-            /// <param name="actionName" type="String"/>
-            /// <returns type="jQuery.Deferred"/>
-            var actionName = routeData.values().action;
-            if (!actionName)
-                throw e.routeDataRequireAction();
-            var self = this;
-            var url = interpolate(routeData.actionPath(), routeData.values());
-            var result = $.Deferred();
-            requirejs([url], $.proxy(function (obj) {
-                if (!obj) {
-                    result.reject();
-                }
-                var func = obj.func || obj;
-                if (!$.isFunction(func))
-                    throw ns.Errors.modelFileExpecteFunction(this.actionName);
-                var action = new Action(self, this.actionName, func);
-                self.actionCreated.fire(self, action);
-                this.result.resolve(action);
-            }, { actionName: actionName, result: result }), $.proxy(function (err) {
-                this.result.reject(err);
-            }, { actionName: actionName, result: result }));
-            return result;
-        };
-        return Controller;
-    })();
-    chitu.Controller = Controller;
-    var Action = (function () {
-        function Action(controller, name, handle) {
-            /// <param name="controller" type="chitu.Controller"/>
-            /// <param name="name" type="String">Name of the action.</param>
-            /// <param name="handle" type="Function"/>
-            if (!controller)
-                throw e.argumentNull('controller');
-            if (!name)
-                throw e.argumentNull('name');
-            if (!handle)
-                throw e.argumentNull('handle');
-            if (!$.isFunction(handle))
-                throw e.paramTypeError('handle', 'Function');
-            this._name = name;
-            this._handle = handle;
-        }
-        Action.prototype.name = function () {
-            return this._name;
-        };
-        Action.prototype.execute = function (page) {
-            if (!page)
-                throw e.argumentNull('page');
-            var result = this._handle.apply({}, [page]);
-            return u.isDeferred(result) ? result : $.Deferred().resolve();
-        };
-        return Action;
-    })();
-    chitu.Action = Action;
-    function action(deps, filters, func) {
-        /// <param name="deps" type="Array" canBeNull="true"/>
-        /// <param name="filters" type="Array" canBeNull="true"/>
-        /// <param name="func" type="Function" canBeNull="false"/>
-        switch (arguments.length) {
-            case 0:
-                throw e.argumentNull('func');
-            case 1:
-                if (typeof arguments[0] != 'function')
-                    throw e.paramTypeError('arguments[0]', 'Function');
-                func = deps;
-                filters = deps = [];
-                break;
-            case 2:
-                func = filters;
-                if (typeof func != 'function')
-                    throw e.paramTypeError('func', 'Function');
-                if (!$.isArray(deps))
-                    throw e.paramTypeError('deps', 'Array');
-                if (deps.length == 0) {
-                    deps = filters = [];
-                }
-                else if (typeof deps[0] == 'function') {
-                    filters = deps;
-                    deps = [];
-                }
-                else {
-                    filters = [];
-                }
-                break;
-        }
-        for (var i = 0; i < deps.length; i++) {
-            if (typeof deps[i] != 'string')
-                throw e.paramTypeError('deps[' + i + ']', 'string');
-        }
-        for (var i = 0; i < filters.length; i++) {
-            if (typeof filters[i] != 'function')
-                throw e.paramTypeError('filters[' + i + ']', 'function');
-        }
-        if (!$.isFunction(func))
-            throw e.paramTypeError('func', 'function');
-        define(deps, $.proxy(function () {
-            var args = Array.prototype.slice.call(arguments, 0);
-            var func = this.func;
-            var filters = this.filters;
-            return {
-                func: function (page) {
-                    args.unshift(page);
-                    return func.apply(func, args);
-                },
-                filters: filters
-            };
-        }, { func: func, filters: filters }));
-        return func;
-    }
-    chitu.action = action;
-    ;
-})(chitu || (chitu = {}));
-;
-;var chitu;
-(function (chitu) {
-    var ControllerContext = (function () {
-        function ControllerContext(controller, view, routeData) {
-            this._routeData = routeData;
-            this._controller = controller;
-            this._view = view;
-            this._routeData = routeData;
-        }
-        ControllerContext.prototype.controller = function () {
-            return this._controller;
-        };
-        ControllerContext.prototype.view = function () {
-            return this._view;
-        };
-        ControllerContext.prototype.routeData = function () {
-            return this._routeData;
-        };
-        return ControllerContext;
-    })();
-    chitu.ControllerContext = ControllerContext;
-})(chitu || (chitu = {}));
-;var chitu;
-(function (chitu) {
-    var e = chitu.Errors;
-    var ns = chitu;
-    var ControllerFactory = (function () {
-        function ControllerFactory() {
-            //if (!actionLocationFormater)
-            //    throw e.argumentNull('actionLocationFormater');
-            this._controllers = {};
-            this._controllers = {};
-        }
-        ControllerFactory.prototype.controllers = function () {
-            return this._controllers;
-        };
-        ControllerFactory.prototype.createController = function (name) {
-            /// <param name="routeData" type="Object"/>
-            /// <returns type="ns.Controller"/>
-            //if (!routeData.values().controller)
-            //    throw e.routeDataRequireController();
-            return new ns.Controller(name);
-        };
-        ControllerFactory.prototype.actionLocationFormater = function () {
-            return this._actionLocationFormater;
-        };
-        ControllerFactory.prototype.getController = function (routeData) {
-            /// <summary>Gets the controller by routeData.</summary>
-            /// <param name="routeData" type="Object"/>
-            /// <returns type="chitu.Controller"/>
-            if (!routeData.values().controller)
-                throw e.routeDataRequireController();
-            if (!this._controllers[routeData.values().controller])
-                this._controllers[routeData.values().controller] = this.createController(routeData.values().controller);
-            return this._controllers[routeData.values().controller];
-        };
-        return ControllerFactory;
-    })();
-    chitu.ControllerFactory = ControllerFactory;
-})(chitu || (chitu = {}));
-;var chitu;
+var chitu;
 (function (chitu) {
     var Route = (function () {
         function Route(name, pattern, defaults) {
@@ -1639,7 +1959,7 @@ window['crossroads'] = factory(window['jQuery']);
     })();
     chitu.Route = Route;
 })(chitu || (chitu = {}));
-;var chitu;
+var chitu;
 (function (chitu) {
     var ns = chitu;
     var e = chitu.Errors;
@@ -1707,7 +2027,7 @@ window['crossroads'] = factory(window['jQuery']);
     })();
     chitu.RouteCollection = RouteCollection;
 })(chitu || (chitu = {}));
-;var chitu;
+var chitu;
 (function (chitu) {
     var RouteData = (function () {
         function RouteData(url) {
@@ -1744,8 +2064,234 @@ window['crossroads'] = factory(window['jQuery']);
     })();
     chitu.RouteData = RouteData;
 })(chitu || (chitu = {}));
-;
-;var chitu;
+var ScrollArguments = (function () {
+    function ScrollArguments() {
+    }
+    return ScrollArguments;
+})();
+var DisScroll = (function () {
+    function DisScroll(page) {
+        var cur_scroll_args = new ScrollArguments();
+        var pre_scroll_top;
+        var checking_num;
+        var CHECK_INTERVAL = 300;
+        var scrollEndCheck = function (page) {
+            if (checking_num != null)
+                return;
+            checking_num = 0;
+            checking_num = window.setInterval(function () {
+                if (pre_scroll_top == cur_scroll_args.scrollTop) {
+                    window.clearInterval(checking_num);
+                    checking_num = null;
+                    pre_scroll_top = null;
+                    page.on_scrollEnd(cur_scroll_args);
+                    return;
+                }
+                pre_scroll_top = cur_scroll_args.scrollTop;
+            }, CHECK_INTERVAL);
+        };
+        var wrapper_node = page.nodes().body;
+        wrapper_node.onscroll = function () {
+            var args = {
+                scrollTop: wrapper_node.scrollTop,
+                scrollHeight: wrapper_node.scrollHeight,
+                clientHeight: wrapper_node.clientHeight
+            };
+            page.on_scroll(args);
+            cur_scroll_args.clientHeight = args.clientHeight;
+            cur_scroll_args.scrollHeight = args.scrollHeight;
+            cur_scroll_args.scrollTop = args.scrollTop;
+            scrollEndCheck(page);
+        };
+    }
+    return DisScroll;
+})();
+var cur_scroll_args = new ScrollArguments();
+var pre_scroll_top;
+var checking_num;
+var CHECK_INTERVAL = 300;
+function scrollEndCheck(page) {
+    if (checking_num != null)
+        return;
+    checking_num = 0;
+    checking_num = window.setInterval(function () {
+        if (pre_scroll_top == cur_scroll_args.scrollTop) {
+            window.clearInterval(checking_num);
+            checking_num = null;
+            pre_scroll_top = null;
+            page.on_scrollEnd(cur_scroll_args);
+            return;
+        }
+        pre_scroll_top = cur_scroll_args.scrollTop;
+    }, CHECK_INTERVAL);
+}
+var DocumentScroll = (function () {
+    function DocumentScroll(page) {
+        $(document).scroll(function (event) {
+            if (!page.visible())
+                return;
+            var args = {
+                scrollTop: $(document).scrollTop(),
+                scrollHeight: document.body.scrollHeight,
+                clientHeight: $(window).height()
+            };
+            cur_scroll_args.clientHeight = args.clientHeight;
+            cur_scroll_args.scrollHeight = args.scrollHeight;
+            cur_scroll_args.scrollTop = args.scrollTop;
+            $(page.node()).data(page.name + '_scroll_top', args.scrollTop);
+            scrollEndCheck(page);
+        });
+        page.shown.add(function (sender) {
+            var value = $(page.node()).data(page.name + '_scroll_top');
+            if (value != null)
+                $(document).scrollTop(new Number(value).valueOf());
+        });
+    }
+    return DocumentScroll;
+})();
+var _this = this;
+var IOSScroll = (function () {
+    function IOSScroll(page) {
+        var options = {
+            tap: true,
+            useTransition: false,
+            HWCompositing: false,
+            preventDefault: true,
+            probeType: 1,
+        };
+        var iscroller = this.iscroller = page['iscroller'] = new IScroll(page.nodes().body, options);
+        iscroller.on('scrollEnd', function () {
+            var scroller = this;
+            var args = {
+                scrollTop: 0 - scroller.y,
+                scrollHeight: scroller.scrollerHeight,
+                clientHeight: scroller.wrapperHeight
+            };
+            console.log('directionY:' + scroller.directionY);
+            console.log('startY:' + scroller.startY);
+            console.log('scroller.y:' + scroller.y);
+            page.on_scrollEnd(args);
+        });
+        iscroller.on('scroll', function () {
+            var scroller = this;
+            var args = {
+                scrollTop: 0 - scroller.y,
+                scrollHeight: scroller.scrollerHeight,
+                clientHeight: scroller.wrapperHeight
+            };
+            console.log('directionY:' + scroller.directionY);
+            console.log('startY:' + scroller.startY);
+            console.log('scroller.y:' + scroller.y);
+            page.on_scroll(args);
+        });
+        (function (scroller, wrapperNode) {
+            $(wrapperNode).on('tap', function (event) {
+                if (page['iscroller'].enabled == false)
+                    return;
+                var MAX_DEEPH = 4;
+                var deeph = 1;
+                var node = event.target;
+                while (node != null) {
+                    if (node.tagName == 'A')
+                        return window.open($(node).attr('href'), '_self');
+                    node = node.parentNode;
+                    deeph = deeph + 1;
+                    if (deeph > MAX_DEEPH)
+                        return;
+                }
+            });
+        })(iscroller, page.nodes().body);
+        page.closed.add(function () { return iscroller.destroy(); });
+        $(window).on('resize', function () {
+            window.setTimeout(function () { return iscroller.refresh(); }, 500);
+        });
+    }
+    IOSScroll.prototype.refresh = function () {
+        this.iscroller.refresh();
+    };
+    return IOSScroll;
+})();
+chitu.scroll = function (page, config) {
+    $(page.nodes().body).addClass('wrapper');
+    $(page.nodes().content).addClass('scroller');
+    var wrapperNode = page['_wrapperNode'] = page.nodes().body;
+    page['_scrollerNode'] = page.nodes().content;
+    $.extend(page, {
+        scrollEnd: chitu.Callbacks(),
+        on_scrollEnd: function (args) {
+            return chitu.fireCallback(this.scrollEnd, [this, args]);
+        },
+        scrollTop: $.proxy(function (value) {
+            if (value === undefined)
+                return (0 - page['iscroller'].y) + 'px';
+            if (typeof value === 'string')
+                value = new Number(value.substr(0, value.length - 2)).valueOf();
+            var scroller = _this['iscroller'];
+            if (scroller) {
+                scroller.scrollTo(0, value);
+            }
+        }, page)
+    });
+};
+var chitu;
+(function (chitu) {
+    var e = chitu.Errors;
+    var Utility = (function () {
+        function Utility() {
+        }
+        Utility.isType = function (targetType, obj) {
+            for (var key in targetType.prototype) {
+                if (obj[key] === undefined)
+                    return false;
+            }
+            return true;
+        };
+        Utility.isDeferred = function (obj) {
+            if (obj == null)
+                return false;
+            if (obj.pipe != null && obj.always != null && obj.done != null)
+                return true;
+            return false;
+        };
+        Utility.format = function (source, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
+            var params = [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10];
+            for (var i = 0; i < params.length; i++) {
+                if (params[i] == null)
+                    break;
+                source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {
+                    return params[i];
+                });
+            }
+            return source;
+        };
+        Utility.fileName = function (url, withExt) {
+            if (!url)
+                throw e.argumentNull('url');
+            withExt = withExt || true;
+            url = url.replace('http://', '/');
+            var filename = url.replace(/^.*[\\\/]/, '');
+            if (withExt === true) {
+                var arr = filename.split('.');
+                filename = arr[0];
+            }
+            return filename;
+        };
+        Utility.log = function (msg, args) {
+            if (args === void 0) { args = []; }
+            if (!window.console)
+                return;
+            if (args == null) {
+                console.log(msg);
+                return;
+            }
+            var txt = this.format.apply(this, arguments);
+            console.log(txt);
+        };
+        return Utility;
+    })();
+    chitu.Utility = Utility;
+})(chitu || (chitu = {}));
+var chitu;
 (function (chitu) {
     var e = chitu.Errors;
     var crossroads = window['crossroads'];
@@ -1765,7 +2311,7 @@ window['crossroads'] = factory(window['jQuery']);
         function ViewFactory() {
             this._views = [];
         }
-        ViewFactory.prototype.view = function (routeData) {
+        ViewFactory.prototype.getView = function (routeData) {
             /// <param name="routeData" type="Object"/>
             /// <returns type="jQuery.Deferred"/>
             if (!routeData.values().controller)
@@ -1806,203 +2352,6 @@ window['crossroads'] = factory(window['jQuery']);
         return ViewFactory;
     })();
     chitu.ViewFactory = ViewFactory;
-})(chitu || (chitu = {}));
-;var chitu;
-(function (chitu) {
-    var ns = chitu;
-    var u = chitu.Utility;
-    var e = chitu.Errors;
-    var PAGE_STACK_MAX_SIZE = 10;
-    var ACTION_LOCATION_FORMATER = '{controller}/{action}';
-    var VIEW_LOCATION_FORMATER = '{controller}/{action}';
-    var Application = (function () {
-        function Application(config) {
-            this.pageCreating = ns.Callbacks();
-            this.pageCreated = ns.Callbacks();
-            this.page_stack = [];
-            this._routes = new chitu.RouteCollection();
-            this._runned = false;
-            this.controllerFactory = new chitu.ControllerFactory();
-            this.viewFactory = new chitu.ViewFactory();
-            if (config == null)
-                throw e.argumentNull('container');
-            if (!config['container']) {
-                throw new Error('The config has not a container property.');
-            }
-            if (!$.isFunction(config['container']) && !config['container'].tagName)
-                throw new Error('Parameter container is not a function or html element.');
-            this._container = config['container'];
-        }
-        Application.prototype.on_pageCreating = function (context) {
-            return ns.fireCallback(this.pageCreating, [this, context]);
-        };
-        Application.prototype.on_pageCreated = function (page) {
-            return ns.fireCallback(this.pageCreated, [this, page]);
-        };
-        Application.prototype.routes = function () {
-            return this._routes;
-        };
-        Application.prototype.controller = function (routeData) {
-            if (typeof routeData !== 'object')
-                throw e.paramTypeError('routeData', 'object');
-            if (!routeData)
-                throw e.argumentNull('routeData');
-            return this.controllerFactory.getController(routeData);
-        };
-        Application.prototype.currentPage = function () {
-            if (this.page_stack.length > 0)
-                return this.page_stack[this.page_stack.length - 1];
-            return null;
-        };
-        Application.prototype.previousPage = function () {
-            if (this.page_stack.length > 1)
-                return this.page_stack[this.page_stack.length - 2];
-            return null;
-        };
-        Application.prototype.action = function (routeData) {
-            if (typeof routeData !== 'object')
-                throw e.paramTypeError('routeData', 'object');
-            if (!routeData)
-                throw e.argumentNull('routeData');
-            var controllerName = routeData.controller;
-            if (!controllerName)
-                throw e.argumentNull('name');
-            if (typeof controllerName != 'string')
-                throw e.routeDataRequireController();
-            var actionName = routeData.action;
-            if (!actionName)
-                throw e.argumentNull('name');
-            if (typeof actionName != 'string')
-                throw e.routeDataRequireAction();
-            var controller = this.controller(routeData);
-            return controller.action(actionName);
-        };
-        Application.prototype.hashchange = function () {
-            var hash = window.location.hash;
-            if (!hash) {
-                u.log('The url is not contains hash.');
-                return;
-            }
-            var current_page_url = '';
-            if (this.previousPage() != null)
-                current_page_url = this.previousPage().context().routeData().url();
-            if (current_page_url.toLowerCase() == hash.substr(1).toLowerCase()) {
-                this.closeCurrentPage();
-            }
-            else {
-                var args = window.location['arguments'] || {};
-                window.location['arguments'] = null;
-                if (window.location['skip'] == true) {
-                    window.location['skip'] = false;
-                    return;
-                }
-                this.showPage(hash.substr(1), args);
-            }
-        };
-        Application.prototype.run = function () {
-            if (this._runned)
-                return;
-            var app = this;
-            $.proxy(this.hashchange, this)();
-            $(window).bind('hashchange', $.proxy(this.hashchange, this));
-            this._runned = true;
-        };
-        Application.prototype.getCachePage = function (name) {
-            for (var i = this.page_stack.length - 1; i >= 0; i--) {
-                if (this.page_stack[i].name() == name)
-                    return this.page_stack[i];
-            }
-            return null;
-        };
-        Application.prototype.showPage = function (url, args) {
-            /// <param name="container" type="HTMLElement" canBeNull="false"/>
-            /// <param name="url" type="String" canBeNull="false"/>
-            /// <param name="args" type="object" canBeNull="true"/>
-            /// <returns type="jQuery.Deferred"/>
-            var _this = this;
-            args = args || {};
-            if (!url)
-                throw e.argumentNull('url');
-            var routeData = this.routes().getRouteData(url);
-            if (routeData == null) {
-                throw e.noneRouteMatched(url);
-            }
-            var container;
-            if ($.isFunction(this._container)) {
-                container = this._container(routeData.values());
-                if (container == null)
-                    throw new Error('The result of continer function cannt be null');
-            }
-            else {
-                container = this._container;
-            }
-            var page = this._createPage(url, container, this.currentPage());
-            this.page_stack.push(page);
-            console.log('page_stack lenght:' + this.page_stack.length);
-            if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
-                var p = this.page_stack.shift();
-                p.close();
-            }
-            $.extend(args, routeData.values());
-            var result = $.Deferred();
-            page.open(args)
-                .done(function () {
-                result.resolve();
-            })
-                .fail(function (error) {
-                result.reject(_this, error);
-            });
-            return result;
-        };
-        Application.prototype.createPageNode = function () {
-            var element = document.createElement('div');
-            return element;
-        };
-        Application.prototype.closeCurrentPage = function () {
-            var current = this.currentPage();
-            var previous = this.previousPage();
-            if (current != null) {
-                current.close();
-                if (previous != null)
-                    previous.show();
-                this.page_stack.pop();
-                console.log('page_stack lenght:' + this.page_stack.length);
-            }
-        };
-        Application.prototype._createPage = function (url, container, previous) {
-            if (!url)
-                throw e.argumentNull('url');
-            if (!container)
-                throw e.argumentNull('element');
-            var routeData = this.routes().getRouteData(url);
-            if (routeData == null) {
-                throw e.noneRouteMatched(url);
-            }
-            var controllerName = routeData.values().controller;
-            var actionName = routeData.values().action;
-            var controller = this.controller(routeData);
-            var view_deferred = this.viewFactory.view(routeData);
-            var context = new ns.ControllerContext(controller, view_deferred, routeData);
-            this.on_pageCreating(context);
-            var page = new ns.Page(context, container, previous);
-            this.on_pageCreated(page);
-            return page;
-        };
-        Application.prototype.redirect = function (url, args) {
-            if (args === void 0) { args = {}; }
-            window.location['arguments'] = args;
-            window.location.hash = url;
-        };
-        Application.prototype.back = function (args) {
-            if (args === void 0) { args = undefined; }
-            if (window.history.length == 0)
-                return $.Deferred().reject();
-            window.history.back();
-            return $.Deferred().resolve();
-        };
-        return Application;
-    })();
-    chitu.Application = Application;
 })(chitu || (chitu = {}));
 ;    //
     window['chitu'] = chitu;

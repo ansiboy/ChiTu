@@ -18,7 +18,7 @@ var chitu;
         function ViewFactory() {
             this._views = [];
         }
-        ViewFactory.prototype.view = function (routeData) {
+        ViewFactory.prototype.getView = function (routeData) {
             /// <param name="routeData" type="Object"/>
             /// <returns type="jQuery.Deferred"/>
             if (!routeData.values().controller)

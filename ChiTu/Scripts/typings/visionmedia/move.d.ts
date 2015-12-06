@@ -7,7 +7,7 @@
      * @return {Move} for chaining
      * @api public
      */
-    duration(n: number|string): Move;
+    duration(n: number | string): Move;
 
     /**
      * Set transition easing function to to `fn` string.
@@ -33,8 +33,8 @@
      * @return {Move} for chaining
      * @api public
      */
-    end();
-    end(func: Function);
+    end(): Move;
+    end(func: Function): Move;
 
     /**
      * Translate `x` and `y` axis.
@@ -55,7 +55,7 @@
      * @return {Move} for chaining
      * @api public
      */
-    x(n: number);
+    x(n: number): Move;
 
     /**
      * Translate on the y axis to `n`.

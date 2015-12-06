@@ -1,8 +1,6 @@
 var chitu;
 (function (chitu) {
-    var ns = chitu;
-    var e = ns.Errors;
-    var u = ns.Utility;
+    var e = chitu.Errors;
     var crossroads = window['crossroads'];
     function interpolate(pattern, data) {
         var http_prefix = 'http://'.toLowerCase();
@@ -28,24 +26,22 @@ var chitu;
         Controller.prototype.name = function () {
             return this._name;
         };
-        Controller.prototype.action = function (routeData) {
+        Controller.prototype.getAction = function (routeData) {
             /// <param name="value" type="chitu.Action" />
             /// <returns type="jQuery.Deferred" />
             var controller = routeData.values().controller;
             ;
             if (!controller)
-                throw e.routeDataRequireController();
+                throw chitu.Errors.routeDataRequireController();
             if (this._name != controller) {
                 throw new Error('Not same a controller.');
             }
             var name = routeData.values().action;
             if (!name)
-                throw e.routeDataRequireAction();
+                throw chitu.Errors.routeDataRequireAction();
             var self = this;
             if (!this._actions[name]) {
-                this._actions[name] = this._createAction(routeData).fail($.proxy(function () {
-                    self._actions[this.actionName] = null;
-                }, { actionName: routeData }));
+                this._actions[name] = this._createAction(routeData);
             }
             return this._actions[name];
         };
@@ -64,7 +60,7 @@ var chitu;
                 }
                 var func = obj.func || obj;
                 if (!$.isFunction(func))
-                    throw ns.Errors.modelFileExpecteFunction(this.actionName);
+                    throw chitu.Errors.modelFileExpecteFunction(this.actionName);
                 var action = new Action(self, this.actionName, func);
                 self.actionCreated.fire(self, action);
                 this.result.resolve(action);
@@ -82,13 +78,13 @@ var chitu;
             /// <param name="name" type="String">Name of the action.</param>
             /// <param name="handle" type="Function"/>
             if (!controller)
-                throw e.argumentNull('controller');
+                throw chitu.Errors.argumentNull('controller');
             if (!name)
-                throw e.argumentNull('name');
+                throw chitu.Errors.argumentNull('name');
             if (!handle)
-                throw e.argumentNull('handle');
+                throw chitu.Errors.argumentNull('handle');
             if (!$.isFunction(handle))
-                throw e.paramTypeError('handle', 'Function');
+                throw chitu.Errors.paramTypeError('handle', 'Function');
             this._name = name;
             this._handle = handle;
         }
@@ -99,7 +95,7 @@ var chitu;
             if (!page)
                 throw e.argumentNull('page');
             var result = this._handle.apply({}, [page]);
-            return u.isDeferred(result) ? result : $.Deferred().resolve();
+            return chitu.Utility.isDeferred(result) ? result : $.Deferred().resolve();
         };
         return Action;
     })();
@@ -159,7 +155,5 @@ var chitu;
         }, { func: func, filters: filters }));
         return func;
     }
-    chitu.action = action;
     ;
 })(chitu || (chitu = {}));
-;

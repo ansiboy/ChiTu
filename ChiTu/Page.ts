@@ -6,7 +6,7 @@ namespace chitu {
     var u = chitu.Utility;
     var e = chitu.Errors;
 
-    function eventDeferred(callback, sender, args = {}) {
+    function eventDeferred(callback, sender, args = {}): JQueryDeferred<any> {
         return chitu.fireCallback(callback, [sender, args]);
     };
 
@@ -17,6 +17,23 @@ namespace chitu {
     const PAGE_LOADING_CLASS_NAME = 'page-loading';
     const PAGE_CONTENT_CLASS_NAME = 'page-content';
     //var zindex: number;
+
+    var LOAD_MORE_HTML = '<span>上拉加载更多数据</span>';
+    var LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
+    var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;"></span>';//数据已全部加载完毕
+
+    export enum PageLoadType {
+        open,
+        scroll,
+        pullDown,
+        pullUp,
+        custom
+    }
+
+    export interface PageLoadArguments {
+        //loadCompleted: (value: boolean) => void,
+        loadType: PageLoadType,
+    }
 
     enum ShowTypes {
         swipeLeft,
@@ -34,6 +51,20 @@ namespace chitu {
     enum PageStatus {
         open,
         closed
+    }
+
+    export enum SwipeDirection {
+        None,
+        Left,
+        Right,
+        Up,
+        Donw,
+    }
+
+    export enum ScrollType {
+        IScroll,
+        Div,
+        Document,
     }
 
     class PageNodes {
@@ -55,18 +86,19 @@ namespace chitu {
 
             this.body = document.createElement('div');
             this.body.className = PAGE_BODY_CLASS_NAME;
-            $(this.body).hide();
+            //$(this.body).hide();
             node.appendChild(this.body);
 
             this.content = document.createElement('div');
             this.content.className = PAGE_CONTENT_CLASS_NAME;
+            $(this.content).hide();
             this.body.appendChild(this.content);
 
             this.loading = document.createElement('div');
             this.loading.className = PAGE_LOADING_CLASS_NAME;
             this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
-            $(this.loading).hide();
-            node.appendChild(this.loading);
+            //$(this.loading).hide();
+            this.body.appendChild(this.loading);
 
             this.footer = document.createElement('div');
             this.footer.className = PAGE_FOOTER_CLASS_NAME;
@@ -78,25 +110,27 @@ namespace chitu {
 
     export class Page {
         static animationTime: number = 300
-        private _context: chitu.ControllerContext
+        //private _context: ControllerContext
         private _name: string
-        private _viewDeferred: any
-        private _actionDeferred: any
+        private _viewDeferred: JQueryPromise<string>
+        private _actionDeferred: JQueryPromise<Action>
 
         private _loadViewModelResult = null
         private _openResult: JQueryDeferred<any> = null
         private _hideResult = null;
         private _pageNode: PageNodes;
-        private _container: HTMLElement;
         private _showTime = Page.animationTime;
         private _hideTime = Page.animationTime
         private _prevous: chitu.Page;
+        private ios_scroller: IOSScroll;
+        private _routeData: chitu.RouteData;
+        private _enableScrollLoad = false;
+        private is_closed = false;
+        private scrollLoad_loading_bar: HTMLElement;
 
-        public swipe = true;
-
-        init = ns.Callbacks();
         preLoad = ns.Callbacks();
         load = ns.Callbacks();
+        //loadCompleted = ns.Callbacks();
         closing = ns.Callbacks();
         closed = ns.Callbacks();
         scroll = ns.Callbacks();
@@ -104,30 +138,96 @@ namespace chitu {
         shown = ns.Callbacks();
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
+        scrollEnd = ns.Callbacks();
+        viewChanged = $.Callbacks();
 
-        constructor(context: chitu.ControllerContext, container: HTMLElement, previous: chitu.Page) {
-            if (!context) throw e.argumentNull('context');
-            if (!container) throw e.argumentNull('container');
+        //scrollLoadData: (sender: chitu.Page, args: PageLoadArguments) => JQueryPromise<any>;
 
-            this._container = container;
-            this._prevous = previous;
-            var element = document.createElement('div');
-            container.appendChild(element);
+        constructor(element: HTMLElement, scrollType: ScrollType, parent?: chitu.Page) {
+            //if (!context) throw e.argumentNull('context');
+            if (!element) throw e.argumentNull('element');
+            if (scrollType == null) throw e.argumentNull('scrollType');
 
-            this._context = context;
-            var controllerName = context.routeData().values().controller;
-            var actionName = context.routeData().values().action;
-
-            var name = Page.getPageName(context.routeData());
-
-            var viewDeferred = context.view();
-            var actionDeferred = context.controller().action(context.routeData());
-
+            this._prevous = parent;
             this._pageNode = new PageNodes(element);
 
-            this._init(name, viewDeferred, actionDeferred, element);
+            if (scrollType == ScrollType.IScroll) {
+                $(this.nodes().container).addClass('ios');
+                this.ios_scroller = new IOSScroll(this);
+            }
+            else if (scrollType == ScrollType.Div) {
+                $(this.nodes().container).addClass('div');
+                new DisScroll(this);
+            }
+            else if (scrollType == ScrollType.Document) {
+                $(this.nodes().container).addClass('doc');
+                new DocumentScroll(this);
+            }
+
+            this.scrollEnd.add(Page.page_scrollEnd);
+            if (parent)
+                parent.closing.add(() => this.close());
         }
 
+        //init(routeData: RouteData) {
+        //    var controllerName = routeData.values().controller;
+        //    var actionName = routeData.values().action;
+        //    //this._name = Page.getPageName(routeData);
+
+
+
+        //    var args: PageLoadArguments = routeData.values();
+        //    args.loadType = PageLoadType.start;
+        //    args.loadCompleted = Page.createLoadCompletedFunc(this); //(value) => this._isLoadAllData = value;
+
+        //    //this.on_load(args);
+        //}
+
+        get viewDeferred(): JQueryPromise<string> {
+            return this._viewDeferred;
+        }
+        set viewDeferred(value: JQueryPromise<string>) {
+            this._viewDeferred = value;
+        }
+        get actionDeferred(): JQueryPromise<Action> {
+            return this._actionDeferred;
+        }
+        set actionDeferred(value: JQueryPromise<Action>) {
+            this._actionDeferred = value;
+        }
+        get enableScrollLoad(): boolean {
+            return this._enableScrollLoad;
+        }
+        set enableScrollLoad(value: boolean) {
+            this._enableScrollLoad = value;
+
+            if (this.scrollLoad_loading_bar == null) {
+                this.scrollLoad_loading_bar = document.createElement('div');
+                this.scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
+                this.scrollLoad_loading_bar.style.display = 'none';
+                $(this.scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
+                this.nodes().content.appendChild(this.scrollLoad_loading_bar);
+            }
+
+            if (!value && this.scrollLoad_loading_bar != null) {
+                $(this.scrollLoad_loading_bar).hide();
+                this.refreshUI();
+            }
+        }
+        set view(value: string) {
+            this.nodes().content.innerHTML = value;
+
+            var q = this.nodes().content.querySelector('[ch-part="header"]');
+            if (q) this.nodes().header.appendChild(q);
+
+            q = this.nodes().content.querySelector('[ch-part="footer"]');
+            if (q) this.nodes().footer.appendChild(q);
+
+            this.viewChanged.fire();
+        }
+        get view(): string {
+            return this.nodes().container.innerHTML;
+        }
         static getPageName(routeData: RouteData): string {
             var name: string;
             if (routeData.pageName()) {
@@ -139,11 +239,16 @@ namespace chitu {
             }
             return name;
         }
-        context(): chitu.ControllerContext {
-            /// <returns type="chitu.ControllerContext"/>
-            return this._context;
+        get routeData(): chitu.RouteData {
+            return this._routeData;
         }
-        name(): string {
+        set routeData(value: chitu.RouteData) {
+            this._routeData = value;
+        }
+        get name(): string {
+            if (!this._name)
+                this._name = Page.getPageName(this.routeData);
+
             return this._name;
         }
         node(): HTMLElement {
@@ -153,144 +258,146 @@ namespace chitu {
         nodes(): PageNodes {
             return this._pageNode;
         }
-        previous(): chitu.Page {
+        get parent(): chitu.Page {
             return this._prevous;
         }
-        hide() {
+        hide(swipe?: SwipeDirection) {
             if (!$(this.node()).is(':visible'))
                 return;
 
-            this.hidePageNode(false);
+            swipe = swipe || SwipeDirection.None;
+            this.hidePageNode(swipe);
         }
-        show() {
+        show(swipe?: SwipeDirection) {
             if ($(this.node()).is(':visible'))
                 return;
 
-            this.showPageNode(false);
+            swipe = swipe || SwipeDirection.None;
+            this.showPageNode(swipe);
         }
         visible() {
             return $(this.node()).is(':visible');
         }
-        private hidePageNode(swipe: boolean): JQueryDeferred<any> {
-            var result = $.Deferred();
-            if (swipe) {
-                var container_width = $(this._container).width();
-                //this.node().style.left = '0px';
+        private hidePageNode(swipe: SwipeDirection): JQueryDeferred<any> {
+            this.on_hiding({});
 
-                //====================================================
-                // 说明：必须要 setTimeout，移动才有效。
-                //window.setTimeout(() => {
-                window['move'](this.node())
-                //.set('left', container_width + 'px').duration(this._moveTime)
-                    .to(container_width)
-                    .duration(this._hideTime)
-                    .end(() => {
-                        $(this.node()).hide();
-                        result.resolve();
-                        this.on_hidden({});
-                    });
-                //}, 100);
-                //====================================================
-                //setTimeout(() => {
-                //    $(this.node()).hide();
-                //    result.resolve();
-                //    this.on_hidden({});
-                //}, this._moveTime);
+            if (!window['move']) {
+                swipe = SwipeDirection.None;
+                console.warn('Move is not loaded and swipe is auto disabled.');
             }
-            else {
+
+            var result = $.Deferred();
+            var container_width = $(this.nodes().container).width();
+            var container_height = $(this.nodes().container).height();
+
+            var on_end = () => {
                 $(this.node()).hide();
                 result.resolve();
                 this.on_hidden({});
+            };
+
+            switch (swipe) {
+                case SwipeDirection.None:
+                default:
+                    on_end();
+                    break;
+                case SwipeDirection.Up:
+                    move(this.nodes().container).y(container_height).end()
+                        .y(0 - container_height).duration(this._hideTime).end(on_end);
+                    break;
+                case SwipeDirection.Donw:
+                    move(this.nodes().container).y(container_height).duration(this._hideTime).end(on_end);
+                    break;
+                case SwipeDirection.Right:
+                    move(this.node())
+                        .x(container_width)
+                        .duration(this._hideTime)
+                        .end(on_end);
+                    break;
+                case SwipeDirection.Left:
+                    move(this.node())
+                        .x(0 - container_width)
+                        .duration(this._hideTime)
+                        .end(on_end);
+                    break;
             }
+
             return result;
         }
-        private showPageNode(swipe): JQueryPromise<any> {//, is_loading: boolean
+        private showPageNode(swipe: SwipeDirection): JQueryPromise<any> {
+            if (!window['move']) {
+                swipe = SwipeDirection.None;
+                console.warn('Move is not loaded and swipe is auto disabled.');
+            }
+
             this.on_showing({});
             var result = $.Deferred();
-            if (swipe) {
-                var container_width = $(this._container).width();
-                this.node().style.left = '0px';
-                this.node().style.display = 'block';
-                move(this.node()).to(container_width).duration(0).end();
-                //====================================================
-                // 说明：必须要 setTimeout，移动才有效。
-                //window.setTimeout(() => {
-                move(this.node())
-                    .to(0)
-                    .duration(this._showTime)
-                    .end(() => {
-                        result.resolve();
-                    });
 
-                if (this._openResult != null) {                 //正在加载中
-                    $(this._pageNode.loading).show();
-                    $(this._pageNode.body).hide();
-                }
-                else {
-                    this.showBodyNode();
-                }
-                //}, this._showDelay);
-                //====================================================
-               
-            }
-            else {
-                this.node().style.display = 'block';
-                //==================================
-                // 说明：如果坐标是通过变换得到的，不能直接设置 left 位置
-                if (this.node().style.transform) {
-                    //window['move'](this.node()).to(0).duration(0);
-                    move(this.node()).to(0).duration(0);
-                }
-                else {
-                    this.node().style.left = '0px';
-                }
-                //==================================
+            this.node().style.display = 'block';
+            //if ($(this.nodes().loading).is(':visible'))
+            //    $(this.nodes().loading).hide();
 
-                if (this._openResult != null) {
-                    $(this._pageNode.loading).show();
-                    $(this._pageNode.body).hide();
-                }
-                else {
-                    this.showBodyNode();
-                }
-
+            var container_width = $(this.nodes().container).width();
+            var container_height = $(this.nodes().container).height();
+            var on_end = () => {
                 result.resolve();
+            };
+
+            switch (swipe) {
+                case SwipeDirection.None:
+                default:
+                    on_end();
+                    break;
+                case SwipeDirection.Donw:
+                    move(this.node()).y(0 - container_height).duration(0).end(on_end);
+                    move(this.node()).y(0).duration(0).end(on_end);
+                    break;
+                case SwipeDirection.Up:
+                    move(this.node()).y(container_height).duration(0).end();
+                    move(this.node()).y(0).duration(this._showTime).end(on_end);
+                    break;
+                case SwipeDirection.Right:
+                    move(this.node()).x(0 - container_width).duration(0).end()
+                    move(this.node()).x(0).duration(this._showTime).end(on_end);
+                    break;
+                case SwipeDirection.Left:
+                    move(this.node()).x(container_width).duration(0).end();
+                    move(this.node()).x(0).duration(this._showTime).end(on_end);
+                    break;
             }
 
             result.done(() => {
                 if (this._prevous != null)
                     this._prevous.hide();
 
-
+                this.on_shown({});
             });
 
-            //this.setPageSize();
             return result;
         }
 
-        private showBodyNode() {
-            $(this._pageNode.container).show();
-            $(this._pageNode.loading).hide();
-            $(this._pageNode.body).show();
+        //private showBodyNode() {
+        //    $(this._pageNode.container).show();
+        //    $(this._pageNode.loading).hide();
+        //    $(this._pageNode.body).show();
 
-            //this.setPageSize();
-            this.on_shown({});
-        }
-        private _init(name, viewDeferred, actionDeferred, node) {
-            if (!name) throw e.argumentNull('name');
-            if (!viewDeferred) throw e.argumentNull('viewDeferred');
-            if (!actionDeferred) throw e.argumentNull('actionDeferred')
-            if (!node) throw e.argumentNull('node');
+        //    this.on_shown({});
+        //}
 
-            this._name = name;
-            this._viewDeferred = viewDeferred;
-            this._actionDeferred = actionDeferred;
-        }
-        on_init() {
-            return eventDeferred(this.init, this);
-        }
-        on_load(args) {
-            return eventDeferred(this.load, this, args);
+        on_load(args: PageLoadArguments) {
+            var result = eventDeferred(this.load, this, args);
+            if (args.loadType == PageLoadType.open) {
+                result.done(() => {
+                    $(this.nodes().loading).hide();
+                    $(this.nodes().content).show();
+                })
+            }
+
+            result.done(() => {
+                window.setTimeout(() => this.refreshUI(), 100);
+            })
+
+            return result;
         }
         on_closed(args) {
             return eventDeferred(this.closed, this, args);
@@ -310,60 +417,10 @@ namespace chitu {
         on_hidden(args) {
             return eventDeferred(this.hidden, this, args);
         }
-        private _loadViewAndModel(): JQueryDeferred<any> {
-
-            if (this._loadViewModelResult)
-                return this._loadViewModelResult;
-
-            this._loadViewModelResult = $.when(this._viewDeferred, this._actionDeferred)
-                .then((html: string, action: chitu.Action) => {
-                    u.log('Load view success, page:{0}.', [this.name()]);
-                    $(html).appendTo(this.nodes().content);
-                    $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header)
-                        .each((index, item: HTMLElement) => {
-                            item.style.zIndex = this.nodes().header.style.zIndex;
-                        });
-
-                    $(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer)
-                        .each((index, item: HTMLElement) => {
-                            item.style.zIndex = this.nodes().footer.style.zIndex;
-                        });
-
-                    var result = action.execute(this);
-                    this.on_init();
-                    if (u.isDeferred(result))
-                        return result;
-
-                    return $.Deferred().resolve();
-                }).fail(() => {
-                    this._loadViewModelResult = null;
-                    u.log('Load view or action fail, page：{0}.', [this.name()]);
-                });
-
-            //this._loadViewModelResult = this._viewDeferred.pipe((html: string) => {
-            //    u.log('Load view success, page:{0}.', [this.name()]);
-            //    $(html).appendTo(this.nodes().content);
-            //    $(this.nodes().content).find('[ch-part="header"]').appendTo(this.nodes().header);
-            //    $(this.nodes().content).find('[ch-part="footer"]').appendTo(this.nodes().footer);
-            //    return this._actionDeferred;
-
-            //}).pipe((action: chitu.Action) => {
-            //    /// <param name="action" type="chitu.Action"/>
-            //    var result = action.execute(this);
-            //    this.on_init();
-            //    if (u.isDeferred(result))
-            //        return result;
-
-            //    return $.Deferred().resolve();
-
-            //}).fail(() => {
-            //    this._loadViewModelResult = null;
-            //    u.log('Load view or action fail, page：{0}.', [this.name()]);
-            //});
-
-            return this._loadViewModelResult;
+        on_scrollEnd(args) {
+            return eventDeferred(this.scrollEnd, this, args);
         }
-        open(values: Object): JQueryDeferred<any> {
+        open(args?: Object, swipe?: SwipeDirection): JQueryDeferred<any> {
             /// <summary>
             /// Show the page.
             /// </summary>
@@ -374,46 +431,90 @@ namespace chitu {
             if (this._openResult)
                 return this._openResult;
 
-            var args = values;
-            this._openResult = $.Deferred();
 
-            //var self = this;
-         
+            swipe = swipe || SwipeDirection.None;
+            this.showPageNode(swipe);
 
-            var pageNodeShown = this.showPageNode(this.swipe);
-
-            this._loadViewAndModel()
-                .pipe(() => {
-                    return this.on_load(args);
-                })
-                .done(() => {
-                    this._openResult.resolve();
-                    this.showBodyNode();
-                })
-                .fail(() => {
-                    this._openResult.reject();
-                });
-
-            return this._openResult.always(() => {
-                this._openResult = null;
+            args = $.extend(args || {}, <PageLoadArguments>{
+                loadType: chitu.PageLoadType.open,
+                //loadCompleted: Page.createLoadCompletedFunc(this)
             });
+
+            if (this.viewDeferred == null && this.view == null) {
+                throw chitu.Errors.viewCanntNull();
+            }
+
+            //var viewDeferred = this.viewDeferred || $.Deferred<string>().resolve(this.view)
+            //var actionDeferred = this.actionDeferred || $.Deferred<Action>().resolve();
+
+            if (this.actionDeferred) {
+                this.actionDeferred.done((action) => {
+                    action.execute(this);
+                    if (this.viewDeferred) {
+                        this.viewDeferred.done((html) => this.view = html);
+                    }
+                    var load_args = <PageLoadArguments>args;
+                    load_args.loadType = chitu.PageLoadType.open;
+                    this.on_load(load_args);
+                });
+            }
+
+
+
         }
-        close(args: any = undefined) {
+        close(args?: Object, swipe?: SwipeDirection) {
             /// <summary>
-            /// Hide the page.
+            /// Colse the page.
             /// </summary>
             /// <param name="args" type="Object" canBeNull="true">
             /// The value passed to the hide event functions.
             /// </param>
             /// <returns type="jQuery.Deferred"/>
 
-            this.hidePageNode(this.swipe).done(() => {
+            if (this.is_closed)
+                return;
+
+            this.hidePageNode(swipe).done(() => {
                 $(this.node()).remove();
             });
 
             args = args || {};
             this.on_closed(args);
+            this.is_closed = true;
         }
 
+        private static page_scrollEnd(sender: chitu.Page, args) {
+            //scrollStatus = ScrollStatus.ScrollEnd;
+
+            var scrollTop = args.scrollTop;
+            var scrollHeight = args.scrollHeight;
+            var clientHeight = args.clientHeight;
+        
+            //====================================================================
+
+            var marginBottom = clientHeight / 3;
+            if (clientHeight + scrollTop < scrollHeight - marginBottom)
+                return;
+
+            if (!sender.enableScrollLoad)
+                return;
+
+
+            if (sender.scrollLoad_loading_bar != null && sender.scrollLoad_loading_bar.style.display == 'none') {
+                sender.scrollLoad_loading_bar.style.display = 'block';
+                sender.refreshUI();
+            }
+
+            var scroll_arg = $.extend(sender.routeData.values(), {
+                loadType: PageLoadType.scroll,
+            });
+            var result = sender.on_load(scroll_arg);
+        }
+
+        refreshUI() {
+            if (this.ios_scroller) {    //仅 IOS 需要刷新
+                this.ios_scroller.refresh();
+            }
+        }
     }
 };
