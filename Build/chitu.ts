@@ -916,9 +916,14 @@ namespace chitu {
 
             this.on_closing(args);
 
-            this.hidePageNode(swipe).done(() => {
+            if (this.visible()) {
+                this.hidePageNode(swipe).done(() => {
+                    $(this.node()).remove();
+                });
+            }
+            else {
                 $(this.node()).remove();
-            });
+            }
 
             args = args || {};
             this.on_closed(args);
@@ -1695,7 +1700,7 @@ namespace chitu {
 
             var page_node = document.createElement('div');
             container.appendChild(page_node);
-            var page = this.createPage(url, page_node, this.currentPage());
+            var page = this.createPage(url, page_node);
             this.page_stack.push(page);
             console.log('page_stack lenght:' + this.page_stack.length);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -1728,7 +1733,7 @@ namespace chitu {
                 console.log('page_stack lenght:' + this.page_stack.length);
             }
         }
-        private createPage(url: string, container: HTMLElement, parent: chitu.Page) {
+        private createPage(url: string, container: HTMLElement, parent?: chitu.Page) {
             if (!url)
                 throw e.argumentNull('url');
 
@@ -1974,7 +1979,7 @@ class IOSScroll {
 
         })(iscroller, page.nodes().body);
 
-        page.closed.add(() => iscroller.destroy());
+        page.closing.add(() => iscroller.destroy());
 
         $(window).on('resize', () => {
             window.setTimeout(() => iscroller.refresh(), 500);

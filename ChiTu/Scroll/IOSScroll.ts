@@ -72,7 +72,7 @@ class IOSScroll {
 
         })(iscroller, page.nodes().body);
 
-        page.closed.add(() => iscroller.destroy());
+        page.closing.add(() => iscroller.destroy());
 
         $(window).on('resize', () => {
             window.setTimeout(() => iscroller.refresh(), 500);

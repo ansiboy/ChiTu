@@ -496,9 +496,14 @@ namespace chitu {
 
             this.on_closing(args);
 
-            this.hidePageNode(swipe).done(() => {
+            if (this.visible()) {
+                this.hidePageNode(swipe).done(() => {
+                    $(this.node()).remove();
+                });
+            }
+            else {
                 $(this.node()).remove();
-            });
+            }
 
             args = args || {};
             this.on_closed(args);

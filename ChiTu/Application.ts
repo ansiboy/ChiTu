@@ -171,7 +171,7 @@
 
             var page_node = document.createElement('div');
             container.appendChild(page_node);
-            var page = this.createPage(url, page_node, this.currentPage());
+            var page = this.createPage(url, page_node);
             this.page_stack.push(page);
             console.log('page_stack lenght:' + this.page_stack.length);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -204,7 +204,7 @@
                 console.log('page_stack lenght:' + this.page_stack.length);
             }
         }
-        private createPage(url: string, container: HTMLElement, parent: chitu.Page) {
+        private createPage(url: string, container: HTMLElement, parent?: chitu.Page) {
             if (!url)
                 throw e.argumentNull('url');
 
