@@ -4,6 +4,10 @@ class IOSScroll {
     private iscroller: IScroll;
 
     constructor(page: chitu.Page) {
+        requirejs(['iscroll'], () => this.init(page));
+    }
+
+    private init(page: chitu.Page) {
         var options = {
             tap: true,
             useTransition: false,
@@ -76,7 +80,8 @@ class IOSScroll {
     }
 
     refresh() {
-        this.iscroller.refresh();
+        if (this.iscroller)
+            this.iscroller.refresh();
     }
 }
 

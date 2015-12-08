@@ -1002,6 +1002,66 @@ window['crossroads'] = factory(window['jQuery']);
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
+    var ControllerContext = (function () {
+        function ControllerContext(controller, view, routeData) {
+            this._routeData = routeData;
+            this._controller = controller;
+            this._view = view;
+            this._routeData = routeData;
+        }
+        ControllerContext.prototype.controller = function () {
+            return this._controller;
+        };
+        ControllerContext.prototype.view = function () {
+            return this._view;
+        };
+        ControllerContext.prototype.routeData = function () {
+            return this._routeData;
+        };
+        return ControllerContext;
+    })();
+    chitu.ControllerContext = ControllerContext;
+})(chitu || (chitu = {}));
+var chitu;
+(function (chitu) {
+    var e = chitu.Errors;
+    var ns = chitu;
+    var ControllerFactory = (function () {
+        function ControllerFactory() {
+            //if (!actionLocationFormater)
+            //    throw e.argumentNull('actionLocationFormater');
+            this._controllers = {};
+            this._controllers = {};
+        }
+        ControllerFactory.prototype.controllers = function () {
+            return this._controllers;
+        };
+        ControllerFactory.prototype.createController = function (name) {
+            /// <param name="routeData" type="Object"/>
+            /// <returns type="ns.Controller"/>
+            //if (!routeData.values().controller)
+            //    throw e.routeDataRequireController();
+            return new chitu.Controller(name);
+        };
+        ControllerFactory.prototype.actionLocationFormater = function () {
+            return this._actionLocationFormater;
+        };
+        ControllerFactory.prototype.getController = function (routeData) {
+            /// <summary>Gets the controller by routeData.</summary>
+            /// <param name="routeData" type="Object"/>
+            /// <returns type="chitu.Controller"/>
+            if (!routeData.values().controller)
+                throw e.routeDataRequireController();
+            if (!this._controllers[routeData.values().controller])
+                this._controllers[routeData.values().controller] = this.createController(routeData.values().controller);
+            return this._controllers[routeData.values().controller];
+        };
+        return ControllerFactory;
+    })();
+    chitu.ControllerFactory = ControllerFactory;
+})(chitu || (chitu = {}));
+var chitu;
+(function (chitu) {
     var e = chitu.Errors;
     var crossroads = window['crossroads'];
     function interpolate(pattern, data) {
@@ -1161,64 +1221,414 @@ var chitu;
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
-    var ControllerContext = (function () {
-        function ControllerContext(controller, view, routeData) {
-            this._routeData = routeData;
-            this._controller = controller;
-            this._view = view;
-            this._routeData = routeData;
+    var gesture;
+    (function (gesture) {
+        function createPullDownBar(page, config) {
+            config = config || {};
+            config = $.extend({
+                text: function (status) {
+                    this.element.innerHTML = PullDownStateText[status];
+                }
+            }, config);
+            var node = config.element;
+            var status;
+            if (node == null) {
+                node = document.createElement('div');
+                node.className = 'page-pulldown';
+                node.innerHTML = PullUpStateText.init;
+                var cn = page.nodes().content;
+                if (cn.childNodes.length == 0) {
+                    cn.appendChild(node);
+                }
+                else {
+                    cn.insertBefore(node, cn.childNodes[0]);
+                }
+                config.element = node;
+            }
+            var bar = new PullDownBar(config);
+            return bar;
         }
-        ControllerContext.prototype.controller = function () {
-            return this._controller;
-        };
-        ControllerContext.prototype.view = function () {
-            return this._view;
-        };
-        ControllerContext.prototype.routeData = function () {
-            return this._routeData;
-        };
-        return ControllerContext;
-    })();
-    chitu.ControllerContext = ControllerContext;
+        gesture.createPullDownBar = createPullDownBar;
+        var config = (function () {
+            function config() {
+            }
+            config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT = 60;
+            config.PULLUP_EXECUTE_CRITICAL_HEIGHT = 60;
+            config.PULL_DOWN_MAX_HEIGHT = 150;
+            config.PULL_UP_MAX_HEIGHT = 150;
+            config.MINI_MOVE_DISTANCE = 3;
+            return config;
+        })();
+        gesture.config = config;
+        var RefreshState = (function () {
+            function RefreshState() {
+            }
+            RefreshState.init = 'init';
+            RefreshState.ready = 'ready';
+            RefreshState.doing = 'doing';
+            RefreshState.done = 'done';
+            return RefreshState;
+        })();
+        gesture.RefreshState = RefreshState;
+        var PullDownStateText = (function () {
+            function PullDownStateText() {
+            }
+            PullDownStateText.init = '<div style="padding-top:10px;">下拉可以刷新</div>';
+            PullDownStateText.ready = '<div style="padding-top:10px;">松开后刷新</div>';
+            PullDownStateText.doing = '<div style=""><i class="icon-spinner icon-spin"></i><span>&nbsp;正在更新中</span></div>';
+            PullDownStateText.done = '<div style="padding-top:10px;">更新完毕</div>';
+            return PullDownStateText;
+        })();
+        gesture.PullDownStateText = PullDownStateText;
+        var PullUpStateText = (function () {
+            function PullUpStateText() {
+            }
+            PullUpStateText.init = '上拉可以刷新';
+            PullUpStateText.ready = '松开后刷新';
+            PullUpStateText.doing = '<div><i class="icon-spinner icon-spin"></i><span>&nbsp;正在更新中</span></div>';
+            PullUpStateText.done = '更新完毕';
+            return PullUpStateText;
+        })();
+        gesture.PullUpStateText = PullUpStateText;
+        var PullDownBar = (function () {
+            function PullDownBar(config) {
+                this._config = config;
+                this.status(RefreshState.init);
+            }
+            PullDownBar.prototype.status = function (value) {
+                if (value === void 0) { value = undefined; }
+                if (value === undefined)
+                    return this._status;
+                this._status = value;
+                this._config.text(value);
+            };
+            PullDownBar.prototype.execute = function () {
+                var _this = this;
+                var result = $.Deferred();
+                window.setTimeout(function () { return result.resolve(); }, 2000);
+                result.done(function () { return _this.status(RefreshState.init); });
+                return result;
+            };
+            PullDownBar.createPullDownBar = function (page, config) {
+                config = config || {};
+                config = $.extend({
+                    text: function (status) {
+                        this.element.innerHTML = PullDownStateText[status];
+                    }
+                }, config);
+                var node = config.element;
+                var status;
+                if (node == null) {
+                    node = document.createElement('div');
+                    node.className = 'page-pulldown';
+                    node.innerHTML = PullUpStateText.init;
+                    var cn = page.nodes().content;
+                    if (cn.childNodes.length == 0) {
+                        cn.appendChild(node);
+                    }
+                    else {
+                        cn.insertBefore(node, cn.childNodes[0]);
+                    }
+                    config.element = node;
+                }
+                var bar = new PullDownBar(config);
+                return bar;
+            };
+            return PullDownBar;
+        })();
+        gesture.PullDownBar = PullDownBar;
+        var PullUpBar = (function () {
+            function PullUpBar(config) {
+                this._config = config;
+                this.status(RefreshState.init);
+            }
+            PullUpBar.prototype.status = function (value) {
+                if (value === void 0) { value = undefined; }
+                if (value === undefined)
+                    return this._status;
+                this._status = value;
+                this._config.text(value);
+            };
+            PullUpBar.prototype.execute = function () {
+                var _this = this;
+                var result = this._config.execute();
+                if (result != null && $.isFunction(result.done)) {
+                    result.done(function () { return _this.status(RefreshState.init); });
+                }
+                return result;
+            };
+            PullUpBar.createPullUpBar = function (page, config) {
+                config = config || {};
+                config = $.extend({
+                    execute: function () { },
+                    text: function (status) {
+                        this.element.innerHTML = PullUpStateText[status];
+                    }
+                }, config);
+                var node = page.nodes()['pullup'];
+                var status;
+                if (node == null) {
+                    node = document.createElement('div');
+                    node.className = 'page-pullup';
+                    node.style.textAlign = 'center';
+                    var cn = page.nodes().content;
+                    cn.appendChild(node);
+                }
+                config.element = node;
+                return new PullUpBar(config);
+            };
+            return PullUpBar;
+        })();
+        gesture.PullUpBar = PullUpBar;
+    })(gesture = chitu.gesture || (chitu.gesture = {}));
+})(chitu || (chitu = {}));
+/// <reference path="common.ts" />
+var chitu;
+(function (chitu) {
+    var gesture;
+    (function (gesture) {
+        function start(move, page, pullDownBar, pullUpBar) {
+            var pre_deltaY = 0;
+            var cur_scroll_args = page['cur_scroll_args'];
+            var content_move = move(page.nodes().content);
+            var body_move;
+            var enablePullUp = false;
+            var start_pos;
+            var delta_height;
+            var enablePullDown = false;
+            var hammer = new Hammer(page.nodes().content);
+            hammer.get('pan').set({ direction: Hammer.DIRECTION_UP | Hammer.DIRECTION_DOWN });
+            hammer.on('panstart', function (e) {
+                var rect = page.nodes().content.getBoundingClientRect();
+                var parent_rect = page.nodes().body.getBoundingClientRect();
+                if (start_pos == null) {
+                    start_pos = rect.top;
+                }
+                if (delta_height == null) {
+                    delta_height = rect.height - $(page.nodes().body).height();
+                }
+                pre_deltaY = e['deltaY'];
+                enablePullUp = pullUpBar != null && Math.abs(parent_rect.bottom - rect.bottom) <= 20 && e['direction'] == Hammer.DIRECTION_UP;
+                if (enablePullUp)
+                    body_move = move(page.nodes().body);
+                enablePullDown = pullDownBar != null && Math.abs(rect.top - start_pos) <= 20 && e['direction'] == Hammer.DIRECTION_DOWN;
+                if (enablePullDown === true) {
+                    hammer.get('pan').set({ direction: Hammer.DIRECTION_UP | Hammer.DIRECTION_DOWN, domEvents: false });
+                }
+            });
+            hammer.on('pan', function (e) {
+                var delta;
+                var event = e;
+                if (event.distance > gesture.config.PULL_DOWN_MAX_HEIGHT)
+                    return;
+                if (enablePullDown === true) {
+                    content_move.set('top', event.deltaY + 'px').duration(0).end();
+                    if (Math.abs(event.deltaY) > gesture.config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT) {
+                        pullDownBar.status(gesture.RefreshState.ready);
+                    }
+                    else {
+                        pullDownBar.status(gesture.RefreshState.init);
+                    }
+                    event.preventDefault();
+                }
+                else if (enablePullUp) {
+                    body_move.y(event.deltaY - pre_deltaY).duration(0).end();
+                    if (Math.abs(event.deltaY) > gesture.config.PULLUP_EXECUTE_CRITICAL_HEIGHT) {
+                        pullUpBar.status(gesture.RefreshState.ready);
+                    }
+                    else {
+                        pullUpBar.status(gesture.RefreshState.init);
+                    }
+                }
+                pre_deltaY = e['deltaY'];
+            });
+            hammer.on('panend', function (e) {
+                var scroll_deferred = $.Deferred();
+                if (enablePullDown === true) {
+                    if (pullDownBar.status() == gesture.RefreshState.ready) {
+                        content_move
+                            .set('top', gesture.config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT + 'px')
+                            .duration(200)
+                            .end();
+                        pullDownBar.status(gesture.RefreshState.doing);
+                        pullDownBar.execute().done(function () {
+                            pullDownBar.status(gesture.RefreshState.done);
+                            content_move.set('top', '0px').duration(500).end(function () {
+                                console.log('scrollTop');
+                                scroll_deferred.resolve();
+                            });
+                        });
+                    }
+                    else {
+                        content_move.set('top', '0px').duration(200).end(function () { return scroll_deferred.resolve(); });
+                    }
+                }
+                else if (enablePullUp) {
+                    if (pullUpBar.status() == gesture.RefreshState.ready) {
+                        pullUpBar.execute();
+                    }
+                    console.log('d');
+                    var m = move(page.nodes().body);
+                    m.y(0).duration(200).end();
+                }
+            });
+        }
+        function enable_divfixed_gesture(page, pullDownBar, pullUpBar) {
+            requirejs(['move', 'hammer'], function (move, hammer) {
+                debugger;
+                window['Hammer'] = hammer;
+                start(move, page, pullDownBar, pullUpBar);
+            });
+        }
+        gesture.enable_divfixed_gesture = enable_divfixed_gesture;
+    })(gesture = chitu.gesture || (chitu.gesture = {}));
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
-    var e = chitu.Errors;
-    var ns = chitu;
-    var ControllerFactory = (function () {
-        function ControllerFactory() {
-            //if (!actionLocationFormater)
-            //    throw e.argumentNull('actionLocationFormater');
-            this._controllers = {};
-            this._controllers = {};
+    var gesture;
+    (function (gesture) {
+        function start(move, page, pullDownBar, pullUpBar) {
+            console.log('enable_ios_gesture');
+            var pre_deltaY = 0;
+            var cur_scroll_args = page['cur_scroll_args'];
+            var content_move = move(page.nodes().content);
+            var body_move;
+            var disable_iscroll;
+            var enablePullUp = false;
+            var enablePullDown = false;
+            var hammer = new Hammer(page.nodes().content);
+            hammer.get('pan').set({ direction: Hammer.DIRECTION_UP | Hammer.DIRECTION_DOWN });
+            hammer.on('panstart', function (e) {
+                pre_deltaY = e['deltaY'];
+                enablePullUp = pullUpBar != null && Math.abs(page['iscroller'].startY - page['iscroller'].maxScrollY) <= 20 && e['direction'] == Hammer.DIRECTION_UP;
+                if (enablePullUp)
+                    body_move = move(page.nodes().body);
+                enablePullDown = pullDownBar != null && Math.abs(page['iscroller'].startY) <= 20 && e['direction'] == Hammer.DIRECTION_DOWN;
+                if (enablePullDown === true || enablePullUp === true) {
+                    if (page['iscroller'].enabled) {
+                        page['iscroller'].disable();
+                        console.log('iscrol disable');
+                        disable_iscroll = true;
+                    }
+                    hammer.get('pan').set({ direction: Hammer.DIRECTION_UP | Hammer.DIRECTION_DOWN, domEvents: false });
+                }
+            });
+            hammer.on('pan', function (e) {
+                var event = e;
+                if (event.distance > gesture.config.PULL_DOWN_MAX_HEIGHT)
+                    return;
+                if (enablePullDown === true) {
+                    content_move.set('top', event.deltaY + 'px').duration(0).end();
+                    if (event.deltaY > gesture.config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT) {
+                        pullDownBar.status(gesture.RefreshState.ready);
+                    }
+                    else {
+                        pullDownBar.status(gesture.RefreshState.init);
+                    }
+                }
+                else if (enablePullUp) {
+                    body_move.y(event.deltaY - pre_deltaY).duration(0).end();
+                    if (Math.abs(event.deltaY) > gesture.config.PULLUP_EXECUTE_CRITICAL_HEIGHT) {
+                        pullUpBar.status(gesture.RefreshState.ready);
+                    }
+                    else {
+                        pullUpBar.status(gesture.RefreshState.init);
+                    }
+                }
+                event.preventDefault();
+                pre_deltaY = e['deltaY'];
+            });
+            hammer.on('panend', function (e) {
+                var scroll_deferred = $.Deferred();
+                if (enablePullDown === true) {
+                    if (pullDownBar.status() == gesture.RefreshState.ready) {
+                        content_move
+                            .set('top', gesture.config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT + 'px')
+                            .duration(200)
+                            .end();
+                        pullDownBar.status(gesture.RefreshState.doing);
+                        pullDownBar.execute().done(function () {
+                            pullDownBar.status(gesture.RefreshState.done);
+                            content_move.set('top', '0px').duration(500).end(function () {
+                                console.log('scrollTop');
+                                scroll_deferred.resolve();
+                            });
+                        });
+                    }
+                    else {
+                        content_move.set('top', '0px').duration(200).end(function () { return scroll_deferred.resolve(); });
+                    }
+                }
+                else if (enablePullUp) {
+                    if (pullUpBar.status() == gesture.RefreshState.ready) {
+                        pullUpBar.execute();
+                    }
+                    var m = move(page.nodes().body);
+                    m.y(0).duration(200).end();
+                }
+                var rect = page.nodes().content.getBoundingClientRect();
+                enablePullUp = pullUpBar != null && Math.abs(page['iscroller'].startY - page['iscroller'].maxScrollY) <= 20 && e['direction'] == Hammer.DIRECTION_UP;
+                console.log(pullUpBar);
+                console.log(page['iscroller']);
+                console.log('enablePullUp:' + enablePullUp);
+                enablePullDown = pullDownBar != null && rect.top <= 0 && e['direction'] == Hammer.DIRECTION_DOWN;
+                window.setTimeout(function () {
+                    if (disable_iscroll)
+                        page['iscroller'].enable();
+                }, 100);
+            });
         }
-        ControllerFactory.prototype.controllers = function () {
-            return this._controllers;
-        };
-        ControllerFactory.prototype.createController = function (name) {
-            /// <param name="routeData" type="Object"/>
-            /// <returns type="ns.Controller"/>
-            //if (!routeData.values().controller)
-            //    throw e.routeDataRequireController();
-            return new chitu.Controller(name);
-        };
-        ControllerFactory.prototype.actionLocationFormater = function () {
-            return this._actionLocationFormater;
-        };
-        ControllerFactory.prototype.getController = function (routeData) {
-            /// <summary>Gets the controller by routeData.</summary>
-            /// <param name="routeData" type="Object"/>
-            /// <returns type="chitu.Controller"/>
-            if (!routeData.values().controller)
-                throw e.routeDataRequireController();
-            if (!this._controllers[routeData.values().controller])
-                this._controllers[routeData.values().controller] = this.createController(routeData.values().controller);
-            return this._controllers[routeData.values().controller];
-        };
-        return ControllerFactory;
-    })();
-    chitu.ControllerFactory = ControllerFactory;
+        function enable_iscroll_gesture(page, pullDownBar, pullUpBar) {
+            requirejs(['move', 'hammer'], function (move, hammer) {
+                window['Hammer'] = hammer;
+                start(move, page, pullDownBar, pullUpBar);
+            });
+        }
+        gesture.enable_iscroll_gesture = enable_iscroll_gesture;
+    })(gesture = chitu.gesture || (chitu.gesture = {}));
 })(chitu || (chitu = {}));
+var ScrollArguments = (function () {
+    function ScrollArguments() {
+    }
+    return ScrollArguments;
+})();
+var DisScroll = (function () {
+    function DisScroll(page) {
+        var cur_scroll_args = new ScrollArguments();
+        var pre_scroll_top;
+        var checking_num;
+        var CHECK_INTERVAL = 300;
+        var scrollEndCheck = function (page) {
+            if (checking_num != null)
+                return;
+            checking_num = 0;
+            checking_num = window.setInterval(function () {
+                if (pre_scroll_top == cur_scroll_args.scrollTop) {
+                    window.clearInterval(checking_num);
+                    checking_num = null;
+                    pre_scroll_top = null;
+                    page.on_scrollEnd(cur_scroll_args);
+                    return;
+                }
+                pre_scroll_top = cur_scroll_args.scrollTop;
+            }, CHECK_INTERVAL);
+        };
+        var wrapper_node = page.nodes().body;
+        wrapper_node.onscroll = function () {
+            var args = {
+                scrollTop: wrapper_node.scrollTop,
+                scrollHeight: wrapper_node.scrollHeight,
+                clientHeight: wrapper_node.clientHeight
+            };
+            page.on_scroll(args);
+            cur_scroll_args.clientHeight = args.clientHeight;
+            cur_scroll_args.scrollHeight = args.scrollHeight;
+            cur_scroll_args.scrollTop = args.scrollTop;
+            scrollEndCheck(page);
+        };
+    }
+    return DisScroll;
+})();
 var chitu;
 (function (chitu) {
     var u = chitu.Utility;
@@ -1504,6 +1914,138 @@ var chitu;
         }
     });
 })(chitu || (chitu = {}));
+var cur_scroll_args = new ScrollArguments();
+var pre_scroll_top;
+var checking_num;
+var CHECK_INTERVAL = 300;
+function scrollEndCheck(page) {
+    if (checking_num != null)
+        return;
+    checking_num = 0;
+    checking_num = window.setInterval(function () {
+        if (pre_scroll_top == cur_scroll_args.scrollTop) {
+            window.clearInterval(checking_num);
+            checking_num = null;
+            pre_scroll_top = null;
+            page.on_scrollEnd(cur_scroll_args);
+            return;
+        }
+        pre_scroll_top = cur_scroll_args.scrollTop;
+    }, CHECK_INTERVAL);
+}
+var DocumentScroll = (function () {
+    function DocumentScroll(page) {
+        $(document).scroll(function (event) {
+            if (!page.visible())
+                return;
+            var args = {
+                scrollTop: $(document).scrollTop(),
+                scrollHeight: document.body.scrollHeight,
+                clientHeight: $(window).height()
+            };
+            cur_scroll_args.clientHeight = args.clientHeight;
+            cur_scroll_args.scrollHeight = args.scrollHeight;
+            cur_scroll_args.scrollTop = args.scrollTop;
+            $(page.node()).data(page.name + '_scroll_top', args.scrollTop);
+            scrollEndCheck(page);
+        });
+        page.shown.add(function (sender) {
+            var value = $(page.node()).data(page.name + '_scroll_top');
+            if (value != null)
+                $(document).scrollTop(new Number(value).valueOf());
+        });
+    }
+    return DocumentScroll;
+})();
+var _this = this;
+var IOSScroll = (function () {
+    function IOSScroll(page) {
+        var _this = this;
+        requirejs(['iscroll'], function () { return _this.init(page); });
+    }
+    IOSScroll.prototype.init = function (page) {
+        var options = {
+            tap: true,
+            useTransition: false,
+            HWCompositing: false,
+            preventDefault: true,
+            probeType: 1,
+        };
+        var iscroller = this.iscroller = page['iscroller'] = new IScroll(page.nodes().body, options);
+        iscroller.on('scrollEnd', function () {
+            var scroller = this;
+            var args = {
+                scrollTop: 0 - scroller.y,
+                scrollHeight: scroller.scrollerHeight,
+                clientHeight: scroller.wrapperHeight
+            };
+            console.log('directionY:' + scroller.directionY);
+            console.log('startY:' + scroller.startY);
+            console.log('scroller.y:' + scroller.y);
+            page.on_scrollEnd(args);
+        });
+        iscroller.on('scroll', function () {
+            var scroller = this;
+            var args = {
+                scrollTop: 0 - scroller.y,
+                scrollHeight: scroller.scrollerHeight,
+                clientHeight: scroller.wrapperHeight
+            };
+            console.log('directionY:' + scroller.directionY);
+            console.log('startY:' + scroller.startY);
+            console.log('scroller.y:' + scroller.y);
+            page.on_scroll(args);
+        });
+        (function (scroller, wrapperNode) {
+            $(wrapperNode).on('tap', function (event) {
+                if (page['iscroller'].enabled == false)
+                    return;
+                var MAX_DEEPH = 4;
+                var deeph = 1;
+                var node = event.target;
+                while (node != null) {
+                    if (node.tagName == 'A')
+                        return window.open($(node).attr('href'), '_self');
+                    node = node.parentNode;
+                    deeph = deeph + 1;
+                    if (deeph > MAX_DEEPH)
+                        return;
+                }
+            });
+        })(iscroller, page.nodes().body);
+        page.closed.add(function () { return iscroller.destroy(); });
+        $(window).on('resize', function () {
+            window.setTimeout(function () { return iscroller.refresh(); }, 500);
+        });
+    };
+    IOSScroll.prototype.refresh = function () {
+        if (this.iscroller)
+            this.iscroller.refresh();
+    };
+    return IOSScroll;
+})();
+chitu.scroll = function (page, config) {
+    $(page.nodes().body).addClass('wrapper');
+    $(page.nodes().content).addClass('scroller');
+    var wrapperNode = page['_wrapperNode'] = page.nodes().body;
+    page['_scrollerNode'] = page.nodes().content;
+    $.extend(page, {
+        scrollEnd: chitu.Callbacks(),
+        on_scrollEnd: function (args) {
+            return chitu.fireCallback(this.scrollEnd, [this, args]);
+        },
+        scrollTop: $.proxy(function (value) {
+            if (value === undefined)
+                return (0 - page['iscroller'].y) + 'px';
+            if (typeof value === 'string')
+                value = new Number(value.substr(0, value.length - 2)).valueOf();
+            var scroller = _this['iscroller'];
+            if (scroller) {
+                scroller.scrollTo(0, value);
+            }
+        }, page)
+    });
+};
 var chitu;
 (function (chitu) {
     var ns = chitu;
@@ -1597,6 +2139,8 @@ var chitu;
             this._hideTime = Page.animationTime;
             this._enableScrollLoad = false;
             this.is_closed = false;
+            this.actionExecuted = $.Deferred();
+            this.isActionExecuted = false;
             this.preLoad = ns.Callbacks();
             this.load = ns.Callbacks();
             this.closing = ns.Callbacks();
@@ -1617,10 +2161,12 @@ var chitu;
             if (scrollType == ScrollType.IScroll) {
                 $(this.nodes().container).addClass('ios');
                 this.ios_scroller = new IOSScroll(this);
+                chitu.gesture.enable_iscroll_gesture(this, null, null);
             }
             else if (scrollType == ScrollType.Div) {
                 $(this.nodes().container).addClass('div');
                 new DisScroll(this);
+                chitu.gesture.enable_divfixed_gesture(this, null, null);
             }
             else if (scrollType == ScrollType.Document) {
                 $(this.nodes().container).addClass('doc');
@@ -1628,7 +2174,7 @@ var chitu;
             }
             this.scrollEnd.add(Page.page_scrollEnd);
             if (parent)
-                parent.closing.add(function () { return _this.close(); });
+                parent.closed.add(function () { return _this.close(); });
         }
         Object.defineProperty(Page.prototype, "viewDeferred", {
             get: function () {
@@ -1656,17 +2202,6 @@ var chitu;
             },
             set: function (value) {
                 this._enableScrollLoad = value;
-                if (this.scrollLoad_loading_bar == null) {
-                    this.scrollLoad_loading_bar = document.createElement('div');
-                    this.scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
-                    this.scrollLoad_loading_bar.style.display = 'none';
-                    $(this.scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
-                    this.nodes().content.appendChild(this.scrollLoad_loading_bar);
-                }
-                if (!value && this.scrollLoad_loading_bar != null) {
-                    $(this.scrollLoad_loading_bar).hide();
-                    this.refreshUI();
-                }
             },
             enumerable: true,
             configurable: true
@@ -1831,40 +2366,76 @@ var chitu;
             });
             return result;
         };
+        Page.prototype.ensureScrollLoadingBar = function () {
+            if (this.scrollLoad_loading_bar == null) {
+                this.scrollLoad_loading_bar = document.createElement('div');
+                this.scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
+                this.scrollLoad_loading_bar.style.display = 'none';
+                $(this.scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
+                this.nodes().content.appendChild(this.scrollLoad_loading_bar);
+            }
+        };
+        Page.prototype.showScrollLoadingBar = function () {
+            this.ensureScrollLoadingBar();
+            if ($(this.scrollLoad_loading_bar).is(':visible') == false) {
+                $(this.scrollLoad_loading_bar).show();
+                this.refreshUI();
+            }
+        };
+        Page.prototype.hideScrollLoadingBar = function () {
+            this.ensureScrollLoadingBar();
+            if ($(this.scrollLoad_loading_bar).is(':visible')) {
+                $(this.scrollLoad_loading_bar).hide();
+                this.refreshUI();
+            }
+        };
+        Page.prototype.fireEvent = function (callback, args) {
+            var _this = this;
+            if (this.actionExecuted.state() == 'resolved')
+                return eventDeferred(callback, this, args);
+            return this.actionExecuted.pipe(function () { return eventDeferred(callback, _this, args); });
+        };
         Page.prototype.on_load = function (args) {
             var _this = this;
-            var result = eventDeferred(this.load, this, args);
+            var result = this.fireEvent(this.load, args);
             if (args.loadType == PageLoadType.open) {
                 result.done(function () {
                     $(_this.nodes().loading).hide();
                     $(_this.nodes().content).show();
                 });
             }
+            else if (args.loadType == PageLoadType.scroll) {
+                this.showScrollLoadingBar();
+                result.done(function () { return _this.hideScrollLoadingBar(); });
+            }
             result.done(function () {
                 window.setTimeout(function () { return _this.refreshUI(); }, 100);
             });
             return result;
         };
+        Page.prototype.on_closing = function (args) {
+            return this.fireEvent(this.closing, args);
+        };
         Page.prototype.on_closed = function (args) {
-            return eventDeferred(this.closed, this, args);
+            return this.fireEvent(this.closed, args);
         };
         Page.prototype.on_scroll = function (args) {
-            return eventDeferred(this.scroll, this, args);
+            return this.fireEvent(this.scroll, args);
         };
         Page.prototype.on_showing = function (args) {
-            return eventDeferred(this.showing, this, args);
+            return this.fireEvent(this.showing, args);
         };
         Page.prototype.on_shown = function (args) {
-            return eventDeferred(this.shown, this, args);
+            return this.fireEvent(this.shown, args);
         };
         Page.prototype.on_hiding = function (args) {
-            return eventDeferred(this.hiding, this, args);
+            return this.fireEvent(this.hiding, args);
         };
         Page.prototype.on_hidden = function (args) {
-            return eventDeferred(this.hidden, this, args);
+            return this.fireEvent(this.hidden, args);
         };
         Page.prototype.on_scrollEnd = function (args) {
-            return eventDeferred(this.scrollEnd, this, args);
+            return this.fireEvent(this.scrollEnd, args);
         };
         Page.prototype.open = function (args, swipe) {
             var _this = this;
@@ -1881,6 +2452,7 @@ var chitu;
             if (this.actionDeferred) {
                 this.actionDeferred.done(function (action) {
                     action.execute(_this);
+                    _this.actionExecuted.resolve();
                     if (_this.viewDeferred) {
                         _this.viewDeferred.done(function (html) { return _this.view = html; });
                     }
@@ -1901,6 +2473,7 @@ var chitu;
             var _this = this;
             if (this.is_closed)
                 return;
+            this.on_closing(args);
             this.hidePageNode(swipe).done(function () {
                 $(_this.node()).remove();
             });
@@ -1918,10 +2491,6 @@ var chitu;
                 return;
             if (!sender.enableScrollLoad)
                 return;
-            if (sender.scrollLoad_loading_bar != null && sender.scrollLoad_loading_bar.style.display == 'none') {
-                sender.scrollLoad_loading_bar.style.display = 'block';
-                sender.refreshUI();
-            }
             var scroll_arg = $.extend(sender.routeData.values(), {
                 loadType: PageLoadType.scroll,
             });
@@ -1938,27 +2507,6 @@ var chitu;
     chitu.Page = Page;
 })(chitu || (chitu = {}));
 ;
-var chitu;
-(function (chitu) {
-    var Route = (function () {
-        function Route(name, pattern, defaults) {
-            this._name = name;
-            this._pattern = pattern;
-            this._defaults = defaults;
-        }
-        Route.prototype.name = function () {
-            return this._name;
-        };
-        Route.prototype.defaults = function () {
-            return this._defaults;
-        };
-        Route.prototype.url = function () {
-            return this._pattern;
-        };
-        return Route;
-    })();
-    chitu.Route = Route;
-})(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
     var ns = chitu;
@@ -2029,6 +2577,27 @@ var chitu;
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
+    var Route = (function () {
+        function Route(name, pattern, defaults) {
+            this._name = name;
+            this._pattern = pattern;
+            this._defaults = defaults;
+        }
+        Route.prototype.name = function () {
+            return this._name;
+        };
+        Route.prototype.defaults = function () {
+            return this._defaults;
+        };
+        Route.prototype.url = function () {
+            return this._pattern;
+        };
+        return Route;
+    })();
+    chitu.Route = Route;
+})(chitu || (chitu = {}));
+var chitu;
+(function (chitu) {
     var RouteData = (function () {
         function RouteData(url) {
             this._url = url;
@@ -2064,175 +2633,6 @@ var chitu;
     })();
     chitu.RouteData = RouteData;
 })(chitu || (chitu = {}));
-var ScrollArguments = (function () {
-    function ScrollArguments() {
-    }
-    return ScrollArguments;
-})();
-var DisScroll = (function () {
-    function DisScroll(page) {
-        var cur_scroll_args = new ScrollArguments();
-        var pre_scroll_top;
-        var checking_num;
-        var CHECK_INTERVAL = 300;
-        var scrollEndCheck = function (page) {
-            if (checking_num != null)
-                return;
-            checking_num = 0;
-            checking_num = window.setInterval(function () {
-                if (pre_scroll_top == cur_scroll_args.scrollTop) {
-                    window.clearInterval(checking_num);
-                    checking_num = null;
-                    pre_scroll_top = null;
-                    page.on_scrollEnd(cur_scroll_args);
-                    return;
-                }
-                pre_scroll_top = cur_scroll_args.scrollTop;
-            }, CHECK_INTERVAL);
-        };
-        var wrapper_node = page.nodes().body;
-        wrapper_node.onscroll = function () {
-            var args = {
-                scrollTop: wrapper_node.scrollTop,
-                scrollHeight: wrapper_node.scrollHeight,
-                clientHeight: wrapper_node.clientHeight
-            };
-            page.on_scroll(args);
-            cur_scroll_args.clientHeight = args.clientHeight;
-            cur_scroll_args.scrollHeight = args.scrollHeight;
-            cur_scroll_args.scrollTop = args.scrollTop;
-            scrollEndCheck(page);
-        };
-    }
-    return DisScroll;
-})();
-var cur_scroll_args = new ScrollArguments();
-var pre_scroll_top;
-var checking_num;
-var CHECK_INTERVAL = 300;
-function scrollEndCheck(page) {
-    if (checking_num != null)
-        return;
-    checking_num = 0;
-    checking_num = window.setInterval(function () {
-        if (pre_scroll_top == cur_scroll_args.scrollTop) {
-            window.clearInterval(checking_num);
-            checking_num = null;
-            pre_scroll_top = null;
-            page.on_scrollEnd(cur_scroll_args);
-            return;
-        }
-        pre_scroll_top = cur_scroll_args.scrollTop;
-    }, CHECK_INTERVAL);
-}
-var DocumentScroll = (function () {
-    function DocumentScroll(page) {
-        $(document).scroll(function (event) {
-            if (!page.visible())
-                return;
-            var args = {
-                scrollTop: $(document).scrollTop(),
-                scrollHeight: document.body.scrollHeight,
-                clientHeight: $(window).height()
-            };
-            cur_scroll_args.clientHeight = args.clientHeight;
-            cur_scroll_args.scrollHeight = args.scrollHeight;
-            cur_scroll_args.scrollTop = args.scrollTop;
-            $(page.node()).data(page.name + '_scroll_top', args.scrollTop);
-            scrollEndCheck(page);
-        });
-        page.shown.add(function (sender) {
-            var value = $(page.node()).data(page.name + '_scroll_top');
-            if (value != null)
-                $(document).scrollTop(new Number(value).valueOf());
-        });
-    }
-    return DocumentScroll;
-})();
-var _this = this;
-var IOSScroll = (function () {
-    function IOSScroll(page) {
-        var options = {
-            tap: true,
-            useTransition: false,
-            HWCompositing: false,
-            preventDefault: true,
-            probeType: 1,
-        };
-        var iscroller = this.iscroller = page['iscroller'] = new IScroll(page.nodes().body, options);
-        iscroller.on('scrollEnd', function () {
-            var scroller = this;
-            var args = {
-                scrollTop: 0 - scroller.y,
-                scrollHeight: scroller.scrollerHeight,
-                clientHeight: scroller.wrapperHeight
-            };
-            console.log('directionY:' + scroller.directionY);
-            console.log('startY:' + scroller.startY);
-            console.log('scroller.y:' + scroller.y);
-            page.on_scrollEnd(args);
-        });
-        iscroller.on('scroll', function () {
-            var scroller = this;
-            var args = {
-                scrollTop: 0 - scroller.y,
-                scrollHeight: scroller.scrollerHeight,
-                clientHeight: scroller.wrapperHeight
-            };
-            console.log('directionY:' + scroller.directionY);
-            console.log('startY:' + scroller.startY);
-            console.log('scroller.y:' + scroller.y);
-            page.on_scroll(args);
-        });
-        (function (scroller, wrapperNode) {
-            $(wrapperNode).on('tap', function (event) {
-                if (page['iscroller'].enabled == false)
-                    return;
-                var MAX_DEEPH = 4;
-                var deeph = 1;
-                var node = event.target;
-                while (node != null) {
-                    if (node.tagName == 'A')
-                        return window.open($(node).attr('href'), '_self');
-                    node = node.parentNode;
-                    deeph = deeph + 1;
-                    if (deeph > MAX_DEEPH)
-                        return;
-                }
-            });
-        })(iscroller, page.nodes().body);
-        page.closed.add(function () { return iscroller.destroy(); });
-        $(window).on('resize', function () {
-            window.setTimeout(function () { return iscroller.refresh(); }, 500);
-        });
-    }
-    IOSScroll.prototype.refresh = function () {
-        this.iscroller.refresh();
-    };
-    return IOSScroll;
-})();
-chitu.scroll = function (page, config) {
-    $(page.nodes().body).addClass('wrapper');
-    $(page.nodes().content).addClass('scroller');
-    var wrapperNode = page['_wrapperNode'] = page.nodes().body;
-    page['_scrollerNode'] = page.nodes().content;
-    $.extend(page, {
-        scrollEnd: chitu.Callbacks(),
-        on_scrollEnd: function (args) {
-            return chitu.fireCallback(this.scrollEnd, [this, args]);
-        },
-        scrollTop: $.proxy(function (value) {
-            if (value === undefined)
-                return (0 - page['iscroller'].y) + 'px';
-            if (typeof value === 'string')
-                value = new Number(value.substr(0, value.length - 2)).valueOf();
-            var scroller = _this['iscroller'];
-            if (scroller) {
-                scroller.scrollTo(0, value);
-            }
-        }, page)
-    });
-};
 var chitu;
 (function (chitu) {
     var e = chitu.Errors;

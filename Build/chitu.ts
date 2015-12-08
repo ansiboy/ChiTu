@@ -413,7 +413,7 @@ namespace chitu {
     var u = chitu.Utility;
     var e = chitu.Errors;
 
-    function eventDeferred(callback, sender, args = {}): JQueryDeferred<any> {
+    function eventDeferred(callback: chitu.Callback, sender, args = {}): JQueryDeferred<any> {
         return chitu.fireCallback(callback, [sender, args]);
     };
 
@@ -534,6 +534,8 @@ namespace chitu {
         private _enableScrollLoad = false;
         private is_closed = false;
         private scrollLoad_loading_bar: HTMLElement;
+        private actionExecuted = $.Deferred<boolean>();
+        private isActionExecuted = false;
 
         preLoad = ns.Callbacks();
         load = ns.Callbacks();
@@ -561,34 +563,23 @@ namespace chitu {
             if (scrollType == ScrollType.IScroll) {
                 $(this.nodes().container).addClass('ios');
                 this.ios_scroller = new IOSScroll(this);
+                gesture.enable_iscroll_gesture(this, null, null);
             }
             else if (scrollType == ScrollType.Div) {
                 $(this.nodes().container).addClass('div');
                 new DisScroll(this);
+                gesture.enable_divfixed_gesture(this, null, null);
             }
             else if (scrollType == ScrollType.Document) {
                 $(this.nodes().container).addClass('doc');
                 new DocumentScroll(this);
+                //gesture.enable_divfixed_gesture(this, null, null);
             }
 
             this.scrollEnd.add(Page.page_scrollEnd);
             if (parent)
-                parent.closing.add(() => this.close());
+                parent.closed.add(() => this.close());
         }
-
-        //init(routeData: RouteData) {
-        //    var controllerName = routeData.values().controller;
-        //    var actionName = routeData.values().action;
-        //    //this._name = Page.getPageName(routeData);
-
-
-
-        //    var args: PageLoadArguments = routeData.values();
-        //    args.loadType = PageLoadType.start;
-        //    args.loadCompleted = Page.createLoadCompletedFunc(this); //(value) => this._isLoadAllData = value;
-
-        //    //this.on_load(args);
-        //}
 
         get viewDeferred(): JQueryPromise<string> {
             return this._viewDeferred;
@@ -607,19 +598,6 @@ namespace chitu {
         }
         set enableScrollLoad(value: boolean) {
             this._enableScrollLoad = value;
-
-            if (this.scrollLoad_loading_bar == null) {
-                this.scrollLoad_loading_bar = document.createElement('div');
-                this.scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
-                this.scrollLoad_loading_bar.style.display = 'none';
-                $(this.scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
-                this.nodes().content.appendChild(this.scrollLoad_loading_bar);
-            }
-
-            if (!value && this.scrollLoad_loading_bar != null) {
-                $(this.scrollLoad_loading_bar).hide();
-                this.refreshUI();
-            }
         }
         set view(value: string) {
             this.nodes().content.innerHTML = value;
@@ -783,21 +761,46 @@ namespace chitu {
             return result;
         }
 
-        //private showBodyNode() {
-        //    $(this._pageNode.container).show();
-        //    $(this._pageNode.loading).hide();
-        //    $(this._pageNode.body).show();
+        private ensureScrollLoadingBar() {
+            if (this.scrollLoad_loading_bar == null) {
+                this.scrollLoad_loading_bar = document.createElement('div');
+                this.scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
+                this.scrollLoad_loading_bar.style.display = 'none';
+                $(this.scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
+                this.nodes().content.appendChild(this.scrollLoad_loading_bar);
+            }
+        }
+        private showScrollLoadingBar() {
+            this.ensureScrollLoadingBar();
+            if ($(this.scrollLoad_loading_bar).is(':visible') == false) {
+                $(this.scrollLoad_loading_bar).show();
+                this.refreshUI();
+            }
+        }
+        private hideScrollLoadingBar() {
+            this.ensureScrollLoadingBar();
+            if ($(this.scrollLoad_loading_bar).is(':visible')) {
+                $(this.scrollLoad_loading_bar).hide();
+                this.refreshUI();
+            }
+        }
+        private fireEvent(callback: chitu.Callback, args) {
+            if (this.actionExecuted.state() == 'resolved')
+                return eventDeferred(callback, this, args);
 
-        //    this.on_shown({});
-        //}
-
+            return this.actionExecuted.pipe(() => eventDeferred(callback, this, args));
+        }
         on_load(args: PageLoadArguments) {
-            var result = eventDeferred(this.load, this, args);
+            var result = this.fireEvent(this.load, args);
             if (args.loadType == PageLoadType.open) {
                 result.done(() => {
                     $(this.nodes().loading).hide();
                     $(this.nodes().content).show();
                 })
+            }
+            else if (args.loadType == PageLoadType.scroll) {
+                this.showScrollLoadingBar();
+                result.done(() => this.hideScrollLoadingBar());
             }
 
             result.done(() => {
@@ -806,26 +809,29 @@ namespace chitu {
 
             return result;
         }
+        on_closing(args) {
+            return this.fireEvent(this.closing, args);
+        }
         on_closed(args) {
-            return eventDeferred(this.closed, this, args);
+            return this.fireEvent(this.closed, args);
         }
         on_scroll(args) {
-            return eventDeferred(this.scroll, this, args);
+            return this.fireEvent(this.scroll, args);
         }
         on_showing(args) {
-            return eventDeferred(this.showing, this, args);
+            return this.fireEvent(this.showing, args);
         }
         on_shown(args) {
-            return eventDeferred(this.shown, this, args);
+            return this.fireEvent(this.shown, args);
         }
         on_hiding(args) {
-            return eventDeferred(this.hiding, this, args);
+            return this.fireEvent(this.hiding, args);
         }
         on_hidden(args) {
-            return eventDeferred(this.hidden, this, args);
+            return this.fireEvent(this.hidden, args);
         }
         on_scrollEnd(args) {
-            return eventDeferred(this.scrollEnd, this, args);
+            return this.fireEvent(this.scrollEnd, args);
         }
         open(args?: Object, swipe?: SwipeDirection): JQueryDeferred<any> {
             /// <summary>
@@ -838,6 +844,7 @@ namespace chitu {
             if (this._openResult)
                 return this._openResult;
 
+            //不能多次打开？？？
 
             swipe = swipe || SwipeDirection.None;
             this.showPageNode(swipe);
@@ -851,12 +858,11 @@ namespace chitu {
                 throw chitu.Errors.viewCanntNull();
             }
 
-            //var viewDeferred = this.viewDeferred || $.Deferred<string>().resolve(this.view)
-            //var actionDeferred = this.actionDeferred || $.Deferred<Action>().resolve();
-
             if (this.actionDeferred) {
                 this.actionDeferred.done((action) => {
                     action.execute(this);
+                    this.actionExecuted.resolve();
+
                     if (this.viewDeferred) {
                         this.viewDeferred.done((html) => this.view = html);
                     }
@@ -865,9 +871,6 @@ namespace chitu {
                     this.on_load(load_args);
                 });
             }
-
-
-
         }
         close(args?: Object, swipe?: SwipeDirection) {
             /// <summary>
@@ -880,6 +883,8 @@ namespace chitu {
 
             if (this.is_closed)
                 return;
+
+            this.on_closing(args);
 
             this.hidePageNode(swipe).done(() => {
                 $(this.node()).remove();
@@ -905,12 +910,6 @@ namespace chitu {
 
             if (!sender.enableScrollLoad)
                 return;
-
-
-            if (sender.scrollLoad_loading_bar != null && sender.scrollLoad_loading_bar.style.display == 'none') {
-                sender.scrollLoad_loading_bar.style.display = 'block';
-                sender.refreshUI();
-            }
 
             var scroll_arg = $.extend(sender.routeData.values(), {
                 loadType: PageLoadType.scroll,
@@ -1877,6 +1876,10 @@ class IOSScroll {
     private iscroller: IScroll;
 
     constructor(page: chitu.Page) {
+        requirejs(['iscroll'], () => this.init(page));
+    }
+
+    private init(page: chitu.Page) {
         var options = {
             tap: true,
             useTransition: false,
@@ -1949,7 +1952,8 @@ class IOSScroll {
     }
 
     refresh() {
-        this.iscroller.refresh();
+        if (this.iscroller)
+            this.iscroller.refresh();
     }
 }
 
@@ -1994,3 +1998,452 @@ class IOSScroll {
 
 
 }
+;namespace chitu.gesture {
+    export function createPullDownBar(page: chitu.Page, config): PullDownBar {
+        config = config || {};
+        config = $.extend({
+            text: function (status) {
+                (<HTMLElement>this.element).innerHTML = PullDownStateText[status];
+            }
+        }, config);
+
+        var node = <HTMLElement>config.element;
+        var status: string;
+        if (node == null) {
+            node = document.createElement('div');
+            node.className = 'page-pulldown';
+            node.innerHTML = PullUpStateText.init;
+
+            var cn = page.nodes().content;
+            if (cn.childNodes.length == 0) {
+                cn.appendChild(node);
+            }
+            else {
+                cn.insertBefore(node, cn.childNodes[0]);
+            }
+
+            config.element = node;
+        }
+
+        var bar = new PullDownBar(config);
+        return bar;
+    }
+    //export function createMove(page: chitu.Page): Move {
+    //    var m: Move;
+    //    m = move(page.nodes().content);
+    //    return m;
+    //}
+    export class config {
+        static PULLDOWN_EXECUTE_CRITICAL_HEIGHT = 60;   //刷新临界高度值，大于这个高度则进行刷新
+        static PULLUP_EXECUTE_CRITICAL_HEIGHT = 60;
+        static PULL_DOWN_MAX_HEIGHT = 150;
+        static PULL_UP_MAX_HEIGHT = 150;
+        static MINI_MOVE_DISTANCE = 3;
+    }
+    export class RefreshState {
+        static init = 'init'
+        static ready = 'ready'
+        static doing = 'doing'
+        static done = 'done'
+    }
+    export class PullDownStateText {
+        static init = '<div style="padding-top:10px;">下拉可以刷新</div>'
+        static ready = '<div style="padding-top:10px;">松开后刷新</div>'
+        static doing = '<div style=""><i class="icon-spinner icon-spin"></i><span>&nbsp;正在更新中</span></div>'
+        static done = '<div style="padding-top:10px;">更新完毕</div>'
+    }
+    export class PullUpStateText {
+        static init = '上拉可以刷新'
+        static ready = '松开后刷新'
+        static doing = '<div><i class="icon-spinner icon-spin"></i><span>&nbsp;正在更新中</span></div>'
+        static done = '更新完毕'
+    }
+    export class PullDownBar {
+        private _status: string;
+        private _config: any;
+
+        constructor(config) {
+            this._config = config;
+            this.status(RefreshState.init);
+        }
+        status(value: string = undefined): string {
+            if (value === undefined)
+                return this._status;
+
+            this._status = value;
+            this._config.text(value);
+
+        }
+        execute(): JQueryPromise<any> {
+            //TODO:现在这里啥也没有处理，之后是要读取数据的
+            var result = $.Deferred();
+            window.setTimeout(() => result.resolve(), 2000);
+            //this.status(RefreshState.init);
+            result.done(() => this.status(RefreshState.init));
+            return result;
+        }
+
+        static createPullDownBar(page: chitu.Page, config): PullDownBar {
+            config = config || {};
+            config = $.extend({
+                text: function (status) {
+                    (<HTMLElement>this.element).innerHTML = PullDownStateText[status];
+                }
+            }, config);
+
+            var node = <HTMLElement>config.element;
+            var status: string;
+            if (node == null) {
+                node = document.createElement('div');
+                node.className = 'page-pulldown';
+                node.innerHTML = PullUpStateText.init;
+
+                var cn = page.nodes().content;
+                if (cn.childNodes.length == 0) {
+                    cn.appendChild(node);
+                }
+                else {
+                    cn.insertBefore(node, cn.childNodes[0]);
+                }
+
+                config.element = node;
+            }
+
+            var bar = new PullDownBar(config);
+            return bar;
+        }
+    }
+
+    export class PullUpBar {
+        private _status: string;
+        private _config: any;
+
+        constructor(config: any) {
+            this._config = config;
+            this.status(RefreshState.init);
+        }
+
+        status(value: string = undefined): string {
+            if (value === undefined)
+                return this._status;
+
+            this._status = value;
+            this._config.text(value);
+        }
+
+        execute() {
+            var result: JQueryPromise<any> = this._config.execute();
+            if (result != null && $.isFunction(result.done)) {
+                result.done(() => this.status(RefreshState.init));
+            }
+
+            return result;
+        }
+
+        static createPullUpBar(page: chitu.Page, config): PullUpBar {
+            config = config || {};
+            config = $.extend({
+                execute: function () { },
+                text: function (status) {
+                    (<HTMLElement>this.element).innerHTML = PullUpStateText[status];
+                }
+            }, config);
+
+            var node = <HTMLElement>page.nodes()['pullup'];
+            var status: string;
+            if (node == null) {
+                node = document.createElement('div');
+                node.className = 'page-pullup';
+                //node.style.height = PULLUP_BAR_HEIGHT + 'px';
+                node.style.textAlign = 'center';
+
+                var cn = page.nodes().content;
+                cn.appendChild(node);
+
+            }
+
+            config.element = node;
+            return new PullUpBar(config);
+        }
+    }
+
+
+
+
+} ;/// <reference path="common.ts" />
+
+namespace chitu.gesture {
+    function start(move: (selector: string | HTMLElement) => Move, page: chitu.Page, pullDownBar: PullDownBar, pullUpBar: PullUpBar) {
+        var pre_deltaY = 0;
+        var cur_scroll_args: ScrollArguments = page['cur_scroll_args'];
+        var content_move = move(page.nodes().content);//createMove(page);
+        var body_move: Move;
+        //========================================================
+        // 说明：判断页面是否已经滚动底部（可以向上拉动刷新的依据之一）。
+        var enablePullUp = false;
+        //==================================================================
+        // 说明：以下代码是实现下拉更新，但注意在 ISO 中，估计是由于使用了 IScroll，
+        // 不能使用 transform，只能设置 top 来进行位移。
+        var start_pos: number;
+        var delta_height: number;
+        var enablePullDown: boolean = false;// pullDownBar != null;
+        var hammer = new Hammer(page.nodes().content);
+        hammer.get('pan').set({ direction: Hammer.DIRECTION_UP | Hammer.DIRECTION_DOWN });
+
+        //$(page.nodes().body).mousedown(() => {
+        //    var rect = page.nodes().content.getBoundingClientRect();
+        //    if (start_pos == null)
+        //        start_pos = rect.top;
+
+        //});
+
+        hammer.on('panstart', function (e: PanEvent) {
+            var rect = page.nodes().content.getBoundingClientRect();
+            var parent_rect = page.nodes().body.getBoundingClientRect();
+
+            if (start_pos == null) {
+                start_pos = rect.top;
+            }
+
+            if (delta_height == null) {
+                delta_height = rect.height - $(page.nodes().body).height();
+            }
+
+            pre_deltaY = e['deltaY'];
+
+            //====================================================================
+            // 如果已经滚动到底部，则允许上拉
+            enablePullUp = pullUpBar != null && Math.abs(parent_rect.bottom - rect.bottom) <= 20 && e['direction'] == Hammer.DIRECTION_UP;
+            if (enablePullUp)
+                body_move = move(page.nodes().body);
+            //====================================================================
+            // 如果页面处内容处理顶部 <= 20（不应该使用 0，允许误差），并且向下拉，则开始下拉事件
+            enablePullDown = pullDownBar != null && Math.abs(rect.top - start_pos) <= 20 && e['direction'] == Hammer.DIRECTION_DOWN;
+            //====================================================================
+            if (enablePullDown === true) {
+                hammer.get('pan').set({ direction: Hammer.DIRECTION_UP | Hammer.DIRECTION_DOWN, domEvents: false });
+            }
+
+        })
+
+        hammer.on('pan', function (e: Event) {
+            var delta
+
+            var event: any = e;
+            if (event.distance > config.PULL_DOWN_MAX_HEIGHT)
+                return;
+
+            if (enablePullDown === true) {
+                content_move.set('top', event.deltaY + 'px').duration(0).end();
+                if (Math.abs(event.deltaY) > config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT) {
+                    pullDownBar.status(RefreshState.ready);
+                }
+                else {
+                    pullDownBar.status(RefreshState.init);
+                }
+
+                //pre_deltaY = event.deltaY;
+                //======================================
+                // 说明：如果已经处理该事件处理，就可以阻止了。
+                event.preventDefault();
+                //======================================
+            }
+            else if (enablePullUp) {
+                body_move.y(event.deltaY - pre_deltaY).duration(0).end();
+                if (Math.abs(event.deltaY) > config.PULLUP_EXECUTE_CRITICAL_HEIGHT) {
+                    pullUpBar.status(RefreshState.ready);
+                }
+                else {
+                    pullUpBar.status(RefreshState.init);
+                }
+            }
+
+            pre_deltaY = e['deltaY']
+        });
+
+        hammer.on('panend', function (e: Event) {
+            var scroll_deferred = $.Deferred();
+            if (enablePullDown === true) {
+                if (pullDownBar.status() == RefreshState.ready) {
+                    // 位置复原到为更新状态位置
+                    content_move
+                        .set('top', config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT + 'px')
+                        .duration(200)
+                        .end();
+                    //content_move.x()
+                    pullDownBar.status(RefreshState.doing);
+                    pullDownBar.execute().done(() => {
+                        pullDownBar.status(RefreshState.done)
+                        content_move.set('top', '0px').duration(500).end(() => {
+                            console.log('scrollTop');
+                            scroll_deferred.resolve()
+                        });
+                    });
+
+
+                }
+                else {
+                    content_move.set('top', '0px').duration(200).end(() => scroll_deferred.resolve());
+                }
+            }
+            else if (enablePullUp) {
+                if (pullUpBar.status() == RefreshState.ready) {
+                    pullUpBar.execute();
+                }
+
+                console.log('d');
+                var m = move(page.nodes().body);
+                m.y(0).duration(200).end();
+            }
+        });
+    }
+    export function enable_divfixed_gesture(page: chitu.Page, pullDownBar: PullDownBar, pullUpBar: PullUpBar) {
+        requirejs(['move', 'hammer'], (move: (selector: string | HTMLElement) => Move, hammer) => {
+            debugger;
+            window['Hammer'] = hammer;
+            start(move, page, pullDownBar, pullUpBar)
+        });
+    }
+}
+;namespace chitu.gesture {
+    function start(move: (selector: string | HTMLElement) => Move, page: chitu.Page, pullDownBar: PullDownBar, pullUpBar: PullUpBar) {
+        console.log('enable_ios_gesture');
+
+        var pre_deltaY = 0;
+        var cur_scroll_args: ScrollArguments = page['cur_scroll_args'];
+        var content_move = move(page.nodes().content);// createMove(page);
+        var body_move: Move;
+        var disable_iscroll: boolean;
+   
+        //==================================================================
+        // 允许向下刷新
+
+
+        //========================================================
+        // 说明：判断页面是否已经滚动底部（可以向上拉动刷新的依据之一）。
+        var enablePullUp = false;
+        //==================================================================
+        // 说明：以下代码是实现下拉更新，但注意在 ISO 中，估计是由于使用了 IScroll，
+        // 不能使用 transform，只能设置 top 来进行位移。
+        var enablePullDown: boolean = false;// pullDownBar != null;
+        var hammer = new Hammer(page.nodes().content);
+        hammer.get('pan').set({ direction: Hammer.DIRECTION_UP | Hammer.DIRECTION_DOWN });
+
+        hammer.on('panstart', function (e: Event) {
+            pre_deltaY = e['deltaY']
+   
+            //====================================================================
+            // 如果已经滚动到底部，则允许上拉
+            enablePullUp = pullUpBar != null && Math.abs(page['iscroller'].startY - page['iscroller'].maxScrollY) <= 20 && e['direction'] == Hammer.DIRECTION_UP;
+            if (enablePullUp)
+                body_move = move(page.nodes().body);
+
+            //====================================================================
+            // 如果页面处内容处理顶部 <= 20（不应该使用 0，允许误差），并且向下拉，则开始下拉事件
+            enablePullDown = pullDownBar != null && Math.abs(page['iscroller'].startY) <= 20 && e['direction'] == Hammer.DIRECTION_DOWN;
+            //====================================================================
+            if (enablePullDown === true || enablePullUp === true) {
+                if (page['iscroller'].enabled) {
+                    page['iscroller'].disable();
+                    console.log('iscrol disable');
+                    disable_iscroll = true;
+                }
+
+                hammer.get('pan').set({ direction: Hammer.DIRECTION_UP | Hammer.DIRECTION_DOWN, domEvents: false });
+            }
+        })
+
+        hammer.on('pan', function (e: PanEvent) {
+
+            var event: any = e;
+            if (event.distance > config.PULL_DOWN_MAX_HEIGHT)
+                return;
+
+            if (enablePullDown === true) {
+                content_move.set('top', event.deltaY + 'px').duration(0).end();
+
+                if (event.deltaY > config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT) {
+                    pullDownBar.status(RefreshState.ready);
+                }
+                else {
+                    pullDownBar.status(RefreshState.init);
+                }
+            }
+            else if (enablePullUp) {
+                body_move.y(event.deltaY - pre_deltaY).duration(0).end();
+                if (Math.abs(event.deltaY) > config.PULLUP_EXECUTE_CRITICAL_HEIGHT) {
+                    pullUpBar.status(RefreshState.ready);
+                }
+                else {
+                    pullUpBar.status(RefreshState.init);
+                }
+            }
+
+            //======================================
+            // 说明：如果已经处理该事件处理，就可以阻止了。
+            event.preventDefault();
+            //======================================
+            pre_deltaY = e['deltaY']
+        });
+
+        hammer.on('panend', function (e: Event) {
+            var scroll_deferred = $.Deferred();
+            if (enablePullDown === true) {
+                if (pullDownBar.status() == RefreshState.ready) {
+                    // 位置复原到为更新状态位置
+                    content_move
+                        .set('top', config.PULLDOWN_EXECUTE_CRITICAL_HEIGHT + 'px')
+                        .duration(200)
+                        .end();
+
+                    pullDownBar.status(RefreshState.doing);
+                    pullDownBar.execute().done(() => {
+                        pullDownBar.status(RefreshState.done)
+                        content_move.set('top', '0px').duration(500).end(() => {
+                            console.log('scrollTop');
+                            scroll_deferred.resolve()
+                        });
+                    });
+
+
+                }
+                else {
+                    content_move.set('top', '0px').duration(200).end(() => scroll_deferred.resolve());
+                }
+            }
+            else if (enablePullUp) {
+                if (pullUpBar.status() == RefreshState.ready) {
+                    pullUpBar.execute();
+                }
+
+                var m = move(page.nodes().body);
+                m.y(0).duration(200).end();
+            }
+
+            var rect = page.nodes().content.getBoundingClientRect();
+            //====================================================================
+            // 如果已经滚动到底部，则允许上拉
+            enablePullUp = pullUpBar != null && Math.abs(page['iscroller'].startY - page['iscroller'].maxScrollY) <= 20 && e['direction'] == Hammer.DIRECTION_UP;
+            console.log(pullUpBar);
+            console.log(page['iscroller']);
+            console.log('enablePullUp:' + enablePullUp);
+            //====================================================================
+            enablePullDown = pullDownBar != null && rect.top <= 0 && e['direction'] == Hammer.DIRECTION_DOWN;
+            //=============================================================
+            // 一定要延时，否则会触发 tap 事件
+            window.setTimeout(() => {
+                if (disable_iscroll)
+                    page['iscroller'].enable();
+
+            }, 100);
+            //=============================================================
+
+        });
+    }
+    export function enable_iscroll_gesture(page: chitu.Page, pullDownBar: PullDownBar, pullUpBar: PullUpBar) {
+        requirejs(['move', 'hammer'], (move: (selector: string | HTMLElement) => Move, hammer) => {
+            window['Hammer'] = hammer;
+            start(move, page, pullDownBar, pullUpBar);
+        });
+    }
+} 
