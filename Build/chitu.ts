@@ -60,10 +60,23 @@ namespace chitu {
             var txt = this.format.apply(this, arguments);
             console.log(txt);
         }
+        static loadjs(modules: string[]): JQueryPromise<any> {
+            var deferred = $.Deferred();
+            requirejs(modules, function () {
+                //deferred.resolve(arguments);
+                var args = [];
+                for (var i = 0; i < arguments.length; i++)
+                    args[i] = arguments[i];
+
+                deferred.resolve.apply(deferred, args);
+            });
+            return deferred;
+        }
     }
 
- 
+
 } 
+
 
 ;namespace chitu {
     var u = chitu.Utility;
@@ -539,7 +552,7 @@ namespace chitu {
 
         preLoad = ns.Callbacks();
         load = ns.Callbacks();
-        //loadCompleted = ns.Callbacks();
+        loadCompleted = ns.Callbacks();
         closing = ns.Callbacks();
         closed = ns.Callbacks();
         scroll = ns.Callbacks();
@@ -549,6 +562,7 @@ namespace chitu {
         hidden = ns.Callbacks();
         scrollEnd = ns.Callbacks();
         viewChanged = $.Callbacks();
+        
 
         //scrollLoadData: (sender: chitu.Page, args: PageLoadArguments) => JQueryPromise<any>;
 
@@ -803,11 +817,27 @@ namespace chitu {
                 result.done(() => this.hideScrollLoadingBar());
             }
 
-            result.done(() => {
-                window.setTimeout(() => this.refreshUI(), 100);
-            })
+            //===============================================================
+            // 必须是 view 加载完成，并且 on_load 完成后，才触发 on_loadCompleted 事件
+            if (this.viewDeferred == null) {
+                result.done(() => this.on_loadCompleted(args));
+            }
+            else {
+                if (this.viewDeferred.state() == 'resolved') {
+                    result.done(() => this.on_loadCompleted(args));
+                }
+                else {
+                    $.when(this.viewDeferred, result).done(() => this.on_loadCompleted(args));
+                }
+            }
+            //===============================================================
 
             return result;
+        }
+        on_loadCompleted(args) {
+            return this.fireEvent(this.loadCompleted, args).done(() => {
+                window.setTimeout(() => this.refreshUI(), 100);
+            });
         }
         on_closing(args) {
             return this.fireEvent(this.closing, args);

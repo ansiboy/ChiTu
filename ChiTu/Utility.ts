@@ -60,8 +60,21 @@
             var txt = this.format.apply(this, arguments);
             console.log(txt);
         }
+        static loadjs(modules: string[]): JQueryPromise<any> {
+            var deferred = $.Deferred();
+            requirejs(modules, function () {
+                //deferred.resolve(arguments);
+                var args = [];
+                for (var i = 0; i < arguments.length; i++)
+                    args[i] = arguments[i];
+
+                deferred.resolve.apply(deferred, args);
+            });
+            return deferred;
+        }
     }
 
- 
+
 } 
+
 
