@@ -30,9 +30,20 @@ namespace chitu {
         custom
     }
 
+    export enum PageLoadingType {
+        form,
+        bottomBar
+    }
+
+    interface PageLoading {
+        show()
+        hide()
+    }
+
     export interface PageLoadArguments {
         //loadCompleted: (value: boolean) => void,
         loadType: PageLoadType,
+        loading?: PageLoading,
     }
 
     enum ShowTypes {
@@ -97,7 +108,7 @@ namespace chitu {
             this.loading = document.createElement('div');
             this.loading.className = PAGE_LOADING_CLASS_NAME;
             this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
-            //$(this.loading).hide();
+            $(this.loading).hide();
             this.body.appendChild(this.loading);
 
             this.footer = document.createElement('div');
@@ -142,12 +153,11 @@ namespace chitu {
         hidden = ns.Callbacks();
         scrollEnd = ns.Callbacks();
         viewChanged = $.Callbacks();
-        
 
-        //scrollLoadData: (sender: chitu.Page, args: PageLoadArguments) => JQueryPromise<any>;
+        formLoading: PageLoading;
+        bottomLoading: PageLoading;
 
         constructor(element: HTMLElement, scrollType: ScrollType, parent?: chitu.Page) {
-            //if (!context) throw e.argumentNull('context');
             if (!element) throw e.argumentNull('element');
             if (scrollType == null) throw e.argumentNull('scrollType');
 
@@ -173,6 +183,30 @@ namespace chitu {
             this.scrollEnd.add(Page.page_scrollEnd);
             if (parent)
                 parent.closed.add(() => this.close());
+
+            this.formLoading = {
+                show: () => {
+                    if ($(this.nodes().loading).is(':visible'))
+                        return;
+
+                    $(this.nodes().loading).show();
+                    $(this.nodes().content).hide();
+                },
+                hide: () => {
+                    $(this.nodes().loading).hide();
+                    $(this.nodes().content).show();
+                    //this.nodes().loading.style.display = 'none';
+                    //this.nodes().content.style.display = 'block';
+                }
+            }
+            this.bottomLoading = {
+                show: () => {
+                    this.showScrollLoadingBar();
+                },
+                hide: () => {
+                    this.hideScrollLoadingBar();
+                }
+            }
         }
 
         get viewDeferred(): JQueryPromise<string> {
@@ -346,9 +380,9 @@ namespace chitu {
             }
 
             result.done(() => {
-                if (this._prevous != null)
-                    this._prevous.hide();
-
+                //if (this._prevous != null)
+                //    this._prevous.hide();
+                
                 this.on_shown({});
             });
 
@@ -385,17 +419,24 @@ namespace chitu {
             return this.actionExecuted.pipe(() => eventDeferred(callback, this, args));
         }
         on_load(args: PageLoadArguments) {
+
+            if (args.loading == null) {
+                args.loading = args.loadType == chitu.PageLoadType.scroll ? this.bottomLoading : this.formLoading;
+            }
+
+            args.loading.show();
             var result = this.fireEvent(this.load, args);
-            if (args.loadType == PageLoadType.open) {
-                result.done(() => {
-                    $(this.nodes().loading).hide();
-                    $(this.nodes().content).show();
-                })
-            }
-            else if (args.loadType == PageLoadType.scroll) {
-                this.showScrollLoadingBar();
-                result.done(() => this.hideScrollLoadingBar());
-            }
+            //if (args.loadType == PageLoadType.open) {
+            //    result.done(() => {
+            //        $(this.nodes().loading).hide();
+            //        $(this.nodes().content).show();
+            //    })
+            //}
+            //else if (args.loadType == PageLoadType.scroll) {
+            //    this.showScrollLoadingBar();
+            //    result.done(() => this.hideScrollLoadingBar());
+            //}
+            result.done(() => args.loading.hide());
 
             //===============================================================
             // 必须是 view 加载完成，并且 on_load 完成后，才触发 on_loadCompleted 事件
@@ -443,7 +484,7 @@ namespace chitu {
         on_scrollEnd(args) {
             return this.fireEvent(this.scrollEnd, args);
         }
-        open(args?: Object, swipe?: SwipeDirection): JQueryDeferred<any> {
+        open(args?: Object, swipe?: SwipeDirection): JQueryPromise<any> {
             /// <summary>
             /// Show the page.
             /// </summary>
@@ -457,12 +498,14 @@ namespace chitu {
             //不能多次打开？？？
 
             swipe = swipe || SwipeDirection.None;
-            this.showPageNode(swipe);
+            var result = this.showPageNode(swipe);
 
-            args = $.extend(args || {}, <PageLoadArguments>{
+            var load_args = <PageLoadArguments>$.extend(args || {}, {
                 loadType: chitu.PageLoadType.open,
-                //loadCompleted: Page.createLoadCompletedFunc(this)
+                loading: this.formLoading,
             });
+
+            load_args.loading.show();
 
             if (this.viewDeferred == null && this.view == null) {
                 throw chitu.Errors.viewCanntNull();
@@ -476,11 +519,12 @@ namespace chitu {
                     if (this.viewDeferred) {
                         this.viewDeferred.done((html) => this.view = html);
                     }
-                    var load_args = <PageLoadArguments>args;
-                    load_args.loadType = chitu.PageLoadType.open;
+
                     this.on_load(load_args);
                 });
             }
+
+            return result;
         }
         close(args?: Object, swipe?: SwipeDirection) {
             /// <summary>
@@ -526,8 +570,9 @@ namespace chitu {
             if (!sender.enableScrollLoad)
                 return;
 
-            var scroll_arg = $.extend(sender.routeData.values(), {
+            var scroll_arg = $.extend(sender.routeData.values(), <PageLoadArguments>{
                 loadType: PageLoadType.scroll,
+                loading: sender.bottomLoading,
             });
             var result = sender.on_load(scroll_arg);
         }

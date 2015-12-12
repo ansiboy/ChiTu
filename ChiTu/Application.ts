@@ -25,9 +25,6 @@
         private _runned: boolean = false;
         private zindex: number;
 
-        controllerFactory: chitu.ControllerFactory = new chitu.ControllerFactory();
-        viewFactory: chitu.ViewFactory = new chitu.ViewFactory();
-
         constructor(config: ApplicationConfig) {
             if (config == null)
                 throw e.argumentNull('container');
@@ -56,17 +53,6 @@
         public routes(): RouteCollection {
             return this._routes;
         }
-        public controller(routeData: RouteData): chitu.Controller {
-            /// <param name="routeData" type="Object"/>
-            /// <returns type="chitu.Controller"/>
-            if (typeof routeData !== 'object')
-                throw chitu.Errors.paramTypeError('routeData', 'object');
-
-            if (!routeData)
-                throw chitu.Errors.argumentNull('routeData');
-
-            return this.controllerFactory.getController(routeData);
-        }
         public currentPage(): chitu.Page {
             if (this.page_stack.length > 0)
                 return this.page_stack[this.page_stack.length - 1];
@@ -79,26 +65,6 @@
 
             return null;
         }
-        public action(routeData) {
-            /// <param name="routeData" type="Object"/>
-            if (typeof routeData !== 'object')
-                throw chitu.Errors.paramTypeError('routeData', 'object');
-
-            if (!routeData)
-                throw chitu.Errors.argumentNull('routeData');
-
-            var controllerName = routeData.controller;
-            if (!controllerName) throw e.argumentNull('name');
-            if (typeof controllerName != 'string') throw e.routeDataRequireController();
-
-            var actionName = routeData.action;
-            if (!actionName) throw e.argumentNull('name');
-            if (typeof actionName != 'string') throw e.routeDataRequireAction();
-
-            var controller = this.controller(routeData);
-            return controller.getAction(actionName);
-        }
-
         hashchange(): any {
 
             if (window.location['skip'] == true) {
@@ -169,6 +135,8 @@
                 container = <any>this.config.container;
             }
 
+            var previous = this.currentPage();
+
             var page_node = document.createElement('div');
             container.appendChild(page_node);
             var page = this.createPage(url, page_node);
@@ -181,7 +149,12 @@
 
             var swipe = this.config.openSwipe(routeData);
             $.extend(args, routeData.values());
-            page.open(args, swipe);
+
+
+            page.open(args, swipe).done(() => {
+                if (previous)
+                    previous.hide();
+            });
 
             return page;
         }
@@ -218,10 +191,10 @@
 
             var controllerName = routeData.values().controller;
             var actionName = routeData.values().action;
-            var controller = this.controller(routeData);
-            var view_deferred = this.viewFactory.getView(routeData);
-            var action_deferred = controller.getAction(routeData);
-            var context = new ns.ControllerContext(controller, view_deferred, routeData);
+            //var controller = this.controller(routeData);
+            var view_deferred = createViewDeferred(routeData); //this.viewFactory.getView(routeData);
+            var action_deferred = createActionDeferred(routeData); //chitu.createActionDeferred(routeData); //controller.getActionDeferred(routeData);
+            var context = new ns.ControllerContext(view_deferred, routeData);
 
             this.on_pageCreating(context);
             var scrollType = this.config.scrollType(routeData);

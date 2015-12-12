@@ -18,75 +18,115 @@
         return route.interpolate(data);
     }
 
-    export class ViewFactory {
-        _views: JQueryPromise<string>[];
+    export class Action {
+        private _name: any
+        private _handle: any
 
-        constructor() {
-            this._views = [];
+        constructor(controller, name, handle) {
+            /// <param name="controller" type="chitu.Controller"/>
+            /// <param name="name" type="String">Name of the action.</param>
+            /// <param name="handle" type="Function"/>
+
+            if (!controller) throw chitu.Errors.argumentNull('controller');
+            if (!name) throw chitu.Errors.argumentNull('name');
+            if (!handle) throw chitu.Errors.argumentNull('handle');
+            if (!$.isFunction(handle)) throw chitu.Errors.paramTypeError('handle', 'Function');
+
+            this._name = name;
+            this._handle = handle;
         }
 
-        getView(routeData: RouteData): JQueryPromise<string> {
-            /// <param name="routeData" type="Object"/>
+        name() {
+            return this._name;
+        }
+
+        execute(page: chitu.Page) {
+            /// <param name="page" type="chitu.Page"/>
             /// <returns type="jQuery.Deferred"/>
+            if (!page) throw e.argumentNull('page');
+            //if (page._type != 'Page') throw e.paramTypeError('page', 'Page');
 
-            //if (typeof routeData !== 'object')
-            //    throw e.paramTypeError('routeData', 'object');
-
-            if (!routeData.values().controller)
-                throw e.routeDataRequireController();
-
-            if (!routeData.values().action)
-                throw e.routeDataRequireAction();
-
-            //var viewLocationFormater = routeData.viewPath;
-            //if (!viewLocationFormater)
-            //    return $.Deferred().resolve('');
-
-            var url = interpolate(routeData.viewPath(), routeData.values());
-            var self = this;
-            var viewName = routeData.values().controller + '_' + routeData.values().action;
-            if (!this._views[viewName]) {
-
-                this._views[viewName] = $.Deferred();
-
-                var http = 'http://';
-                if (url.substr(0, http.length).toLowerCase() == http) {
-                    //=======================================================
-                    // 说明：不使用 require text 是因为加载远的 html 文件，会作
-                    // 为 script 去解释而导致错误 
-                    $.ajax({ url: url })
-                        .done($.proxy(function (html) {
-                            if (html != null)
-                                this.deferred.resolve(html);
-                            else
-                                this.deferred.reject();
-                        }, { deferred: this._views[viewName] }))
-
-                        .fail($.proxy(function (err) {
-                            this.deferred.reject(err);
-                        }, { deferred: this._views[viewName] }));
-                    //=======================================================
-                }
-                else {
-                    requirejs(['text!' + url],
-                        $.proxy(function (html) {
-                            if (html != null)
-                                this.deferred.resolve(html);
-                            else
-                                this.deferred.reject();
-                        },
-                            { deferred: this._views[viewName] }),
-
-                        $.proxy(function (err) {
-                            this.deferred.reject(err);
-                        },
-                            { deferred: this._views[viewName] })
-                    );
-                }
-            }
-
-            return this._views[viewName];
-
+            var result = this._handle.apply({}, [page]);
+            return chitu.Utility.isDeferred(result) ? result : $.Deferred().resolve();
         }
     }
-} 
+
+    export function createActionDeferred(routeData: chitu.RouteData): JQueryPromise<Action> {
+        /// <param name="actionName" type="String"/>
+        /// <returns type="jQuery.Deferred"/>
+
+        var actionName = routeData.values().action;
+        if (!actionName)
+            throw e.routeDataRequireAction();
+
+        var url = interpolate(routeData.actionPath(), routeData.values()); //this.getLocation(actionName);
+        var result = $.Deferred();
+        requirejs([url],
+            (obj) => {
+                //加载脚本失败
+                if (!obj) {
+                    console.warn(chitu.Utility.format('加载活动“{1}.{0}”失败。', actionName, routeData.values().controller));
+                    result.reject();
+                }
+
+                var func = obj.func || obj;
+
+                if (!$.isFunction(func))
+                    throw chitu.Errors.modelFileExpecteFunction(actionName);
+
+                var action = new Action(self, actionName, func);
+
+                result.resolve(action);
+            },
+
+            (err) => result.reject(err)
+        );
+
+        return result;
+    }
+
+    export function createViewDeferred(routeData: RouteData): JQueryPromise<string> {
+        /// <param name="routeData" type="Object"/>
+        /// <returns type="jQuery.Deferred"/>
+
+        //if (typeof routeData !== 'object')
+        //    throw e.paramTypeError('routeData', 'object');
+
+        if (!routeData.values().controller)
+            throw e.routeDataRequireController();
+
+        if (!routeData.values().action)
+            throw e.routeDataRequireAction();
+
+        var url = interpolate(routeData.viewPath(), routeData.values());
+        var self = this;
+        var result = $.Deferred();
+        var http = 'http://';
+        if (url.substr(0, http.length).toLowerCase() == http) {
+            //=======================================================
+            // 说明：不使用 require text 是因为加载远的 html 文件，会作
+            // 为 script 去解释而导致错误 
+            $.ajax({ url: url })
+                .done((html) => {
+                    if (html != null)
+                        result.resolve(html);
+                    else
+                        result.reject();
+                })
+                .fail((err) => result.reject(err));
+            //=======================================================
+        }
+        else {
+            requirejs(['text!' + url],
+                (html) => {
+                    if (html != null)
+                        result.resolve(html);
+                    else
+                        result.reject();
+                },
+                (err) => result.reject(err));
+        }
+
+        return result;
+    }
+}

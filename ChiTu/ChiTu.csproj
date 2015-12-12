@@ -31,9 +31,9 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Application.ts" />
+    <TypeScriptCompile Include="Controller.ts" />
     <TypeScriptCompile Include="ControllerContext.ts" />
     <TypeScriptCompile Include="ControllerFactory.ts" />
-    <TypeScriptCompile Include="Controller.ts" />
     <TypeScriptCompile Include="Gesture\Common.ts" />
     <TypeScriptCompile Include="Gesture\DIVGesture.ts" />
     <TypeScriptCompile Include="Gesture\IOSGesture.ts" />
