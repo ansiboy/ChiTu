@@ -31,9 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Application.ts" />
-    <TypeScriptCompile Include="Controller.ts" />
     <TypeScriptCompile Include="ControllerContext.ts" />
-    <TypeScriptCompile Include="ControllerFactory.ts" />
     <TypeScriptCompile Include="Gesture\Common.ts" />
     <TypeScriptCompile Include="Gesture\DIVGesture.ts" />
     <TypeScriptCompile Include="Gesture\IOSGesture.ts" />
@@ -51,7 +49,7 @@
     <TypeScriptCompile Include="Scripts\typings\requirejs\require.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\visionmedia\move.d.ts" />
     <TypeScriptCompile Include="Utility.ts" />
-    <TypeScriptCompile Include="ViewFactory.ts" />
+    <TypeScriptCompile Include="Action.ts" />
   </ItemGroup>
   <ItemGroup>
     <None Include="web.Debug.config">

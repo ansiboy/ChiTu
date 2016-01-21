@@ -12,8 +12,9 @@
             },
             chitu: {
                 src: ['ChiTu/Utility.ts', 'ChiTu/Errors.ts', 'ChiTu/Extends.ts',
-                      'ChiTu/Page.ts', 'ChiTu/Controller.ts', 'ChiTu/ControllerContext.ts', 'ChiTu/ControllerFactory.ts',
-                      'ChiTu/Route.ts', 'ChiTu/RouteCollection.ts', 'ChiTu/RouteData.ts', 'ChiTu/ViewFactory.ts', 'ChiTu/Application.ts',
+                      'ChiTu/Action.ts',
+                      'ChiTu/Page.ts', 'ChiTu/ControllerContext.ts', 'ChiTu/ControllerFactory.ts',
+                      'ChiTu/Route.ts', 'ChiTu/RouteCollection.ts', 'ChiTu/RouteData.ts', 'ChiTu/Application.ts',
                       'ChiTu/Scroll/DivScroll.ts', 'ChiTu/Scroll/DocumentScroll.ts', 'ChiTu/Scroll/IOSScroll.ts',
                       'ChiTu/Gesture/Common.ts', 'ChiTu/Gesture/DIVGesture.ts', 'ChiTu/Gesture/IOSGesture.ts',
                    ],

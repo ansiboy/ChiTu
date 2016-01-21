@@ -118,8 +118,6 @@ namespace chitu.gesture {
                 if (pullUpBar.status() == RefreshState.ready) {
                     pullUpBar.execute();
                 }
-
-                console.log('d');
                 var m = move(page.nodes().body);
                 m.y(0).duration(200).end();
             }
@@ -127,7 +125,6 @@ namespace chitu.gesture {
     }
     export function enable_divfixed_gesture(page: chitu.Page, pullDownBar: PullDownBar, pullUpBar: PullUpBar) {
         requirejs(['move', 'hammer'], (move: (selector: string | HTMLElement) => Move, hammer) => {
-            debugger;
             window['Hammer'] = hammer;
             start(move, page, pullDownBar, pullUpBar)
         });

@@ -94,24 +94,24 @@ class IOSScroll {
     var wrapperNode = page['_wrapperNode'] = page.nodes().body;
     page['_scrollerNode'] = page.nodes().content;
 
-    $.extend(page, {
-        scrollEnd: chitu.Callbacks(),
-        on_scrollEnd: function (args) {
-            return chitu.fireCallback(this.scrollEnd, [this, args]);
-        },
-        scrollTop: $.proxy((value: number | string) => {
-            if (value === undefined)
-                return (0 - page['iscroller'].y) + 'px';
+    //$.extend(page, {
+    //    scrollEnd: chitu.Callbacks(),
+    //    on_scrollEnd: function (args) {
+    //        return chitu.fireCallback(this.scrollEnd, [this, args]);
+    //    },
+    //    scrollTop: $.proxy((value: number | string) => {
+    //        if (value === undefined)
+    //            return (0 - page['iscroller'].y) + 'px';
 
-            if (typeof value === 'string')
-                value = new Number((<string>value).substr(0, (<string>value).length - 2)).valueOf();
+    //        if (typeof value === 'string')
+    //            value = new Number((<string>value).substr(0, (<string>value).length - 2)).valueOf();
 
-            var scroller = this['iscroller'];
-            if (scroller) {
-                scroller.scrollTo(0, value);
-            }
-        }, page)
-    })
+    //        var scroller = this['iscroller'];
+    //        if (scroller) {
+    //            scroller.scrollTo(0, value);
+    //        }
+    //    }, page)
+    //})
 
     //var page_shown = (sender: chitu.Page) => {
     //    window.setTimeout(() => {

@@ -8,7 +8,7 @@
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
-    interface ApplicationConfig {
+    export interface ApplicationConfig {
         container: () => HTMLElement | HTMLElement,
         openSwipe?: (page: chitu.RouteData) => SwipeDirection,
         scrollType?: (page: chitu.RouteData) => ScrollType,
@@ -24,6 +24,9 @@
         private _routes: chitu.RouteCollection = new RouteCollection();
         private _runned: boolean = false;
         private zindex: number;
+        private back_deferred: JQueryDeferred<any>;
+        private start_flag_hash: string;
+        private start_hash: string;
 
         constructor(config: ApplicationConfig) {
             if (config == null)
@@ -43,10 +46,10 @@
             this.config = config;
         }
 
-        on_pageCreating(context) {
+        on_pageCreating(context: chitu.PageContext) {
             return chitu.fireCallback(this.pageCreating, [this, context]);
         }
-        on_pageCreated(page) {
+        on_pageCreated(page: chitu.Page, context: chitu.PageContext) {
             //this.pageCreated.fire(this, page);
             return chitu.fireCallback(this.pageCreated, [this, page]);
         }
@@ -65,17 +68,40 @@
 
             return null;
         }
-        hashchange(): any {
-
+        protected hashchange() {
             if (window.location['skip'] == true) {
                 window.location['skip'] = false;
                 return;
             }
 
+            var back_deferred: JQueryDeferred<any>
+            if (this.back_deferred && this.back_deferred['processed'] == null) {
+                back_deferred = this.back_deferred;
+                back_deferred['processed'] = true;
+            }
+
             var hash = window.location.hash;
-            if (!hash) {
-                chitu.Utility.log('The url is not contains hash.');
+            if (!hash || hash == this.start_flag_hash) {
+                if (!hash)
+                    console.log('The url is not contains hash.url is ' + window.location.href);
+
+                if (hash == this.start_flag_hash) {
+                    window.history.pushState({}, '', this.start_hash);
+                    console.log('The hash is start url, the hash is ' + hash);
+                }
+
+                if (back_deferred)
+                    back_deferred.reject();
+
                 return;
+            }
+
+            if (!this.start_flag_hash) {
+                //TODO:生成随机字符串
+                this.start_flag_hash = '#AABBCCDDEEFF';
+                this.start_hash = hash;
+                window.history.replaceState({}, '', this.start_flag_hash);
+                window.history.pushState({}, '', hash);
             }
 
             var current_page_url: string = '';
@@ -91,6 +117,8 @@
                 this.showPage(hash.substr(1), args);
             }
 
+            if (back_deferred)
+                back_deferred.resolve();
         }
 
         public run() {
@@ -111,10 +139,6 @@
             return null;
         }
         public showPage(url: string, args): chitu.Page {
-            /// <param name="container" type="HTMLElement" canBeNull="false"/>
-            /// <param name="url" type="String" canBeNull="false"/>
-            /// <param name="args" type="object" canBeNull="true"/>
-            /// <returns type="jQuery.Deferred"/>
 
             args = args || {};
 
@@ -139,7 +163,7 @@
 
             var page_node = document.createElement('div');
             container.appendChild(page_node);
-            var page = this.createPage(url, page_node);
+            var page = this.createPage(url, page_node, previous);
             this.page_stack.push(page);
             console.log('page_stack lenght:' + this.page_stack.length);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -149,7 +173,6 @@
 
             var swipe = this.config.openSwipe(routeData);
             $.extend(args, routeData.values());
-
 
             page.open(args, swipe).done(() => {
                 if (previous)
@@ -177,7 +200,7 @@
                 console.log('page_stack lenght:' + this.page_stack.length);
             }
         }
-        private createPage(url: string, container: HTMLElement, parent?: chitu.Page) {
+        private createPage(url: string, container: HTMLElement, previousPage?: chitu.Page) {
             if (!url)
                 throw e.argumentNull('url');
 
@@ -191,43 +214,35 @@
 
             var controllerName = routeData.values().controller;
             var actionName = routeData.values().action;
-            //var controller = this.controller(routeData);
-            var view_deferred = createViewDeferred(routeData); //this.viewFactory.getView(routeData);
-            var action_deferred = createActionDeferred(routeData); //chitu.createActionDeferred(routeData); //controller.getActionDeferred(routeData);
-            var context = new ns.ControllerContext(view_deferred, routeData);
+            var view_deferred = createViewDeferred(routeData);
+            var action_deferred = createActionDeferred(routeData);
+            var context = new ns.PageContext(view_deferred, routeData);
 
             this.on_pageCreating(context);
             var scrollType = this.config.scrollType(routeData);
-            var page = new ns.Page(container, scrollType, parent);
+            var page = new ns.Page(container, scrollType, previousPage);
             page.routeData = routeData;
-            page.viewDeferred = view_deferred;
-            page.actionDeferred = action_deferred;
+            page.view = view_deferred;
+            page.action = action_deferred;
 
-            this.on_pageCreated(page);
-
-            //$.when<string | chitu.Action>(view_deferred, action_deferred).done(function (html: string, action: chitu.Action) {
-            //    //page.nodes().content.innerHTML = html
-            //    page.view = html;
-            //    action.execute(page);
-            //})
-            //action_deferred.done((action) => action.execute(page));
-            //view_deferred.done((html) => page.view = html);
+            this.on_pageCreated(page, context);
 
             return page;
         }
         public redirect(url: string, args = {}): chitu.Page {
-            //window.location['arguments'] = args;
             window.location['skip'] = true;
             window.location.hash = url;
             return this.showPage(url, args);
         }
-        public back(args = undefined) {
-            /// <returns type="jQuery.Deferred"/>
-            if (window.history.length == 0)
-                return $.Deferred().reject();
+        public back(args = undefined): JQueryPromise<any> {
+            this.back_deferred = $.Deferred();
+            if (window.history.length == 0) {
+                this.back_deferred.reject();
+                return this.back_deferred;
+            }
 
             window.history.back();
-            return $.Deferred().resolve();
+            return this.back_deferred;
         }
     }
 } 

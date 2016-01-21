@@ -828,7 +828,7 @@ window['crossroads'] = factory(window['jQuery']);
         Application.prototype.on_pageCreating = function (context) {
             return chitu.fireCallback(this.pageCreating, [this, context]);
         };
-        Application.prototype.on_pageCreated = function (page) {
+        Application.prototype.on_pageCreated = function (page, context) {
             return chitu.fireCallback(this.pageCreated, [this, page]);
         };
         Application.prototype.routes = function () {
@@ -849,10 +849,28 @@ window['crossroads'] = factory(window['jQuery']);
                 window.location['skip'] = false;
                 return;
             }
+            var back_deferred;
+            if (this.back_deferred && this.back_deferred['processed'] == null) {
+                back_deferred = this.back_deferred;
+                back_deferred['processed'] = true;
+            }
             var hash = window.location.hash;
-            if (!hash) {
-                chitu.Utility.log('The url is not contains hash.');
+            if (!hash || hash == this.start_flag_hash) {
+                if (!hash)
+                    console.log('The url is not contains hash.url is ' + window.location.href);
+                if (hash == this.start_flag_hash) {
+                    window.history.pushState({}, '', this.start_hash);
+                    console.log('The hash is start url, the hash is ' + hash);
+                }
+                if (back_deferred)
+                    back_deferred.reject();
                 return;
+            }
+            if (!this.start_flag_hash) {
+                this.start_flag_hash = '#AABBCCDDEEFF';
+                this.start_hash = hash;
+                window.history.replaceState({}, '', this.start_flag_hash);
+                window.history.pushState({}, '', hash);
             }
             var current_page_url = '';
             if (this.previousPage() != null)
@@ -865,6 +883,8 @@ window['crossroads'] = factory(window['jQuery']);
                 window.location['arguments'] = null;
                 this.showPage(hash.substr(1), args);
             }
+            if (back_deferred)
+                back_deferred.resolve();
         };
         Application.prototype.run = function () {
             if (this._runned)
@@ -882,10 +902,6 @@ window['crossroads'] = factory(window['jQuery']);
             return null;
         };
         Application.prototype.showPage = function (url, args) {
-            /// <param name="container" type="HTMLElement" canBeNull="false"/>
-            /// <param name="url" type="String" canBeNull="false"/>
-            /// <param name="args" type="object" canBeNull="true"/>
-            /// <returns type="jQuery.Deferred"/>
             args = args || {};
             if (!url)
                 throw e.argumentNull('url');
@@ -905,7 +921,7 @@ window['crossroads'] = factory(window['jQuery']);
             var previous = this.currentPage();
             var page_node = document.createElement('div');
             container.appendChild(page_node);
-            var page = this.createPage(url, page_node);
+            var page = this.createPage(url, page_node, previous);
             this.page_stack.push(page);
             console.log('page_stack lenght:' + this.page_stack.length);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -936,7 +952,7 @@ window['crossroads'] = factory(window['jQuery']);
                 console.log('page_stack lenght:' + this.page_stack.length);
             }
         };
-        Application.prototype.createPage = function (url, container, parent) {
+        Application.prototype.createPage = function (url, container, previousPage) {
             if (!url)
                 throw e.argumentNull('url');
             if (!container)
@@ -949,14 +965,14 @@ window['crossroads'] = factory(window['jQuery']);
             var actionName = routeData.values().action;
             var view_deferred = chitu.createViewDeferred(routeData);
             var action_deferred = chitu.createActionDeferred(routeData);
-            var context = new ns.ControllerContext(view_deferred, routeData);
+            var context = new ns.PageContext(view_deferred, routeData);
             this.on_pageCreating(context);
             var scrollType = this.config.scrollType(routeData);
-            var page = new ns.Page(container, scrollType, parent);
+            var page = new ns.Page(container, scrollType, previousPage);
             page.routeData = routeData;
-            page.viewDeferred = view_deferred;
-            page.actionDeferred = action_deferred;
-            this.on_pageCreated(page);
+            page.view = view_deferred;
+            page.action = action_deferred;
+            this.on_pageCreated(page, context);
             return page;
         };
         Application.prototype.redirect = function (url, args) {
@@ -967,10 +983,13 @@ window['crossroads'] = factory(window['jQuery']);
         };
         Application.prototype.back = function (args) {
             if (args === void 0) { args = undefined; }
-            if (window.history.length == 0)
-                return $.Deferred().reject();
+            this.back_deferred = $.Deferred();
+            if (window.history.length == 0) {
+                this.back_deferred.reject();
+                return this.back_deferred;
+            }
             window.history.back();
-            return $.Deferred().resolve();
+            return this.back_deferred;
         };
         return Application;
     })();
@@ -978,42 +997,20 @@ window['crossroads'] = factory(window['jQuery']);
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
-    var ControllerContext = (function () {
-        function ControllerContext(view, routeData) {
-            this._routeData = routeData;
+    var PageContext = (function () {
+        function PageContext(view, routeData) {
             this._view = view;
             this._routeData = routeData;
         }
-        ControllerContext.prototype.view = function () {
+        PageContext.prototype.view = function () {
             return this._view;
         };
-        ControllerContext.prototype.routeData = function () {
+        PageContext.prototype.routeData = function () {
             return this._routeData;
         };
-        return ControllerContext;
+        return PageContext;
     })();
-    chitu.ControllerContext = ControllerContext;
-})(chitu || (chitu = {}));
-var chitu;
-(function (chitu) {
-    var e = chitu.Errors;
-    var ns = chitu;
-    var ControllerFactory = (function () {
-        function ControllerFactory() {
-            //if (!actionLocationFormater)
-            //    throw e.argumentNull('actionLocationFormater');
-            this._controllers = {};
-            this._controllers = {};
-        }
-        ControllerFactory.prototype.controllers = function () {
-            return this._controllers;
-        };
-        ControllerFactory.prototype.actionLocationFormater = function () {
-            return this._actionLocationFormater;
-        };
-        return ControllerFactory;
-    })();
-    chitu.ControllerFactory = ControllerFactory;
+    chitu.PageContext = PageContext;
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
@@ -1263,7 +1260,6 @@ var chitu;
                     if (pullUpBar.status() == gesture.RefreshState.ready) {
                         pullUpBar.execute();
                     }
-                    console.log('d');
                     var m = move(page.nodes().body);
                     m.y(0).duration(200).end();
                 }
@@ -1271,7 +1267,6 @@ var chitu;
         }
         function enable_divfixed_gesture(page, pullDownBar, pullUpBar) {
             requirejs(['move', 'hammer'], function (move, hammer) {
-                debugger;
                 window['Hammer'] = hammer;
                 start(move, page, pullDownBar, pullUpBar);
             });
@@ -1753,7 +1748,6 @@ var DocumentScroll = (function () {
     }
     return DocumentScroll;
 })();
-var _this = this;
 var IOSScroll = (function () {
     function IOSScroll(page) {
         var _this = this;
@@ -1825,22 +1819,6 @@ chitu.scroll = function (page, config) {
     $(page.nodes().content).addClass('scroller');
     var wrapperNode = page['_wrapperNode'] = page.nodes().body;
     page['_scrollerNode'] = page.nodes().content;
-    $.extend(page, {
-        scrollEnd: chitu.Callbacks(),
-        on_scrollEnd: function (args) {
-            return chitu.fireCallback(this.scrollEnd, [this, args]);
-        },
-        scrollTop: $.proxy(function (value) {
-            if (value === undefined)
-                return (0 - page['iscroller'].y) + 'px';
-            if (typeof value === 'string')
-                value = new Number(value.substr(0, value.length - 2)).valueOf();
-            var scroller = _this['iscroller'];
-            if (scroller) {
-                scroller.scrollTo(0, value);
-            }
-        }, page)
-    });
 };
 var chitu;
 (function (chitu) {
@@ -1858,9 +1836,8 @@ var chitu;
     var PAGE_FOOTER_CLASS_NAME = 'page-footer';
     var PAGE_LOADING_CLASS_NAME = 'page-loading';
     var PAGE_CONTENT_CLASS_NAME = 'page-content';
-    var LOAD_MORE_HTML = '<span>上拉加载更多数据</span>';
     var LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
-    var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;"></span>';
+    var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
     (function (PageLoadType) {
         PageLoadType[PageLoadType["open"] = 0] = "open";
         PageLoadType[PageLoadType["scroll"] = 1] = "scroll";
@@ -1869,11 +1846,24 @@ var chitu;
         PageLoadType[PageLoadType["custom"] = 4] = "custom";
     })(chitu.PageLoadType || (chitu.PageLoadType = {}));
     var PageLoadType = chitu.PageLoadType;
-    (function (PageLoadingType) {
-        PageLoadingType[PageLoadingType["form"] = 0] = "form";
-        PageLoadingType[PageLoadingType["bottomBar"] = 1] = "bottomBar";
-    })(chitu.PageLoadingType || (chitu.PageLoadingType = {}));
-    var PageLoadingType = chitu.PageLoadingType;
+    var PageLoadArguments = (function () {
+        function PageLoadArguments(page, loadType, loading) {
+            if (page == null)
+                throw chitu.Errors.argumentNull('page');
+            this._page = page;
+            this.loadType = loadType;
+            this.loading = loading;
+        }
+        Object.defineProperty(PageLoadArguments.prototype, "enableScrollLoad", {
+            set: function (value) {
+                this._page.enableScrollLoad = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        return PageLoadArguments;
+    })();
+    chitu.PageLoadArguments = PageLoadArguments;
     var ShowTypes;
     (function (ShowTypes) {
         ShowTypes[ShowTypes["swipeLeft"] = 0] = "swipeLeft";
@@ -1931,8 +1921,28 @@ var chitu;
         }
         return PageNodes;
     })();
+    var PageBottomLoading = (function () {
+        function PageBottomLoading(page) {
+            if (!page)
+                throw chitu.Errors.argumentNull('page');
+            this._page = page;
+            this._scrollLoad_loading_bar = document.createElement('div');
+            this._scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
+            this._scrollLoad_loading_bar.style.visibility = 'hidden';
+            $(this._scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
+            page.nodes().content.appendChild(this._scrollLoad_loading_bar);
+            page.refreshUI();
+        }
+        PageBottomLoading.prototype.show = function () {
+            this._scrollLoad_loading_bar.style.visibility = 'visible';
+        };
+        PageBottomLoading.prototype.hide = function () {
+            this._scrollLoad_loading_bar.style.visibility = 'hidden';
+        };
+        return PageBottomLoading;
+    })();
     var Page = (function () {
-        function Page(element, scrollType, parent) {
+        function Page(element, scrollType, previous) {
             var _this = this;
             this._loadViewModelResult = null;
             this._openResult = null;
@@ -1959,8 +1969,10 @@ var chitu;
                 throw e.argumentNull('element');
             if (scrollType == null)
                 throw e.argumentNull('scrollType');
-            this._prevous = parent;
+            this._prevous = previous;
             this._pageNode = new PageNodes(element);
+            this.disableHeaderFooterTouchMove();
+            this._scrollType = scrollType;
             if (scrollType == ScrollType.IScroll) {
                 $(this.nodes().container).addClass('ios');
                 this.ios_scroller = new IOSScroll(this);
@@ -1976,30 +1988,46 @@ var chitu;
                 new DocumentScroll(this);
             }
             this.scrollEnd.add(Page.page_scrollEnd);
-            if (parent)
-                parent.closed.add(function () { return _this.close(); });
-            this.formLoading = {
-                show: function () {
-                    if ($(_this.nodes().loading).is(':visible'))
-                        return;
-                    $(_this.nodes().loading).show();
-                    $(_this.nodes().content).hide();
-                },
-                hide: function () {
-                    $(_this.nodes().loading).hide();
-                    $(_this.nodes().content).show();
-                }
-            };
-            this.bottomLoading = {
-                show: function () {
-                    _this.showScrollLoadingBar();
-                },
-                hide: function () {
-                    _this.hideScrollLoadingBar();
-                }
-            };
+            if (previous)
+                previous.closed.add(function () { return _this.close(); });
         }
-        Object.defineProperty(Page.prototype, "viewDeferred", {
+        Page.prototype.createPageLoadArguments = function (args, loadType, loading) {
+            var result = new PageLoadArguments(this, loadType, loading);
+            result = $.extend(result, args || {});
+            return result;
+        };
+        Object.defineProperty(Page.prototype, "formLoading", {
+            get: function () {
+                var _this = this;
+                if (this._formLoading == null) {
+                    this._formLoading = {
+                        show: function () {
+                            if ($(_this.nodes().loading).is(':visible'))
+                                return;
+                            $(_this.nodes().loading).show();
+                            $(_this.nodes().content).hide();
+                        },
+                        hide: function () {
+                            $(_this.nodes().loading).hide();
+                            $(_this.nodes().content).show();
+                        }
+                    };
+                }
+                return this._formLoading;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Page.prototype, "bottomLoading", {
+            get: function () {
+                if (this._bottomLoading == null)
+                    this._bottomLoading = new PageBottomLoading(this);
+                return this._bottomLoading;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Page.prototype, "view", {
             get: function () {
                 return this._viewDeferred;
             },
@@ -2009,7 +2037,7 @@ var chitu;
             enumerable: true,
             configurable: true
         });
-        Object.defineProperty(Page.prototype, "actionDeferred", {
+        Object.defineProperty(Page.prototype, "action", {
             get: function () {
                 return this._actionDeferred;
             },
@@ -2024,12 +2052,13 @@ var chitu;
                 return this._enableScrollLoad;
             },
             set: function (value) {
+                var b = this.bottomLoading;
                 this._enableScrollLoad = value;
             },
             enumerable: true,
             configurable: true
         });
-        Object.defineProperty(Page.prototype, "view", {
+        Object.defineProperty(Page.prototype, "viewHtml", {
             get: function () {
                 return this.nodes().container.innerHTML;
             },
@@ -2082,9 +2111,16 @@ var chitu;
         Page.prototype.nodes = function () {
             return this._pageNode;
         };
-        Object.defineProperty(Page.prototype, "parent", {
+        Object.defineProperty(Page.prototype, "previous", {
             get: function () {
                 return this._prevous;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Page.prototype, "scrollType", {
+            get: function () {
+                return this._scrollType;
             },
             enumerable: true,
             configurable: true
@@ -2189,52 +2225,36 @@ var chitu;
             });
             return result;
         };
-        Page.prototype.ensureScrollLoadingBar = function () {
-            if (this.scrollLoad_loading_bar == null) {
-                this.scrollLoad_loading_bar = document.createElement('div');
-                this.scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
-                this.scrollLoad_loading_bar.style.display = 'none';
-                $(this.scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
-                this.nodes().content.appendChild(this.scrollLoad_loading_bar);
-            }
-        };
-        Page.prototype.showScrollLoadingBar = function () {
-            this.ensureScrollLoadingBar();
-            if ($(this.scrollLoad_loading_bar).is(':visible') == false) {
-                $(this.scrollLoad_loading_bar).show();
-                this.refreshUI();
-            }
-        };
-        Page.prototype.hideScrollLoadingBar = function () {
-            this.ensureScrollLoadingBar();
-            if ($(this.scrollLoad_loading_bar).is(':visible')) {
-                $(this.scrollLoad_loading_bar).hide();
-                this.refreshUI();
-            }
-        };
         Page.prototype.fireEvent = function (callback, args) {
             var _this = this;
             if (this.actionExecuted.state() == 'resolved')
                 return eventDeferred(callback, this, args);
             return this.actionExecuted.pipe(function () { return eventDeferred(callback, _this, args); });
         };
+        Page.prototype.disableHeaderFooterTouchMove = function () {
+            $([this.nodes().footer, this.nodes().header]).on('touchmove', function (e) {
+                e.preventDefault();
+            });
+        };
         Page.prototype.on_load = function (args) {
             var _this = this;
-            if (args.loading == null) {
-                args.loading = args.loadType == chitu.PageLoadType.scroll ? this.bottomLoading : this.formLoading;
+            var load_args = args instanceof PageLoadArguments ?
+                args : new PageLoadArguments(this, args.loadType, args.loading);
+            if (load_args.loading == null) {
+                load_args.loading = load_args.loadType == chitu.PageLoadType.scroll ? this.bottomLoading : this.formLoading;
             }
-            args.loading.show();
-            var result = this.fireEvent(this.load, args);
-            result.done(function () { return args.loading.hide(); });
-            if (this.viewDeferred == null) {
-                result.done(function () { return _this.on_loadCompleted(args); });
+            load_args.loading.show();
+            var result = this.fireEvent(this.load, load_args);
+            result.done(function () { return load_args.loading.hide(); });
+            if (this.view == null) {
+                result.done(function () { return _this.on_loadCompleted(load_args); });
             }
             else {
-                if (this.viewDeferred.state() == 'resolved') {
-                    result.done(function () { return _this.on_loadCompleted(args); });
+                if (this.view.state() == 'resolved') {
+                    result.done(function () { return _this.on_loadCompleted(load_args); });
                 }
                 else {
-                    $.when(this.viewDeferred, result).done(function () { return _this.on_loadCompleted(args); });
+                    $.when(this.view, result).done(function () { return _this.on_loadCompleted(load_args); });
                 }
             }
             return result;
@@ -2275,20 +2295,17 @@ var chitu;
                 return this._openResult;
             swipe = swipe || SwipeDirection.None;
             var result = this.showPageNode(swipe);
-            var load_args = $.extend(args || {}, {
-                loadType: chitu.PageLoadType.open,
-                loading: this.formLoading,
-            });
+            var load_args = this.createPageLoadArguments(args, chitu.PageLoadType.open, this.formLoading);
             load_args.loading.show();
-            if (this.viewDeferred == null && this.view == null) {
+            if (this.view == null && this.viewHtml == null) {
                 throw chitu.Errors.viewCanntNull();
             }
-            if (this.actionDeferred) {
-                this.actionDeferred.done(function (action) {
+            if (this.action) {
+                this.action.done(function (action) {
                     action.execute(_this);
                     _this.actionExecuted.resolve();
-                    if (_this.viewDeferred) {
-                        _this.viewDeferred.done(function (html) { return _this.view = html; });
+                    if (_this.view) {
+                        _this.view.done(function (html) { return _this.viewHtml = html; });
                     }
                     _this.on_load(load_args);
                 });
@@ -2302,7 +2319,6 @@ var chitu;
             /// <param name="args" type="Object" canBeNull="true">
             /// The value passed to the hide event functions.
             /// </param>
-            /// <returns type="jQuery.Deferred"/>
             var _this = this;
             if (this.is_closed)
                 return;
@@ -2585,8 +2601,6 @@ var chitu;
     })();
     chitu.Action = Action;
     function createActionDeferred(routeData) {
-        /// <param name="actionName" type="String"/>
-        /// <returns type="jQuery.Deferred"/>
         var actionName = routeData.values().action;
         if (!actionName)
             throw e.routeDataRequireAction();
@@ -2607,8 +2621,6 @@ var chitu;
     }
     chitu.createActionDeferred = createActionDeferred;
     function createViewDeferred(routeData) {
-        /// <param name="routeData" type="Object"/>
-        /// <returns type="jQuery.Deferred"/>
         if (!routeData.values().controller)
             throw e.routeDataRequireController();
         if (!routeData.values().action)

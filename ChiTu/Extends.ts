@@ -13,8 +13,6 @@
         return object;
     }
 
-
-
     export class Callback {
         source: any
         constructor(source: any) {
