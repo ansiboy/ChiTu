@@ -557,7 +557,7 @@ namespace chitu {
     const PAGE_CONTENT_CLASS_NAME = 'page-content';
     //var zindex: number;
 
-    var LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
+
     var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
 
     export enum PageLoadType {
@@ -568,7 +568,7 @@ namespace chitu {
         custom
     }
 
-    interface PageLoading {
+    export interface PageLoading {
         show()
         hide()
     }
@@ -588,6 +588,9 @@ namespace chitu {
         loading: PageLoading
         set enableScrollLoad(value: boolean) {
             (<any>this._page).enableScrollLoad = value;
+        }
+        get enableScrollLoad(): boolean {
+            return (<any>this._page).enableScrollLoad;
         }
     }
 
@@ -664,6 +667,7 @@ namespace chitu {
     }
 
     class PageBottomLoading implements PageLoading {
+        private LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
         private _page: chitu.Page;
         private _scrollLoad_loading_bar: HTMLElement;
 
@@ -675,17 +679,23 @@ namespace chitu {
 
             this._scrollLoad_loading_bar = document.createElement('div');
             this._scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
-            this._scrollLoad_loading_bar.style.visibility = 'hidden';
-            $(this._scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
+            this._scrollLoad_loading_bar.style.display = 'none';
+            $(this._scrollLoad_loading_bar).find('h5').html(this.LOADDING_HTML);
             page.nodes().content.appendChild(this._scrollLoad_loading_bar);
-            page.refreshUI();
-
         }
         show() {
-            this._scrollLoad_loading_bar.style.visibility = 'visible';
+            if (this._scrollLoad_loading_bar.style.display == 'block')
+                return;
+
+            this._scrollLoad_loading_bar.style.display = 'block';
+            this._page.refreshUI();
         }
         hide() {
-            this._scrollLoad_loading_bar.style.visibility = 'hidden';
+            if (this._scrollLoad_loading_bar.style.display == 'none')
+                return;
+
+            this._scrollLoad_loading_bar.style.display = 'none';
+            this._page.refreshUI();
         }
     }
 
@@ -756,6 +766,8 @@ namespace chitu {
             this.scrollEnd.add(Page.page_scrollEnd);
             if (previous)
                 previous.closed.add(() => this.close());
+
+
         }
         private createPageLoadArguments(args, loadType: PageLoadType, loading: PageLoading): PageLoadArguments {
             var result: PageLoadArguments = new PageLoadArguments(this, loadType, loading);
@@ -781,11 +793,23 @@ namespace chitu {
             }
             return this._formLoading;
         }
+        set formLoading(value: PageLoading) {
+            if (!value)
+                throw chitu.Errors.argumentNull('value');
+
+            this._formLoading = value;
+        }
         get bottomLoading(): PageLoading {
             if (this._bottomLoading == null)
                 this._bottomLoading = new PageBottomLoading(this);
 
             return this._bottomLoading;
+        }
+        set bottomLoading(value: PageLoading) {
+            if (!value)
+                throw chitu.Errors.argumentNull('value');
+
+            this._bottomLoading = value;
         }
         get view(): JQueryPromise<string> {
             return this._viewDeferred;
@@ -803,10 +827,6 @@ namespace chitu {
             return this._enableScrollLoad;
         }
         private set enableScrollLoad(value: boolean) {
-            //==================================
-            // 使用 bottomLoading 主动创建，即页面底部会生成“正在加载”字样的底栏。
-            var b = this.bottomLoading;
-            //==================================
             this._enableScrollLoad = value;
         }
         private set viewHtml(value: string) {

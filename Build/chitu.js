@@ -1836,7 +1836,6 @@ var chitu;
     var PAGE_FOOTER_CLASS_NAME = 'page-footer';
     var PAGE_LOADING_CLASS_NAME = 'page-loading';
     var PAGE_CONTENT_CLASS_NAME = 'page-content';
-    var LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
     var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
     (function (PageLoadType) {
         PageLoadType[PageLoadType["open"] = 0] = "open";
@@ -1855,6 +1854,9 @@ var chitu;
             this.loading = loading;
         }
         Object.defineProperty(PageLoadArguments.prototype, "enableScrollLoad", {
+            get: function () {
+                return this._page.enableScrollLoad;
+            },
             set: function (value) {
                 this._page.enableScrollLoad = value;
             },
@@ -1923,21 +1925,27 @@ var chitu;
     })();
     var PageBottomLoading = (function () {
         function PageBottomLoading(page) {
+            this.LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
             if (!page)
                 throw chitu.Errors.argumentNull('page');
             this._page = page;
             this._scrollLoad_loading_bar = document.createElement('div');
             this._scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
-            this._scrollLoad_loading_bar.style.visibility = 'hidden';
-            $(this._scrollLoad_loading_bar).find('h5').html(LOADDING_HTML);
+            this._scrollLoad_loading_bar.style.display = 'none';
+            $(this._scrollLoad_loading_bar).find('h5').html(this.LOADDING_HTML);
             page.nodes().content.appendChild(this._scrollLoad_loading_bar);
-            page.refreshUI();
         }
         PageBottomLoading.prototype.show = function () {
-            this._scrollLoad_loading_bar.style.visibility = 'visible';
+            if (this._scrollLoad_loading_bar.style.display == 'block')
+                return;
+            this._scrollLoad_loading_bar.style.display = 'block';
+            this._page.refreshUI();
         };
         PageBottomLoading.prototype.hide = function () {
-            this._scrollLoad_loading_bar.style.visibility = 'hidden';
+            if (this._scrollLoad_loading_bar.style.display == 'none')
+                return;
+            this._scrollLoad_loading_bar.style.display = 'none';
+            this._page.refreshUI();
         };
         return PageBottomLoading;
     })();
@@ -2015,6 +2023,11 @@ var chitu;
                 }
                 return this._formLoading;
             },
+            set: function (value) {
+                if (!value)
+                    throw chitu.Errors.argumentNull('value');
+                this._formLoading = value;
+            },
             enumerable: true,
             configurable: true
         });
@@ -2023,6 +2036,11 @@ var chitu;
                 if (this._bottomLoading == null)
                     this._bottomLoading = new PageBottomLoading(this);
                 return this._bottomLoading;
+            },
+            set: function (value) {
+                if (!value)
+                    throw chitu.Errors.argumentNull('value');
+                this._bottomLoading = value;
             },
             enumerable: true,
             configurable: true
@@ -2052,7 +2070,6 @@ var chitu;
                 return this._enableScrollLoad;
             },
             set: function (value) {
-                var b = this.bottomLoading;
                 this._enableScrollLoad = value;
             },
             enumerable: true,
