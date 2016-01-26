@@ -1,4 +1,0 @@
-﻿    //
-    window['chitu'] = chitu;
-    return chitu;
-});

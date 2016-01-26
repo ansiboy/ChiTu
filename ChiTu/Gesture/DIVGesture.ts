@@ -1,5 +1,4 @@
-﻿/// <reference path="common.ts" />
-
+﻿
 namespace chitu.gesture {
     function start(move: (selector: string | HTMLElement) => Move, page: chitu.Page, pullDownBar: PullDownBar, pullUpBar: PullUpBar) {
         var pre_deltaY = 0;

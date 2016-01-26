@@ -78,7 +78,8 @@ namespace chitu {
 } 
 
 
-;namespace chitu {
+
+namespace chitu {
     var u = chitu.Utility;
     export class Errors {
         public static argumentNull(paramName: string) {
@@ -156,7 +157,8 @@ namespace chitu {
     }
 } 
 
-;namespace chitu {
+
+namespace chitu {
     var rnotwhite = (/\S+/g);
 
     // String to Object options format cache
@@ -416,7 +418,8 @@ namespace chitu {
         }
     });
 
-} ;namespace chitu {
+} 
+namespace chitu {
 
     var e = chitu.Errors;
     var crossroads = window['crossroads'];
@@ -537,7 +540,8 @@ namespace chitu {
         return result;
     }
 }
-;
+
+
 namespace chitu {
 
 
@@ -722,6 +726,8 @@ namespace chitu {
         private actionExecuted = $.Deferred<boolean>();
         private isActionExecuted = false;
         private _scrollType: ScrollType;
+        private _formLoading: PageLoading;
+        private _bottomLoading: PageLoading;
 
         preLoad = ns.Callbacks();
         load = ns.Callbacks();
@@ -736,8 +742,7 @@ namespace chitu {
         scrollEnd = ns.Callbacks();
         viewChanged = $.Callbacks();
 
-        _formLoading: PageLoading;
-        _bottomLoading: PageLoading;
+
 
         constructor(element: HTMLElement, scrollType: ScrollType, previous?: chitu.Page) {
             if (!element) throw e.argumentNull('element');
@@ -1191,7 +1196,8 @@ namespace chitu {
             }
         }
     }
-};;
+};
+
 namespace chitu {
     export class PageContext {
         private _view: JQueryPromise<string>;
@@ -1208,7 +1214,8 @@ namespace chitu {
         }
     }
 }
-;namespace chitu {
+
+namespace chitu {
     export class Route {
         private _name: string;
         private _pattern: string;
@@ -1234,7 +1241,8 @@ namespace chitu {
     }
 
 
-};
+}
+
 namespace chitu {
     var ns = chitu;
     var e = chitu.Errors;
@@ -1324,7 +1332,8 @@ namespace chitu {
             return routeData;
         }
     }
-};namespace chitu {
+}
+namespace chitu {
     export class RouteData {
         private _values: any;
         private _viewPath: string;
@@ -1369,7 +1378,8 @@ namespace chitu {
         }
     }
 }
-;namespace chitu {
+
+namespace chitu {
 
     var ns = chitu;
     var u = chitu.Utility;
@@ -1616,7 +1626,8 @@ namespace chitu {
             return this.back_deferred;
         }
     }
-} ;
+} 
+
 class ScrollArguments {
     scrollTop: number
     scrollHeight: number
@@ -1670,7 +1681,8 @@ class DisScroll {
         };
 
     }
-};
+}
+
 var cur_scroll_args: ScrollArguments = new ScrollArguments();
 var pre_scroll_top: number;
 var checking_num: number;
@@ -1735,7 +1747,8 @@ class DocumentScroll {
 
     }
 }
-;
+
+
 class IOSScroll {
 
     private iscroller: IScroll;
@@ -1863,7 +1876,8 @@ class IOSScroll {
 
 
 }
-;namespace chitu.gesture {
+
+namespace chitu.gesture {
     export function createPullDownBar(page: chitu.Page, config): PullDownBar {
         config = config || {};
         config = $.extend({
@@ -2035,7 +2049,7 @@ class IOSScroll {
 
 
 
-} ;/// <reference path="common.ts" />
+} 
 
 namespace chitu.gesture {
     function start(move: (selector: string | HTMLElement) => Move, page: chitu.Page, pullDownBar: PullDownBar, pullUpBar: PullUpBar) {
@@ -2167,7 +2181,8 @@ namespace chitu.gesture {
         });
     }
 }
-;namespace chitu.gesture {
+
+namespace chitu.gesture {
     function start(move: (selector: string | HTMLElement) => Move, page: chitu.Page, pullDownBar: PullDownBar, pullUpBar: PullUpBar) {
         console.log('enable_ios_gesture');
 
