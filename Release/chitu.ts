@@ -760,7 +760,7 @@ namespace chitu {
             }
             else if (scrollType == ScrollType.Div) {
                 $(this.nodes().container).addClass('div');
-                new DisScroll(this);
+                new DivScroll(this);
                 gesture.enable_divfixed_gesture(this, null, null);
             }
             else if (scrollType == ScrollType.Document) {
@@ -1627,256 +1627,259 @@ namespace chitu {
         }
     }
 } 
-
-class ScrollArguments {
-    scrollTop: number
-    scrollHeight: number
-    clientHeight: number
-}
-
-class DisScroll {
-    constructor(page: chitu.Page) {
-        //============================================================
-        // 说明：实现滚动结束检测
-        var cur_scroll_args: ScrollArguments = new ScrollArguments();
-        var pre_scroll_top: number;
-        var checking_num: number;
-        var CHECK_INTERVAL = 300;
-        var scrollEndCheck = (page: chitu.Page) => {
-            if (checking_num != null) return;
-            //======================
-            // 锁定，不让滚动期内创建二次，因setInterval有一定的时间。
-            checking_num = 0;
-            //======================
-            checking_num = window.setInterval(() => {
-                if (pre_scroll_top == cur_scroll_args.scrollTop) {
-                    window.clearInterval(checking_num);
-                    checking_num = null;
-                    pre_scroll_top = null;
-
-                    //page['on_scrollEnd'](cur_scroll_args);
-                    page.on_scrollEnd(cur_scroll_args);
-
-                    return;
-                }
-                pre_scroll_top = cur_scroll_args.scrollTop;
-
-            }, CHECK_INTERVAL);
-        }
-        //========================================================
-        var wrapper_node = page.nodes().body;
-        wrapper_node.onscroll = () => {
-            var args = {
-                scrollTop: wrapper_node.scrollTop,
-                scrollHeight: wrapper_node.scrollHeight,
-                clientHeight: wrapper_node.clientHeight
-            };
-
-            page.on_scroll(args);
-
-            cur_scroll_args.clientHeight = args.clientHeight;
-            cur_scroll_args.scrollHeight = args.scrollHeight;
-            cur_scroll_args.scrollTop = args.scrollTop;
-            scrollEndCheck(page);
-        };
-
-    }
-}
-
-var cur_scroll_args: ScrollArguments = new ScrollArguments();
-var pre_scroll_top: number;
-var checking_num: number;
-var CHECK_INTERVAL = 300;
-
-function scrollEndCheck(page: chitu.Page) {
-    if (checking_num != null) return;
-    //======================
-    // 锁定，不让滚动期内创建二次，因setInterval有一定的时间。
-    checking_num = 0;
-    //======================
-    checking_num = window.setInterval(() => {
-        if (pre_scroll_top == cur_scroll_args.scrollTop) {
-            window.clearInterval(checking_num);
-            checking_num = null;
-            pre_scroll_top = null;
-
-            page.on_scrollEnd(cur_scroll_args);
-
-            return;
-        }
-        pre_scroll_top = cur_scroll_args.scrollTop;
-
-    }, CHECK_INTERVAL);
-}
-
-
-class DocumentScroll {
-    constructor(page: chitu.Page) {
-        $(document).scroll(function (event) {
-            if (!page.visible())
-                return;
-
-            var args = {
-                scrollTop: $(document).scrollTop(),
-                scrollHeight: document.body.scrollHeight,
-                clientHeight: $(window).height()
-            };
-
-            cur_scroll_args.clientHeight = args.clientHeight;
-            cur_scroll_args.scrollHeight = args.scrollHeight;
-            cur_scroll_args.scrollTop = args.scrollTop;
-
-            $(page.node()).data(page.name + '_scroll_top', args.scrollTop);
-            scrollEndCheck(page);
-        });
-
-        page.shown.add((sender: chitu.Page) => {
-            var value = $(page.node()).data(page.name + '_scroll_top');
-            if (value != null)
-                $(document).scrollTop(new Number(value).valueOf());
-        });
-
-        //page.shown.add(function (sender) {
-        //    // 说明：显示页面，scrollTop 定位
-        //    sender.scrollTop($(sender.node()).data(scroll_top_data_name) || '0px');
-        //});
-
-        //page.scroll.add(function (sender, args) {
-        //    $(sender.node()).data(scroll_top_data_name, sender.scrollTop());
-        //});
-
-    }
-}
-
-
-class IOSScroll {
-
-    private iscroller: IScroll;
-
-    constructor(page: chitu.Page) {
-        requirejs(['iscroll'], () => this.init(page));
+namespace chitu {
+    export class ScrollArguments {
+        scrollTop: number
+        scrollHeight: number
+        clientHeight: number
     }
 
-    private init(page: chitu.Page) {
-        var options = {
-            tap: true,
-            useTransition: false,
-            HWCompositing: false,
-            preventDefault: true,   // 必须设置为 True，否是在微信环境下，页面位置在上拉，或下拉时，会移动。
-            probeType: 1,
-            //bounce: true,
-            //bounceTime: 600
-        }
+    export class DivScroll {
+        constructor(page: chitu.Page) {
+            //============================================================
+            // 说明：实现滚动结束检测
+            var cur_scroll_args: ScrollArguments = new ScrollArguments();
+            var pre_scroll_top: number;
+            var checking_num: number;
+            var CHECK_INTERVAL = 300;
+            var scrollEndCheck = (page: chitu.Page) => {
+                if (checking_num != null) return;
+                //======================
+                // 锁定，不让滚动期内创建二次，因setInterval有一定的时间。
+                checking_num = 0;
+                //======================
+                checking_num = window.setInterval(() => {
+                    if (pre_scroll_top == cur_scroll_args.scrollTop) {
+                        window.clearInterval(checking_num);
+                        checking_num = null;
+                        pre_scroll_top = null;
 
-        var iscroller = this.iscroller = page['iscroller'] = new IScroll(page.nodes().body, options);
+                        //page['on_scrollEnd'](cur_scroll_args);
+                        page.on_scrollEnd(cur_scroll_args);
 
-        //window.setTimeout(() => iscroller.refresh(), 1000);
-
-        iscroller.on('scrollEnd', function () {
-            var scroller = <IScroll>this;
-            var args = {
-                scrollTop: 0 - scroller.y,
-                scrollHeight: scroller.scrollerHeight,
-                clientHeight: scroller.wrapperHeight
-            };
-
-            console.log('directionY:' + scroller.directionY);
-            console.log('startY:' + scroller.startY);
-            console.log('scroller.y:' + scroller.y);
-            page.on_scrollEnd(args);
-        });
-
-        iscroller.on('scroll', function () {
-            var scroller = <IScroll>this;
-            var args = {
-                scrollTop: 0 - scroller.y,
-                scrollHeight: scroller.scrollerHeight,
-                clientHeight: scroller.wrapperHeight
-            };
-
-            console.log('directionY:' + scroller.directionY);
-            console.log('startY:' + scroller.startY);
-            console.log('scroller.y:' + scroller.y);
-            page.on_scroll(args);
-        });
-
-        (function (scroller: IScroll, wrapperNode: HTMLElement) {
-
-            $(wrapperNode).on('tap', (event) => {
-                if (page['iscroller'].enabled == false)
-                    return;
-
-                var MAX_DEEPH = 4;
-                var deeph = 1;
-                var node = <HTMLElement>event.target;
-                while (node != null) {
-                    if (node.tagName == 'A')
-                        return window.open($(node).attr('href'), '_self');
-
-                    node = <HTMLElement>node.parentNode;
-                    deeph = deeph + 1;
-                    if (deeph > MAX_DEEPH)
                         return;
-                }
-            })
+                    }
+                    pre_scroll_top = cur_scroll_args.scrollTop;
 
-        })(iscroller, page.nodes().body);
+                }, CHECK_INTERVAL);
+            }
+            //========================================================
+            var wrapper_node = page.nodes().body;
+            wrapper_node.onscroll = () => {
+                var args = {
+                    scrollTop: wrapper_node.scrollTop,
+                    scrollHeight: wrapper_node.scrollHeight,
+                    clientHeight: wrapper_node.clientHeight
+                };
 
-        page.closing.add(() => iscroller.destroy());
+                page.on_scroll(args);
 
-        $(window).on('resize', () => {
-            window.setTimeout(() => iscroller.refresh(), 500);
-        });
-    }
+                cur_scroll_args.clientHeight = args.clientHeight;
+                cur_scroll_args.scrollHeight = args.scrollHeight;
+                cur_scroll_args.scrollTop = args.scrollTop;
+                scrollEndCheck(page);
+            };
 
-    refresh() {
-        if (this.iscroller)
-            this.iscroller.refresh();
+        }
     }
 }
 
-(<any>chitu).scroll = (page: chitu.Page, config) => {
+
+namespace chitu {
+    var cur_scroll_args: ScrollArguments = new ScrollArguments();
+    var pre_scroll_top: number;
+    var checking_num: number;
+    var CHECK_INTERVAL = 300;
+
+    function scrollEndCheck(page: chitu.Page) {
+        if (checking_num != null) return;
+        //======================
+        // 锁定，不让滚动期内创建二次，因setInterval有一定的时间。
+        checking_num = 0;
+        //======================
+        checking_num = window.setInterval(() => {
+            if (pre_scroll_top == cur_scroll_args.scrollTop) {
+                window.clearInterval(checking_num);
+                checking_num = null;
+                pre_scroll_top = null;
+
+                page.on_scrollEnd(cur_scroll_args);
+
+                return;
+            }
+            pre_scroll_top = cur_scroll_args.scrollTop;
+
+        }, CHECK_INTERVAL);
+    }
 
 
-    $(page.nodes().body).addClass('wrapper');
-    $(page.nodes().content).addClass('scroller');
+    export class DocumentScroll {
+        constructor(page: chitu.Page) {
+            $(document).scroll(function(event) {
+                if (!page.visible())
+                    return;
 
-    var wrapperNode = page['_wrapperNode'] = page.nodes().body;
-    page['_scrollerNode'] = page.nodes().content;
+                var args = {
+                    scrollTop: $(document).scrollTop(),
+                    scrollHeight: document.body.scrollHeight,
+                    clientHeight: $(window).height()
+                };
 
-    //$.extend(page, {
-    //    scrollEnd: chitu.Callbacks(),
-    //    on_scrollEnd: function (args) {
-    //        return chitu.fireCallback(this.scrollEnd, [this, args]);
-    //    },
-    //    scrollTop: $.proxy((value: number | string) => {
-    //        if (value === undefined)
-    //            return (0 - page['iscroller'].y) + 'px';
+                cur_scroll_args.clientHeight = args.clientHeight;
+                cur_scroll_args.scrollHeight = args.scrollHeight;
+                cur_scroll_args.scrollTop = args.scrollTop;
 
-    //        if (typeof value === 'string')
-    //            value = new Number((<string>value).substr(0, (<string>value).length - 2)).valueOf();
+                $(page.node()).data(page.name + '_scroll_top', args.scrollTop);
+                scrollEndCheck(page);
+            });
 
-    //        var scroller = this['iscroller'];
-    //        if (scroller) {
-    //            scroller.scrollTo(0, value);
-    //        }
-    //    }, page)
-    //})
+            page.shown.add((sender: chitu.Page) => {
+                var value = $(page.node()).data(page.name + '_scroll_top');
+                if (value != null)
+                    $(document).scrollTop(new Number(value).valueOf());
+            });
 
-    //var page_shown = (sender: chitu.Page) => {
-    //    window.setTimeout(() => {
-    //        sender['iscroller'].refresh();
-    //    }, 500);
-    //}
+            //page.shown.add(function (sender) {
+            //    // 说明：显示页面，scrollTop 定位
+            //    sender.scrollTop($(sender.node()).data(scroll_top_data_name) || '0px');
+            //});
 
-    //page.shown.add(page_shown);
-    //if (page.visible())
-    //    page_shown(page);
+            //page.scroll.add(function (sender, args) {
+            //    $(sender.node()).data(scroll_top_data_name, sender.scrollTop());
+            //});
 
-
-
+        }
+    }
 }
+namespace chitu {
+    export class IOSScroll {
 
+        private iscroller: IScroll;
+
+        constructor(page: chitu.Page) {
+            requirejs(['iscroll'], () => this.init(page));
+        }
+
+        private init(page: chitu.Page) {
+            var options = {
+                tap: true,
+                useTransition: false,
+                HWCompositing: false,
+                preventDefault: true,   // 必须设置为 True，否是在微信环境下，页面位置在上拉，或下拉时，会移动。
+                probeType: 1,
+                //bounce: true,
+                //bounceTime: 600
+            }
+
+            var iscroller = this.iscroller = page['iscroller'] = new IScroll(page.nodes().body, options);
+
+            //window.setTimeout(() => iscroller.refresh(), 1000);
+
+            iscroller.on('scrollEnd', function() {
+                var scroller = <IScroll>this;
+                var args = {
+                    scrollTop: 0 - scroller.y,
+                    scrollHeight: scroller.scrollerHeight,
+                    clientHeight: scroller.wrapperHeight
+                };
+
+                console.log('directionY:' + scroller.directionY);
+                console.log('startY:' + scroller.startY);
+                console.log('scroller.y:' + scroller.y);
+                page.on_scrollEnd(args);
+            });
+
+            iscroller.on('scroll', function() {
+                var scroller = <IScroll>this;
+                var args = {
+                    scrollTop: 0 - scroller.y,
+                    scrollHeight: scroller.scrollerHeight,
+                    clientHeight: scroller.wrapperHeight
+                };
+
+                console.log('directionY:' + scroller.directionY);
+                console.log('startY:' + scroller.startY);
+                console.log('scroller.y:' + scroller.y);
+                page.on_scroll(args);
+            });
+
+            (function(scroller: IScroll, wrapperNode: HTMLElement) {
+
+                $(wrapperNode).on('tap', (event) => {
+                    if (page['iscroller'].enabled == false)
+                        return;
+
+                    var MAX_DEEPH = 4;
+                    var deeph = 1;
+                    var node = <HTMLElement>event.target;
+                    while (node != null) {
+                        if (node.tagName == 'A')
+                            return window.open($(node).attr('href'), '_self');
+
+                        node = <HTMLElement>node.parentNode;
+                        deeph = deeph + 1;
+                        if (deeph > MAX_DEEPH)
+                            return;
+                    }
+                })
+
+            })(iscroller, page.nodes().body);
+
+            page.closing.add(() => iscroller.destroy());
+
+            $(window).on('resize', () => {
+                window.setTimeout(() => iscroller.refresh(), 500);
+            });
+        }
+
+        refresh() {
+            if (this.iscroller)
+                this.iscroller.refresh();
+        }
+    }
+
+    (<any>chitu).scroll = (page: chitu.Page, config) => {
+
+
+        $(page.nodes().body).addClass('wrapper');
+        $(page.nodes().content).addClass('scroller');
+
+        var wrapperNode = page['_wrapperNode'] = page.nodes().body;
+        page['_scrollerNode'] = page.nodes().content;
+
+        //$.extend(page, {
+        //    scrollEnd: chitu.Callbacks(),
+        //    on_scrollEnd: function (args) {
+        //        return chitu.fireCallback(this.scrollEnd, [this, args]);
+        //    },
+        //    scrollTop: $.proxy((value: number | string) => {
+        //        if (value === undefined)
+        //            return (0 - page['iscroller'].y) + 'px';
+
+        //        if (typeof value === 'string')
+        //            value = new Number((<string>value).substr(0, (<string>value).length - 2)).valueOf();
+
+        //        var scroller = this['iscroller'];
+        //        if (scroller) {
+        //            scroller.scrollTo(0, value);
+        //        }
+        //    }, page)
+        //})
+
+        //var page_shown = (sender: chitu.Page) => {
+        //    window.setTimeout(() => {
+        //        sender['iscroller'].refresh();
+        //    }, 500);
+        //}
+
+        //page.shown.add(page_shown);
+        //if (page.visible())
+        //    page_shown(page);
+
+
+
+    }
+}
 namespace chitu.gesture {
     export function createPullDownBar(page: chitu.Page, config): PullDownBar {
         config = config || {};

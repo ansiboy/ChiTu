@@ -217,7 +217,7 @@ namespace chitu {
             }
             else if (scrollType == ScrollType.Div) {
                 $(this.nodes().container).addClass('div');
-                new DisScroll(this);
+                new DivScroll(this);
                 gesture.enable_divfixed_gesture(this, null, null);
             }
             else if (scrollType == ScrollType.Document) {
