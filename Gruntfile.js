@@ -61,16 +61,25 @@ module.exports = function (grunt) {
                     'ChiTu/Scroll/DivScroll.ts', 'ChiTu/Scroll/DocumentScroll.ts', 'ChiTu/Scroll/IOSScroll.ts',
                     'ChiTu/Gesture/Common.ts', 'ChiTu/Gesture/DIVGesture.ts', 'ChiTu/Gesture/IOSGesture.ts',
                 ],
-                dest: 'Build/chitu.ts'
+                dest: 'Release/chitu.ts'
+            },
+            chitujs: {
+                src: ['Build/*.js'],
+                dest: 'Release/chitu.js'
+            }
+        },
+        uglify: {
+            build: {
+                src: 'Release/chitu.js',
+                dest: 'Release/chitu.min.js'
             }
         }
     });
 
-    // Load the plugin that provides the "uglify" task.
-    //grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-typescript');
     grunt.loadNpmTasks('grunt-contrib-concat');
 
-    grunt.registerTask('default', ['typescript', 'concat']);
+    grunt.registerTask('default', ['typescript', 'concat', 'uglify']);
 
 };
