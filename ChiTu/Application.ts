@@ -20,7 +20,7 @@
         pageCreated: chitu.Callback = ns.Callbacks();
 
         private page_stack: chitu.Page[] = [];
-        private config: ApplicationConfig;
+        private _config: ApplicationConfig;
         private _routes: chitu.RouteCollection = new RouteCollection();
         private _runned: boolean = false;
         private zindex: number;
@@ -40,10 +40,14 @@
                 throw new Error('Parameter container is not a function or html element.');
 
             //this._container = config['container'];
-            config.openSwipe = config.openSwipe || function (routeData: chitu.RouteData) { return SwipeDirection.None; };
-            config.closeSwipe = config.closeSwipe || function (routeData: chitu.RouteData) { return SwipeDirection.None; };
-            config.scrollType = config.scrollType || function (routeData: chitu.RouteData) { return ScrollType.Document };
-            this.config = config;
+            this._config = config;
+            this._config.openSwipe = config.openSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
+            this._config.closeSwipe = config.closeSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
+            this._config.scrollType = config.scrollType || function(routeData: chitu.RouteData) { return ScrollType.Document };
+        }
+
+        get config(): chitu.ApplicationConfig {
+            return this._config;
         }
 
         on_pageCreating(context: chitu.PageContext) {

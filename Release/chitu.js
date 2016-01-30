@@ -116,11 +116,18 @@ var chitu;
             }
             if (!$.isFunction(config.container) && !config.container['tagName'])
                 throw new Error('Parameter container is not a function or html element.');
-            config.openSwipe = config.openSwipe || function (routeData) { return chitu.SwipeDirection.None; };
-            config.closeSwipe = config.closeSwipe || function (routeData) { return chitu.SwipeDirection.None; };
-            config.scrollType = config.scrollType || function (routeData) { return chitu.ScrollType.Document; };
-            this.config = config;
+            this._config = config;
+            this._config.openSwipe = config.openSwipe || function (routeData) { return chitu.SwipeDirection.None; };
+            this._config.closeSwipe = config.closeSwipe || function (routeData) { return chitu.SwipeDirection.None; };
+            this._config.scrollType = config.scrollType || function (routeData) { return chitu.ScrollType.Document; };
         }
+        Object.defineProperty(Application.prototype, "config", {
+            get: function () {
+                return this._config;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Application.prototype.on_pageCreating = function (context) {
             return chitu.fireCallback(this.pageCreating, [this, context]);
         };
@@ -1078,7 +1085,6 @@ var chitu;
     })();
     var Page = (function () {
         function Page(element, scrollType, previous) {
-            var _this = this;
             this._loadViewModelResult = null;
             this._openResult = null;
             this._hideResult = null;
@@ -1123,8 +1129,6 @@ var chitu;
                 new chitu.DocumentScroll(this);
             }
             this.scrollEnd.add(Page.page_scrollEnd);
-            if (previous)
-                previous.closed.add(function () { return _this.close(); });
         }
         Page.prototype.createPageLoadArguments = function (args, loadType, loading) {
             var result = new PageLoadArguments(this, loadType, loading);
@@ -1282,7 +1286,7 @@ var chitu;
             this.showPageNode(swipe);
         };
         Page.prototype.visible = function () {
-            return $(this.node()).is(':visible');
+            return this.node().style.display == 'block';
         };
         Page.prototype.hidePageNode = function (swipe) {
             var _this = this;
@@ -1295,7 +1299,7 @@ var chitu;
             var container_width = $(this.nodes().container).width();
             var container_height = $(this.nodes().container).height();
             var on_end = function () {
-                $(_this.node()).hide();
+                _this.node().style.display = 'none';
                 result.resolve();
                 _this.on_hidden({});
             };
@@ -1469,11 +1473,11 @@ var chitu;
             this.on_closing(args);
             if (this.visible()) {
                 this.hidePageNode(swipe).done(function () {
-                    $(_this.node()).remove();
+                    _this.node().parentNode.removeChild(_this.node());
                 });
             }
             else {
-                $(this.node()).remove();
+                this.node().parentNode.removeChild(this.node());
             }
             args = args || {};
             this.on_closed(args);

@@ -1,13 +1,13 @@
 {
     "files.exclude": {
-        "Build/chitu.ts": true,
+        "Build": true,
         "Release":true,
         "node_modules": true,
         "LICENSE.txt": true,
         "README.txt": true,
         "*.doc": true,
         ".gitignore": true,
-        "**/*.min.js": true,
+        "ChiTu/Scripts/*.js": true,
         "**/*.intellisense.js": true
         // "**/.DS_Store": true
     }

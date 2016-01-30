@@ -226,8 +226,8 @@ namespace chitu {
             }
 
             this.scrollEnd.add(Page.page_scrollEnd);
-            if (previous)
-                previous.closed.add(() => this.close());
+            // if (previous)
+            //     previous.closed.add(() => this.close());
 
 
         }
@@ -356,7 +356,7 @@ namespace chitu {
             this.showPageNode(swipe);
         }
         visible() {
-            return $(this.node()).is(':visible');
+            return this.node().style.display == 'block';
         }
         private hidePageNode(swipe: SwipeDirection): JQueryDeferred<any> {
             this.on_hiding({});
@@ -371,7 +371,7 @@ namespace chitu {
             var container_height = $(this.nodes().container).height();
 
             var on_end = () => {
-                $(this.node()).hide();
+                this.node().style.display = 'none';
                 result.resolve();
                 this.on_hidden({});
             };
@@ -497,7 +497,7 @@ namespace chitu {
             return this.actionExecuted.pipe(() => eventDeferred(callback, this, args));
         }
         private disableHeaderFooterTouchMove() {
-            $([this.nodes().footer, this.nodes().header]).on('touchmove', function (e) {
+            $([this.nodes().footer, this.nodes().header]).on('touchmove', function(e) {
                 e.preventDefault();
             })
         }
@@ -612,11 +612,13 @@ namespace chitu {
 
             if (this.visible()) {
                 this.hidePageNode(swipe).done(() => {
-                    $(this.node()).remove();
+                    //$(this.node()).remove();
+                    this.node().parentNode.removeChild(this.node());
                 });
             }
             else {
-                $(this.node()).remove();
+                //$(this.node()).remove();
+                this.node().parentNode.removeChild(this.node());
             }
 
             args = args || {};

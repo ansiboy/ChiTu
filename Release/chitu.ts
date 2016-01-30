@@ -769,8 +769,8 @@ namespace chitu {
             }
 
             this.scrollEnd.add(Page.page_scrollEnd);
-            if (previous)
-                previous.closed.add(() => this.close());
+            // if (previous)
+            //     previous.closed.add(() => this.close());
 
 
         }
@@ -899,7 +899,7 @@ namespace chitu {
             this.showPageNode(swipe);
         }
         visible() {
-            return $(this.node()).is(':visible');
+            return this.node().style.display == 'block';
         }
         private hidePageNode(swipe: SwipeDirection): JQueryDeferred<any> {
             this.on_hiding({});
@@ -914,7 +914,7 @@ namespace chitu {
             var container_height = $(this.nodes().container).height();
 
             var on_end = () => {
-                $(this.node()).hide();
+                this.node().style.display = 'none';
                 result.resolve();
                 this.on_hidden({});
             };
@@ -1040,7 +1040,7 @@ namespace chitu {
             return this.actionExecuted.pipe(() => eventDeferred(callback, this, args));
         }
         private disableHeaderFooterTouchMove() {
-            $([this.nodes().footer, this.nodes().header]).on('touchmove', function (e) {
+            $([this.nodes().footer, this.nodes().header]).on('touchmove', function(e) {
                 e.preventDefault();
             })
         }
@@ -1155,11 +1155,13 @@ namespace chitu {
 
             if (this.visible()) {
                 this.hidePageNode(swipe).done(() => {
-                    $(this.node()).remove();
+                    //$(this.node()).remove();
+                    this.node().parentNode.removeChild(this.node());
                 });
             }
             else {
-                $(this.node()).remove();
+                //$(this.node()).remove();
+                this.node().parentNode.removeChild(this.node());
             }
 
             args = args || {};
@@ -1401,7 +1403,7 @@ namespace chitu {
         pageCreated: chitu.Callback = ns.Callbacks();
 
         private page_stack: chitu.Page[] = [];
-        private config: ApplicationConfig;
+        private _config: ApplicationConfig;
         private _routes: chitu.RouteCollection = new RouteCollection();
         private _runned: boolean = false;
         private zindex: number;
@@ -1421,10 +1423,14 @@ namespace chitu {
                 throw new Error('Parameter container is not a function or html element.');
 
             //this._container = config['container'];
-            config.openSwipe = config.openSwipe || function (routeData: chitu.RouteData) { return SwipeDirection.None; };
-            config.closeSwipe = config.closeSwipe || function (routeData: chitu.RouteData) { return SwipeDirection.None; };
-            config.scrollType = config.scrollType || function (routeData: chitu.RouteData) { return ScrollType.Document };
-            this.config = config;
+            this._config = config;
+            this._config.openSwipe = config.openSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
+            this._config.closeSwipe = config.closeSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
+            this._config.scrollType = config.scrollType || function(routeData: chitu.RouteData) { return ScrollType.Document };
+        }
+
+        get config(): chitu.ApplicationConfig {
+            return this._config;
         }
 
         on_pageCreating(context: chitu.PageContext) {
