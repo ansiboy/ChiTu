@@ -1,6 +1,4 @@
-﻿
-
-interface Move {
+﻿interface Move {
 
     /**
      * Set duration to `n`.
@@ -90,9 +88,3 @@ declare function move(selector: string | HTMLElement): Move;
 
     //export = move;
 //}
-declare module "move" {
-
-
-
-    export = move;
-}

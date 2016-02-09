@@ -17,6 +17,9 @@
             var msg = u.format('The param "{0}" is expected "{1}" type.', paramName, expectedType);
             return new Error(msg);
         }
+        public static paramError(msg: string) {
+            return new Error(msg);
+        }
         public static viewNodeNotExists(name) {
             var msg = u.format('The view node "{0}" is not exists.', name);
             return new Error(msg);

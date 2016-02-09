@@ -44,10 +44,38 @@
             this._config.openSwipe = config.openSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
             this._config.closeSwipe = config.closeSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
             this._config.scrollType = config.scrollType || function(routeData: chitu.RouteData) { return ScrollType.Document };
+
+
+
+
+        }
+
+        private page_closed = (sender: chitu.Page) => {
+            // 将页面从栈中移除  
+            var item_index = -1;
+            for (var i = 0; i < this.page_stack.length; i++) {
+                if (sender == this.page_stack[i]) {
+                    item_index = i;
+                    break;
+                }
+            }
+
+            if (item_index < 0)
+                return;
+
+            this.page_stack.splice(item_index, 1);
+        }
+
+        private page_shown = (sender: chitu.Page) => {
+            this.setCurrentPage(sender);
         }
 
         get config(): chitu.ApplicationConfig {
             return this._config;
+        }
+
+        get pages(): Array<chitu.Page> {
+            return this.page_stack;
         }
 
         on_pageCreating(context: chitu.PageContext) {
@@ -59,6 +87,24 @@
         }
         public routes(): RouteCollection {
             return this._routes;
+        }
+        private setCurrentPage(value: chitu.Page) {
+            if (value == this.page_stack[this.page_stack.length - 1])
+                return;
+
+            var item_index = -1;
+            for (var i = 0; i < this.page_stack.length; i++) {
+                if (value == this.page_stack[i]) {
+                    item_index = i;
+                    break;
+                }
+            }
+
+            if (item_index >= 0) {
+                this.page_stack.splice(item_index, 1);
+            }
+
+            this.page_stack.push(value);
         }
         public currentPage(): chitu.Page {
             if (this.page_stack.length > 0)
@@ -108,11 +154,11 @@
                 window.history.pushState({}, '', hash);
             }
 
-            var current_page_url: string = '';
+            var previous_url: string = '';
             if (this.previousPage() != null)
-                current_page_url = this.previousPage().routeData.url();
+                previous_url = this.previousPage().routeData.url();
 
-            if (current_page_url.toLowerCase() == hash.substr(1).toLowerCase()) {
+            if (previous_url.toLowerCase() == hash.substr(1).toLowerCase()) {
                 this.closeCurrentPage();
             }
             else {
@@ -135,7 +181,7 @@
 
             this._runned = true;
         }
-        public getCachePage(name: string): chitu.Page {
+        public getPage(name: string): chitu.Page {
             for (var i = this.page_stack.length - 1; i >= 0; i--) {
                 if (this.page_stack[i].name == name)
                     return this.page_stack[i];
@@ -178,10 +224,12 @@
             var swipe = this.config.openSwipe(routeData);
             $.extend(args, routeData.values());
 
-            page.open(args, swipe).done(() => {
-                if (previous)
-                    previous.hide();
-            });
+            page.show(swipe);
+            //
+            // .done(() => {
+            //     if (previous)
+            //         previous.hide(SwipeDirection.None);
+            // });
 
             return page;
         }
@@ -189,20 +237,28 @@
             var element = document.createElement('div');
             return element;
         }
-        private closeCurrentPage() {
+        public closeCurrentPage() {
             var current = this.currentPage();
             var previous = this.previousPage();
 
-            if (current != null) {
-                var swipe = this.config.closeSwipe(current.routeData);
-                current.close({}, swipe);
-
-                if (previous != null)
-                    previous.show();
-
-                this.page_stack.pop();
-                console.log('page_stack lenght:' + this.page_stack.length);
+            if (current == null) {
+                return;
             }
+
+            var swipe = this.config.closeSwipe(current.routeData);
+            if (swipe == chitu.SwipeDirection.None) {
+                current.close({}, swipe);
+                if (previous != null)
+                    previous.show(SwipeDirection.None);
+            }
+            else {
+                if (previous != null)
+                    previous.show(SwipeDirection.None);
+
+                current.close({}, swipe);
+            }
+
+            console.log('page_stack lenght:' + this.page_stack.length);
         }
         private createPage(url: string, container: HTMLElement, previousPage?: chitu.Page) {
             if (!url)
@@ -224,13 +280,14 @@
 
             this.on_pageCreating(context);
             var scrollType = this.config.scrollType(routeData);
-            var page = new ns.Page(container, scrollType, previousPage);
+            var page = new ns.Page(container, routeData, action_deferred, view_deferred, previousPage);
             page.routeData = routeData;
-            page.view = view_deferred;
-            page.action = action_deferred;
+            // page.view = view_deferred;
+            // page.action = action_deferred;
 
             this.on_pageCreated(page, context);
-
+            page.closed.add(this.page_closed);
+            page.shown.add(this.page_shown);
             return page;
         }
         public redirect(url: string, args = {}): chitu.Page {
