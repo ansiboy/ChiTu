@@ -16,13 +16,13 @@ namespace chitu {
     const PAGE_FOOTER_CLASS_NAME = 'page-footer';
     const PAGE_LOADING_CLASS_NAME = 'page-loading';
     const PAGE_CONTENT_CLASS_NAME = 'page-content';
-    //var zindex: number;
+    //var zindex: number;viewChanged
 
 
     var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
 
     export enum PageLoadType {
-        open,
+        init,
         scroll,
         pullDown,
         pullUp,
@@ -142,7 +142,7 @@ namespace chitu {
             this._scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
             this._scrollLoad_loading_bar.style.display = 'none';
             $(this._scrollLoad_loading_bar).find('h5').html(this.LOADDING_HTML);
-            page.nodes().content.appendChild(this._scrollLoad_loading_bar);
+            page.conatiner.content.appendChild(this._scrollLoad_loading_bar);
         }
         show() {
             if (this._scrollLoad_loading_bar.style.display == 'block')
@@ -198,7 +198,7 @@ namespace chitu {
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
         scrollEnd = ns.Callbacks();
-        viewChanged = $.Callbacks();
+        viewChanged = ns.Callbacks();
 
         constructor(element: HTMLElement, routeData: RouteData,
             action: JQueryPromise<Action>, view: JQueryPromise<string>,
@@ -225,7 +225,7 @@ namespace chitu {
                     this.view.done((html) => this.viewHtml = html);
                 }
 
-                var load_args = this.createPageLoadArguments(routeData.values(), chitu.PageLoadType.open, this.formLoading);
+                var load_args = this.createPageLoadArguments(routeData.values(), chitu.PageLoadType.init, this.formLoading);
                 load_args.loading.show();
 
                 this.on_load(load_args);
@@ -241,15 +241,15 @@ namespace chitu {
             if (this._formLoading == null) {
                 this._formLoading = {
                     show: () => {
-                        if ($(this.nodes().loading).is(':visible'))
+                        if ($(this.conatiner.loading).is(':visible'))
                             return;
 
-                        $(this.nodes().loading).show();
-                        $(this.nodes().content).hide();
+                        $(this.conatiner.loading).show();
+                        $(this.conatiner.content).hide();
                     },
                     hide: () => {
-                        $(this.nodes().loading).hide();
-                        $(this.nodes().content).show();
+                        $(this.conatiner.loading).hide();
+                        $(this.conatiner.content).show();
                     }
                 }
             }
@@ -292,11 +292,12 @@ namespace chitu {
             this._enableScrollLoad = value;
         }
         private set viewHtml(value: string) {
-            this.nodes().content.innerHTML = value;
-            this.viewChanged.fire();
+            this.conatiner.content.innerHTML = value;
+            //this.viewChanged.fire();
+            this.fireEvent(this.viewChanged,{});
         }
         private get viewHtml(): string {
-            return this.nodes().content.innerHTML;
+            return this.conatiner.content.innerHTML;
         }
         static getPageName(routeData: RouteData): string {
             var name: string;
@@ -318,7 +319,7 @@ namespace chitu {
 
             return this._name;
         }
-        nodes(): PageContainer {
+        get conatiner(): PageContainer {
             return this._pageContainer;
         }
         get previous(): chitu.Page {

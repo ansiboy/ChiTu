@@ -1,28 +1,11 @@
-/// <reference path="Scripts/typings/move.d.ts" />
-
 namespace chitu {
-
-    class ScrollArguments {
+   export class ScrollArguments {
         scrollTop: number
         scrollHeight: number
         clientHeight: number
     }
 
-    export interface PageContainer {
-        show(swipe: SwipeDirection): JQueryPromise<any>;
-        hide(swipe: SwipeDirection): JQueryPromise<any>;
-        dispose();
-
-        //header: HTMLElement;
-        content: HTMLElement;
-        //footer: HTMLElement;
-        loading: HTMLElement;
-        visible: boolean;
-
-        scrollEnd: JQueryCallback;
-    }
-
-    export abstract class BasePageContainer implements PageContainer {
+    export abstract class WebPageContainer implements PageContainer {
         private animationTime: number = 300;
         private num: Number;
 
@@ -31,9 +14,11 @@ namespace chitu {
 
         scrollEnd = $.Callbacks()
 
-        constructor(node: HTMLElement, prevous: PageContainer) {
-            if (!node) throw Errors.argumentNull('node');
-            $(node).hide();
+        constructor(prevous: PageContainer) {
+            //if (!node) throw Errors.argumentNull('node');
+            //$(node).hide();
+            var node = document.createElement('div');
+            document.body.appendChild(node);
 
             this.previous = prevous;
             this.nodes = new chitu.PageNodes(node);
@@ -69,9 +54,9 @@ namespace chitu {
                 case SwipeDirection.Up:
                     this.translateY(container_height, 0);
                     $(this.nodes.container).show();
-                    window.setTimeout(()=>{
+                    window.setTimeout(() => {
                         this.translateY(0, this.animationTime).done(on_end);
-                    },30);
+                    }, 30);
                     break;
                 case SwipeDirection.Right:
                     this.translateX(0 - container_width, 0);
@@ -191,12 +176,7 @@ namespace chitu {
     }
 
    
+
    
 
- 
-
-  
-
-
-  
 }
