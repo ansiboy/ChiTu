@@ -4,12 +4,13 @@ module.exports = function (grunt) {
         typescript: {
             base: {
                 src: ['ChiTu/**/*.ts'],
-                dest: 'Build',
+                dest: 'Build/chitu.js',
                 options: {
+                    basePath: 'Build',
                     module: 'amd', //or commonjs
                     target: 'es5',
                     removeComments: true,
-                    declaration: true
+                    declaration: true,
                 }
             }
         },
