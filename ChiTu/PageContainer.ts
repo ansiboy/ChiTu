@@ -1,5 +1,3 @@
-/// <reference path="Scripts/typings/move.d.ts" />
-
 namespace chitu {
 
     class ScrollArguments {
@@ -14,8 +12,9 @@ namespace chitu {
         dispose();
 
         //header: HTMLElement;
-        content: HTMLElement;
+        //content: HTMLElement;
         //footer: HTMLElement;
+        nodes: PageNodes;
         loading: HTMLElement;
         visible: boolean;
 
@@ -26,7 +25,7 @@ namespace chitu {
         private animationTime: number = 300;
         private num: Number;
 
-        protected nodes: PageNodes;
+        private _nodes: PageNodes;
         protected previous: PageContainer;
 
         scrollEnd = $.Callbacks()
@@ -36,7 +35,7 @@ namespace chitu {
             $(node).hide();
 
             this.previous = prevous;
-            this.nodes = new chitu.PageNodes(node);
+            this._nodes = new chitu.PageNodes(node);
             this.disableHeaderFooterTouchMove();
         }
         show(swipe: SwipeDirection): JQueryPromise<any> {
@@ -53,6 +52,7 @@ namespace chitu {
 
             switch (swipe) {
                 case SwipeDirection.None:
+                default:
                     $(this.nodes.container).show();
                     result = $.Deferred().resolve();
                     break;
@@ -69,9 +69,9 @@ namespace chitu {
                 case SwipeDirection.Up:
                     this.translateY(container_height, 0);
                     $(this.nodes.container).show();
-                    window.setTimeout(()=>{
+                    window.setTimeout(() => {
                         this.translateY(0, this.animationTime).done(on_end);
-                    },30);
+                    }, 30);
                     break;
                 case SwipeDirection.Right:
                     this.translateX(0 - container_width, 0);
@@ -140,6 +140,7 @@ namespace chitu {
             var result: JQueryPromise<any>;
             switch (swipe) {
                 case SwipeDirection.None:
+                default:
                     result = $.Deferred().resolve();
                     break;
                 case SwipeDirection.Down:
@@ -170,8 +171,8 @@ namespace chitu {
         get header() {
             return this.nodes.header;
         }
-        get content() {
-            return this.nodes.content;
+        get nodes(): PageNodes {
+            return this._nodes;
         }
         get footer() {
             return this.nodes.footer;
@@ -190,13 +191,13 @@ namespace chitu {
         }
     }
 
-   
-   
-
- 
-
-  
 
 
-  
+
+
+
+
+
+
+
 }

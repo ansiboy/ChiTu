@@ -9,10 +9,9 @@
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
     export interface ApplicationConfig {
-        container: () => HTMLElement | HTMLElement,
-        openSwipe?: (page: chitu.RouteData) => SwipeDirection,
-        scrollType?: (page: chitu.RouteData) => ScrollType,
-        closeSwipe?: (page: chitu.RouteData) => SwipeDirection,
+        container?: (routeData: chitu.RouteData, previous?: Page | PageContainer) => PageContainer,
+        openSwipe?: (routeData: chitu.RouteData) => SwipeDirection,
+        closeSwipe?: (route: chitu.RouteData) => SwipeDirection,
     }
 
     export class Application {
@@ -32,18 +31,14 @@
             if (config == null)
                 throw e.argumentNull('container');
 
-            if (!config.container) {
-                throw new Error('The config has not a container property.');
-            }
-
-            if (!$.isFunction(config.container) && !config.container['tagName'])
-                throw new Error('Parameter container is not a function or html element.');
 
             //this._container = config['container'];
             this._config = config;
             this._config.openSwipe = config.openSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
             this._config.closeSwipe = config.closeSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
-            this._config.scrollType = config.scrollType || function(routeData: chitu.RouteData) { return ScrollType.Document };
+            this._config.container = config.container || function(routeData: chitu.RouteData, previous: Page | PageContainer): PageContainer {
+                return PageContainerFactory.createPageContainer(routeData, previous);
+            };
 
 
 
@@ -199,21 +194,21 @@
                 throw e.noneRouteMatched(url);
             }
 
-            var container: HTMLElement;
-            if ($.isFunction(this.config.container)) {
-                container = (<Function>this.config.container)(routeData.values());
-                if (container == null)
-                    throw new Error('The result of continer function cannt be null');
-            }
-            else {
-                container = <any>this.config.container;
-            }
+            //var container: HTMLElement;
+            // if ($.isFunction(this.config.container)) {
+            //     container = (<Function>this.config.container)(routeData.values());
+            //     if (container == null)
+            //         throw new Error('The result of continer function cannt be null');
+            // }
+            // else {
+            //     container = <any>this.config.container;
+            // }
 
             var previous = this.currentPage();
 
-            var page_node = document.createElement('div');
-            container.appendChild(page_node);
-            var page = this.createPage(url, page_node, previous);
+            // var page_node = document.createElement('div');
+            // container.appendChild(page_node);
+            var page = this.createPage(url, previous);
             this.page_stack.push(page);
             console.log('page_stack lenght:' + this.page_stack.length);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -260,12 +255,12 @@
 
             console.log('page_stack lenght:' + this.page_stack.length);
         }
-        private createPage(url: string, container: HTMLElement, previousPage?: chitu.Page) {
+        private createPage(url: string, previousPage?: chitu.Page) {
             if (!url)
                 throw e.argumentNull('url');
 
-            if (!container)
-                throw e.argumentNull('element');
+            // if (!container)
+            //     throw e.argumentNull('element');
 
             var routeData = this.routes().getRouteData(url);
             if (routeData == null) {
@@ -279,7 +274,8 @@
             var context = new ns.PageContext(view_deferred, routeData);
 
             this.on_pageCreating(context);
-            var scrollType = this.config.scrollType(routeData);
+            //var scrollType = this.config.scrollType(routeData);
+            var container = this.config.container(routeData);
             var page = new ns.Page(container, routeData, action_deferred, view_deferred, previousPage);
             page.routeData = routeData;
             // page.view = view_deferred;

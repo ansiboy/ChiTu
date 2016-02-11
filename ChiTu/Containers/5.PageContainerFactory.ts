@@ -91,13 +91,13 @@ namespace chitu {
     }
 
     export class PageContainerFactory {
-        static createPageContainer<T extends PageContainer>(routeData: RouteData, pageNode: HTMLElement, previous: Page | T): PageContainer {
+        static createPageContainer(routeData: RouteData, previous: Page | PageContainer): PageContainer {
 
             var previous_container: PageContainer;
             if (previous instanceof Page)
                 previous_container = previous.conatiner;
-            else if (previous != null)
-                previous_container = <T>previous;
+            else 
+                previous_container = <PageContainer>previous;
 
             if (Environment.instance.isDegrade)// || (site.env.isApp && site.env.isAndroid)
                 return new DocumentPageContainer(<DocumentPageContainer>previous_container);
