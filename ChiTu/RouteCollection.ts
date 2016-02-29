@@ -44,7 +44,7 @@ namespace chitu {
             route.viewPath = args.viewPath;
             route.actionPath = args.actionPath;
 
-            var originalRoute = this._source.addRoute(url, function (args) {
+            var originalRoute = this._source.addRoute(url, function(args) {
                 //var values = $.extend(defaults, args);
                 //self.routeMatched.fire([name, values]);
             }, this._priority);
@@ -67,8 +67,7 @@ namespace chitu {
             return route;
         }
 
-        getRouteData(url): chitu.RouteData {
-            /// <returns type="Object"/>
+        getRouteData(url: string): chitu.RouteData {
             var data = this._source.getRouteData(url);
             if (data == null)
                 throw e.canntParseUrl(url);

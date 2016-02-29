@@ -209,7 +209,7 @@
         return new chitu.Callback(self);
     }
 
-    export function fireCallback(callback: chitu.Callback, args): JQueryPromise<any> {
+    export function fireCallback(callback: chitu.Callback, args: Array<any>): JQueryPromise<any> {
 
         var results = callback.fire.apply(callback, args);
         var deferreds = [];

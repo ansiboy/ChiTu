@@ -6,9 +6,9 @@ namespace chitu {
     var u = chitu.Utility;
     var e = chitu.Errors;
 
-    function eventDeferred(callback: chitu.Callback, sender, args = {}): JQueryPromise<any> {
-        return chitu.fireCallback(callback, [sender, args]);
-    };
+    // function eventDeferred(callback: chitu.Callback, sender, args = {}): JQueryPromise<any> {
+    //     return chitu.fireCallback(callback, [sender, args]);
+    // };
 
     const PAGE_CLASS_NAME = 'page-node';
     const PAGE_HEADER_CLASS_NAME = 'page-header';
@@ -16,8 +16,6 @@ namespace chitu {
     const PAGE_FOOTER_CLASS_NAME = 'page-footer';
     const PAGE_LOADING_CLASS_NAME = 'page-loading';
     const PAGE_CONTENT_CLASS_NAME = 'page-content';
-    //var zindex: number;viewChanged
-
 
     var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
 
@@ -34,26 +32,26 @@ namespace chitu {
         hide()
     }
 
-    export class PageLoadArguments {
-        private _page: chitu.Page;
-
-        constructor(page: chitu.Page, loadType?: PageLoadType, loading?: PageLoading) {
-            if (page == null)
-                throw chitu.Errors.argumentNull('page');
-
-            this._page = page;
-            this.loadType = loadType;
-            this.loading = loading;
-        }
-        loadType: PageLoadType
-        loading: PageLoading
-        set enableScrollLoad(value: boolean) {
-            (<any>this._page).enableScrollLoad = value;
-        }
-        get enableScrollLoad(): boolean {
-            return (<any>this._page).enableScrollLoad;
-        }
-    }
+    //     export class PageLoadArguments {
+    //         private _page: chitu.Page;
+    // 
+    //         constructor(page: chitu.Page, loadType?: PageLoadType, loading?: PageLoading) {
+    //             if (page == null)
+    //                 throw chitu.Errors.argumentNull('page');
+    // 
+    //             this._page = page;
+    //             this.loadType = loadType;
+    //             this.loading = loading;
+    //         }
+    //         loadType: PageLoadType
+    //         loading: PageLoading
+    //         set enableScrollLoad(value: boolean) {
+    //             (<any>this._page).enableScrollLoad = value;
+    //         }
+    //         get enableScrollLoad(): boolean {
+    //             return (<any>this._page).enableScrollLoad;
+    //         }
+    //     }
 
     enum ShowTypes {
         swipeLeft,
@@ -87,81 +85,7 @@ namespace chitu {
         Document,
     }
 
-    export class PageNodes {
-        container: HTMLElement
-        header: HTMLElement
-        body: HTMLElement
-        footer: HTMLElement
-        loading: HTMLElement
-        content: HTMLElement
-
-        constructor(node: HTMLElement) {
-            node.className = PAGE_CLASS_NAME;
-            this.container = node;
-
-            this.header = document.createElement('div');
-            this.header.className = PAGE_HEADER_CLASS_NAME;
-            //this.headerNode.style.display = 'none';
-            node.appendChild(this.header);
-
-            this.body = document.createElement('div');
-            this.body.className = PAGE_BODY_CLASS_NAME;
-            //$(this.body).hide();
-            node.appendChild(this.body);
-
-            this.content = document.createElement('div');
-            this.content.className = PAGE_CONTENT_CLASS_NAME;
-            $(this.content).hide();
-            this.body.appendChild(this.content);
-
-            this.loading = document.createElement('div');
-            this.loading.className = PAGE_LOADING_CLASS_NAME;
-            this.loading.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
-            $(this.loading).hide();
-            this.body.appendChild(this.loading);
-
-            this.footer = document.createElement('div');
-            this.footer.className = PAGE_FOOTER_CLASS_NAME;
-            //this.footerNode.style.display = 'none';
-            node.appendChild(this.footer);
-        }
-    }
-
-    class PageBottomLoading implements PageLoading {
-        private LOADDING_HTML = '<i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span>';
-        private _page: chitu.Page;
-        private _scrollLoad_loading_bar: HTMLElement;
-
-        constructor(page: chitu.Page) {
-            if (!page)
-                throw chitu.Errors.argumentNull('page');
-
-            this._page = page;
-
-            this._scrollLoad_loading_bar = document.createElement('div');
-            this._scrollLoad_loading_bar.innerHTML = '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"><h5 class="text-center"></h5></div>';
-            this._scrollLoad_loading_bar.style.display = 'none';
-            $(this._scrollLoad_loading_bar).find('h5').html(this.LOADDING_HTML);
-            page.conatiner.nodes.content.appendChild(this._scrollLoad_loading_bar);
-        }
-        show() {
-            if (this._scrollLoad_loading_bar.style.display == 'block')
-                return;
-
-            this._scrollLoad_loading_bar.style.display = 'block';
-            this._page.refreshUI();
-        }
-        hide() {
-            if (this._scrollLoad_loading_bar.style.display == 'none')
-                return;
-
-            this._scrollLoad_loading_bar.style.display = 'none';
-            this._page.refreshUI();
-        }
-    }
-
-
-    export class Page {
+    export class Page {// extends Control
         static animationTime: number = 300;
         //private _context: ControllerContext
         private _name: string;
@@ -171,21 +95,27 @@ namespace chitu {
         private _loadViewModelResult = null;
         private _openResult: JQueryDeferred<any> = null;
         private _hideResult = null;
-        //private _pageNode: PageContainer; //PageNodes;
+
         private _showTime = Page.animationTime;
         private _hideTime = Page.animationTime;
         private _prevous: chitu.Page;
-        //private ios_scroller: IOSScroll;
+
         private _routeData: chitu.RouteData;
         private _enableScrollLoad = false;
         private is_closed = false;
         private _scrollLoad_loading_bar: HTMLElement;
-        //private actionExecuted = $.Deferred<boolean>();
+
         private isActionExecuted = false;
-        //private _scrollType: ScrollType;
+
         private _formLoading: PageLoading;
         private _bottomLoading: PageLoading;
         private _pageContainer: PageContainer;
+        private _node: HTMLElement;
+        private _viewHtml: string;
+        
+        // Controls
+        private _loading: Control;
+        private _controls: Array<Control>;
 
         preLoad = ns.Callbacks();
         load = ns.Callbacks();
@@ -204,75 +134,49 @@ namespace chitu {
             action: JQueryPromise<Action>, view: JQueryPromise<string>,
             previous?: chitu.Page) {
 
+            //super(container);
             if (!container) throw e.argumentNull('container');
             if (routeData == null) throw e.argumentNull('scrorouteDatallType');
             if (action == null) throw e.argumentNull('action');
             if (view == null) throw e.argumentNull('view');
 
+            this._pageContainer = container;
+            this._node = document.createElement('div');
+
             this._actionDeferred = action;
             this._viewDeferred = view;
             this._prevous = previous;
             this._routeData = routeData
-            this._pageContainer =container; //PageContainerFactory.createPageContainer(routeData, previous);
-            this._pageContainer.scrollEnd.add((sender, args) => this.on_scrollEnd(args));
-
-            this.scrollEnd.add(Page.page_scrollEnd);
 
             this.action.done((action) => {
                 action.execute(this);
 
                 if (this.view) {
-                    this.view.done((html) => this.viewHtml = html);
+                    this.view.done((html) => {
+                        this.node.innerHTML = html;
+                        this._controls = this.createControls(this.node);
+                        this.viewHtml = html
+
+                        //var load_args = this.createPageLoadArguments(routeData.values(), chitu.PageLoadType.init, this.formLoading);
+                        //load_args.loading.show();
+
+                        this.on_load(routeData.values());
+                    });
                 }
-
-                var load_args = this.createPageLoadArguments(routeData.values(), chitu.PageLoadType.init, this.formLoading);
-                load_args.loading.show();
-
-                this.on_load(load_args);
             })
         }
-        private createPageLoadArguments(args, loadType: PageLoadType, loading: PageLoading): PageLoadArguments {
-            var result: PageLoadArguments = new PageLoadArguments(this, loadType, loading);
-            result = $.extend(result, args || {});
 
-            return result;
-        }
-        get formLoading(): PageLoading {
-            if (this._formLoading == null) {
-                this._formLoading = {
-                    show: () => {
-                        if ($(this.conatiner.loading).is(':visible'))
-                            return;
+        private createControls(element: HTMLElement): Control[] {
+            //var control_parser = new ControlParser(this);
+            this._controls = ControlFactory.createControls(element, this);//, this
+            var stack = new Array<Control>();
 
-                        $(this.conatiner.loading).show();
-                        $(this.conatiner.nodes.content).hide();
-                    },
-                    hide: () => {
-                        $(this.conatiner.loading).hide();
-                        $(this.conatiner.nodes.content).show();
-                    }
-                }
+            for (var i = 0; i < this._controls.length; i++) {
+                stack.push(this._controls[i]);
             }
-            return this._formLoading;
+            return this._controls;
         }
-        set formLoading(value: PageLoading) {
-            if (!value)
-                throw chitu.Errors.argumentNull('value');
 
-            this._formLoading = value;
-        }
-        get bottomLoading(): PageLoading {
-            if (this._bottomLoading == null)
-                this._bottomLoading = new PageBottomLoading(this);
-
-            return this._bottomLoading;
-        }
-        set bottomLoading(value: PageLoading) {
-            if (!value)
-                throw chitu.Errors.argumentNull('value');
-
-            this._bottomLoading = value;
-        }
         get view(): JQueryPromise<string> {
             return this._viewDeferred;
         }
@@ -292,12 +196,12 @@ namespace chitu {
             this._enableScrollLoad = value;
         }
         private set viewHtml(value: string) {
-            this.conatiner.nodes.content.innerHTML = value;
-            //this.viewChanged.fire();
-            this.fireEvent(this.viewChanged, {});
+            this._viewHtml = value;
+            this.on_viewChanged({});
         }
         private get viewHtml(): string {
-            return this.conatiner.nodes.content.innerHTML;
+            //return this.conatiner.nodes.content.innerHTML;
+            return this._viewHtml;
         }
         static getPageName(routeData: RouteData): string {
             var name: string;
@@ -320,63 +224,72 @@ namespace chitu {
             return this._name;
         }
         get node(): HTMLElement {
-            return this._pageContainer.nodes.container;
-        }
-        get conatiner(): PageContainer {
-            return this._pageContainer;
+            return this._node;
         }
         get previous(): chitu.Page {
             return this._prevous;
         }
+        get visible(): boolean {
+            return $(this._node).is(':visible');
+        }
+        get container(): PageContainer {
+            return this._pageContainer;
+        }
         hide(swipe?: SwipeDirection): JQueryPromise<any> {
             swipe = swipe || SwipeDirection.None;
-            return this._pageContainer.hide(swipe);
+            return this.container.hide(swipe);
         }
-        show(swipe?: SwipeDirection): JQueryPromise<any> {
-            swipe = swipe || SwipeDirection.None;
-            return this._pageContainer.show(swipe);
-        }
-        visible(): boolean {
-            return this._pageContainer.visible;
-        }
-        private fireEvent(callback: chitu.Callback, args): JQueryPromise<any> {
-            return eventDeferred(callback, this, args);
-        }
+        findControl<T extends Control>(name: string): T {
+            if (!name) throw Errors.argumentNull('name');
 
-        on_load(args: PageLoadArguments | { loadType: PageLoadType, loading?: PageLoading }) {
-
-            var load_args: PageLoadArguments = args instanceof PageLoadArguments ?
-                args : new PageLoadArguments(this, args.loadType, args.loading);
-
-            if (load_args.loading == null) {
-                load_args.loading = load_args.loadType == chitu.PageLoadType.scroll ? this.bottomLoading : this.formLoading;
+            var stack = new Array<Control>();
+            for (var i = 0; i < this._controls.length; i++) {
+                var control = this._controls[i];
+                stack.push(control);
             }
+            while (stack.length > 0) {
+                var control = stack.pop();
+                if (control.name == name)
+                    return <T>control;
 
-            load_args.loading.show();
-            var result = this.fireEvent(this.load, load_args);
-            result.done(() => load_args.loading.hide());
+                for (var i = 0; i < control.children.length; i++)
+                    stack.push(control.children[i]);
+            }
+            return null;
+        }
 
+        private fireEvent(callback: chitu.Callback, args): JQueryPromise<any> {
+            return chitu.fireCallback(callback, [this, args]);
+        }
+        on_load(args: Object) {
+            var promises = new Array<JQueryPromise<any>>();
+            promises.push(this.fireEvent(this.load, args));
+            for (var i = 0; i < this._controls.length; i++) {
+                var p = this._controls[i].on_load(args);
+                //if (chitu.Utility.isDeferred(p))
+                promises.push(p);
+            }
+            var result = $.when.apply($, promises);
             //===============================================================
             // 必须是 view 加载完成，并且 on_load 完成后，才触发 on_loadCompleted 事件
             if (this.view == null) {
-                result.done(() => this.on_loadCompleted(load_args));
+                result.done(() => this.on_loadCompleted(args));
             }
             else {
                 if (this.view.state() == 'resolved') {
-                    result.done(() => this.on_loadCompleted(load_args));
+                    result.done(() => this.on_loadCompleted(args));
                 }
                 else {
-                    $.when(this.view, result).done(() => this.on_loadCompleted(load_args));
+                    $.when(this.view, result).done(() => this.on_loadCompleted(args));
                 }
             }
             //===============================================================
 
             return result;
         }
-        on_loadCompleted(args) {
-            return this.fireEvent(this.loadCompleted, args).done(() => {
-                window.setTimeout(() => this.refreshUI(), 100);
-            });
+        on_loadCompleted(args: Object) {
+            var result = this.fireEvent(this.loadCompleted, args);
+            //result.done(() => this.container.hideLoading());
         }
         on_closing(args) {
             return this.fireEvent(this.closing, args);
@@ -402,63 +315,22 @@ namespace chitu {
         on_scrollEnd(args) {
             return this.fireEvent(this.scrollEnd, args);
         }
-        close(args?: Object, swipe?: SwipeDirection) {
-            /// <summary>
-            /// Colse the page.
-            /// </summary>
-            /// <param name="args" type="Object" canBeNull="true">
-            /// The value passed to the hide event functions.
-            /// </param>
-
-            if (this.is_closed)
-                return;
-
-            this.on_closing(args);
-
-            this._pageContainer.hide(swipe).done(() => {
-                this._pageContainer.dispose();
-
-                args = args || {};
-                this.on_closed(args);
-                this.is_closed = true;
-            });
+        on_viewChanged(args) {
+            return this.fireEvent(this.viewChanged, args);
         }
-
-        private static page_scrollEnd(sender: chitu.Page, args) {
-            //scrollStatus = ScrollStatus.ScrollEnd;
-
-            var scrollTop = args.scrollTop;
-            var scrollHeight = args.scrollHeight;
-            var clientHeight = args.clientHeight;
-        
-            //====================================================================
-
-            var marginBottom = clientHeight / 3;
-            if (clientHeight + scrollTop < scrollHeight - marginBottom)
-                return;
-
-            if (!sender.enableScrollLoad)
-                return;
-
-            var scroll_arg = $.extend(sender.routeData.values(), <PageLoadArguments>{
-                loadType: PageLoadType.scroll,
-                loading: sender.bottomLoading,
-            });
-            var result = sender.on_load(scroll_arg);
-        }
-
-        refreshUI() {
-            // if (this.ios_scroller) {    //仅 IOS 需要刷新
-            //     this.ios_scroller.refresh();
-            // }
-            if (this._pageContainer instanceof IScrollPageContainer)
-                (<IScrollPageContainer>this._pageContainer).refresh();
-        }
+        //         close(args?: Object, swipe?: SwipeDirection) {
+        //             if (this.is_closed)
+        //                 return;
+        // 
+        //             this.on_closing(args);
+        // 
+        //             this.hide(swipe).done(() => {
+        //                  this.container.close();
+        // 
+        //                 args = args || {};
+        //                 this.on_closed(args);
+        //                 this.is_closed = true;
+        //             });
+        //         }
     }
-
-    Object.defineProperty(Page.prototype, 'iscroller', {
-        get: function() {
-            return (<Page>this).conatiner['iscroller'];
-        }
-    })
 };

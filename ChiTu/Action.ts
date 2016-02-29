@@ -1,4 +1,5 @@
-﻿namespace chitu {
+﻿
+namespace chitu {
 
     var e = chitu.Errors;
     var crossroads = window['crossroads'];
