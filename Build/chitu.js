@@ -110,11 +110,12 @@ var chitu;
             this.container_stack = new Array();
             if (config == null)
                 throw e.argumentNull('container');
+            var container_factory = this._containerFactory = new chitu.PageContainerFactory(this);
             this._config = config;
             this._config.openSwipe = config.openSwipe || function (routeData) { return chitu.SwipeDirection.None; };
             this._config.closeSwipe = config.closeSwipe || function (routeData) { return chitu.SwipeDirection.None; };
             this._config.container = config.container || function (routeData, previous) {
-                return chitu.PageContainerFactory.createInstance(routeData, previous);
+                return container_factory.createInstance(routeData, previous);
             };
         }
         Application.prototype.on_pageCreating = function (context) {
@@ -141,6 +142,13 @@ var chitu;
         Object.defineProperty(Application.prototype, "pageContainers", {
             get: function () {
                 return this.container_stack;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Application.prototype, "containerFactory", {
+            get: function () {
+                return this._containerFactory;
             },
             enumerable: true,
             configurable: true
@@ -1483,18 +1491,57 @@ var chitu;
         return PageContainerTypeClassNames;
     })();
     var PageContainer = (function () {
-        function PageContainer(previous) {
+        function PageContainer(app, previous) {
             this.animationTime = 300;
+            this._previousOffsetRate = 0.5;
             this.pageCreated = chitu.Callbacks();
             this.is_closing = false;
             this._node = this.createNode();
             this._loading = this.createLoading(this._node);
             this._pages = new Array();
             this._previous = previous;
+            this._app = app;
             this.gesture = new Gesture();
+            this.enableSwipeClose(this);
         }
         PageContainer.prototype.on_pageCreated = function (page) {
             return chitu.fireCallback(this.pageCreated, [this, page]);
+        };
+        PageContainer.prototype.enableSwipeClose = function (container) {
+            var _this = this;
+            if (container.previous == null)
+                return;
+            var previous_start_x;
+            var node = container.element;
+            var pan = container.gesture.createPan(container.element);
+            pan.start = function (e) {
+                node.style.webkitTransform = '';
+                node.style.transform = '';
+                var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
+                previous_start_x = martix.m41;
+                return container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0;
+            };
+            pan.left = function (e) {
+                if (e.deltaX <= 0) {
+                    move(node).x(0).duration(0).end();
+                    move(_this.previous.element).x(previous_start_x).duration(0).end();
+                    return;
+                }
+                move(node).x(e.deltaX).duration(0).end();
+                move(_this.previous.element).x(previous_start_x + e.deltaX * _this._previousOffsetRate).duration(0).end();
+            };
+            pan.right = function (e) {
+                move(node).x(e.deltaX).duration(0).end();
+                move(_this.previous.element).x(previous_start_x + e.deltaX * _this._previousOffsetRate).duration(0).end();
+            };
+            pan.end = function (e) {
+                if (e.deltaX > $(window).width() / 2) {
+                    _this._app.back();
+                    return;
+                }
+                move(node).x(0).duration(chitu.Page.animationTime).end();
+                move(container.previous.element).x(previous_start_x).duration(chitu.Page.animationTime).end();
+            };
         };
         PageContainer.prototype.createNode = function () {
             this._node = document.createElement('div');
@@ -1527,88 +1574,70 @@ var chitu;
                     result = $.Deferred().resolve();
                     break;
                 case chitu.SwipeDirection.Down:
-                    this.translateY(0 - container_height, 0);
+                    move(this.element).y(0 - container_height).duration(0).end();
                     $(this._node).show();
                     window.setTimeout(function () {
-                        _this.translateY(0, _this.animationTime).done(on_end);
+                        move(_this.element).y(0).duration(_this.animationTime).end(on_end);
                     }, 30);
                     break;
                 case chitu.SwipeDirection.Up:
-                    this.translateY(container_height, 0);
+                    move(this.element).y(container_height).duration(0).end();
                     $(this._node).show();
                     window.setTimeout(function () {
-                        _this.translateY(0, _this.animationTime).done(on_end);
+                        move(_this.element).y(0).duration(_this.animationTime).end(on_end);
                     }, 30);
                     break;
                 case chitu.SwipeDirection.Right:
-                    this.translateX(0 - container_width, 0);
+                    move(this.element).x(0 - container_width).duration(0).end();
                     $(this._node).show();
                     window.setTimeout(function () {
-                        _this.translateX(0, _this.animationTime).done(on_end);
+                        if (_this.previous != null)
+                            move(_this.previous.element).x(container_width * _this._previousOffsetRate).duration(_this.animationTime).end();
+                        move(_this.element).x(0).duration(_this.animationTime).end(on_end);
                     }, 30);
                     break;
                 case chitu.SwipeDirection.Left:
-                    this.translateX(container_width, 0);
+                    move(this.element).x(container_width).duration(0).end();
                     $(this._node).show();
                     window.setTimeout(function () {
-                        _this.translateX(0, _this.animationTime).done(on_end);
+                        if (_this.previous != null)
+                            move(_this.previous.element).x(0 - container_width * _this._previousOffsetRate).duration(_this.animationTime).end();
+                        move(_this.element).x(0).duration(_this.animationTime).end(on_end);
                     }, 30);
                     break;
             }
             return result;
         };
-        PageContainer.prototype.translateDuration = function (duration) {
-            if (duration < 0)
-                throw chitu.Errors.paramError('Parameter duration must greater or equal 0, actual is ' + duration + '.');
-            var result = $.Deferred();
-            if (duration == 0) {
-                this._node.style.transitionDuration =
-                    this._node.style.webkitTransitionDuration = '';
-                return result.resolve();
-            }
-            this._node.style.transitionDuration =
-                this._node.style.webkitTransitionDuration = duration + 'ms';
-            window.setTimeout(function () { return result.resolve(); }, duration);
-            return result;
-        };
-        PageContainer.prototype.translateX = function (x, duration) {
-            var result = this.translateDuration(duration);
-            this._node.style.transform = this._node.style.webkitTransform
-                = 'translateX(' + x + 'px)';
-            return result;
-        };
-        PageContainer.prototype.translateY = function (y, duration) {
-            var result = this.translateDuration(duration);
-            this._node.style.transform = this._node.style.webkitTransform
-                = 'translateY(' + y + 'px)';
-            return result;
-        };
         PageContainer.prototype.hide = function (swipe) {
-            var _this = this;
             if (this.visible == false)
                 return $.Deferred().resolve();
             var container_width = $(this._node).width();
             var container_height = $(this._node).height();
-            var result;
+            var result = $.Deferred();
             switch (swipe) {
                 case chitu.SwipeDirection.None:
                 default:
-                    result = $.Deferred().resolve();
+                    if (this.previous != null)
+                        move(this.previous.element).x(0).duration(this.animationTime).end();
+                    result.resolve();
                     break;
                 case chitu.SwipeDirection.Down:
-                    result = this.translateY(container_height, this.animationTime);
+                    move(this.element).y(container_height).duration(this.animationTime).end(function () { return result.resolve(); });
                     break;
                 case chitu.SwipeDirection.Up:
-                    result = this.translateY(0 - container_height, this.animationTime);
+                    move(this.element).y(0 - container_height).duration(this.animationTime).end(function () { return result.resolve(); });
                     break;
                 case chitu.SwipeDirection.Right:
-                    result = this.translateX(container_width, this.animationTime);
+                    move(this.element).x(container_width).duration(this.animationTime).end(function () { return result.resolve(); });
+                    if (this.previous != null)
+                        move(this.previous.element).x(0).duration(this.animationTime).end();
                     break;
                 case chitu.SwipeDirection.Left:
-                    result = this.translateX(0 - container_width, this.animationTime);
+                    move(this.element).x(0 - container_width).duration(this.animationTime).end(function () { return result.resolve(); });
+                    if (this.previous != null)
+                        move(this.previous.element).x(0).duration(this.animationTime).end();
                     break;
             }
-            result.done(function () { return $(_this._node).hide(); });
             return result;
         };
         PageContainer.prototype.close = function (swipe) {
@@ -1698,10 +1727,11 @@ var chitu;
     })();
     chitu.PageContainer = PageContainer;
     var PageContainerFactory = (function () {
-        function PageContainerFactory() {
+        function PageContainerFactory(app) {
+            this._app = app;
         }
-        PageContainerFactory.createInstance = function (routeData, previous) {
-            return new PageContainer(previous);
+        PageContainerFactory.prototype.createInstance = function (routeData, previous) {
+            return new PageContainer(this._app, previous);
         };
         return PageContainerFactory;
     })();

@@ -28,23 +28,68 @@ namespace chitu {
         private _pages: Array<Page>;
         private _currentPage: Page;
         private _previous: PageContainer;
-
+        private _app: Application;
+        private _previousOffsetRate = 0.5; // 前一个页面，相对当前页面移动的比率
 
         gesture: Gesture;
         pageCreated: chitu.Callback = Callbacks();
 
-        constructor(previous?: PageContainer) {
+        constructor(app: Application, previous?: PageContainer) {
 
             this._node = this.createNode();
             this._loading = this.createLoading(this._node);
             this._pages = new Array<Page>();
             this._previous = previous;
+            this._app = app;
 
             this.gesture = new Gesture();
+            this.enableSwipeClose(this);
         }
 
         on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, [this, page]);
+        }
+
+        private enableSwipeClose(container: chitu.PageContainer) {
+            if (container.previous == null)
+                return;
+
+
+            var previous_start_x: number;
+
+            var node = container.element;
+
+            var pan = container.gesture.createPan(container.element);
+            pan.start = (e: PanEvent) => {
+                node.style.webkitTransform = '';
+                node.style.transform = ''
+                var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
+                previous_start_x = martix.m41;
+                return container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0;
+            };
+
+            pan.left = (e: PanEvent) => {
+                if (e.deltaX <= 0) {
+                    move(node).x(0).duration(0).end();
+                    move(this.previous.element).x(previous_start_x).duration(0).end();
+                    return;
+                }
+                move(node).x(e.deltaX).duration(0).end();
+                move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
+            }
+            pan.right = (e: PanEvent) => {
+                move(node).x(e.deltaX).duration(0).end();
+                move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
+            }
+            pan.end = (e: PanEvent) => {
+                if (e.deltaX > $(window).width() / 2) {
+                    //this.close(SwipeDirection.Right);
+                    this._app.back();
+                    return;
+                }
+                move(node).x(0).duration(Page.animationTime).end();
+                move(container.previous.element).x(previous_start_x).duration(Page.animationTime).end();
+            }
         }
 
         protected createNode(): HTMLElement {
@@ -85,101 +130,87 @@ namespace chitu {
                     result = $.Deferred().resolve();
                     break;
                 case SwipeDirection.Down:
-                    this.translateY(0 - container_height, 0);
+                    //this.translateY(0 - container_height, 0);
+                    move(this.element).y(0 - container_height).duration(0).end();
                     $(this._node).show();
                     //======================================
                     // 不要问我为什么这里要设置 timeout，反正不设置不起作用。
                     window.setTimeout(() => {
-                        this.translateY(0, this.animationTime).done(on_end);
+                        //this.translateY(0, this.animationTime).done(on_end);
+                        move(this.element).y(0).duration(this.animationTime).end(on_end);
                     }, 30);
                     //======================================
                     break;
                 case SwipeDirection.Up:
-                    this.translateY(container_height, 0);
+                    //this.translateY(container_height, 0);
+                    move(this.element).y(container_height).duration(0).end();
                     $(this._node).show();
                     window.setTimeout(() => {
-                        this.translateY(0, this.animationTime).done(on_end);
+                        //this.translateY(0, this.animationTime).done(on_end);
+                        move(this.element).y(0).duration(this.animationTime).end(on_end);
                     }, 30);
                     break;
                 case SwipeDirection.Right:
-                    this.translateX(0 - container_width, 0);
+                    move(this.element).x(0 - container_width).duration(0).end();
                     $(this._node).show();
                     window.setTimeout(() => {
-                        this.translateX(0, this.animationTime).done(on_end)
+                        if (this.previous != null)
+                            move(this.previous.element).x(container_width * this._previousOffsetRate).duration(this.animationTime).end();
+
+                        move(this.element).x(0).duration(this.animationTime).end(on_end);
                     }, 30);
                     break;
                 case SwipeDirection.Left:
-                    this.translateX(container_width, 0);
+                    move(this.element).x(container_width).duration(0).end();
                     $(this._node).show();
                     window.setTimeout(() => {
-                        this.translateX(0, this.animationTime).done(on_end);
+                        if (this.previous != null)
+                            move(this.previous.element).x(0 - container_width * this._previousOffsetRate).duration(this.animationTime).end();
+
+                        move(this.element).x(0).duration(this.animationTime).end(on_end);
                     }, 30);
                     break;
             }
             return result;
         }
-        
-        /// <summary>动画的效果的持续时间，这里使用定时器，是因为 transitionEnd 事件并非都起作用。</summary>
-        private translateDuration(duration: number) {
-            if (duration < 0)
-                throw Errors.paramError('Parameter duration must greater or equal 0, actual is ' + duration + '.');
 
-            var result = $.Deferred();
-            if (duration == 0) {
-                this._node.style.transitionDuration =
-                    this._node.style.webkitTransitionDuration = '';
-
-                return result.resolve();
-            }
-
-            this._node.style.transitionDuration =
-                this._node.style.webkitTransitionDuration = duration + 'ms';
-
-            window.setTimeout(() => result.resolve(), duration);
-            return result;
-        }
-        private translateX(x: number, duration?: number): JQueryPromise<any> {
-
-            var result = this.translateDuration(duration);
-            this._node.style.transform = this._node.style.webkitTransform
-                = 'translateX(' + x + 'px)';
-
-            return result;
-        }
-        private translateY(y: number, duration?: number): JQueryPromise<any> {
-
-            var result = this.translateDuration(duration);
-            this._node.style.transform = this._node.style.webkitTransform
-                = 'translateY(' + y + 'px)';
-
-            return result;
-        }
         hide(swipe: SwipeDirection): JQueryPromise<any> {
             if (this.visible == false)
                 return $.Deferred().resolve();
 
             var container_width = $(this._node).width();
             var container_height = $(this._node).height();
-            var result: JQueryPromise<any>;
+            var result = $.Deferred();
             switch (swipe) {
                 case SwipeDirection.None:
                 default:
-                    result = $.Deferred().resolve();
+                    if (this.previous != null)
+                        move(this.previous.element).x(0).duration(this.animationTime).end();
+
+                    result.resolve();
                     break;
                 case SwipeDirection.Down:
-                    result = this.translateY(container_height, this.animationTime);
+                    //result = this.translateY(container_height, this.animationTime);
+                    move(this.element).y(container_height).duration(this.animationTime).end(() => result.resolve())
                     break;
                 case SwipeDirection.Up:
-                    result = this.translateY(0 - container_height, this.animationTime);
+                    //result = this.translateY(0 - container_height, this.animationTime);
+                    move(this.element).y(0 - container_height).duration(this.animationTime).end(() => result.resolve());
                     break;
                 case SwipeDirection.Right:
-                    result = this.translateX(container_width, this.animationTime);
+                    //result = this.translateX(container_width, this.animationTime);
+                    move(this.element).x(container_width).duration(this.animationTime).end(() => result.resolve());
+                    if (this.previous != null)
+                        move(this.previous.element).x(0).duration(this.animationTime).end();
                     break;
                 case SwipeDirection.Left:
-                    result = this.translateX(0 - container_width, this.animationTime);
+                    //result = this.translateX(0 - container_width, this.animationTime);
+                    move(this.element).x(0 - container_width).duration(this.animationTime).end(() => result.resolve());
+                    if (this.previous != null)
+                        move(this.previous.element).x(0).duration(this.animationTime).end();
                     break;
             }
-            result.done(() => $(this._node).hide());
+            //result.done(() => $(this._node).hide());
             return result;
         }
 
@@ -233,8 +264,7 @@ namespace chitu {
 
             var page = new Page(this, routeData, action_deferred, view_deferred, previousPage);
             this.on_pageCreated(page);
-            //page.shown.add(this.page_shown);
-            
+
             this._pages.push(page);
             this._pages[page.name] = page;
             return page;
@@ -256,8 +286,12 @@ namespace chitu {
     }
 
     export class PageContainerFactory {
-        static createInstance(routeData: RouteData, previous: PageContainer): PageContainer {
-            return new PageContainer(previous);
+        private _app: Application;
+        constructor(app: Application) {
+            this._app = app;
+        }
+        createInstance(routeData: RouteData, previous: PageContainer): PageContainer {
+            return new PageContainer(this._app, previous);
         }
     }
 
@@ -323,7 +357,7 @@ namespace chitu {
 
 
                         }
-                        
+
                         var extected = pans[i]['started'] == true;
                         if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
                             pans[i]['started'] = null;

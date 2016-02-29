@@ -27,18 +27,19 @@
         private start_flag_hash: string;
         private start_hash: string;
         private container_stack = new Array<PageContainer>();
+        private _containerFactory: PageContainerFactory;
 
         constructor(config: ApplicationConfig) {
             if (config == null)
                 throw e.argumentNull('container');
 
 
-            //this._container = config['container'];
+            var container_factory = this._containerFactory = new PageContainerFactory(this);
             this._config = config;
             this._config.openSwipe = config.openSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
             this._config.closeSwipe = config.closeSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
             this._config.container = config.container || function(routeData: chitu.RouteData, previous: PageContainer) {
-                return PageContainerFactory.createInstance(routeData, previous);
+                return container_factory.createInstance(routeData, previous);
             };
         }
 
@@ -64,8 +65,11 @@
         get pageContainers(): Array<PageContainer> {
             return this.container_stack;
         }
+        get containerFactory(): PageContainerFactory {
+            return this._containerFactory;
+        }
         private createPageContainer(routeData: RouteData): PageContainer {
-            var container = this.config.container(routeData,this.pageContainers[this.pageContainers.length - 1]);
+            var container = this.config.container(routeData, this.pageContainers[this.pageContainers.length - 1]);
 
             this.container_stack.push(container);
             if (this.container_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -175,29 +179,6 @@
             var element = document.createElement('div');
             return element;
         }
-        //public closeCurrentPage() {
-        //             var current = this.currentPage();
-        //             var previous = this.previousPage();
-        // 
-        //             if (current == null) {
-        //                 return;
-        //             }
-        // 
-        //             var swipe = this.config.closeSwipe(current.routeData);
-        //             if (swipe == chitu.SwipeDirection.None) {
-        //                 current.close({}, swipe);
-        //                 if (previous != null)
-        //                     previous.show(SwipeDirection.None);
-        //             }
-        //             else {
-        //                 if (previous != null)
-        //                     previous.show(SwipeDirection.None);
-        // 
-        //                 current.close({}, swipe);
-        //             }
-        // 
-        //             console.log('page_stack lenght:' + this.page_stack.length);
-        //}
         public redirect(url: string, args = {}): chitu.Page {
             window.location['skip'] = true;
             window.location.hash = url;
