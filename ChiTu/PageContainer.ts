@@ -30,6 +30,9 @@ namespace chitu {
         private _previous: PageContainer;
         private _app: Application;
         private _previousOffsetRate = 0.5; // 前一个页面，相对当前页面移动的比率
+        private open_swipe: chitu.SwipeDirection;
+
+        public enableSwipeClose = true;
 
         gesture: Gesture;
         pageCreated: chitu.Callback = Callbacks();
@@ -43,20 +46,20 @@ namespace chitu {
             this._app = app;
 
             this.gesture = new Gesture();
-            this.enableSwipeClose(this);
+            this._enableSwipeClose();
         }
 
         on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, [this, page]);
         }
 
-        private enableSwipeClose(container: chitu.PageContainer) {
-            if (container.previous == null)
+        private _enableSwipeClose() {
+            var container = this;
+            if (container.previous == null || this.enableSwipeClose == false)
                 return;
 
-
             var previous_start_x: number;
-
+            var previous_visible: boolean;
             var node = container.element;
 
             var pan = container.gesture.createPan(container.element);
@@ -65,11 +68,24 @@ namespace chitu {
                 node.style.transform = ''
                 var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
                 previous_start_x = martix.m41;
-                return container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0;
+                if (ScrollView.scrolling == true)
+                    return false;
+
+                var result = (container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0) &&
+                    (this.open_swipe == SwipeDirection.Left || this.open_swipe == SwipeDirection.Right);
+
+                if (result == true) {
+                    previous_visible = this.previous.visible;
+                    this.previous.visible = true;
+                }
+
+                return result;
             };
 
             pan.left = (e: PanEvent) => {
                 if (e.deltaX <= 0) {
+
+
                     move(node).x(0).duration(0).end();
                     move(this.previous.element).x(previous_start_x).duration(0).end();
                     return;
@@ -87,8 +103,10 @@ namespace chitu {
                     this._app.back();
                     return;
                 }
+
                 move(node).x(0).duration(Page.animationTime).end();
-                move(container.previous.element).x(previous_start_x).duration(Page.animationTime).end();
+                move(container.previous.element).x(previous_start_x).duration(Page.animationTime)
+                    .end(() => this.previous.visible = previous_visible);
             }
         }
 
@@ -120,9 +138,13 @@ namespace chitu {
 
             var result = $.Deferred();
             var on_end = () => {
+                if (this.previous != null)
+                    this.previous.visible = false;
+
                 result.resolve();
             };
 
+            this.open_swipe = swipe;
             switch (swipe) {
                 case SwipeDirection.None:
                 default:
@@ -190,27 +212,26 @@ namespace chitu {
                     result.resolve();
                     break;
                 case SwipeDirection.Down:
-                    //result = this.translateY(container_height, this.animationTime);
                     move(this.element).y(container_height).duration(this.animationTime).end(() => result.resolve())
                     break;
                 case SwipeDirection.Up:
-                    //result = this.translateY(0 - container_height, this.animationTime);
                     move(this.element).y(0 - container_height).duration(this.animationTime).end(() => result.resolve());
                     break;
                 case SwipeDirection.Right:
-                    //result = this.translateX(container_width, this.animationTime);
-                    move(this.element).x(container_width).duration(this.animationTime).end(() => result.resolve());
                     if (this.previous != null)
                         move(this.previous.element).x(0).duration(this.animationTime).end();
+
+                    move(this.element).x(container_width).duration(this.animationTime).end(() => result.resolve());
+
                     break;
                 case SwipeDirection.Left:
-                    //result = this.translateX(0 - container_width, this.animationTime);
-                    move(this.element).x(0 - container_width).duration(this.animationTime).end(() => result.resolve());
                     if (this.previous != null)
                         move(this.previous.element).x(0).duration(this.animationTime).end();
+
+                    move(this.element).x(0 - container_width).duration(this.animationTime).end(() => result.resolve());
+
                     break;
             }
-            //result.done(() => $(this._node).hide());
             return result;
         }
 
@@ -290,8 +311,8 @@ namespace chitu {
         constructor(app: Application) {
             this._app = app;
         }
-        createInstance(routeData: RouteData, previous: PageContainer): PageContainer {
-            return new PageContainer(this._app, previous);
+        static createInstance(app: Application, routeData: RouteData, previous: PageContainer): PageContainer {
+            return new PageContainer(app, previous);
         }
     }
 
@@ -329,7 +350,7 @@ namespace chitu {
             var hammer: Hammer.Manager = <any>$(element).data('hammer');
             if (hammer == null) {
                 hammer = new Hammer.Manager(element);
-                hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_HORIZONTAL | Hammer.DIRECTION_VERTICAL }));
+                hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_HORIZONTAL }));//| Hammer.DIRECTION_VERTICAL 
                 $(element).data('hammer', hammer);
                 this.hammersCount = this.hammersCount + 1;
 
@@ -345,7 +366,9 @@ namespace chitu {
                             //     continue;
                         }
 
-                        if (pans[i]['started'] == true) {
+                        var exected = false;
+                        var started = pans[i]['started'];
+                        if (started == true) {
                             if ((e.direction & Hammer.DIRECTION_LEFT) == Hammer.DIRECTION_LEFT && pans[i].left != null)
                                 pans[i].left(e);
                             else if ((e.direction & Hammer.DIRECTION_RIGHT) == Hammer.DIRECTION_RIGHT && pans[i].right != null)
@@ -355,19 +378,21 @@ namespace chitu {
                             else if ((e.direction & Hammer.DIRECTION_DOWN) == Hammer.DIRECTION_DOWN && pans[i].down != null)
                                 pans[i].down(e);
 
+                            if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED && pans[i].end != null)
+                                pans[i].end(e);
+
+                            exected = true;
 
                         }
 
-                        var extected = pans[i]['started'] == true;
                         if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
                             pans[i]['started'] = null;
-                            if (pans[i].end != null)
-                                pans[i].end(e);
                         }
-
+                        
                         //Pan 只执行一个，所以这里 break
-                        if (extected == true)
+                        if (exected == true)
                             break;
+
                     }
                 });
             }

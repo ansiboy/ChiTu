@@ -110,13 +110,12 @@ var chitu;
             this.container_stack = new Array();
             if (config == null)
                 throw e.argumentNull('container');
-            var container_factory = this._containerFactory = new chitu.PageContainerFactory(this);
             this._config = config;
             this._config.openSwipe = config.openSwipe || function (routeData) { return chitu.SwipeDirection.None; };
             this._config.closeSwipe = config.closeSwipe || function (routeData) { return chitu.SwipeDirection.None; };
-            this._config.container = config.container || function (routeData, previous) {
-                return container_factory.createInstance(routeData, previous);
-            };
+            this._config.container = config.container || $.proxy(function (routeData, previous) {
+                return chitu.PageContainerFactory.createInstance(this.app, routeData, previous);
+            }, { app: this });
         }
         Application.prototype.on_pageCreating = function (context) {
             return chitu.fireCallback(this.pageCreating, [this, context]);
@@ -142,13 +141,6 @@ var chitu;
         Object.defineProperty(Application.prototype, "pageContainers", {
             get: function () {
                 return this.container_stack;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Application.prototype, "containerFactory", {
-            get: function () {
-                return this._containerFactory;
             },
             enumerable: true,
             configurable: true
@@ -198,6 +190,9 @@ var chitu;
             if (container != null && $.inArray(container, this.container_stack) == this.container_stack.length - 2) {
                 var c = this.container_stack.pop();
                 var swipe = this.config.closeSwipe(c.currentPage.routeData);
+                if (c.previous != null) {
+                    c.previous.visible = true;
+                }
                 c.close(swipe);
             }
             else {
@@ -233,6 +228,8 @@ var chitu;
             if (routeData == null) {
                 throw e.noneRouteMatched(url);
             }
+            var routeValues = $.extend(args, routeData.values() || {});
+            routeData.values(routeValues);
             var container = this.createPageContainer(routeData);
             container.pageCreated.add(function (sender, page) { return _this.on_pageCreated(page); });
             var swipe = this.config.openSwipe(routeData);
@@ -428,11 +425,7 @@ var chitu;
                         scroll_type = 'doc';
                     }
                     else if (Environment.instance.isIOS) {
-                        scroll_type = 'ios';
-                        var scroller_node = document.createElement('scroller');
-                        scroller_node.innerHTML = node.innerHTML;
-                        node.innerHTML = '';
-                        node.appendChild(scroller_node);
+                        scroll_type = 'div';
                     }
                     else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
                         scroll_type = 'div';
@@ -575,7 +568,6 @@ var chitu;
         __extends(PageHeader, _super);
         function PageHeader(element, page) {
             _super.call(this, element, page);
-            this.element.className = 'page-header';
         }
         return PageHeader;
     })(Control);
@@ -584,7 +576,6 @@ var chitu;
         __extends(PageFooter, _super);
         function PageFooter(element, page) {
             _super.call(this, element, page);
-            this.element.className = 'page-footer';
         }
         return PageFooter;
     })(Control);
@@ -626,9 +617,11 @@ var chitu;
             });
         };
         ScrollView.prototype.on_scrollEnd = function (args) {
+            ScrollView.scrolling = false;
             return chitu.fireCallback(this.scrollEnd, [this, args]);
         };
         ScrollView.prototype.on_scroll = function (args) {
+            ScrollView.scrolling = true;
             return chitu.fireCallback(this.scroll, [this, args]);
         };
         ScrollView.createInstance = function (element, page) {
@@ -636,7 +629,7 @@ var chitu;
             if (scroll_type == 'doc')
                 return new DocumentScrollView(element, page);
             if (scroll_type == 'ios') {
-                return new IScrollView(element, page);
+                return new DivScrollView(element, page);
             }
             if (scroll_type == 'div')
                 return new DivScrollView(element, page);
@@ -668,6 +661,7 @@ var chitu;
                 });
             }
         };
+        ScrollView.scrolling = false;
         return ScrollView;
     })(Control);
     chitu.ScrollView = ScrollView;
@@ -720,11 +714,12 @@ var chitu;
             var _this = this;
             _super.call(this, element, page);
             this.cur_scroll_args = new ScrollArguments();
-            this.CHECK_INTERVAL = 300;
+            this.CHECK_INTERVAL = 30;
             this.element.onscroll = function () {
                 _this.cur_scroll_args.scrollTop = _this.element.scrollTop;
                 _this.cur_scroll_args.clientHeight = _this.element.clientHeight;
                 _this.cur_scroll_args.scrollHeight = _this.element.scrollHeight;
+                _this.on_scroll(_this.cur_scroll_args);
                 _this.scrollEndCheck();
             };
         }
@@ -1494,6 +1489,7 @@ var chitu;
         function PageContainer(app, previous) {
             this.animationTime = 300;
             this._previousOffsetRate = 0.5;
+            this.enableSwipeClose = true;
             this.pageCreated = chitu.Callbacks();
             this.is_closing = false;
             this._node = this.createNode();
@@ -1502,16 +1498,18 @@ var chitu;
             this._previous = previous;
             this._app = app;
             this.gesture = new Gesture();
-            this.enableSwipeClose(this);
+            this._enableSwipeClose();
         }
         PageContainer.prototype.on_pageCreated = function (page) {
             return chitu.fireCallback(this.pageCreated, [this, page]);
         };
-        PageContainer.prototype.enableSwipeClose = function (container) {
+        PageContainer.prototype._enableSwipeClose = function () {
             var _this = this;
-            if (container.previous == null)
+            var container = this;
+            if (container.previous == null || this.enableSwipeClose == false)
                 return;
             var previous_start_x;
+            var previous_visible;
             var node = container.element;
             var pan = container.gesture.createPan(container.element);
             pan.start = function (e) {
@@ -1519,7 +1517,15 @@ var chitu;
                 node.style.transform = '';
                 var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
                 previous_start_x = martix.m41;
-                return container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0;
+                if (chitu.ScrollView.scrolling == true)
+                    return false;
+                var result = (container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0) &&
+                    (_this.open_swipe == chitu.SwipeDirection.Left || _this.open_swipe == chitu.SwipeDirection.Right);
+                if (result == true) {
+                    previous_visible = _this.previous.visible;
+                    _this.previous.visible = true;
+                }
+                return result;
             };
             pan.left = function (e) {
                 if (e.deltaX <= 0) {
@@ -1540,7 +1546,8 @@ var chitu;
                     return;
                 }
                 move(node).x(0).duration(chitu.Page.animationTime).end();
-                move(container.previous.element).x(previous_start_x).duration(chitu.Page.animationTime).end();
+                move(container.previous.element).x(previous_start_x).duration(chitu.Page.animationTime)
+                    .end(function () { return _this.previous.visible = previous_visible; });
             };
         };
         PageContainer.prototype.createNode = function () {
@@ -1565,8 +1572,11 @@ var chitu;
             var container_height = $(this._node).height();
             var result = $.Deferred();
             var on_end = function () {
+                if (_this.previous != null)
+                    _this.previous.visible = false;
                 result.resolve();
             };
+            this.open_swipe = swipe;
             switch (swipe) {
                 case chitu.SwipeDirection.None:
                 default:
@@ -1628,14 +1638,14 @@ var chitu;
                     move(this.element).y(0 - container_height).duration(this.animationTime).end(function () { return result.resolve(); });
                     break;
                 case chitu.SwipeDirection.Right:
-                    move(this.element).x(container_width).duration(this.animationTime).end(function () { return result.resolve(); });
                     if (this.previous != null)
                         move(this.previous.element).x(0).duration(this.animationTime).end();
+                    move(this.element).x(container_width).duration(this.animationTime).end(function () { return result.resolve(); });
                     break;
                 case chitu.SwipeDirection.Left:
-                    move(this.element).x(0 - container_width).duration(this.animationTime).end(function () { return result.resolve(); });
                     if (this.previous != null)
                         move(this.previous.element).x(0).duration(this.animationTime).end();
+                    move(this.element).x(0 - container_width).duration(this.animationTime).end(function () { return result.resolve(); });
                     break;
             }
             return result;
@@ -1730,8 +1740,8 @@ var chitu;
         function PageContainerFactory(app) {
             this._app = app;
         }
-        PageContainerFactory.prototype.createInstance = function (routeData, previous) {
-            return new PageContainer(this._app, previous);
+        PageContainerFactory.createInstance = function (app, routeData, previous) {
+            return new PageContainer(app, previous);
         };
         return PageContainerFactory;
     })();
@@ -1762,7 +1772,7 @@ var chitu;
             var hammer = $(element).data('hammer');
             if (hammer == null) {
                 hammer = new Hammer.Manager(element);
-                hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_HORIZONTAL | Hammer.DIRECTION_VERTICAL }));
+                hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_HORIZONTAL }));
                 $(element).data('hammer', hammer);
                 this.hammersCount = this.hammersCount + 1;
                 hammer.on('pan', function (e) {
@@ -1772,7 +1782,9 @@ var chitu;
                         if (pans[i]['started'] == null && (state & Hammer.STATE_BEGAN) == Hammer.STATE_BEGAN) {
                             pans[i]['started'] = pans[i].start(e);
                         }
-                        if (pans[i]['started'] == true) {
+                        var exected = false;
+                        var started = pans[i]['started'];
+                        if (started == true) {
                             if ((e.direction & Hammer.DIRECTION_LEFT) == Hammer.DIRECTION_LEFT && pans[i].left != null)
                                 pans[i].left(e);
                             else if ((e.direction & Hammer.DIRECTION_RIGHT) == Hammer.DIRECTION_RIGHT && pans[i].right != null)
@@ -1781,14 +1793,14 @@ var chitu;
                                 pans[i].up(e);
                             else if ((e.direction & Hammer.DIRECTION_DOWN) == Hammer.DIRECTION_DOWN && pans[i].down != null)
                                 pans[i].down(e);
+                            if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED && pans[i].end != null)
+                                pans[i].end(e);
+                            exected = true;
                         }
-                        var extected = pans[i]['started'] == true;
                         if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
                             pans[i]['started'] = null;
-                            if (pans[i].end != null)
-                                pans[i].end(e);
                         }
-                        if (extected == true)
+                        if (exected == true)
                             break;
                     }
                 });

@@ -27,20 +27,17 @@
         private start_flag_hash: string;
         private start_hash: string;
         private container_stack = new Array<PageContainer>();
-        private _containerFactory: PageContainerFactory;
 
         constructor(config: ApplicationConfig) {
             if (config == null)
                 throw e.argumentNull('container');
 
-
-            var container_factory = this._containerFactory = new PageContainerFactory(this);
             this._config = config;
             this._config.openSwipe = config.openSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
             this._config.closeSwipe = config.closeSwipe || function(routeData: chitu.RouteData) { return SwipeDirection.None; };
-            this._config.container = config.container || function(routeData: chitu.RouteData, previous: PageContainer) {
-                return container_factory.createInstance(routeData, previous);
-            };
+            this._config.container = config.container || $.proxy(function(routeData: chitu.RouteData, previous: PageContainer) {
+                return PageContainerFactory.createInstance(this.app, routeData, previous);
+            }, { app: this });
         }
 
         on_pageCreating(context: chitu.PageContext) {
@@ -64,9 +61,6 @@
         }
         get pageContainers(): Array<PageContainer> {
             return this.container_stack;
-        }
-        get containerFactory(): PageContainerFactory {
-            return this._containerFactory;
         }
         private createPageContainer(routeData: RouteData): PageContainer {
             var container = this.config.container(routeData, this.pageContainers[this.pageContainers.length - 1]);
@@ -123,6 +117,9 @@
             if (container != null && $.inArray(container, this.container_stack) == this.container_stack.length - 2) {
                 var c = this.container_stack.pop();
                 var swipe = this.config.closeSwipe(c.currentPage.routeData);
+                if (c.previous != null) {
+                    c.previous.visible = true;
+                }
                 c.close(swipe);
             }
             else {
@@ -168,6 +165,8 @@
                 throw e.noneRouteMatched(url);
             }
 
+            var routeValues = $.extend(args, routeData.values() || {});
+            routeData.values(routeValues);
             var container = this.createPageContainer(routeData);
             container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
             var swipe = this.config.openSwipe(routeData);

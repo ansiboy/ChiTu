@@ -21,12 +21,12 @@ module.exports = function (grunt) {
                     banner: '/// <reference path="jquery.d.ts" /> \r\n',
                 },
                 files: {
-                    '/Users/MaiShu/git/ChiTuStore/Web/Scripts/typings/chitu.d.ts': ['Build/**/*.d.ts']
+                    '/Users/MaiShu/git/ChiTuStore/dev/Scripts/typings/chitu.d.ts': ['Build/**/*.d.ts']
                 }
             },
             chitujs: {
                 src: ['Build/**/*.js'],
-                dest: '/Users/MaiShu/git/ChiTuStore/Web/Scripts/chitu.js'//'Release/chitu.js'
+                dest: '/Users/MaiShu/git/ChiTuStore/dev/Scripts/chitu.js'//'Release/chitu.js'
             }
         },
         uglify: {

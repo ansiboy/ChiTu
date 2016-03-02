@@ -145,12 +145,12 @@ namespace chitu {
                         scroll_type = 'doc';
                     }
                     else if (Environment.instance.isIOS) {
-                        scroll_type = 'ios';
+                        scroll_type = 'div';
 
-                        var scroller_node = document.createElement('scroller');
-                        scroller_node.innerHTML = node.innerHTML;
-                        node.innerHTML = '';
-                        node.appendChild(scroller_node);
+                        // var scroller_node = document.createElement('scroller');
+                        // scroller_node.innerHTML = node.innerHTML;
+                        // node.innerHTML = '';
+                        // node.appendChild(scroller_node);
                     }
                     else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
                         scroll_type = 'div';
@@ -166,8 +166,6 @@ namespace chitu {
             for (var i = 0; i < element.childNodes.length; i++) {
                 ControlFactory.transformElement(<HTMLElement>element.childNodes[i]);
             }
-
-            //return node;
         }
     }
 
@@ -289,16 +287,12 @@ namespace chitu {
     export class PageHeader extends Control {
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
-
-            this.element.className = 'page-header';
         }
     }
 
     export class PageFooter extends Control {
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
-
-            this.element.className = 'page-footer';
         }
     }
 
@@ -308,34 +302,9 @@ namespace chitu {
         clientHeight: number
     }
 
-    //     export class ScrollLoadArguments {
-    //         private _enableScrollLoad = false;
-    //         private _scrollView: ScrollView;
-    // 
-    //         constructor(scrollView: ScrollView, source: any) {
-    //             this._scrollView = scrollView;
-    //             for (var key in source) {
-    //                 this[key] = source[key];
-    //             }
-    //         }
-    // 
-    //         set enableScrollLoad(value: boolean) {
-    //             if (value == true && this._scrollView.bottomLoading != null) {
-    //                 this._scrollView.bottomLoading.show();
-    //             }
-    //             else if (value == false && this._scrollView.bottomLoading != null) {
-    //                 this._scrollView.bottomLoading.hide();
-    //             }
-    //             this._enableScrollLoad = value;
-    //         }
-    //         get enableScrollLoad() {
-    //             return this._enableScrollLoad;
-    //         }
-    //     }
-
-
     export class ScrollView extends Control {
         private _bottomLoading: ScrollViewStatusBar;
+        static scrolling = false;
 
         scroll: Callback = Callbacks();
         scrollEnd: Callback = Callbacks();
@@ -366,16 +335,18 @@ namespace chitu {
 
             return result.done(() => {
                 if (this instanceof IScrollView) {
-                    setTimeout(() => (<IScrollView>this).refresh(), 30);
+                    setTimeout(() => (<IScrollView><any>this).refresh(), 30);
                 }
             });
         }
 
         protected on_scrollEnd(args: ScrollArguments) {
+            ScrollView.scrolling = false;
             return chitu.fireCallback(this.scrollEnd, [this, args]);
         }
 
         protected on_scroll(args: ScrollArguments) {
+            ScrollView.scrolling = true;
             return chitu.fireCallback(this.scroll, [this, args]);
         }
 
@@ -385,7 +356,7 @@ namespace chitu {
                 return new DocumentScrollView(element, page);
 
             if (scroll_type == 'ios') {
-                return new IScrollView(element, page);
+                return new DivScrollView(element, page); //new IScrollView(element, page);
             }
 
             if (scroll_type == 'div')
@@ -485,15 +456,16 @@ namespace chitu {
         private cur_scroll_args = new ScrollArguments();
         private checking_num: number;
         private pre_scroll_top: number;
-        private CHECK_INTERVAL = 300;
+        private CHECK_INTERVAL = 30;
 
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
-       
+
             this.element.onscroll = () => {
                 this.cur_scroll_args.scrollTop = this.element.scrollTop;
                 this.cur_scroll_args.clientHeight = this.element.clientHeight;
                 this.cur_scroll_args.scrollHeight = this.element.scrollHeight;
+                this.on_scroll(this.cur_scroll_args);
                 this.scrollEndCheck();
             };
         }

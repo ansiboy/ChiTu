@@ -32,27 +32,6 @@ namespace chitu {
         hide()
     }
 
-    //     export class PageLoadArguments {
-    //         private _page: chitu.Page;
-    // 
-    //         constructor(page: chitu.Page, loadType?: PageLoadType, loading?: PageLoading) {
-    //             if (page == null)
-    //                 throw chitu.Errors.argumentNull('page');
-    // 
-    //             this._page = page;
-    //             this.loadType = loadType;
-    //             this.loading = loading;
-    //         }
-    //         loadType: PageLoadType
-    //         loading: PageLoading
-    //         set enableScrollLoad(value: boolean) {
-    //             (<any>this._page).enableScrollLoad = value;
-    //         }
-    //         get enableScrollLoad(): boolean {
-    //             return (<any>this._page).enableScrollLoad;
-    //         }
-    //     }
-
     enum ShowTypes {
         swipeLeft,
         swipeRight,
@@ -156,9 +135,6 @@ namespace chitu {
                         this.node.innerHTML = html;
                         this._controls = this.createControls(this.node);
                         this.viewHtml = html
-
-                        //var load_args = this.createPageLoadArguments(routeData.values(), chitu.PageLoadType.init, this.formLoading);
-                        //load_args.loading.show();
 
                         this.on_load(routeData.values());
                     });
@@ -318,19 +294,6 @@ namespace chitu {
         on_viewChanged(args) {
             return this.fireEvent(this.viewChanged, args);
         }
-        //         close(args?: Object, swipe?: SwipeDirection) {
-        //             if (this.is_closed)
-        //                 return;
-        // 
-        //             this.on_closing(args);
-        // 
-        //             this.hide(swipe).done(() => {
-        //                  this.container.close();
-        // 
-        //                 args = args || {};
-        //                 this.on_closed(args);
-        //                 this.is_closed = true;
-        //             });
-        //         }
+       
     }
 };
