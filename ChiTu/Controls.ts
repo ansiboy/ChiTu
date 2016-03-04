@@ -111,13 +111,7 @@ namespace chitu {
 
             return controls;
         }
-        private static isControlTag(tag: string): boolean {
-            var control_tags = ['HEADER', 'FOOTER', 'SECTION'];
-            if ($.inArray(tag, control_tags))
-                return true;
-
-            return false;
-        }
+        
         static createControl(element: HTMLElement, page: Page): Control {
             var control: Control;
             var control_type = ControlTags[element.tagName];
@@ -138,25 +132,21 @@ namespace chitu {
             var node = element;
 
             switch (node.tagName) {
-                case 'SECTION':
                 case 'SCROLL-VIEW':
-                    var scroll_type: string;
-                    if (Environment.instance.isDegrade) {
-                        scroll_type = 'doc';
-                    }
-                    else if (Environment.instance.isIOS) {
-                        scroll_type = 'div';
-
-                        // var scroller_node = document.createElement('scroller');
-                        // scroller_node.innerHTML = node.innerHTML;
-                        // node.innerHTML = '';
-                        // node.appendChild(scroller_node);
-                    }
-                    else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
-                        scroll_type = 'div';
-                    }
-                    else {
-                        scroll_type = 'doc';
+                    var scroll_type: string = $(node).attr('scroll-type');
+                    if (scroll_type == null) {
+                        if (Environment.instance.isDegrade) {
+                            scroll_type = 'doc';
+                        }
+                        else if (Environment.instance.isIOS) {
+                            scroll_type = 'div';
+                        }
+                        else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
+                            scroll_type = 'div';
+                        }
+                        else {
+                            scroll_type = 'doc';
+                        }
                     }
 
                     $(node).attr('scroll-type', scroll_type);
@@ -356,7 +346,7 @@ namespace chitu {
                 return new DocumentScrollView(element, page);
 
             if (scroll_type == 'ios') {
-                return new DivScrollView(element, page); //new IScrollView(element, page);
+                return new IScrollView(element, page); //new IScrollView(element, page);
             }
 
             if (scroll_type == 'div')
@@ -405,7 +395,6 @@ namespace chitu {
         constructor(element: HTMLElement, page: Page) {
 
             super(element, page);
-            $(element).addClass('doc');
             //this.element.style.display = 'none';
 
             $(document).scroll((event) => {
@@ -510,7 +499,7 @@ namespace chitu {
         private iscroller: IScroll;
         constructor(element: HTMLElement, page: Page) {
             super(element, page)
-            $(element).addClass('iscroll');
+
             requirejs(['iscroll'], () => this.init(this.element));
         }
 
