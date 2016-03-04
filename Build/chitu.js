@@ -273,6 +273,11 @@ var chitu;
         OS[OS["other"] = 2] = "other";
     })(chitu.OS || (chitu.OS = {}));
     var OS = chitu.OS;
+    var scroll_types = {
+        div: 'div',
+        iscroll: 'iscroll',
+        doc: 'doc'
+    };
     var Environment = (function () {
         function Environment() {
             var userAgent = navigator.userAgent;
@@ -395,43 +400,33 @@ var chitu;
             }
             return controls;
         };
-        ControlFactory.isControlTag = function (tag) {
-            var control_tags = ['HEADER', 'FOOTER', 'SECTION'];
-            if ($.inArray(tag, control_tags))
-                return true;
-            return false;
-        };
         ControlFactory.createControl = function (element, page) {
-            var control;
-            var control_type = ControlTags[element.tagName];
-            if (control_type != null) {
-                if (control_type.prototype != null)
-                    control = new control_type(element, page);
-                else
-                    control = control_type(element, page);
-            }
-            else {
-                control = new Control(element, page);
-            }
-            return control;
+            return Control.createControl(element, page);
         };
         ControlFactory.transformElement = function (element) {
             var node = element;
             switch (node.tagName) {
-                case 'SECTION':
                 case 'SCROLL-VIEW':
-                    var scroll_type;
-                    if (Environment.instance.isDegrade) {
-                        scroll_type = 'doc';
+                    var scroll_type = $(node).attr('scroll-type');
+                    if (scroll_type == null) {
+                        if (Environment.instance.isDegrade) {
+                            scroll_type = scroll_types.doc;
+                        }
+                        else if (Environment.instance.isIOS) {
+                            scroll_type = scroll_types.iscroll;
+                        }
+                        else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
+                            scroll_type = scroll_types.div;
+                        }
+                        else {
+                            scroll_type = scroll_types.doc;
+                        }
                     }
-                    else if (Environment.instance.isIOS) {
-                        scroll_type = 'div';
-                    }
-                    else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
-                        scroll_type = 'div';
-                    }
-                    else {
-                        scroll_type = 'doc';
+                    if (scroll_type == scroll_types.iscroll) {
+                        var scroller_node = document.createElement('scroller');
+                        scroller_node.innerHTML = node.innerHTML;
+                        node.innerHTML = '';
+                        node.appendChild(scroller_node);
                     }
                     $(node).attr('scroll-type', scroll_type);
                     break;
@@ -559,8 +554,26 @@ var chitu;
             var result = $.when.apply($, promises);
             return result;
         };
-        Control.prototype.dispose = function () {
+        Control.register = function (tagName, createControlMethod) {
+            Control.ControlTags[tagName] = createControlMethod;
         };
+        Control.createControl = function (element, page) {
+            if (element == null)
+                throw chitu.Errors.argumentNull('element');
+            if (page == null)
+                throw chitu.Errors.argumentNull('page');
+            var tagName = element.tagName;
+            var createControlMethod = Control.ControlTags[tagName];
+            if (createControlMethod == null)
+                return null;
+            var instance;
+            if (createControlMethod.prototype != null)
+                instance = new createControlMethod(element, page);
+            else
+                instance = createControlMethod(element, page);
+            return instance;
+        };
+        Control.ControlTags = {};
         return Control;
     })();
     chitu.Control = Control;
@@ -599,7 +612,6 @@ var chitu;
             }
         }
         ScrollView.prototype.on_load = function (args) {
-            var _this = this;
             var result;
             if (this.scrollLoad != null) {
                 result = this.scrollLoad(this, args);
@@ -610,11 +622,7 @@ var chitu;
             else {
                 result = _super.prototype.on_load.call(this, args);
             }
-            return result.done(function () {
-                if (_this instanceof IScrollView) {
-                    setTimeout(function () { return _this.refresh(); }, 30);
-                }
-            });
+            return result;
         };
         ScrollView.prototype.on_scrollEnd = function (args) {
             ScrollView.scrolling = false;
@@ -626,12 +634,12 @@ var chitu;
         };
         ScrollView.createInstance = function (element, page) {
             var scroll_type = $(element).attr('scroll-type');
-            if (scroll_type == 'doc')
+            if (scroll_type == scroll_types.doc)
                 return new DocumentScrollView(element, page);
-            if (scroll_type == 'ios') {
-                return new DivScrollView(element, page);
+            if (scroll_type == scroll_types.iscroll) {
+                return new IScrollView(element, page);
             }
-            if (scroll_type == 'div')
+            if (scroll_type == scroll_types.div)
                 return new DivScrollView(element, page);
             return new DocumentScrollView(element, page);
         };
@@ -655,9 +663,6 @@ var chitu;
                     if (sender.bottomLoading != null) {
                         sender.bottomLoading.visible = args.enableScrollLoad != false;
                     }
-                    if (sender instanceof IScrollView) {
-                        setTimeout(function () { return sender.refresh(); }, 30);
-                    }
                 });
             }
         };
@@ -672,7 +677,6 @@ var chitu;
             _super.call(this, element, page);
             this.cur_scroll_args = new ScrollArguments();
             this.CHECK_INTERVAL = 300;
-            $(element).addClass('doc');
             $(document).scroll(function (event) {
                 var args = new ScrollArguments();
                 args.scrollTop = $(document).scrollTop();
@@ -760,7 +764,6 @@ var chitu;
         function IScrollView(element, page) {
             var _this = this;
             _super.call(this, element, page);
-            $(element).addClass('iscroll');
             requirejs(['iscroll'], function () { return _this.init(_this.element); });
         }
         IScrollView.prototype.init = function (element) {
@@ -823,18 +826,6 @@ var chitu;
     var FormLoading = (function (_super) {
         __extends(FormLoading, _super);
         function FormLoading(element, page) {
-            //this._on_load = Control.prototype.on_load;
-            // var _add = this.children.add;
-            // this.children.add = (control: Control) => {
-            //     control.visible = false;
-            //     _add.apply(this, [control]);
-            //     control.load.add(() => {
-            //         this.loaded_count = this.loaded_count + 1
-            //         if (this.loaded_count >= this.children.length) {
-            //             this.loading_element.style.display = 'none';
-            //         }
-            //     });
-            // }
             _super.call(this, element, page);
             this._loaded_count = 0;
             this.loading_element = document.createElement('page-loading');
@@ -881,16 +872,12 @@ var chitu;
         return FormLoading;
     })(Control);
     chitu.FormLoading = FormLoading;
-    var ControlTags = {
-        'FORM-LOADING': FormLoading,
-        'HEADER': PageHeader,
-        'TOP-BAR': PageHeader,
-        'SECTION': ScrollView.createInstance,
-        'SCROLL-VIEW': ScrollView.createInstance,
-        'SCROLL-VIEW-WRAPPER': ScrollView.createInstance,
-        'FOOTER': PageFooter,
-        'BOTTOM-BAR': PageFooter,
-    };
+    Control.register('FORM-LOADING', FormLoading);
+    Control.register('HEADER', PageHeader);
+    Control.register('TOP-BAR', PageHeader);
+    Control.register('SCROLL-VIEW', ScrollView.createInstance);
+    Control.register('FOOTER', PageFooter);
+    Control.register('BOTTOM-BAR', PageFooter);
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
@@ -1247,12 +1234,10 @@ var chitu;
             this.loadCompleted = ns.Callbacks();
             this.closing = ns.Callbacks();
             this.closed = ns.Callbacks();
-            this.scroll = ns.Callbacks();
             this.showing = ns.Callbacks();
             this.shown = ns.Callbacks();
             this.hiding = ns.Callbacks();
             this.hidden = ns.Callbacks();
-            this.scrollEnd = ns.Callbacks();
             this.viewChanged = ns.Callbacks();
             if (!container)
                 throw e.argumentNull('container');
@@ -1439,9 +1424,6 @@ var chitu;
         Page.prototype.on_closed = function (args) {
             return this.fireEvent(this.closed, args);
         };
-        Page.prototype.on_scroll = function (args) {
-            return this.fireEvent(this.scroll, args);
-        };
         Page.prototype.on_showing = function (args) {
             return this.fireEvent(this.showing, args);
         };
@@ -1453,9 +1435,6 @@ var chitu;
         };
         Page.prototype.on_hidden = function (args) {
             return this.fireEvent(this.hidden, args);
-        };
-        Page.prototype.on_scrollEnd = function (args) {
-            return this.fireEvent(this.scrollEnd, args);
         };
         Page.prototype.on_viewChanged = function (args) {
             return this.fireEvent(this.viewChanged, args);

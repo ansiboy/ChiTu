@@ -101,12 +101,12 @@ namespace chitu {
         loadCompleted = ns.Callbacks();
         closing = ns.Callbacks();
         closed = ns.Callbacks();
-        scroll = ns.Callbacks();
+        //scroll = ns.Callbacks();
         showing = ns.Callbacks();
         shown = ns.Callbacks();
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
-        scrollEnd = ns.Callbacks();
+        //scrollEnd = ns.Callbacks();
         viewChanged = ns.Callbacks();
 
         constructor(container: PageContainer, routeData: RouteData,
@@ -273,9 +273,9 @@ namespace chitu {
         on_closed(args) {
             return this.fireEvent(this.closed, args);
         }
-        on_scroll(args) {
-            return this.fireEvent(this.scroll, args);
-        }
+        // on_scroll(args) {
+        //     return this.fireEvent(this.scroll, args);
+        // }
         on_showing(args) {
             return this.fireEvent(this.showing, args);
         }
@@ -288,9 +288,9 @@ namespace chitu {
         on_hidden(args) {
             return this.fireEvent(this.hidden, args);
         }
-        on_scrollEnd(args) {
-            return this.fireEvent(this.scrollEnd, args);
-        }
+        // on_scrollEnd(args) {
+        //     return this.fireEvent(this.scrollEnd, args);
+        // }
         on_viewChanged(args) {
             return this.fireEvent(this.viewChanged, args);
         }
