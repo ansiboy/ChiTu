@@ -46,14 +46,15 @@ namespace chitu {
             this._app = app;
 
             this.gesture = new Gesture();
-            this._enableSwipeClose();
+            this._enableSwipeBack();
         }
 
         on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, [this, page]);
         }
 
-        private _enableSwipeClose() {
+        /// <summary>启用滑动返回</summary>
+        private _enableSwipeBack() {
             var container = this;
             if (container.previous == null || this.enableSwipeClose == false)
                 return;
@@ -61,6 +62,8 @@ namespace chitu {
             var previous_start_x: number;
             var previous_visible: boolean;
             var node = container.element;
+            var colse_position = $(window).width() / 2; // 关闭的位置，只有过了这个位置，才关闭。
+            var horizontal_swipe_angle = 35;            // 水平滑动角度，角度不大于20度时，才认为是水平移动
 
             var pan = container.gesture.createPan(container.element);
             pan.start = (e: PanEvent) => {
@@ -70,6 +73,13 @@ namespace chitu {
                 previous_start_x = martix.m41;
                 if (ScrollView.scrolling == true)
                     return false;
+
+                //==================================================
+                // 说明：计算角度，超过了水平滑动角度，则认为不是水平滑动。
+                var d = Math.atan(Math.abs(e.deltaY / e.deltaX)) / 3.14159265 * 180;
+                if (d > horizontal_swipe_angle)
+                    return false;
+                //==================================================
 
                 var result = (container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0) &&
                     (this.open_swipe == SwipeDirection.Left || this.open_swipe == SwipeDirection.Right);
@@ -98,8 +108,7 @@ namespace chitu {
                 move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
             }
             pan.end = (e: PanEvent) => {
-                if (e.deltaX > $(window).width() / 2) {
-                    //this.close(SwipeDirection.Right);
+                if (e.deltaX > colse_position) {
                     this._app.back();
                     return;
                 }
@@ -149,26 +158,22 @@ namespace chitu {
                 case SwipeDirection.None:
                 default:
                     $(this._node).show();
-                    result = $.Deferred().resolve();
+                    on_end();
                     break;
                 case SwipeDirection.Down:
-                    //this.translateY(0 - container_height, 0);
                     move(this.element).y(0 - container_height).duration(0).end();
                     $(this._node).show();
                     //======================================
                     // 不要问我为什么这里要设置 timeout，反正不设置不起作用。
                     window.setTimeout(() => {
-                        //this.translateY(0, this.animationTime).done(on_end);
                         move(this.element).y(0).duration(this.animationTime).end(on_end);
                     }, 30);
                     //======================================
                     break;
                 case SwipeDirection.Up:
-                    //this.translateY(container_height, 0);
                     move(this.element).y(container_height).duration(0).end();
                     $(this._node).show();
                     window.setTimeout(() => {
-                        //this.translateY(0, this.animationTime).done(on_end);
                         move(this.element).y(0).duration(this.animationTime).end(on_end);
                     }, 30);
                     break;
@@ -222,14 +227,12 @@ namespace chitu {
                         move(this.previous.element).x(0).duration(this.animationTime).end();
 
                     move(this.element).x(container_width).duration(this.animationTime).end(() => result.resolve());
-
                     break;
                 case SwipeDirection.Left:
                     if (this.previous != null)
                         move(this.previous.element).x(0).duration(this.animationTime).end();
 
                     move(this.element).x(0 - container_width).duration(this.animationTime).end(() => result.resolve());
-
                     break;
             }
             return result;
@@ -293,7 +296,7 @@ namespace chitu {
 
         showPage(routeData: RouteData, swipe: SwipeDirection): Page {
             var page = this.createPage(routeData);
-            this.element.appendChild(page.node);
+            this.element.appendChild(page.element);
             this._currentPage = page;
 
             page.on_showing(routeData.values());

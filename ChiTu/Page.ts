@@ -132,8 +132,8 @@ namespace chitu {
 
                 if (this.view) {
                     this.view.done((html) => {
-                        this.node.innerHTML = html;
-                        this._controls = this.createControls(this.node);
+                        this.element.innerHTML = html;
+                        this._controls = this.createControls(this.element);
                         this.viewHtml = html
 
                         this.on_load(routeData.values());
@@ -199,7 +199,7 @@ namespace chitu {
 
             return this._name;
         }
-        get node(): HTMLElement {
+        get element(): HTMLElement {
             return this._node;
         }
         get previous(): chitu.Page {
@@ -273,9 +273,7 @@ namespace chitu {
         on_closed(args) {
             return this.fireEvent(this.closed, args);
         }
-        // on_scroll(args) {
-        //     return this.fireEvent(this.scroll, args);
-        // }
+
         on_showing(args) {
             return this.fireEvent(this.showing, args);
         }
@@ -288,9 +286,7 @@ namespace chitu {
         on_hidden(args) {
             return this.fireEvent(this.hidden, args);
         }
-        // on_scrollEnd(args) {
-        //     return this.fireEvent(this.scrollEnd, args);
-        // }
+
         on_viewChanged(args) {
             return this.fireEvent(this.viewChanged, args);
         }

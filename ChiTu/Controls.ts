@@ -1,6 +1,6 @@
 namespace chitu {
 
-    export enum OS {
+    enum OS {
         ios,
         android,
         other
@@ -12,7 +12,7 @@ namespace chitu {
         doc: 'doc'
     }
 
-    export class Environment {
+    class Environment {
         private _environmentType;
         private _isIIS: boolean;
         private _os: OS;
@@ -56,19 +56,7 @@ namespace chitu {
         get isAndroid() {
             return this.os == OS.android;
         }
-        /// <summary>
-        /// 判断是否为 APP
-        /// </summary>
-        get isApp(): boolean {
-            return navigator.userAgent.indexOf("Html5Plus") >= 0;
-            //return window['plus'] != null;
-        }
-        /// <summary>
-        /// 判断是否为 WEB
-        /// </summary>
-        get isWeb(): boolean {
-            return !this.isApp;
-        }
+
         /// <summary>
         /// 是否需要降级
         /// </summary>
@@ -94,7 +82,6 @@ namespace chitu {
 
             return Environment._instance;
         }
-
     }
     export class ControlFactory {
         static createControls(element: HTMLElement, page: Page): Array<Control> {
@@ -260,7 +247,7 @@ namespace chitu {
             return chitu.fireCallback(callback, [this, args]);
         }
 
-        on_load(args: Object): JQueryPromise<any> {//PageLoadArguments | { loadType: PageLoadType, loading?: PageLoading }
+        on_load(args: Object): JQueryPromise<any> {
             var promises = new Array<JQueryPromise<any>>();
             promises.push(this.fireEvent(this.load, args));
             for (var i = 0; i < this.children.length; i++) {
@@ -383,7 +370,7 @@ namespace chitu {
             var scrollTop = args.scrollTop;
             var scrollHeight = args.scrollHeight;
             var clientHeight = args.clientHeight;
-        
+
             //====================================================================
 
             var marginBottom = clientHeight / 3;
@@ -430,7 +417,7 @@ namespace chitu {
         private static createElement(html: string, page: Page): HTMLElement {
             var element = document.createElement('div');
             element.innerHTML = html;
-            page.node.appendChild(element);
+            page.element.appendChild(element);
             return element;
         }
 
