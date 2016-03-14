@@ -1,5 +1,5 @@
 ﻿
-module.exports = function (grunt) {
+module.exports = function(grunt) {
     grunt.initConfig({
         typescript: {
             base: {
@@ -25,8 +25,17 @@ module.exports = function (grunt) {
                 }
             },
             chitujs: {
+                options: {
+                    footer:
+                    '\nif (typeof define == "function") { \n\
+                        define(function(require, factory) { \n\
+                            return chitu;\n\
+                        }); \n\
+                    } \n',
+                },
                 src: ['Build/**/*.js'],
-                dest: '/Users/MaiShu/git/ChiTuStore/src/Scripts/chitu.js'//'Release/chitu.js'
+                dest: '/Users/MaiShu/git/ChiTuStore/src/Scripts/chitu.js',//'Release/chitu.js'
+
             }
         },
         uglify: {
