@@ -41,10 +41,9 @@ namespace chitu {
             return this._name;
         }
 
-        execute(page: chitu.Page) {
+        execute(page: chitu.Page, args: Array<any>) {
             if (!page) throw e.argumentNull('page');
-
-            var result = this._handle.apply({}, [page]);
+            var result = this._handle.apply({}, [page].concat(args));
             return chitu.Utility.isDeferred(result) ? result : $.Deferred().resolve();
         }
     }

@@ -275,7 +275,7 @@ namespace chitu {
         get previous(): PageContainer {
             return this._previous;
         }
-        private createPage(routeData: RouteData): Page {
+        private createPage(routeData: RouteData, actionArguments: Array<any>): Page {
             var controllerName = routeData.values().controller;
             var actionName = routeData.values().action;
             var view_deferred = createViewDeferred(routeData);
@@ -286,7 +286,7 @@ namespace chitu {
             if (this._pages.length > 0)
                 previousPage = this._pages[this._pages.length - 1];
 
-            var page = new Page(this, routeData, action_deferred, view_deferred, previousPage);
+            var page = new Page(this, routeData, actionArguments, action_deferred, view_deferred, previousPage);
             this.on_pageCreated(page);
 
             this._pages.push(page);
@@ -294,8 +294,8 @@ namespace chitu {
             return page;
         }
 
-        showPage(routeData: RouteData, swipe: SwipeDirection): Page {
-            var page = this.createPage(routeData);
+        showPage(routeData: RouteData, actionArguments: Array<any>, swipe: SwipeDirection): Page {
+            var page = this.createPage(routeData, actionArguments);
             this.element.appendChild(page.element);
             this._currentPage = page;
 
@@ -391,7 +391,7 @@ namespace chitu {
                         if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
                             pans[i]['started'] = null;
                         }
-                        
+
                         //Pan 只执行一个，所以这里 break
                         if (exected == true)
                             break;

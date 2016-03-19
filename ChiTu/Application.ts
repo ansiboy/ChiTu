@@ -143,11 +143,6 @@
             this._runned = true;
         }
         public getPage(name: string): chitu.Page {
-            // for (var i = this.page_stack.length - 1; i >= 0; i--) {
-            //     if (this.page_stack[i].name == name)
-            //         return this.page_stack[i];
-            // }
-            // return null;
             for (var i = this.container_stack.length - 1; i >= 0; i--) {
                 var page = this.container_stack[i].pages[name];
                 if (page != null)
@@ -155,22 +150,22 @@
             }
             return null;
         }
-        public showPage(url: string, args): chitu.Page {
+        public showPage(url: string, args: Array<any>): chitu.Page {
             if (!url) throw e.argumentNull('url');
 
-            args = args || {};
+            //args = args || {};
 
             var routeData = this.routes().getRouteData(url);
             if (routeData == null) {
                 throw e.noneRouteMatched(url);
             }
 
-            var routeValues = $.extend(args, routeData.values() || {});
-            routeData.values(routeValues);
+            //var routeValues = $.extend(args, routeData.values() || {});
+            //routeData.values(routeValues);
             var container = this.createPageContainer(routeData);
             container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
             var swipe = this.config.openSwipe(routeData);
-            var page = container.showPage(routeData, swipe);
+            var page = container.showPage(routeData, args, swipe);
 
             return page;
         }
@@ -178,7 +173,7 @@
             var element = document.createElement('div');
             return element;
         }
-        public redirect(url: string, args = {}): chitu.Page {
+        public redirect(url: string, args: Array<any>): chitu.Page {
             window.location['skip'] = true;
             window.location.hash = url;
             return this.showPage(url, args);

@@ -91,7 +91,7 @@ namespace chitu {
         private _pageContainer: PageContainer;
         private _node: HTMLElement;
         private _viewHtml: string;
-        
+
         // Controls
         private _loading: Control;
         private _controls: Array<Control>;
@@ -109,7 +109,7 @@ namespace chitu {
         //scrollEnd = ns.Callbacks();
         viewChanged = ns.Callbacks();
 
-        constructor(container: PageContainer, routeData: RouteData,
+        constructor(container: PageContainer, routeData: RouteData, actionArguments: Array<any>,
             action: JQueryPromise<Action>, view: JQueryPromise<string>,
             previous?: chitu.Page) {
 
@@ -120,15 +120,16 @@ namespace chitu {
             if (view == null) throw e.argumentNull('view');
 
             this._pageContainer = container;
-            this._node = document.createElement('div');
+            this._node = document.createElement('page');
+            $(this._node).data('page', this);
 
             this._actionDeferred = action;
             this._viewDeferred = view;
             this._prevous = previous;
             this._routeData = routeData
 
-            this.action.done((action) => {
-                action.execute(this);
+            this.action.done((action: chitu.Action) => {
+                action.execute(this, actionArguments);
 
                 if (this.view) {
                     this.view.done((html) => {
@@ -290,6 +291,6 @@ namespace chitu {
         on_viewChanged(args) {
             return this.fireEvent(this.viewChanged, args);
         }
-       
+
     }
 };

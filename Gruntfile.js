@@ -1,6 +1,7 @@
-﻿
+﻿var js_output_file = 'Release/chitu.js';
+var ts_output_file = 'Release/chitu.d.ts';
 module.exports = function(grunt) {
-    grunt.initConfig({
+    var config = {
         typescript: {
             base: {
                 src: ['ChiTu/**/*.ts'],
@@ -21,7 +22,7 @@ module.exports = function(grunt) {
                     banner: '/// <reference path="jquery.d.ts" /> \r\n',
                 },
                 files: {
-                    '/Users/MaiShu/git/ChiTuStore/src/Scripts/typings/chitu.d.ts': ['Build/**/*.d.ts']
+                    ts_output_file: ['Build/**/*.d.ts']
                 }
             },
             chitujs: {
@@ -34,7 +35,7 @@ module.exports = function(grunt) {
                     } \n',
                 },
                 src: ['Build/**/*.js'],
-                dest: '/Users/MaiShu/git/ChiTuStore/src/Scripts/chitu.js',//'Release/chitu.js'
+                dest: js_output_file
 
             }
         },
@@ -44,14 +45,28 @@ module.exports = function(grunt) {
                 dest: 'Release/chitu.min.js'
             }
         },
-        clean: ['Build/**/*.d.ts']
-    });
+        clean: ['Build/**/*.d.ts', ts_output_file]
+    };
+
+    config.copy = {
+        main: {
+            files: [
+                { src: [js_output_file], dest: '/Users/MaiShu/git/YunDe/POS/src/js/chitu.js' },
+                { src: [ts_output_file], dest: '/Users/MaiShu/git/YunDe/POS/src/js/typings/chitu.d.ts' },
+            ]
+        }
+    };
+
+
+
+    grunt.initConfig(config);
 
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-typescript');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-contrib-copy');
 
-    grunt.registerTask('default', ['typescript', 'concat', 'uglify', 'clean']);//,
+    grunt.registerTask('default', ['typescript', 'concat', 'uglify', 'copy', 'clean']);//,
 
 };

@@ -2010,3 +2010,9 @@ var chitu;
     })();
     chitu.Utility = Utility;
 })(chitu || (chitu = {}));
+
+if (typeof define == "function") { 
+                        define(function(require, factory) { 
+                            return chitu;
+                        }); 
+                    } 
