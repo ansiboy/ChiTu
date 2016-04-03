@@ -1,17 +1,21 @@
-﻿var js_output_file = 'Release/chitu.js';
-var ts_output_file = 'Release/chitu.d.ts';
+﻿var js_output_file = 'release/chitu.js';
+var ts_output_file = 'release/chitu.d.ts';
+var build_dir = 'build';
+var release_dir = 'release';
 module.exports = function(grunt) {
     var config = {
         typescript: {
             base: {
-                src: ['ChiTu/**/*.ts'],
-                dest: 'Build/chitu.js',
+                src: ['src/**/*.ts'],
+                dest: build_dir + '/chitu.js',
                 options: {
-                    basePath: 'Build',
-                    module: 'amd', //or commonjs
+                    basePath: build_dir,
                     target: 'es5',
                     removeComments: true,
                     declaration: true,
+                    references: [
+                        "src/**/*.ts"
+                    ]
                 }
             }
         },
@@ -20,32 +24,40 @@ module.exports = function(grunt) {
                 options: {
                     stripBanners: true,
                     banner: '/// <reference path="jquery.d.ts" /> \r\n',
+                    footer: 'declare module "chitu" { \n\
+    export = chitu; \n\
+}\n'
                 },
-                files: {
-                    ts_output_file: ['Build/**/*.d.ts']
-                }
+                //files: {
+                src: [build_dir + '/**/*.d.ts'],
+                dest: ts_output_file
+                //}
             },
             chitujs: {
                 options: {
-                    footer:
-                    '\nif (typeof define == "function") { \n\
-                        define(function(require, factory) { \n\
-                            return chitu;\n\
-                        }); \n\
-                    } \n',
+                    banner:
+                    "(function(factory) { \n\
+        if (typeof define === 'function' && define['amd']) { \n\
+            define(['jquery', 'crossroads', 'hammer', 'move'], factory);  \n\
+        } else { \n\
+            factory($, crossroads, Hammer, move); \n\
+        } \n\
+    })(function($, crossroads, Hammer,move) {",
+                    footer: '\n return chitu;\n\
+    });',
                 },
-                src: ['Build/**/*.js'],
+                src: [build_dir + '/**/*.js'],
                 dest: js_output_file
 
             }
         },
         uglify: {
             build: {
-                src: 'Release/chitu.js',
-                dest: 'Release/chitu.min.js'
+                src: release_dir + '/chitu.js',
+                dest: release_dir + '/chitu.min.js'
             }
         },
-        clean: ['Build/**/*.d.ts', ts_output_file]
+        clean: [build_dir + '/**/*.d.ts', ts_output_file]
     };
 
     config.copy = {
