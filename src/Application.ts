@@ -1,26 +1,93 @@
 ﻿namespace chitu {
 
-    var ns = chitu;
-    var u = chitu.Utility;
-    var e = Errors;
-    //var zindex = 500;
+    export interface PageInfo {
+        actionPath: string,
+        viewPath: string,
+        cssPath: string,
+        parameters: any,
+        pageName: string
+    }
+
+    export class UrlParser {
+        private path_string = '';
+        private path_spliter_char = '_';
+        private param_spliter = '?'
+
+        private _actionPath = '';
+        private _viewPath = '';
+        private _cssPath = '';
+        private _parameters = {};
+        private _pageName = '';
+
+        pathBase = '';
+
+        public pareeUrl(url: string): PageInfo {
+            if (!url)
+                throw Errors.argumentNull('url');
+
+            let a = document.createElement('a');
+            a.href = url;
+
+            if (a.search && a.search.length > 1) {
+                this._parameters = this.pareeUrlQuery(a.search.substr(1));
+            }
+            if (a.hash && a.hash.length > 1) {
+                this._pageName = a.hash.substr(1);
+            }
+
+            //
+            let path_parts = a.hash.substr(1).split(this.path_spliter_char);
+            if (path_parts.length < 2)
+                throw Errors.canntParseUrl(url);
+
+            let path = path_parts.join('/');
+            var result = {
+                actionPath: this.pathBase + path + '.js',
+                viewPath: this.pathBase + path + '.html',
+                cssPath: this.pathBase + path + '.css',
+                parameters: {},
+                pageName: Page.getPageName({ controller: path_parts[0], action: path_parts[1] }),
+                controller: path_parts[0],
+                action: path_parts[1]
+            }
+
+            return result;
+        }
+
+        pareeUrlQuery(query: string): Object {
+            let match,
+                pl = /\+/g,  // Regex for replacing addition symbol with a space
+                search = /([^&=]+)=?([^&]*)/g,
+                decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
+
+            let urlParams = {};
+            while (match = search.exec(query))
+                urlParams[decode(match[1])] = decode(match[2]);
+
+            return urlParams;
+        }
+    }
+
+
+
     var PAGE_STACK_MAX_SIZE = 10;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
     export interface ApplicationConfig {
-        container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
-        openSwipe?: (routeData: RouteData) => SwipeDirection,
-        closeSwipe?: (route: RouteData) => SwipeDirection,
+        container?: (routeData: PageInfo, prevous: PageContainer) => PageContainer,
+        openSwipe?: (routeData: PageInfo) => SwipeDirection,
+        closeSwipe?: (route: PageInfo) => SwipeDirection,
+        urlParser?: UrlParser,
     }
 
     export class Application {
-        pageCreating: chitu.Callback = ns.Callbacks();
-        pageCreated: chitu.Callback = ns.Callbacks();
+        pageCreating: chitu.Callback = Callbacks();
+        pageCreated: chitu.Callback = Callbacks();
 
         //private page_stack: chitu.Page[] = [];
         private _config: ApplicationConfig;
-        private _routes: chitu.RouteCollection = new RouteCollection();
+        //private _routes: chitu.RouteCollection = new RouteCollection();
         private _runned: boolean = false;
         private zindex: number;
         private back_deferred: JQueryDeferred<any>;
@@ -30,18 +97,21 @@
 
         constructor(config: ApplicationConfig) {
             if (config == null)
-                throw e.argumentNull('container');
+                throw Errors.argumentNull('container');
 
             this._config = config;
-            this._config.openSwipe = config.openSwipe || function(routeData: RouteData) { return SwipeDirection.None; };
-            this._config.closeSwipe = config.closeSwipe || function(routeData: RouteData) { return SwipeDirection.None; };
-            this._config.container = config.container || $.proxy(function(routeData: RouteData, previous: PageContainer) {
+            this._config.openSwipe = config.openSwipe || function (routeData: PageInfo) { return SwipeDirection.None; };
+            this._config.closeSwipe = config.closeSwipe || function (routeData: PageInfo) { return SwipeDirection.None; };
+            this._config.container = config.container || $.proxy(function (routeData: PageInfo, previous: PageContainer) {
                 return PageContainerFactory.createInstance(this.app, routeData, previous);
             }, { app: this });
+
+            this._config.urlParser = this._config.urlParser || new UrlParser();
+
         }
 
-        on_pageCreating(context: chitu.PageContext) {
-            return chitu.fireCallback(this.pageCreating, [this, context]);
+        on_pageCreating() {
+            return chitu.fireCallback(this.pageCreating, [this]);
         }
         on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, [this, page]);
@@ -49,10 +119,6 @@
         get config(): chitu.ApplicationConfig {
             return this._config;
         }
-        routes(): RouteCollection {
-            return this._routes;
-        }
-
         currentPage(): chitu.Page {
             if (this.container_stack.length > 0)
                 return this.container_stack[this.container_stack.length - 1].currentPage;
@@ -62,7 +128,7 @@
         get pageContainers(): Array<PageContainer> {
             return this.container_stack;
         }
-        private createPageContainer(routeData: RouteData): PageContainer {
+        private createPageContainer(routeData: PageInfo): PageContainer {
             var container = this.config.container(routeData, this.pageContainers[this.pageContainers.length - 1]);
 
             this.container_stack.push(container);
@@ -109,10 +175,11 @@
                 window.history.pushState({}, '', hash);
             }
 
-            var url = hash.substr(1);
-            var routeData = this.routes().getRouteData(url);
-            var pageName = Page.getPageName(routeData);
-            var page = this.getPage(pageName);
+            var url = location.href; //hash.substr(1);
+            //var routeData = this.routes().getRouteData(url);
+            //var pageName = Page.getPageName(routeData.values());
+            var pageInfo = this.config.urlParser.pareeUrl(url);
+            var page = this.getPage(pageInfo.pageName);
             var container: PageContainer = page != null ? page.container : null;
             if (container != null && $.inArray(container, this.container_stack) == this.container_stack.length - 2) {
                 var c = this.container_stack.pop();
@@ -125,7 +192,7 @@
             else {
                 var args = window.location['arguments'] || {};
                 window.location['arguments'] = null;
-                this.showPage(hash.substr(1), args);
+                this.showPage(url, args);
             }
 
             if (back_deferred)
@@ -150,14 +217,14 @@
             }
             return null;
         }
-        public showPage(url: string, args: Array<any>): chitu.Page {
-            if (!url) throw e.argumentNull('url');
+        public showPage(url: string, args: Array<any>): JQueryPromise<Page> {
+            if (!url) throw Errors.argumentNull('url');
 
             //args = args || {};
 
-            var routeData = this.routes().getRouteData(url);
+            var routeData = this.config.urlParser.pareeUrl(url); //this.routes().getRouteData(url);
             if (routeData == null) {
-                throw e.noneRouteMatched(url);
+                throw Errors.noneRouteMatched(url);
             }
 
             //var routeValues = $.extend(args, routeData.values() || {});
@@ -165,20 +232,20 @@
             var container = this.createPageContainer(routeData);
             container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
             var swipe = this.config.openSwipe(routeData);
-            var page = container.showPage(routeData, args, swipe);
+            var result = container.showPage(routeData, args, swipe);
 
-            return page;
+            return result;
         }
         protected createPageNode(): HTMLElement {
             var element = document.createElement('div');
             return element;
         }
-        public redirect(url: string, ...args: Array<any>): chitu.Page {
+        public redirect(url: string, args: Array<any>): JQueryPromise<Page> {
             window.location['skip'] = true;
             window.location.hash = url;
             return this.showPage(url, args);
         }
-        public back(): JQueryPromise<any> {
+        public back(args = undefined): JQueryPromise<any> {
             this.back_deferred = $.Deferred();
             if (window.history.length == 0) {
                 this.back_deferred.reject();

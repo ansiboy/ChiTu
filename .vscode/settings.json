@@ -1,7 +1,7 @@
 {
     "files.exclude": {
-        "Build": true,
-        "Release":true,
+        "build": true,
+        //"release":true,
         "node_modules": true,
         "LICENSE.txt": true,
         "README.txt": true,

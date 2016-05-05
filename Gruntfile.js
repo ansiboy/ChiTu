@@ -20,29 +20,27 @@ module.exports = function(grunt) {
             }
         },
         concat: {
-            chitudts: {
-                options: {
-                    stripBanners: true,
-                    banner: '/// <reference path="jquery.d.ts" /> \r\n',
-                    footer: 'declare module "chitu" { \n\
-    export = chitu; \n\
-}\n'
-                },
-                //files: {
-                src: [build_dir + '/**/*.d.ts'],
-                dest: ts_output_file
-                //}
-            },
+//             chitudts: {
+//                 options: {
+//                     stripBanners: true,
+//                     banner: '/// <reference path="jquery.d.ts" /> \r\n',
+//                     footer: 'declare module "chitu" { \n\
+//     export = chitu; \n\
+// }\n'
+//                 },
+//                 src: [build_dir + '/**/*.d.ts'],
+//                 dest: ts_output_file
+//             },
             chitujs: {
                 options: {
                     banner:
                     "(function(factory) { \n\
         if (typeof define === 'function' && define['amd']) { \n\
-            define(['jquery', 'crossroads', 'hammer', 'move'], factory);  \n\
+            define(['jquery', 'hammer', 'move'], factory);  \n\
         } else { \n\
-            factory($, crossroads, Hammer, move); \n\
+            factory($, Hammer, move); \n\
         } \n\
-    })(function($, crossroads, Hammer,move) {",
+    })(function($, Hammer,move) {",
                     footer: '\n return chitu;\n\
     });',
                 },

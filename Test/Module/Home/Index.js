@@ -1,5 +1,3 @@
-define([], function () {
-    return function (page) {
-        console.log('Home Index')
-    }
+define(['chitu'], function (chitu) {
+    return chitu.Page;
 });

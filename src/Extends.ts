@@ -225,37 +225,6 @@ namespace chitu {
         return $.when.apply($, deferreds);
     }
 
-    $.extend(crossroads, {
-        _create: crossroads.create,
-        create: function() {
-            /// <returns type="Crossroads"/>
-            var obj = this._create();
-            obj.getRouteData = function(request, defaultArgs) {
-                request = request || '';
-                defaultArgs = defaultArgs || [];
-
-                // should only care about different requests if ignoreState isn't true
-                if (!this.ignoreState &&
-                    (request === this._prevMatchedRequest ||
-                        request === this._prevBypassedRequest)) {
-                    return;
-                }
-
-                var routes = this._getMatchedRoutes(request),
-                    i = 0,
-                    n = routes.length,
-                    cur;
-
-                if (n == 0)
-                    return null;
-
-                if (n > 1) {
-                    throw Errors.ambiguityRouteMatched(request, 'route1', 'route2');
-                }
-                return routes[0];
-            }
-            return obj;
-        }
-    });
+ 
 
 } 

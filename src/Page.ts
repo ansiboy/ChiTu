@@ -1,6 +1,6 @@
-﻿/// <reference path="Scripts/typings/crossroads.d.ts"/>
-
+﻿
 namespace chitu {
+
 
     var ns = chitu;
     var u = chitu.Utility;
@@ -19,7 +19,7 @@ namespace chitu {
 
     var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
 
-    enum PageLoadType {
+    export enum PageLoadType {
         init,
         scroll,
         pullDown,
@@ -69,7 +69,7 @@ namespace chitu {
         //private _context: ControllerContext
         private _name: string;
         private _viewDeferred: JQueryPromise<string>;
-        private _actionDeferred: JQueryPromise<chitu.Action>;
+        private _actionDeferred: JQueryPromise<Function>;
 
         private _loadViewModelResult = null;
         private _openResult: JQueryDeferred<any> = null;
@@ -79,7 +79,7 @@ namespace chitu {
         private _hideTime = Page.animationTime;
         private _prevous: chitu.Page;
 
-        private _routeData: chitu.RouteData;
+        private _routeData: PageInfo;
         private _enableScrollLoad = false;
         private is_closed = false;
         private _scrollLoad_loading_bar: HTMLElement;
@@ -109,38 +109,35 @@ namespace chitu {
         //scrollEnd = ns.Callbacks();
         viewChanged = ns.Callbacks();
 
-        constructor(container: PageContainer, routeData: RouteData, actionArguments: Array<any>,
-            action: JQueryPromise<chitu.Action>, view: JQueryPromise<string>,
+        constructor(container: PageContainer, routeData: PageInfo, actionArguments: Array<any>,
+            //action: JQueryPromise<Function>, view: JQueryPromise<string>,
             previous?: chitu.Page) {
 
             //super(container);
             if (!container) throw e.argumentNull('container');
             if (routeData == null) throw e.argumentNull('scrorouteDatallType');
-            if (action == null) throw e.argumentNull('action');
-            if (view == null) throw e.argumentNull('view');
+            // if (action == null) throw e.argumentNull('action');
+            // if (view == null) throw e.argumentNull('view');
 
             this._pageContainer = container;
             this._node = document.createElement('page');
             $(this._node).data('page', this);
 
-            this._actionDeferred = action;
-            this._viewDeferred = view;
+            // this._actionDeferred = action;
+            // this._viewDeferred = view;
             this._prevous = previous;
             this._routeData = routeData
 
-            this.action.done((action: chitu.Action) => {
-                action.execute(this, actionArguments);
+            //this.action.done((type: Function) => {
+                //action.execute(this, actionArguments);
 
-                if (this.view) {
-                    this.view.done((html) => {
-                        this.element.innerHTML = html;
-                        this._controls = this.createControls(this.element);
-                        this.viewHtml = html
-
-                        this.on_load(routeData.values());
-                    });
-                }
-            })
+                // if (this.view) {
+                //     this.view.done((html) => {
+           
+                //     });
+                // }
+                
+            //})
         }
 
         private createControls(element: HTMLElement): Control[] {
@@ -154,49 +151,50 @@ namespace chitu {
             return this._controls;
         }
 
-        get view(): JQueryPromise<string> {
-            return this._viewDeferred;
-        }
-        set view(value: JQueryPromise<string>) {
-            this._viewDeferred = value;
-        }
-        get action(): JQueryPromise<Action> {
-            return this._actionDeferred;
-        }
-        set action(value: JQueryPromise<Action>) {
-            this._actionDeferred = value;
-        }
+        // get view(): JQueryPromise<string> {
+        //     return this._viewDeferred;
+        // }
+        // set view(value: JQueryPromise<string>) {
+        //     this._viewDeferred = value;
+        // }
+        // get action(): JQueryPromise<Function> {
+        //     return this._actionDeferred;
+        // }
+        // set action(value: JQueryPromise<Function>) {
+        //     this._actionDeferred = value;
+        // }
         private get enableScrollLoad(): boolean {
             return this._enableScrollLoad;
         }
         private set enableScrollLoad(value: boolean) {
             this._enableScrollLoad = value;
         }
-        private set viewHtml(value: string) {
+        public set viewHtml(value: string) {
             this._viewHtml = value;
+            this._controls = this.createControls(this.element);
             this.on_viewChanged({});
         }
-        private get viewHtml(): string {
+        public get viewHtml(): string {
             //return this.conatiner.nodes.content.innerHTML;
             return this._viewHtml;
         }
-        static getPageName(routeData: RouteData): string {
+        static getPageName(routeValue: { controller: string, action: string }): string {
             var name: string;
-            if (routeData.pageName()) {
-                var route = crossroads.addRoute(routeData.pageName());
-                name = route.interpolate(routeData.values());
-            }
-            else {
-                name = routeData.values().controller + '.' + routeData.values().action;
-            }
+            // if (routeData.pageName()) {
+            //     var route = window['crossroads'].addRoute(routeData.pageName());
+            //     name = route.interpolate(routeData.values());
+            // }
+            // else {
+            name = routeValue.controller + '.' + routeValue.action;
+            //}
             return name;
         }
-        get routeData(): chitu.RouteData {
+        get routeData(): PageInfo {
             return this._routeData;
         }
         get name(): string {
             if (!this._name)
-                this._name = Page.getPageName(this.routeData);
+                this._name = this.routeData.pageName; //Page.getPageName(this.routeData.values());
 
             return this._name;
         }
@@ -249,17 +247,17 @@ namespace chitu {
             var result = $.when.apply($, promises);
             //===============================================================
             // 必须是 view 加载完成，并且 on_load 完成后，才触发 on_loadCompleted 事件
-            if (this.view == null) {
-                result.done(() => this.on_loadCompleted(args));
-            }
-            else {
-                if (this.view.state() == 'resolved') {
-                    result.done(() => this.on_loadCompleted(args));
-                }
-                else {
-                    $.when(this.view, result).done(() => this.on_loadCompleted(args));
-                }
-            }
+            // if (this.view == null) {
+            //     result.done(() => this.on_loadCompleted(args));
+            // }
+            // else {
+            //     if (this.view.state() == 'resolved') {
+            //         result.done(() => this.on_loadCompleted(args));
+            //     }
+            //     else {
+            //         $.when(this.view, result).done(() => this.on_loadCompleted(args));
+            //     }
+            // }
             //===============================================================
 
             return result;

@@ -17,14 +17,6 @@ namespace chitu {
         Document = 'doc'
     }
 
-    export interface PageDefine {
-        name: string;
-        left?: PageDefine;
-        right?: PageDefine;
-        up?: PageDefine;
-        down?: PageDefine;
-    }
-
     export class PageContainer {
         private animationTime: number = 300;
         private num: Number;
@@ -45,7 +37,7 @@ namespace chitu {
         gesture: Gesture;
         pageCreated: chitu.Callback = Callbacks();
 
-        constructor(app: Application, pageDefine: PageDefine, previous?: PageContainer) {
+        constructor(app: Application, previous?: PageContainer) {
 
             this._node = this.createNode();
             this._loading = this.createLoading(this._node);
@@ -219,6 +211,9 @@ namespace chitu {
             switch (swipe) {
                 case SwipeDirection.None:
                 default:
+                    if (this.previous != null)
+                        move(this.previous.element).x(0).duration(this.animationTime).end();
+
                     result.resolve();
                     break;
                 case SwipeDirection.Down:
@@ -280,37 +275,54 @@ namespace chitu {
         get previous(): PageContainer {
             return this._previous;
         }
-        private createPage(routeData: RouteData, actionArguments: Array<any>): Page {
-            var controllerName = routeData.values().controller;
-            var actionName = routeData.values().action;
+        private createPage(routeData: PageInfo, actionArguments: Array<any>): JQueryPromise<Page> {
+            //var controllerName = routeData.values().controller;
+            //var actionName = routeData.values().action;
             var view_deferred = createViewDeferred(routeData);
             var action_deferred = createActionDeferred(routeData);
-            var context = new PageContext(view_deferred, routeData);
+            //var context = new PageContext(view_deferred, routeData);
+
+            var result = $.Deferred();
 
             var previousPage: Page;
             if (this._pages.length > 0)
                 previousPage = this._pages[this._pages.length - 1];
 
-            var page = new Page(this, routeData, actionArguments, action_deferred, view_deferred, previousPage);
-            this.on_pageCreated(page);
+            $.when<any>(action_deferred, view_deferred).done((pageType: any, html: string) => {
+                var page: Page = new pageType(this, routeData, actionArguments, previousPage);
+                this.on_pageCreated(page);
 
-            this._pages.push(page);
-            this._pages[page.name] = page;
-            return page;
+                this._pages.push(page);
+                this._pages[page.name] = page;
+
+                result.resolve(page);
+                page.element.innerHTML = html;
+               //page._controls = page.createControls(this.element);
+                page.viewHtml = html
+
+                page.on_load(routeData.parameters);
+            }).fail(() => {
+                result.reject();
+            });
+
+            return result;
+
+            //return page;
         }
 
-        showPage(routeData: RouteData, actionArguments: Array<any>, swipe: SwipeDirection): Page {
-            var page = this.createPage(routeData, actionArguments);
-            this.element.appendChild(page.element);
-            this._currentPage = page;
+        showPage(routeData: PageInfo, actionArguments: Array<any>, swipe: SwipeDirection): JQueryPromise<Page> {
+            return this.createPage(routeData, actionArguments)
+                .done((page: Page) => {
+                    this.element.appendChild(page.element);
+                    this._currentPage = page;
 
-            page.on_showing(routeData.values());
-            this.show(swipe).done(() => {
-                page.on_shown(routeData.values());
-            });
-            page.loadCompleted.add(() => this.hideLoading());
+                    page.on_showing(page.routeData.parameters);
+                    this.show(swipe).done(() => {
+                        page.on_shown(page.routeData.parameters);
+                    });
+                    page.loadCompleted.add(() => this.hideLoading());
+                });
 
-            return page;
         }
     }
 
@@ -319,9 +331,8 @@ namespace chitu {
         constructor(app: Application) {
             this._app = app;
         }
-        static createInstance(app: Application, routeData: RouteData, previous: PageContainer): PageContainer {
-            var page_name = Page.getPageName(routeData);
-            return new PageContainer(app, { name: page_name }, previous);
+        static createInstance(app: Application, routeData: PageInfo, previous: PageContainer): PageContainer {
+            return new PageContainer(app, previous);
         }
     }
 
