@@ -35,18 +35,18 @@
                 this._pageName = a.hash.substr(1);
             }
 
-            //
             let path_parts = a.hash.substr(1).split(this.path_spliter_char);
             if (path_parts.length < 2)
                 throw Errors.canntParseUrl(url);
 
             let path = path_parts.join('/');
+            let page_name = path_parts.join('.');
             var result = {
                 actionPath: this.pathBase + path + '.js',
                 viewPath: this.pathBase + path + '.html',
                 cssPath: this.pathBase + path + '.css',
                 parameters: {},
-                pageName: Page.getPageName({ controller: path_parts[0], action: path_parts[1] }),
+                pageName: page_name,
                 controller: path_parts[0],
                 action: path_parts[1]
             }
@@ -54,7 +54,7 @@
             return result;
         }
 
-        pareeUrlQuery(query: string): Object {
+        private pareeUrlQuery(query: string): Object {
             let match,
                 pl = /\+/g,  // Regex for replacing addition symbol with a space
                 search = /([^&=]+)=?([^&]*)/g,
@@ -220,15 +220,11 @@
         public showPage(url: string, args: Array<any>): JQueryPromise<Page> {
             if (!url) throw Errors.argumentNull('url');
 
-            //args = args || {};
-
-            var routeData = this.config.urlParser.pareeUrl(url); //this.routes().getRouteData(url);
+            var routeData = this.config.urlParser.pareeUrl(url); 
             if (routeData == null) {
                 throw Errors.noneRouteMatched(url);
             }
 
-            //var routeValues = $.extend(args, routeData.values() || {});
-            //routeData.values(routeValues);
             var container = this.createPageContainer(routeData);
             container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
             var swipe = this.config.openSwipe(routeData);

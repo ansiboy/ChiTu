@@ -178,17 +178,11 @@ namespace chitu {
             //return this.conatiner.nodes.content.innerHTML;
             return this._viewHtml;
         }
-        static getPageName(routeValue: { controller: string, action: string }): string {
-            var name: string;
-            // if (routeData.pageName()) {
-            //     var route = window['crossroads'].addRoute(routeData.pageName());
-            //     name = route.interpolate(routeData.values());
-            // }
-            // else {
-            name = routeValue.controller + '.' + routeValue.action;
-            //}
-            return name;
-        }
+        // static getPageName(routeValue: { controller: string, action: string }): string {
+        //     var name: string;
+        //     name = routeValue.controller + '.' + routeValue.action;
+        //     return name;
+        // }
         get routeData(): PageInfo {
             return this._routeData;
         }

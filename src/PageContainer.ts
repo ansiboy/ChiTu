@@ -142,9 +142,12 @@ namespace chitu {
             if (this.visible == true)
                 return $.Deferred().resolve();
 
-            var container_width = $(this._node).width();
+            let container_width = $(this._node).width();
             var container_height = $(this._node).height();
+            if (container_width <= 0 || container_height <= 0)
+                swipe = SwipeDirection.None;
 
+            let interval = 30;
             var result = $.Deferred();
             var on_end = () => {
                 if (this.previous != null)
@@ -167,7 +170,7 @@ namespace chitu {
                     // 不要问我为什么这里要设置 timeout，反正不设置不起作用。
                     window.setTimeout(() => {
                         move(this.element).y(0).duration(this.animationTime).end(on_end);
-                    }, 30);
+                    }, interval);
                     //======================================
                     break;
                 case SwipeDirection.Up:
@@ -175,7 +178,7 @@ namespace chitu {
                     $(this._node).show();
                     window.setTimeout(() => {
                         move(this.element).y(0).duration(this.animationTime).end(on_end);
-                    }, 30);
+                    }, interval);
                     break;
                 case SwipeDirection.Right:
                     move(this.element).x(0 - container_width).duration(0).end();
@@ -185,7 +188,7 @@ namespace chitu {
                             move(this.previous.element).x(container_width * this._previousOffsetRate).duration(this.animationTime).end();
 
                         move(this.element).x(0).duration(this.animationTime).end(on_end);
-                    }, 30);
+                    }, interval);
                     break;
                 case SwipeDirection.Left:
                     move(this.element).x(container_width).duration(0).end();
@@ -195,7 +198,7 @@ namespace chitu {
                             move(this.previous.element).x(0 - container_width * this._previousOffsetRate).duration(this.animationTime).end();
 
                         move(this.element).x(0).duration(this.animationTime).end(on_end);
-                    }, 30);
+                    }, interval);
                     break;
             }
             return result;
@@ -275,11 +278,68 @@ namespace chitu {
         get previous(): PageContainer {
             return this._previous;
         }
+        private createActionDeferred(pageInfo: PageInfo): JQueryPromise<ObjectConstructor> {
+
+            var url = pageInfo.actionPath;
+            var result = $.Deferred();
+            requirejs([url],
+                (Type) => {
+                    //加载脚本失败
+                    if (!Type) {
+                        console.warn(chitu.Utility.format('加载活动“{0}”失败。', pageInfo.pageName));
+                        result.reject();
+                        return;
+                    }
+
+                    if (!$.isFunction(Type))
+                        throw chitu.Errors.modelFileExpecteFunction(pageInfo.pageName);
+
+                    result.resolve(Type);
+                },
+
+                (err) => result.reject(err)
+            );
+
+            return result;
+        }
+
+        private createViewDeferred(pageInfo: PageInfo): JQueryPromise<string> {
+
+            var url = pageInfo.viewPath;
+            var self = this;
+            var result = $.Deferred();
+            var http = 'http://';
+            if (url.substr(0, http.length).toLowerCase() == http) {
+                //=======================================================
+                // 说明：不使用 require text 是因为加载远的 html 文件，会作
+                // 为 script 去解释而导致错误 
+                $.ajax({ url: url })
+                    .done((html) => {
+                        if (html != null)
+                            result.resolve(html);
+                        else
+                            result.reject();
+                    })
+                    .fail((err) => result.reject(err));
+                //=======================================================
+            }
+            else {
+                requirejs(['text!' + url],
+                    (html) => {
+                        if (html != null)
+                            result.resolve(html);
+                        else
+                            result.reject();
+                    },
+                    (err) => result.reject(err));
+            }
+
+            return result;
+        }
         private createPage(routeData: PageInfo, actionArguments: Array<any>): JQueryPromise<Page> {
-            //var controllerName = routeData.values().controller;
-            //var actionName = routeData.values().action;
-            var view_deferred = createViewDeferred(routeData);
-            var action_deferred = createActionDeferred(routeData);
+
+            var view_deferred = this.createViewDeferred(routeData);
+            var action_deferred = this.createActionDeferred(routeData);
             //var context = new PageContext(view_deferred, routeData);
 
             var result = $.Deferred();
@@ -297,7 +357,7 @@ namespace chitu {
 
                 result.resolve(page);
                 page.element.innerHTML = html;
-               //page._controls = page.createControls(this.element);
+                //page._controls = page.createControls(this.element);
                 page.viewHtml = html
 
                 page.on_load(routeData.parameters);
@@ -306,8 +366,6 @@ namespace chitu {
             });
 
             return result;
-
-            //return page;
         }
 
         showPage(routeData: PageInfo, actionArguments: Array<any>, swipe: SwipeDirection): JQueryPromise<Page> {

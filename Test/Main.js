@@ -1,4 +1,3 @@
-/// <reference path="../Release/chitu.js"/>
 
 requirejs.config({
     paths: {
