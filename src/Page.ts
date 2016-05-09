@@ -109,39 +109,20 @@ namespace chitu {
         //scrollEnd = ns.Callbacks();
         viewChanged = ns.Callbacks();
 
-        constructor(container: PageContainer, routeData: PageInfo, actionArguments: Array<any>,
-            //action: JQueryPromise<Function>, view: JQueryPromise<string>,
-            previous?: chitu.Page) {
+        constructor(container: PageContainer, pageInfo: PageInfo, previous?: chitu.Page) {
 
-            //super(container);
             if (!container) throw e.argumentNull('container');
-            if (routeData == null) throw e.argumentNull('scrorouteDatallType');
-            // if (action == null) throw e.argumentNull('action');
-            // if (view == null) throw e.argumentNull('view');
+            if (pageInfo == null) throw e.argumentNull('pageInfo');
 
             this._pageContainer = container;
             this._node = document.createElement('page');
             $(this._node).data('page', this);
 
-            // this._actionDeferred = action;
-            // this._viewDeferred = view;
             this._prevous = previous;
-            this._routeData = routeData
-
-            //this.action.done((type: Function) => {
-                //action.execute(this, actionArguments);
-
-                // if (this.view) {
-                //     this.view.done((html) => {
-           
-                //     });
-                // }
-                
-            //})
+            this._routeData = pageInfo
         }
 
         private createControls(element: HTMLElement): Control[] {
-            //var control_parser = new ControlParser(this);
             this._controls = ControlFactory.createControls(element, this);//, this
             var stack = new Array<Control>();
 
@@ -178,17 +159,12 @@ namespace chitu {
             //return this.conatiner.nodes.content.innerHTML;
             return this._viewHtml;
         }
-        // static getPageName(routeValue: { controller: string, action: string }): string {
-        //     var name: string;
-        //     name = routeValue.controller + '.' + routeValue.action;
-        //     return name;
-        // }
         get routeData(): PageInfo {
             return this._routeData;
         }
         get name(): string {
             if (!this._name)
-                this._name = this.routeData.pageName; //Page.getPageName(this.routeData.values());
+                this._name = this.routeData.pageName; 
 
             return this._name;
         }
