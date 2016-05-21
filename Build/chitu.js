@@ -175,9 +175,7 @@ var chitu;
                 c.close(swipe);
             }
             else {
-                var args = window.location['arguments'] || {};
-                window.location['arguments'] = null;
-                this.showPage(url, args);
+                this.showPage(url);
             }
             if (back_deferred)
                 back_deferred.resolve();
@@ -198,7 +196,7 @@ var chitu;
             }
             return null;
         };
-        Application.prototype.showPage = function (url, args) {
+        Application.prototype.showPage = function (url) {
             var _this = this;
             if (!url)
                 throw chitu.Errors.argumentNull('url');
@@ -209,17 +207,17 @@ var chitu;
             var container = this.createPageContainer(routeData);
             container.pageCreated.add(function (sender, page) { return _this.on_pageCreated(page); });
             var swipe = this.config.openSwipe(routeData);
-            var result = container.showPage(routeData, args, swipe);
+            var result = container.showPage(routeData, swipe);
             return result;
         };
         Application.prototype.createPageNode = function () {
             var element = document.createElement('div');
             return element;
         };
-        Application.prototype.redirect = function (url, args) {
+        Application.prototype.redirect = function (url) {
             window.location['skip'] = true;
             window.location.hash = url;
-            return this.showPage(url, args);
+            return this.showPage(url);
         };
         Application.prototype.back = function (args) {
             if (args === void 0) { args = undefined; }
@@ -1108,12 +1106,6 @@ var chitu;
     var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
-    var PAGE_CLASS_NAME = 'page-node';
-    var PAGE_HEADER_CLASS_NAME = 'page-header';
-    var PAGE_BODY_CLASS_NAME = 'page-body';
-    var PAGE_FOOTER_CLASS_NAME = 'page-footer';
-    var PAGE_LOADING_CLASS_NAME = 'page-loading';
-    var PAGE_CONTENT_CLASS_NAME = 'page-content';
     var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
     (function (PageLoadType) {
         PageLoadType[PageLoadType["init"] = 0] = "init";
@@ -1156,7 +1148,7 @@ var chitu;
     })(chitu.ScrollType || (chitu.ScrollType = {}));
     var ScrollType = chitu.ScrollType;
     var Page = (function () {
-        function Page(container, routeData, actionArguments, previous) {
+        function Page(container, pageInfo, previous) {
             this._loadViewModelResult = null;
             this._openResult = null;
             this._hideResult = null;
@@ -1177,13 +1169,13 @@ var chitu;
             this.viewChanged = ns.Callbacks();
             if (!container)
                 throw e.argumentNull('container');
-            if (routeData == null)
-                throw e.argumentNull('scrorouteDatallType');
+            if (pageInfo == null)
+                throw e.argumentNull('pageInfo');
             this._pageContainer = container;
             this._node = document.createElement('page');
             $(this._node).data('page', this);
             this._prevous = previous;
-            this._routeData = routeData;
+            this._routeData = pageInfo;
         }
         Page.prototype.createControls = function (element) {
             this._controls = chitu.ControlFactory.createControls(element, this);
@@ -1611,31 +1603,31 @@ var chitu;
             }
             return result;
         };
-        PageContainer.prototype.createPage = function (routeData, actionArguments) {
+        PageContainer.prototype.createPage = function (pageInfo) {
             var _this = this;
-            var view_deferred = this.createViewDeferred(routeData);
-            var action_deferred = this.createActionDeferred(routeData);
+            var view_deferred = this.createViewDeferred(pageInfo);
+            var action_deferred = this.createActionDeferred(pageInfo);
             var result = $.Deferred();
             var previousPage;
             if (this._pages.length > 0)
                 previousPage = this._pages[this._pages.length - 1];
             $.when(action_deferred, view_deferred).done(function (pageType, html) {
-                var page = new pageType(_this, routeData, actionArguments, previousPage);
+                var page = new pageType(_this, pageInfo, previousPage);
                 _this.on_pageCreated(page);
                 _this._pages.push(page);
                 _this._pages[page.name] = page;
                 result.resolve(page);
                 page.element.innerHTML = html;
                 page.viewHtml = html;
-                page.on_load(routeData.parameters);
+                page.on_load(pageInfo.parameters);
             }).fail(function () {
                 result.reject();
             });
             return result;
         };
-        PageContainer.prototype.showPage = function (routeData, actionArguments, swipe) {
+        PageContainer.prototype.showPage = function (routeData, swipe) {
             var _this = this;
-            return this.createPage(routeData, actionArguments)
+            return this.createPage(routeData)
                 .done(function (page) {
                 _this.element.appendChild(page.element);
                 _this._currentPage = page;

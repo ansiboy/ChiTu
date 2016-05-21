@@ -190,9 +190,7 @@
                 c.close(swipe);
             }
             else {
-                var args = window.location['arguments'] || {};
-                window.location['arguments'] = null;
-                this.showPage(url, args);
+                this.showPage(url);
             }
 
             if (back_deferred)
@@ -217,7 +215,7 @@
             }
             return null;
         }
-        public showPage(url: string, args: Array<any>): JQueryPromise<Page> {
+        public showPage(url: string): JQueryPromise<Page> {
             if (!url) throw Errors.argumentNull('url');
 
             var routeData = this.config.urlParser.pareeUrl(url); 
@@ -228,7 +226,7 @@
             var container = this.createPageContainer(routeData);
             container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
             var swipe = this.config.openSwipe(routeData);
-            var result = container.showPage(routeData, args, swipe);
+            var result = container.showPage(routeData, swipe);
 
             return result;
         }
@@ -236,10 +234,10 @@
             var element = document.createElement('div');
             return element;
         }
-        public redirect(url: string, args: Array<any>): JQueryPromise<Page> {
+        public redirect(url: string): JQueryPromise<Page> {
             window.location['skip'] = true;
             window.location.hash = url;
-            return this.showPage(url, args);
+            return this.showPage(url);
         }
         public back(args = undefined): JQueryPromise<any> {
             this.back_deferred = $.Deferred();

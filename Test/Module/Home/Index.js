@@ -1,3 +1,9 @@
 define(['chitu'], function (chitu) {
-    return chitu.Page;
+
+    function HomePage(container, pageInfo, args, previous) {
+        chitu.Page.apply(this,arguments);
+    }
+
+    HomePage.prototype = chitu.Page.prototype;
+    return HomePage;
 });

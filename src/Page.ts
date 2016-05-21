@@ -6,16 +6,12 @@ namespace chitu {
     var u = chitu.Utility;
     var e = chitu.Errors;
 
-    // function eventDeferred(callback: chitu.Callback, sender, args = {}): JQueryPromise<any> {
-    //     return chitu.fireCallback(callback, [sender, args]);
-    // };
-
-    const PAGE_CLASS_NAME = 'page-node';
-    const PAGE_HEADER_CLASS_NAME = 'page-header';
-    const PAGE_BODY_CLASS_NAME = 'page-body';
-    const PAGE_FOOTER_CLASS_NAME = 'page-footer';
-    const PAGE_LOADING_CLASS_NAME = 'page-loading';
-    const PAGE_CONTENT_CLASS_NAME = 'page-content';
+    // const PAGE_CLASS_NAME = 'page-node';
+    // const PAGE_HEADER_CLASS_NAME = 'page-header';
+    // const PAGE_BODY_CLASS_NAME = 'page-body';
+    // const PAGE_FOOTER_CLASS_NAME = 'page-footer';
+    // const PAGE_LOADING_CLASS_NAME = 'page-loading';
+    // const PAGE_CONTENT_CLASS_NAME = 'page-content';
 
     var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
 
@@ -64,9 +60,9 @@ namespace chitu {
         Document,
     }
 
-    export class Page {// extends Control
+    export class Page {
         static animationTime: number = 300;
-        //private _context: ControllerContext
+    
         private _name: string;
         private _viewDeferred: JQueryPromise<string>;
         private _actionDeferred: JQueryPromise<Function>;
@@ -101,12 +97,10 @@ namespace chitu {
         loadCompleted = ns.Callbacks();
         closing = ns.Callbacks();
         closed = ns.Callbacks();
-        //scroll = ns.Callbacks();
         showing = ns.Callbacks();
         shown = ns.Callbacks();
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
-        //scrollEnd = ns.Callbacks();
         viewChanged = ns.Callbacks();
 
         constructor(container: PageContainer, pageInfo: PageInfo, previous?: chitu.Page) {

@@ -21,8 +21,6 @@ namespace chitu {
         private animationTime: number = 300;
         private num: Number;
 
-        //private _topBar: HTMLElement;
-        //private _bottomBar: HTMLElement;
         private _node: HTMLElement;
         private _loading: HTMLElement;
         private _pages: Array<Page>;
@@ -336,12 +334,10 @@ namespace chitu {
 
             return result;
         }
-        private createPage(routeData: PageInfo, actionArguments: Array<any>): JQueryPromise<Page> {
+        private createPage(pageInfo: PageInfo): JQueryPromise<Page> {
 
-            var view_deferred = this.createViewDeferred(routeData);
-            var action_deferred = this.createActionDeferred(routeData);
-            //var context = new PageContext(view_deferred, routeData);
-
+            var view_deferred = this.createViewDeferred(pageInfo);
+            var action_deferred = this.createActionDeferred(pageInfo);
             var result = $.Deferred();
 
             var previousPage: Page;
@@ -349,7 +345,7 @@ namespace chitu {
                 previousPage = this._pages[this._pages.length - 1];
 
             $.when<any>(action_deferred, view_deferred).done((pageType: any, html: string) => {
-                var page: Page = new pageType(this, routeData, actionArguments, previousPage);
+                var page: Page = new pageType(this, pageInfo, previousPage);
                 this.on_pageCreated(page);
 
                 this._pages.push(page);
@@ -357,10 +353,9 @@ namespace chitu {
 
                 result.resolve(page);
                 page.element.innerHTML = html;
-                //page._controls = page.createControls(this.element);
                 page.viewHtml = html
 
-                page.on_load(routeData.parameters);
+                page.on_load(pageInfo.parameters);
             }).fail(() => {
                 result.reject();
             });
@@ -368,8 +363,8 @@ namespace chitu {
             return result;
         }
 
-        showPage(routeData: PageInfo, actionArguments: Array<any>, swipe: SwipeDirection): JQueryPromise<Page> {
-            return this.createPage(routeData, actionArguments)
+        showPage(routeData: PageInfo, swipe: SwipeDirection): JQueryPromise<Page> {
+            return this.createPage(routeData)
                 .done((page: Page) => {
                     this.element.appendChild(page.element);
                     this._currentPage = page;
@@ -435,13 +430,10 @@ namespace chitu {
                 hammer.on('pan', (e: PanEvent) => {
                     var pans = this.getPans(hammer.element);
                     for (var i = pans.length - 1; i >= 0; i--) {
-                        //var is_continue: any;
 
                         var state = hammer.get('pan').state;
                         if (pans[i]['started'] == null && (state & Hammer.STATE_BEGAN) == Hammer.STATE_BEGAN) {
                             pans[i]['started'] = <any>pans[i].start(e);
-                            // if (started == false)
-                            //     continue;
                         }
 
                         var exected = false;
