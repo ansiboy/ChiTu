@@ -363,7 +363,7 @@ namespace chitu {
             return result;
         }
 
-        showPage(routeData: PageInfo, swipe: SwipeDirection): JQueryPromise<Page> {
+        showPage<T extends Page>(routeData: PageInfo, swipe: SwipeDirection): JQueryPromise<T> {
             return this.createPage(routeData)
                 .done((page: Page) => {
                     this.element.appendChild(page.element);

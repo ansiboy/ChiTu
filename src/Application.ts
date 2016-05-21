@@ -215,7 +215,7 @@
             }
             return null;
         }
-        public showPage(url: string): JQueryPromise<Page> {
+        public showPage<T extends Page>(url: string): JQueryPromise<T>  {
             if (!url) throw Errors.argumentNull('url');
 
             var routeData = this.config.urlParser.pareeUrl(url); 
@@ -234,10 +234,10 @@
             var element = document.createElement('div');
             return element;
         }
-        public redirect(url: string): JQueryPromise<Page> {
+        public redirect<T extends Page>(url: string): JQueryPromise<T> {
             window.location['skip'] = true;
             window.location.hash = url;
-            return this.showPage(url);
+            return this.showPage<T>(url);
         }
         public back(args = undefined): JQueryPromise<any> {
             this.back_deferred = $.Deferred();
