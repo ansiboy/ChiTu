@@ -6,13 +6,6 @@ namespace chitu {
     var u = chitu.Utility;
     var e = chitu.Errors;
 
-    // const PAGE_CLASS_NAME = 'page-node';
-    // const PAGE_HEADER_CLASS_NAME = 'page-header';
-    // const PAGE_BODY_CLASS_NAME = 'page-body';
-    // const PAGE_FOOTER_CLASS_NAME = 'page-footer';
-    // const PAGE_LOADING_CLASS_NAME = 'page-loading';
-    // const PAGE_CONTENT_CLASS_NAME = 'page-content';
-
     var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
 
     export enum PageLoadType {
