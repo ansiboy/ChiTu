@@ -1,4 +1,4 @@
-﻿/// <reference path="Scripts/typings/crossroads.d.ts"/>
+﻿
 namespace chitu {
     var rnotwhite = (/\S+/g);
 

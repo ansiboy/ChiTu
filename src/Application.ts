@@ -1,10 +1,10 @@
 ﻿namespace chitu {
 
-    export interface PageInfo {
+    export interface RouteData {
         actionPath: string,
         viewPath: string,
-        cssPath: string,
-        parameters: any,
+        //cssPath: string,
+        values: any,
         pageName: string
     }
 
@@ -16,12 +16,12 @@
         private _actionPath = '';
         private _viewPath = '';
         private _cssPath = '';
-        private _parameters = {};
+        private _parameters: any = {};
         private _pageName = '';
 
         pathBase = '';
 
-        public pareeUrl(url: string): PageInfo {
+        public pareeUrl(url: string): RouteData {
             if (!url)
                 throw Errors.argumentNull('url');
 
@@ -39,16 +39,22 @@
             if (path_parts.length < 2)
                 throw Errors.canntParseUrl(url);
 
-            let path = path_parts.join('/');
-            let page_name = path_parts.join('.');
+            let controller = path_parts[0];
+            let action = path_parts[1];
+
+            this._parameters.controller = controller;
+            this._parameters.action = action;
+            if (path_parts.length > 2)
+                this._parameters.id = path_parts[2];
+
+            let path = controller + '/' + action;
+            let page_name = controller + '.' + action;
+             //path_parts.join('.');
             var result = {
                 actionPath: this.pathBase + path + '.js',
                 viewPath: this.pathBase + path + '.html',
-                cssPath: this.pathBase + path + '.css',
-                parameters: {},
+                values: this._parameters,
                 pageName: page_name,
-                controller: path_parts[0],
-                action: path_parts[1]
             }
 
             return result;
@@ -75,9 +81,9 @@
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
     export interface ApplicationConfig {
-        container?: (routeData: PageInfo, prevous: PageContainer) => PageContainer,
-        openSwipe?: (routeData: PageInfo) => SwipeDirection,
-        closeSwipe?: (route: PageInfo) => SwipeDirection,
+        container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
+        openSwipe?: (routeData: RouteData) => SwipeDirection,
+        closeSwipe?: (route: RouteData) => SwipeDirection,
         urlParser?: UrlParser,
     }
 
@@ -85,9 +91,7 @@
         pageCreating: chitu.Callback = Callbacks();
         pageCreated: chitu.Callback = Callbacks();
 
-        //private page_stack: chitu.Page[] = [];
         private _config: ApplicationConfig;
-        //private _routes: chitu.RouteCollection = new RouteCollection();
         private _runned: boolean = false;
         private zindex: number;
         private back_deferred: JQueryDeferred<any>;
@@ -100,9 +104,9 @@
                 throw Errors.argumentNull('container');
 
             this._config = config;
-            this._config.openSwipe = config.openSwipe || function (routeData: PageInfo) { return SwipeDirection.None; };
-            this._config.closeSwipe = config.closeSwipe || function (routeData: PageInfo) { return SwipeDirection.None; };
-            this._config.container = config.container || $.proxy(function (routeData: PageInfo, previous: PageContainer) {
+            this._config.openSwipe = config.openSwipe || function (routeData: RouteData) { return SwipeDirection.None; };
+            this._config.closeSwipe = config.closeSwipe || function (routeData: RouteData) { return SwipeDirection.None; };
+            this._config.container = config.container || $.proxy(function (routeData: RouteData, previous: PageContainer) {
                 return PageContainerFactory.createInstance(this.app, routeData, previous);
             }, { app: this });
 
@@ -128,7 +132,7 @@
         get pageContainers(): Array<PageContainer> {
             return this.container_stack;
         }
-        private createPageContainer(routeData: PageInfo): PageContainer {
+        private createPageContainer(routeData: RouteData): PageContainer {
             var container = this.config.container(routeData, this.pageContainers[this.pageContainers.length - 1]);
 
             this.container_stack.push(container);
@@ -175,9 +179,7 @@
                 window.history.pushState({}, '', hash);
             }
 
-            var url = location.href; //hash.substr(1);
-            //var routeData = this.routes().getRouteData(url);
-            //var pageName = Page.getPageName(routeData.values());
+            var url = location.href;
             var pageInfo = this.config.urlParser.pareeUrl(url);
             var page = this.getPage(pageInfo.pageName);
             var container: PageContainer = page != null ? page.container : null;
@@ -215,10 +217,10 @@
             }
             return null;
         }
-        public showPage<T extends Page>(url: string): JQueryPromise<T>  {
+        public showPage<T extends Page>(url: string, args?: any): JQueryPromise<T> {
             if (!url) throw Errors.argumentNull('url');
 
-            var routeData = this.config.urlParser.pareeUrl(url); 
+            var routeData = this.config.urlParser.pareeUrl(url);
             if (routeData == null) {
                 throw Errors.noneRouteMatched(url);
             }
@@ -226,7 +228,7 @@
             var container = this.createPageContainer(routeData);
             container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
             var swipe = this.config.openSwipe(routeData);
-            var result = container.showPage(routeData, swipe);
+            var result = container.showPage(routeData, args, swipe);
 
             return result;
         }
@@ -234,10 +236,10 @@
             var element = document.createElement('div');
             return element;
         }
-        public redirect<T extends Page>(url: string): JQueryPromise<T> {
+        public redirect<T extends Page>(url: string, args?: any): JQueryPromise<T> {
             window.location['skip'] = true;
             window.location.hash = url;
-            return this.showPage<T>(url);
+            return this.showPage<T>(url, args);
         }
         public back(args = undefined): JQueryPromise<any> {
             this.back_deferred = $.Deferred();

@@ -130,12 +130,7 @@ namespace chitu {
                         }
                     }
 
-                    if (scroll_type == scroll_types.iscroll) {
-                        var scroller_node = document.createElement('scroller');
-                        scroller_node.innerHTML = node.innerHTML;
-                        node.innerHTML = '';
-                        node.appendChild(scroller_node);
-                    }
+
 
                     $(node).attr('scroll-type', scroll_type);
                     break;
@@ -304,7 +299,7 @@ namespace chitu {
 
         scroll: Callback = Callbacks();
         scrollEnd: Callback = Callbacks();
-        scrollLoad: (sender, args) => JQueryPromise<any>; //Callback = Callbacks();
+        scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>; //Callback = Callbacks();
 
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
@@ -501,6 +496,14 @@ namespace chitu {
     export class IScrollView extends ScrollView {
         private iscroller: IScroll;
         constructor(element: HTMLElement, page: Page) {
+
+            //if (scroll_type == scroll_types.iscroll) {
+            var scroller_node = document.createElement('scroller');
+            scroller_node.innerHTML = element.innerHTML;
+            element.innerHTML = '';
+            element.appendChild(scroller_node);
+            //}
+
             super(element, page)
 
             requirejs(['iscroll'], () => this.init(this.element));
@@ -519,7 +522,7 @@ namespace chitu {
 
             var iscroller = this.iscroller = new IScroll(element, options);
             iscroller['page_container'] = this;
-            iscroller.on('scrollEnd', function() {
+            iscroller.on('scrollEnd', function () {
                 var scroller = <IScroll>this;
                 var args = {
                     scrollTop: 0 - scroller.y,
@@ -530,7 +533,7 @@ namespace chitu {
             });
 
             var control = this;
-            iscroller.on('scroll', function() {
+            iscroller.on('scroll', function () {
                 var scroller = <IScroll>this;
                 var args = {
                     scrollTop: 0 - scroller.y,
@@ -541,7 +544,7 @@ namespace chitu {
                 control.on_scroll(args);
             });
 
-            (function(scroller: IScroll, wrapperNode: HTMLElement) {
+            (function (scroller: IScroll, wrapperNode: HTMLElement) {
 
                 $(wrapperNode).on('tap', (event) => {
                     if (scroller.enabled == false)
@@ -611,7 +614,7 @@ namespace chitu {
                 return;
 
             control.visible = false;
-            control.on_load = function(args: Object) {
+            control.on_load = function (args: Object) {
                 var result = FormLoading._on_load.apply(this, [args]);
                 if (chitu.Utility.isDeferred(result)) {
                     (<JQueryDeferred<any>>result).done(() => self.loaded_count = self.loaded_count + 1);

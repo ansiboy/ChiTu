@@ -75,6 +75,10 @@
             var msg = 'The view or viewDeferred of the page cannt null.';
             return new Error(msg);
         }
+        public static createPageFail(pageName: string) {
+            var msg = Utility.format('Create page "{0}" fail.', pageName);
+            return new Error(msg);
+        }
     }
-} 
+}
 

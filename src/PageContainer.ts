@@ -276,24 +276,23 @@ namespace chitu {
         get previous(): PageContainer {
             return this._previous;
         }
-        private createActionDeferred(pageInfo: PageInfo): JQueryPromise<ObjectConstructor> {
+        private createActionDeferred(pageInfo: RouteData): JQueryPromise<PageConstructor> {
 
             var url = pageInfo.actionPath;
-            var result = $.Deferred();
-            requirejs([url],
-                (Type) => {
-                    //加载脚本失败
-                    if (!Type) {
-                        console.warn(chitu.Utility.format('加载活动“{0}”失败。', pageInfo.pageName));
-                        result.reject();
-                        return;
-                    }
+            var result = $.Deferred<PageConstructor>();
+            requirejs([url], (Type: PageConstructor) => {
+                //加载脚本失败
+                if (!Type) {
+                    console.warn(chitu.Utility.format('加载活动“{0}”失败。', pageInfo.pageName));
+                    result.reject();
+                    return;
+                }
 
-                    if (!$.isFunction(Type))
-                        throw chitu.Errors.modelFileExpecteFunction(pageInfo.pageName);
+                if (!$.isFunction(Type))
+                    throw chitu.Errors.modelFileExpecteFunction(pageInfo.pageName);
 
-                    result.resolve(Type);
-                },
+                result.resolve(Type);
+            },
 
                 (err) => result.reject(err)
             );
@@ -301,7 +300,7 @@ namespace chitu {
             return result;
         }
 
-        private createViewDeferred(pageInfo: PageInfo): JQueryPromise<string> {
+        private createViewDeferred(pageInfo: RouteData): JQueryPromise<string> {
 
             var url = pageInfo.viewPath;
             var self = this;
@@ -323,19 +322,20 @@ namespace chitu {
             }
             else {
                 requirejs(['text!' + url],
-                    (html) => {
+                    function (html) {
                         if (html != null)
                             result.resolve(html);
                         else
                             result.reject();
                     },
-                    (err) => result.reject(err));
+                    function (err) {
+                        result.reject(err)
+                    });
             }
 
             return result;
         }
-        private createPage(pageInfo: PageInfo): JQueryPromise<Page> {
-
+        private createPage(pageInfo: RouteData, args: any): JQueryPromise<Page> {
             var view_deferred = this.createViewDeferred(pageInfo);
             var action_deferred = this.createActionDeferred(pageInfo);
             var result = $.Deferred();
@@ -344,8 +344,12 @@ namespace chitu {
             if (this._pages.length > 0)
                 previousPage = this._pages[this._pages.length - 1];
 
-            $.when<any>(action_deferred, view_deferred).done((pageType: any, html: string) => {
-                var page: Page = new pageType(this, pageInfo, previousPage);
+            $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
+                args = args || {};
+
+                var page: Page = new pageType(); 
+                page.initialize(this, pageInfo, args, previousPage);
+                
                 this.on_pageCreated(page);
 
                 this._pages.push(page);
@@ -353,27 +357,31 @@ namespace chitu {
 
                 result.resolve(page);
                 page.element.innerHTML = html;
-                page.viewHtml = html
+                page.view = html
 
-                page.on_load(pageInfo.parameters);
-            }).fail(() => {
+                page.on_load(pageInfo.values).done(() => {
+                    this.hideLoading();
+                });
+            }).fail((err) => {
                 result.reject();
+                console.log(err);
+                throw Errors.createPageFail(pageInfo.pageName);
             });
 
             return result;
         }
 
-        showPage<T extends Page>(routeData: PageInfo, swipe: SwipeDirection): JQueryPromise<T> {
-            return this.createPage(routeData)
+        showPage<T extends Page>(routeData: RouteData, args: any, swipe: SwipeDirection): JQueryPromise<T> {
+            return this.createPage(routeData, args)
                 .done((page: Page) => {
                     this.element.appendChild(page.element);
                     this._currentPage = page;
 
-                    page.on_showing(page.routeData.parameters);
+                    page.on_showing(page.routeData.values);
                     this.show(swipe).done(() => {
-                        page.on_shown(page.routeData.parameters);
+                        page.on_shown(page.routeData.values);
                     });
-                    page.loadCompleted.add(() => this.hideLoading());
+                    //page.load.add(() => this.hideLoading());
                 });
 
         }
@@ -384,7 +392,7 @@ namespace chitu {
         constructor(app: Application) {
             this._app = app;
         }
-        static createInstance(app: Application, routeData: PageInfo, previous: PageContainer): PageContainer {
+        static createInstance(app: Application, routeData: RouteData, previous: PageContainer): PageContainer {
             return new PageContainer(app, previous);
         }
     }

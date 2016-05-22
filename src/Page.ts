@@ -1,6 +1,4 @@
-﻿
-namespace chitu {
-
+﻿namespace chitu {
 
     var ns = chitu;
     var u = chitu.Utility;
@@ -53,9 +51,13 @@ namespace chitu {
         Document,
     }
 
+    export interface PageConstructor {
+        new (): Page;
+    }
+
     export class Page {
         static animationTime: number = 300;
-    
+
         private _name: string;
         private _viewDeferred: JQueryPromise<string>;
         private _actionDeferred: JQueryPromise<Function>;
@@ -68,7 +70,7 @@ namespace chitu {
         private _hideTime = Page.animationTime;
         private _prevous: chitu.Page;
 
-        private _routeData: PageInfo;
+        private _routeData: RouteData;
         private _enableScrollLoad = false;
         private is_closed = false;
         private _scrollLoad_loading_bar: HTMLElement;
@@ -87,7 +89,7 @@ namespace chitu {
 
         preLoad = ns.Callbacks();
         load = ns.Callbacks();
-        loadCompleted = ns.Callbacks();
+        //loadCompleted = ns.Callbacks();
         closing = ns.Callbacks();
         closed = ns.Callbacks();
         showing = ns.Callbacks();
@@ -96,8 +98,10 @@ namespace chitu {
         hidden = ns.Callbacks();
         viewChanged = ns.Callbacks();
 
-        constructor(container: PageContainer, pageInfo: PageInfo, previous?: chitu.Page) {
+        constructor() {
+        }
 
+        public initialize(container: PageContainer, pageInfo: RouteData, args: any, previous?: chitu.Page) {
             if (!container) throw e.argumentNull('container');
             if (pageInfo == null) throw e.argumentNull('pageInfo');
 
@@ -110,7 +114,7 @@ namespace chitu {
         }
 
         private createControls(element: HTMLElement): Control[] {
-            this._controls = ControlFactory.createControls(element, this);//, this
+            this._controls = ControlFactory.createControls(element, this);
             var stack = new Array<Control>();
 
             for (var i = 0; i < this._controls.length; i++) {
@@ -119,39 +123,20 @@ namespace chitu {
             return this._controls;
         }
 
-        // get view(): JQueryPromise<string> {
-        //     return this._viewDeferred;
-        // }
-        // set view(value: JQueryPromise<string>) {
-        //     this._viewDeferred = value;
-        // }
-        // get action(): JQueryPromise<Function> {
-        //     return this._actionDeferred;
-        // }
-        // set action(value: JQueryPromise<Function>) {
-        //     this._actionDeferred = value;
-        // }
-        private get enableScrollLoad(): boolean {
-            return this._enableScrollLoad;
-        }
-        private set enableScrollLoad(value: boolean) {
-            this._enableScrollLoad = value;
-        }
-        public set viewHtml(value: string) {
+        public set view(value: string) {
             this._viewHtml = value;
             this._controls = this.createControls(this.element);
             this.on_viewChanged({});
         }
-        public get viewHtml(): string {
-            //return this.conatiner.nodes.content.innerHTML;
+        public get view(): string {
             return this._viewHtml;
         }
-        get routeData(): PageInfo {
+        get routeData(): RouteData {
             return this._routeData;
         }
         get name(): string {
             if (!this._name)
-                this._name = this.routeData.pageName; 
+                this._name = this.routeData.pageName;
 
             return this._name;
         }
@@ -193,12 +178,11 @@ namespace chitu {
         private fireEvent(callback: chitu.Callback, args): JQueryPromise<any> {
             return chitu.fireCallback(callback, [this, args]);
         }
-        on_load(args: Object) {
+        on_load(args: Object): JQueryPromise<any> {
             var promises = new Array<JQueryPromise<any>>();
             promises.push(this.fireEvent(this.load, args));
             for (var i = 0; i < this._controls.length; i++) {
                 var p = this._controls[i].on_load(args);
-                //if (chitu.Utility.isDeferred(p))
                 promises.push(p);
             }
             var result = $.when.apply($, promises);
@@ -219,10 +203,9 @@ namespace chitu {
 
             return result;
         }
-        on_loadCompleted(args: Object) {
-            var result = this.fireEvent(this.loadCompleted, args);
-            //result.done(() => this.container.hideLoading());
-        }
+        // on_loadCompleted(args: Object) {
+        //     var result = this.fireEvent(this.loadCompleted, args);
+        // }
         on_closing(args) {
             return this.fireEvent(this.closing, args);
         }

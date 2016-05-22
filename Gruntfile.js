@@ -20,17 +20,17 @@ module.exports = function(grunt) {
             }
         },
         concat: {
-//             chitudts: {
-//                 options: {
-//                     stripBanners: true,
-//                     banner: '/// <reference path="jquery.d.ts" /> \r\n',
-//                     footer: 'declare module "chitu" { \n\
-//     export = chitu; \n\
-// }\n'
-//                 },
-//                 src: [build_dir + '/**/*.d.ts'],
-//                 dest: ts_output_file
-//             },
+            chitudts: {
+                options: {
+                    stripBanners: true,
+                    //banner: '/// <reference path="jquery.d.ts" /> \r\n',
+                    footer: 'declare module "chitu" { \n\
+    export = chitu; \n\
+}\n'
+                },
+                src: [build_dir + '/**/*.d.ts'],
+                dest: ts_output_file
+            },
             chitujs: {
                 options: {
                     banner:
@@ -41,7 +41,8 @@ module.exports = function(grunt) {
             factory($, Hammer, move); \n\
         } \n\
     })(function($, Hammer,move) {",
-                    footer: '\n return chitu;\n\
+                    footer: ' window[\'chitu\']=chitu \n\
+                    \n return chitu;\n\
     });',
                 },
                 src: [build_dir + '/**/*.js'],
@@ -60,9 +61,9 @@ module.exports = function(grunt) {
 
     config.copy = {
         main: {
-            files: [
-                { src: [js_output_file], dest: '/Users/MaiShu/git/YunDe/POS/src/js/chitu.js' },
-                { src: [ts_output_file], dest: '/Users/MaiShu/git/YunDe/POS/src/js/typings/chitu.d.ts' },
+            files: [///Users/MaiShu/git/ChiTuStore/src/Scripts 
+                { src: [js_output_file], dest: '/Users/MaiShu/git/ChiTuStore/src/js/chitu.js' },
+                { src: [ts_output_file], dest: '/Users/MaiShu/git/ChiTuStore/src/Scripts/typings/chitu.d.ts' },
             ]
         }
     };
@@ -77,6 +78,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-copy');
 
-    grunt.registerTask('default', ['typescript', 'concat', 'uglify', 'copy', 'clean']);//,
+    grunt.registerTask('default', ['typescript', 'concat', 'uglify', 'copy']);//,, 'clean'
 
 };
