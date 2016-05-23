@@ -33,7 +33,7 @@ namespace chitu {
             return this.source.has(func);
         }
         fireWith(context, args) {
-            return this.source.fire(context, args);
+            return this.source.fireWith(context, args);
         }
         fire(arg1?, arg2?, arg3?, arg4?) {
             return this.source.fire(arg1, arg2, arg3);
@@ -215,8 +215,8 @@ namespace chitu {
     }
 
     export function fireCallback<S, A>(callback: chitu.Callback<S, A>, args: Array<any>): JQueryPromise<any> {
-
-        var results = callback.fire.apply(callback, args);
+        let context = args[0];
+        var results = callback.fireWith(context, args); //callback.fire.apply(callback, args);
         var deferreds = [];
         for (var i = 0; i < results.length; i++) {
             if (chitu.Utility.isDeferred(results[i]))

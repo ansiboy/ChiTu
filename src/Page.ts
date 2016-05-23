@@ -102,7 +102,7 @@
         constructor() {
         }
 
-        public initialize(container: PageContainer, pageInfo: RouteData, args: any, previous?: chitu.Page) {
+        public initialize(container: PageContainer, pageInfo: RouteData, previous?: chitu.Page) {
             if (!container) throw e.argumentNull('container');
             if (pageInfo == null) throw e.argumentNull('pageInfo');
 
@@ -176,7 +176,7 @@
             return null;
         }
 
-        private fireEvent<S,A>(callback: chitu.Callback<S,A>, args): JQueryPromise<any> {
+        private fireEvent<S, A>(callback: chitu.Callback<S, A>, args): JQueryPromise<any> {
             return chitu.fireCallback(callback, [this, args]);
         }
         on_load(args: Object): JQueryPromise<any> {

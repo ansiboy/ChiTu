@@ -33,7 +33,7 @@ namespace chitu {
         public enableSwipeClose = true;
 
         gesture: Gesture;
-        pageCreated: chitu.Callback<PageContainer,Page> = Callbacks<PageContainer,Page>();
+        pageCreated: chitu.Callback<PageContainer, Page> = Callbacks<PageContainer, Page>();
 
         constructor(app: Application, previous?: PageContainer) {
 
@@ -335,9 +335,9 @@ namespace chitu {
 
             return result;
         }
-        private createPage(pageInfo: RouteData, args: any): JQueryPromise<Page> {
-            var view_deferred = this.createViewDeferred(pageInfo);
-            var action_deferred = this.createActionDeferred(pageInfo);
+        private createPage(routeData: RouteData): JQueryPromise<Page> {
+            var view_deferred = this.createViewDeferred(routeData);
+            var action_deferred = this.createActionDeferred(routeData);
             var result = $.Deferred();
 
             var previousPage: Page;
@@ -345,11 +345,10 @@ namespace chitu {
                 previousPage = this._pages[this._pages.length - 1];
 
             $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
-                args = args || {};
 
-                var page: Page = new pageType(); 
-                page.initialize(this, pageInfo, args, previousPage);
-                
+                var page: Page = new pageType();
+                page.initialize(this, routeData, previousPage);
+
                 this.on_pageCreated(page);
 
                 this._pages.push(page);
@@ -359,20 +358,20 @@ namespace chitu {
                 page.element.innerHTML = html;
                 page.view = html
 
-                page.on_load(pageInfo.values).done(() => {
+                page.on_load(routeData.values).done(() => {
                     this.hideLoading();
                 });
             }).fail((err) => {
                 result.reject();
                 console.log(err);
-                throw Errors.createPageFail(pageInfo.pageName);
+                throw Errors.createPageFail(routeData.pageName);
             });
 
             return result;
         }
 
-        showPage<T extends Page>(routeData: RouteData, args: any, swipe: SwipeDirection): JQueryPromise<T> {
-            return this.createPage(routeData, args)
+        showPage<T extends Page>(routeData: RouteData, swipe: SwipeDirection): JQueryPromise<T> {
+            return this.createPage(routeData)
                 .done((page: Page) => {
                     this.element.appendChild(page.element);
                     this._currentPage = page;

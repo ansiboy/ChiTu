@@ -225,10 +225,12 @@
                 throw Errors.noneRouteMatched(url);
             }
 
+            routeData.values = $.extend(routeData.values, args || {});
+
             var container = this.createPageContainer(routeData);
             container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
             var swipe = this.config.openSwipe(routeData);
-            var result = container.showPage(routeData, args, swipe);
+            var result = container.showPage(routeData,swipe);
 
             return result;
         }
