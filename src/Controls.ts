@@ -238,7 +238,7 @@ namespace chitu {
         get page(): Page {
             return this._page;
         }
-        protected fireEvent(callback: chitu.Callback, args): JQueryPromise<any> {
+        protected fireEvent<S, A>(callback: chitu.Callback<S, A>, args): JQueryPromise<any> {
             return chitu.fireCallback(callback, [this, args]);
         }
 
@@ -297,8 +297,8 @@ namespace chitu {
         private _bottomLoading: ScrollViewStatusBar;
         static scrolling = false;
 
-        scroll: Callback = Callbacks();
-        scrollEnd: Callback = Callbacks();
+        scroll: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
+        scrollEnd: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
         scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>; //Callback = Callbacks();
 
         constructor(element: HTMLElement, page: Page) {
@@ -325,11 +325,6 @@ namespace chitu {
             }
 
             return result;
-            // return result.done(() => {
-            //     if (this instanceof IScrollView) {
-            //         setTimeout(() => (<IScrollView><any>this).refresh(), 30);
-            //     }
-            // });
         }
 
         protected on_scrollEnd(args: ScrollArguments) {
@@ -360,7 +355,7 @@ namespace chitu {
             return this._bottomLoading;
         }
 
-        private static page_scrollEnd(sender: ScrollView, args) {
+        private static page_scrollEnd(sender: ScrollView, args: any): JQueryPromise<any> {
 
             var scrollTop = args.scrollTop;
             var scrollHeight = args.scrollHeight;

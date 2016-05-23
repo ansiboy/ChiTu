@@ -8,18 +8,22 @@ namespace chitu {
     // Convert String-formatted options into Object-formatted ones and store in cache
     function createOptions(options) {
         var object = optionsCache[options] = {};
-        jQuery.each(options.match(rnotwhite) || [], function(_, flag) {
+        jQuery.each(options.match(rnotwhite) || [], function (_, flag) {
             object[flag] = true;
         });
         return object;
     }
 
-    export class Callback {
+    export interface EventCallback<S, A> {
+        (sender: S, args: A): JQueryPromise<any>
+    }
+
+    export class Callback<S, A> {
         source: any
         constructor(source: any) {
             this.source = source;
         }
-        add(func: Function) {
+        add(func: EventCallback<S, A>) {
             this.source.add(func);
         }
         remove(func: Function) {
@@ -36,7 +40,7 @@ namespace chitu {
         }
     }
 
-    export function Callbacks(options: any = null): Callback {
+    export function Callbacks<S, A>(options: any = null): Callback<S, A> {
         // Convert options from String-formatted to Object-formatted if needed
         // (we check in cache first)
         options = typeof options === "string" ?
@@ -60,7 +64,7 @@ namespace chitu {
             // Stack of fire calls for repeatable lists
             stack = !options.once && [],
             // Fire callbacks
-            fire = function(data) {
+            fire = function (data) {
                 memory = options.memory && data;
                 fired = true;
                 firingIndex = firingStart || 0;
@@ -97,12 +101,12 @@ namespace chitu {
             self = {
                 results: [],
                 // Add a callback or a collection of callbacks to the list
-                add: function() {
+                add: function () {
                     if (list) {
                         // First, we save the current length
                         var start = list.length;
                         (function add(args) {
-                            jQuery.each(args, function(_, arg) {
+                            jQuery.each(args, function (_, arg) {
                                 var type = jQuery.type(arg);
                                 if (type === "function") {
                                     if (!options.unique || !self.has(arg)) {
@@ -128,9 +132,9 @@ namespace chitu {
                     return this;
                 },
                 // Remove a callback from the list
-                remove: function() {
+                remove: function () {
                     if (list) {
-                        jQuery.each(arguments, function(_, arg) {
+                        jQuery.each(arguments, function (_, arg) {
                             var index;
                             while ((index = jQuery.inArray(arg, list, index)) > -1) {
                                 list.splice(index, 1);
@@ -150,26 +154,26 @@ namespace chitu {
                 },
                 // Check if a given callback is in the list.
                 // If no argument is given, return whether or not list has callbacks attached.
-                has: function(fn) {
+                has: function (fn) {
                     return fn ? jQuery.inArray(fn, list) > -1 : !!(list && list.length);
                 },
                 // Remove all callbacks from the list
-                empty: function() {
+                empty: function () {
                     list = [];
                     firingLength = 0;
                     return this;
                 },
                 // Have the list do nothing anymore
-                disable: function() {
+                disable: function () {
                     list = stack = memory = undefined;
                     return this;
                 },
                 // Is it disabled?
-                disabled: function() {
+                disabled: function () {
                     return !list;
                 },
                 // Lock the list in its current state
-                lock: function() {
+                lock: function () {
                     stack = undefined;
                     if (!memory) {
                         self.disable();
@@ -177,11 +181,11 @@ namespace chitu {
                     return this;
                 },
                 // Is it locked?
-                locked: function() {
+                locked: function () {
                     return !stack;
                 },
                 // Call all callbacks with the given context and arguments
-                fireWith: function(context, args) {
+                fireWith: function (context, args) {
                     context.results = [];
                     if (list && (!fired || stack)) {
                         args = args || [];
@@ -195,14 +199,14 @@ namespace chitu {
                     return context.results;
                 },
                 // Call all the callbacks with the given arguments
-                fire: function() {
+                fire: function () {
                     return self.fireWith(this, arguments);
                 },
                 // To know if the callbacks have already been called at least once
-                fired: function() {
+                fired: function () {
                     return !!fired;
                 },
-                count: function() {
+                count: function () {
                     return list.length;
                 }
             };
@@ -210,7 +214,7 @@ namespace chitu {
         return new chitu.Callback(self);
     }
 
-    export function fireCallback(callback: chitu.Callback, args: Array<any>): JQueryPromise<any> {
+    export function fireCallback<S, A>(callback: chitu.Callback<S, A>, args: Array<any>): JQueryPromise<any> {
 
         var results = callback.fire.apply(callback, args);
         var deferreds = [];
@@ -225,6 +229,6 @@ namespace chitu {
         return $.when.apply($, deferreds);
     }
 
- 
+
 
 } 

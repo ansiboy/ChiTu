@@ -78,7 +78,7 @@
             this._config.urlParser = this._config.urlParser || new UrlParser();
         }
         Application.prototype.on_pageCreating = function () {
-            return chitu.fireCallback(this.pageCreating, [this]);
+            return chitu.fireCallback(this.pageCreating, [this, {}]);
         };
         Application.prototype.on_pageCreated = function (page) {
             return chitu.fireCallback(this.pageCreated, [this, page]);

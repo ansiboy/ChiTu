@@ -49,7 +49,7 @@
 
             let path = controller + '/' + action;
             let page_name = controller + '.' + action;
-             //path_parts.join('.');
+            //path_parts.join('.');
             var result = {
                 actionPath: this.pathBase + path + '.js',
                 viewPath: this.pathBase + path + '.html',
@@ -88,8 +88,8 @@
     }
 
     export class Application {
-        pageCreating: chitu.Callback = Callbacks();
-        pageCreated: chitu.Callback = Callbacks();
+        pageCreating = Callbacks<Application, any>();
+        pageCreated = Callbacks<Application, Page>();
 
         private _config: ApplicationConfig;
         private _runned: boolean = false;
@@ -115,7 +115,7 @@
         }
 
         on_pageCreating() {
-            return chitu.fireCallback(this.pageCreating, [this]);
+            return chitu.fireCallback(this.pageCreating, [this, {}]);
         }
         on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, [this, page]);

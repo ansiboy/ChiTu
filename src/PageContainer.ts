@@ -33,7 +33,7 @@ namespace chitu {
         public enableSwipeClose = true;
 
         gesture: Gesture;
-        pageCreated: chitu.Callback = Callbacks();
+        pageCreated: chitu.Callback<PageContainer,Page> = Callbacks<PageContainer,Page>();
 
         constructor(app: Application, previous?: PageContainer) {
 

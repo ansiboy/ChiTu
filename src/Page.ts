@@ -55,6 +55,7 @@
         new (): Page;
     }
 
+
     export class Page {
         static animationTime: number = 300;
 
@@ -87,10 +88,10 @@
         private _loading: Control;
         private _controls: Array<Control>;
 
-        preLoad = ns.Callbacks();
-        load = ns.Callbacks();
+        preLoad = ns.Callbacks<Page, any>();
+        load = ns.Callbacks<Page, any>();
         //loadCompleted = ns.Callbacks();
-        closing = ns.Callbacks();
+        closing = ns.Callbacks<Page, any>();
         closed = ns.Callbacks();
         showing = ns.Callbacks();
         shown = ns.Callbacks();
@@ -175,7 +176,7 @@
             return null;
         }
 
-        private fireEvent(callback: chitu.Callback, args): JQueryPromise<any> {
+        private fireEvent<S,A>(callback: chitu.Callback<S,A>, args): JQueryPromise<any> {
             return chitu.fireCallback(callback, [this, args]);
         }
         on_load(args: Object): JQueryPromise<any> {
