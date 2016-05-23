@@ -154,7 +154,7 @@ declare namespace chitu {
 }
 declare namespace chitu {
     interface EventCallback<S, A> {
-        (sender: S, args: A): JQueryPromise<any>;
+        (sender: S, args: A): JQueryPromise<any> | void;
     }
     class Callback<S, A> {
         source: any;

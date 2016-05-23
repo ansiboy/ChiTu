@@ -15,7 +15,7 @@ namespace chitu {
     }
 
     export interface EventCallback<S, A> {
-        (sender: S, args: A): JQueryPromise<any>
+        (sender: S, args: A): JQueryPromise<any> | void
     }
 
     export class Callback<S, A> {
