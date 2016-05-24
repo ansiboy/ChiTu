@@ -62,8 +62,8 @@ module.exports = function(grunt) {
     config.copy = {
         main: {
             files: [///Users/MaiShu/git/ChiTuStore/src/Scripts 
-                { src: [js_output_file], dest: '/Users/MaiShu/git/ChiTuStore/src/Scripts/chitu.js' },
-                { src: [ts_output_file], dest: '/Users/MaiShu/git/ChiTuStore/src/Scripts/typings/chitu.d.ts' },
+                { src: [js_output_file], dest: '../ChiTuStore/src/Scripts/chitu.js' },
+                { src: [ts_output_file], dest: '../ChiTuStore/src/Scripts/typings/chitu.d.ts' },
             ]
         }
     };
