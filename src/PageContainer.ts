@@ -347,7 +347,7 @@ namespace chitu {
             $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
 
                 var page: Page = new pageType();
-                page.initialize(this, routeData, previousPage);
+                page.initialize(this, routeData, html, previousPage);
 
                 this.on_pageCreated(page);
 
@@ -355,8 +355,8 @@ namespace chitu {
                 this._pages[page.name] = page;
 
                 result.resolve(page);
-                page.element.innerHTML = html;
-                page.view = html
+                //page.element.innerHTML = html;
+                //page.view = html
 
                 page.on_load(routeData.values).done(() => {
                     this.hideLoading();

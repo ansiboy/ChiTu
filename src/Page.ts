@@ -97,21 +97,24 @@
         shown = ns.Callbacks();
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
-        viewChanged = ns.Callbacks();
+        //viewChanged = ns.Callbacks();
 
         constructor() {
         }
 
-        public initialize(container: PageContainer, pageInfo: RouteData, previous?: chitu.Page) {
+        public initialize(container: PageContainer, pageInfo: RouteData, html: string, previous?: chitu.Page) {
             if (!container) throw e.argumentNull('container');
             if (pageInfo == null) throw e.argumentNull('pageInfo');
 
             this._pageContainer = container;
             this._node = document.createElement('page');
+            this._node.innerHTML = html;
             $(this._node).data('page', this);
 
             this._prevous = previous;
             this._routeData = pageInfo
+
+            this._controls = this.createControls(this.element);
         }
 
         private createControls(element: HTMLElement): Control[] {
@@ -124,14 +127,13 @@
             return this._controls;
         }
 
-        public set view(value: string) {
-            this._viewHtml = value;
-            this._controls = this.createControls(this.element);
-            this.on_viewChanged({});
-        }
-        public get view(): string {
-            return this._viewHtml;
-        }
+        // public set view(value: string) {
+        //     this._viewHtml = value;
+        //     this.on_viewChanged({});
+        // }
+        // public get view(): string {
+        //     return this._viewHtml;
+        // }
         get routeData(): RouteData {
             return this._routeData;
         }
@@ -227,9 +229,9 @@
             return this.fireEvent(this.hidden, args);
         }
 
-        on_viewChanged(args) {
-            return this.fireEvent(this.viewChanged, args);
-        }
+        // on_viewChanged(args) {
+        //     return this.fireEvent(this.viewChanged, args);
+        // }
 
     }
 };
