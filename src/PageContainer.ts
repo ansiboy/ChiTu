@@ -347,6 +347,9 @@ namespace chitu {
             $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
 
                 var page: Page = new pageType(html);
+                if (!(page instanceof chitu.Page))
+                    throw Errors.actionTypeError(routeData.pageName);
+
                 page.initialize(this, routeData, previousPage);
 
                 this.on_pageCreated(page);
@@ -382,7 +385,6 @@ namespace chitu {
                     this.show(swipe).done(() => {
                         page.on_shown(page.routeData.values);
                     });
-                    //page.load.add(() => this.hideLoading());
                 });
 
         }

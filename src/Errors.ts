@@ -79,6 +79,9 @@
             var msg = Utility.format('Create page "{0}" fail.', pageName);
             return new Error(msg);
         }
+        public static actionTypeError(pageName: string) {
+            var msg = Utility.format('Export of \'{0}\' page is expect chitu.Page type.', pageName);
+        }
     }
 }
 
