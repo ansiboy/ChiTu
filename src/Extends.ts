@@ -214,9 +214,9 @@ namespace chitu {
         return new chitu.Callback(self);
     }
 
-    export function fireCallback<S, A>(callback: chitu.Callback<S, A>, args: Array<any>): JQueryPromise<any> {
-        let context = args[0];
-        var results = callback.fireWith(context, args); //callback.fire.apply(callback, args);
+    export function fireCallback<S, A>(callback: chitu.Callback<S, A>, sender: S, args: A): JQueryPromise<any> {
+        let context = sender;
+        var results = callback.fireWith(context, [sender, args]); //callback.fire.apply(callback, args);
         var deferreds = [];
         for (var i = 0; i < results.length; i++) {
             if (chitu.Utility.isDeferred(results[i]))

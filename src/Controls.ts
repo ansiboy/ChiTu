@@ -238,13 +238,13 @@ namespace chitu {
         get page(): Page {
             return this._page;
         }
-        protected fireEvent<S, A>(callback: chitu.Callback<S, A>, args): JQueryPromise<any> {
-            return chitu.fireCallback(callback, [this, args]);
-        }
+        // protected fireEvent<S, A>(callback: chitu.Callback<S, A>, args): JQueryPromise<any> {
+        //     return chitu.fireCallback(callback, this, args);
+        // }
 
         on_load(args: Object): JQueryPromise<any> {
             var promises = new Array<JQueryPromise<any>>();
-            promises.push(this.fireEvent(this.load, args));
+            promises.push(fireCallback(this.load, this, args));
             for (var i = 0; i < this.children.length; i++) {
                 var promise = this.children.item(i).on_load(args);
                 if (chitu.Utility.isDeferred(promise))
@@ -299,7 +299,8 @@ namespace chitu {
 
         scroll: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
         scrollEnd: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
-        scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>; //Callback = Callbacks();
+        scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;
+        scrollBottom: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
 
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
@@ -329,12 +330,12 @@ namespace chitu {
 
         protected on_scrollEnd(args: ScrollArguments) {
             ScrollView.scrolling = false;
-            return chitu.fireCallback(this.scrollEnd, [this, args]);
+            return fireCallback(this.scrollEnd, this, args);
         }
 
         protected on_scroll(args: ScrollArguments) {
             ScrollView.scrolling = true;
-            return chitu.fireCallback(this.scroll, [this, args]);
+            return fireCallback(this.scroll, this, args);
         }
 
         static createInstance(element: HTMLElement, page: Page): ScrollView {
@@ -375,6 +376,8 @@ namespace chitu {
                     }
                 })
             }
+
+            fireCallback(sender.scrollBottom, sender, args);
 
         }
     }

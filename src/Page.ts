@@ -90,14 +90,13 @@
 
         preLoad = ns.Callbacks<Page, any>();
         load = ns.Callbacks<Page, any>();
-        //loadCompleted = ns.Callbacks();
+
         closing = ns.Callbacks<Page, any>();
         closed = ns.Callbacks();
         showing = ns.Callbacks();
         shown = ns.Callbacks();
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
-        //viewChanged = ns.Callbacks();
 
         constructor() {
         }
@@ -126,14 +125,6 @@
             }
             return this._controls;
         }
-
-        // public set view(value: string) {
-        //     this._viewHtml = value;
-        //     this.on_viewChanged({});
-        // }
-        // public get view(): string {
-        //     return this._viewHtml;
-        // }
         get routeData(): RouteData {
             return this._routeData;
         }
@@ -178,9 +169,10 @@
             return null;
         }
 
-        private fireEvent<S, A>(callback: chitu.Callback<S, A>, args): JQueryPromise<any> {
-            return chitu.fireCallback(callback, [this, args]);
+        private fireEvent<A>(callback: chitu.Callback<Page, A>, args): JQueryPromise<any> {
+            return fireCallback(callback, this, args);
         }
+        
         on_load(args: Object): JQueryPromise<any> {
             var promises = new Array<JQueryPromise<any>>();
             promises.push(this.fireEvent(this.load, args));
@@ -189,26 +181,8 @@
                 promises.push(p);
             }
             var result = $.when.apply($, promises);
-            //===============================================================
-            // 必须是 view 加载完成，并且 on_load 完成后，才触发 on_loadCompleted 事件
-            // if (this.view == null) {
-            //     result.done(() => this.on_loadCompleted(args));
-            // }
-            // else {
-            //     if (this.view.state() == 'resolved') {
-            //         result.done(() => this.on_loadCompleted(args));
-            //     }
-            //     else {
-            //         $.when(this.view, result).done(() => this.on_loadCompleted(args));
-            //     }
-            // }
-            //===============================================================
-
             return result;
         }
-        // on_loadCompleted(args: Object) {
-        //     var result = this.fireEvent(this.loadCompleted, args);
-        // }
         on_closing(args) {
             return this.fireEvent(this.closing, args);
         }
@@ -228,10 +202,5 @@
         on_hidden(args) {
             return this.fireEvent(this.hidden, args);
         }
-
-        // on_viewChanged(args) {
-        //     return this.fireEvent(this.viewChanged, args);
-        // }
-
     }
 };

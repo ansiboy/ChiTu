@@ -3,9 +3,9 @@
     export interface RouteData {
         actionPath: string,
         viewPath: string,
-        //cssPath: string,
         values: any,
-        pageName: string
+        pageName: string,
+        resource?: string[]
     }
 
     export class UrlParser {
@@ -115,10 +115,10 @@
         }
 
         on_pageCreating() {
-            return chitu.fireCallback(this.pageCreating, [this, {}]);
+            return chitu.fireCallback(this.pageCreating, this, {});
         }
         on_pageCreated(page: chitu.Page) {
-            return chitu.fireCallback(this.pageCreated, [this, page]);
+            return chitu.fireCallback(this.pageCreated, this, page);
         }
         get config(): chitu.ApplicationConfig {
             return this._config;
@@ -230,7 +230,7 @@
             var container = this.createPageContainer(routeData);
             container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
             var swipe = this.config.openSwipe(routeData);
-            var result = container.showPage(routeData,swipe);
+            var result = container.showPage(routeData, swipe);
 
             return result;
         }

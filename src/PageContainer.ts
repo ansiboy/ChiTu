@@ -48,7 +48,7 @@ namespace chitu {
         }
 
         on_pageCreated(page: chitu.Page) {
-            return chitu.fireCallback(this.pageCreated, [this, page]);
+            return chitu.fireCallback(this.pageCreated, this, page);
         }
 
         /// <summary>启用滑动返回</summary>
@@ -355,8 +355,6 @@ namespace chitu {
                 this._pages[page.name] = page;
 
                 result.resolve(page);
-                //page.element.innerHTML = html;
-                //page.view = html
 
                 page.on_load(routeData.values).done(() => {
                     this.hideLoading();
@@ -366,6 +364,10 @@ namespace chitu {
                 console.log(err);
                 throw Errors.createPageFail(routeData.pageName);
             });
+
+            if (routeData.resource != null && routeData.resource.length > 0) {
+                Utility.loadjs(routeData.resource);
+            }
 
             return result;
         }

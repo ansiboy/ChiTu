@@ -78,10 +78,10 @@
             this._config.urlParser = this._config.urlParser || new UrlParser();
         }
         Application.prototype.on_pageCreating = function () {
-            return chitu.fireCallback(this.pageCreating, [this, {}]);
+            return chitu.fireCallback(this.pageCreating, this, {});
         };
         Application.prototype.on_pageCreated = function (page) {
-            return chitu.fireCallback(this.pageCreated, [this, page]);
+            return chitu.fireCallback(this.pageCreated, this, page);
         };
         Object.defineProperty(Application.prototype, "config", {
             get: function () {
@@ -470,12 +470,9 @@ var chitu;
             enumerable: true,
             configurable: true
         });
-        Control.prototype.fireEvent = function (callback, args) {
-            return chitu.fireCallback(callback, [this, args]);
-        };
         Control.prototype.on_load = function (args) {
             var promises = new Array();
-            promises.push(this.fireEvent(this.load, args));
+            promises.push(chitu.fireCallback(this.load, this, args));
             for (var i = 0; i < this.children.length; i++) {
                 var promise = this.children.item(i).on_load(args);
                 if (chitu.Utility.isDeferred(promise))
@@ -535,6 +532,7 @@ var chitu;
             _super.call(this, element, page);
             this.scroll = chitu.Callbacks();
             this.scrollEnd = chitu.Callbacks();
+            this.scrollBottom = chitu.Callbacks();
             this.scrollEnd.add(ScrollView.page_scrollEnd);
             var $status_bar = $(element).find('STATUS-BAR');
             if ($status_bar.length > 0) {
@@ -556,11 +554,11 @@ var chitu;
         };
         ScrollView.prototype.on_scrollEnd = function (args) {
             ScrollView.scrolling = false;
-            return chitu.fireCallback(this.scrollEnd, [this, args]);
+            return chitu.fireCallback(this.scrollEnd, this, args);
         };
         ScrollView.prototype.on_scroll = function (args) {
             ScrollView.scrolling = true;
-            return chitu.fireCallback(this.scroll, [this, args]);
+            return chitu.fireCallback(this.scroll, this, args);
         };
         ScrollView.createInstance = function (element, page) {
             var scroll_type = $(element).attr('scroll-type');
@@ -595,6 +593,7 @@ var chitu;
                     }
                 });
             }
+            chitu.fireCallback(sender.scrollBottom, sender, args);
         };
         ScrollView.scrolling = false;
         return ScrollView;
@@ -1067,9 +1066,9 @@ var chitu;
         return new chitu.Callback(self);
     }
     chitu.Callbacks = Callbacks;
-    function fireCallback(callback, args) {
-        var context = args[0];
-        var results = callback.fireWith(context, args);
+    function fireCallback(callback, sender, args) {
+        var context = sender;
+        var results = callback.fireWith(context, [sender, args]);
         var deferreds = [];
         for (var i = 0; i < results.length; i++) {
             if (chitu.Utility.isDeferred(results[i]))
@@ -1233,7 +1232,7 @@ var chitu;
             return null;
         };
         Page.prototype.fireEvent = function (callback, args) {
-            return chitu.fireCallback(callback, [this, args]);
+            return chitu.fireCallback(callback, this, args);
         };
         Page.prototype.on_load = function (args) {
             var promises = new Array();
@@ -1304,7 +1303,7 @@ var chitu;
             this._enableSwipeBack();
         }
         PageContainer.prototype.on_pageCreated = function (page) {
-            return chitu.fireCallback(this.pageCreated, [this, page]);
+            return chitu.fireCallback(this.pageCreated, this, page);
         };
         PageContainer.prototype._enableSwipeBack = function () {
             var _this = this;
@@ -1582,6 +1581,9 @@ var chitu;
                 console.log(err);
                 throw chitu.Errors.createPageFail(routeData.pageName);
             });
+            if (routeData.resource != null && routeData.resource.length > 0) {
+                chitu.Utility.loadjs(routeData.resource);
+            }
             return result;
         };
         PageContainer.prototype.showPage = function (routeData, swipe) {
