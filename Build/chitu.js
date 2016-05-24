@@ -35,7 +35,7 @@ var chitu;
             var path = controller + '/' + action;
             var page_name = controller + '.' + action;
             var result = {
-                actionPath: this.pathBase + path + '.js',
+                actionPath: this.pathBase + path,
                 viewPath: this.pathBase + path + '.html',
                 values: this._parameters,
                 pageName: page_name,
