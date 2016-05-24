@@ -300,7 +300,6 @@ namespace chitu {
         scroll: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
         scrollEnd: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
         scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;
-        scrollBottom: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
 
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
@@ -376,9 +375,6 @@ namespace chitu {
                     }
                 })
             }
-
-            fireCallback(sender.scrollBottom, sender, args);
-
         }
     }
 

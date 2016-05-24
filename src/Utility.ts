@@ -55,7 +55,7 @@
             var txt = this.format.apply(this, arguments);
             console.log(txt);
         }
-        static loadjs(modules: string[]): JQueryPromise<any> {
+        static loadjs(...modules: string[]): JQueryPromise<any> {
             var deferred = $.Deferred();
             requirejs(modules, function() {
                 //deferred.resolve(arguments);

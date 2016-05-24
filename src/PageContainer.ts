@@ -346,8 +346,8 @@ namespace chitu {
 
             $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
 
-                var page: Page = new pageType();
-                page.initialize(this, routeData, html, previousPage);
+                var page: Page = new pageType(html);
+                page.initialize(this, routeData, previousPage);
 
                 this.on_pageCreated(page);
 
@@ -366,7 +366,7 @@ namespace chitu {
             });
 
             if (routeData.resource != null && routeData.resource.length > 0) {
-                Utility.loadjs(routeData.resource);
+                Utility.loadjs.apply(Utility, routeData.resource);
             }
 
             return result;

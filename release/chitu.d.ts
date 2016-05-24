@@ -102,7 +102,6 @@ declare namespace chitu {
         scroll: Callback<ScrollView, any>;
         scrollEnd: Callback<ScrollView, any>;
         scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;
-        scrollBottom: Callback<ScrollView, any>;
         constructor(element: HTMLElement, page: Page);
         on_load(args: any): JQueryPromise<any>;
         protected on_scrollEnd(args: ScrollArguments): JQueryPromise<any>;
@@ -194,7 +193,7 @@ declare namespace chitu {
         Document = 2,
     }
     interface PageConstructor {
-        new (): Page;
+        new (html: string): Page;
     }
     class Page {
         static animationTime: number;
@@ -227,8 +226,8 @@ declare namespace chitu {
         shown: Callback<{}, {}>;
         hiding: Callback<{}, {}>;
         hidden: Callback<{}, {}>;
-        constructor();
-        initialize(container: PageContainer, pageInfo: RouteData, html: string, previous?: chitu.Page): void;
+        constructor(html: string);
+        initialize(container: PageContainer, pageInfo: RouteData, previous?: chitu.Page): void;
         private createControls(element);
         routeData: RouteData;
         name: string;
@@ -320,7 +319,7 @@ declare namespace chitu {
         static format(source: string, ...params: string[]): string;
         static fileName(url: any, withExt: any): string;
         static log(msg: any, args?: any[]): void;
-        static loadjs(modules: string[]): JQueryPromise<any>;
+        static loadjs(...modules: string[]): JQueryPromise<any>;
     }
 }
 declare module "chitu" { 

@@ -52,7 +52,7 @@
     }
 
     export interface PageConstructor {
-        new (): Page;
+        new (html: string): Page;
     }
 
 
@@ -98,22 +98,27 @@
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
 
-        constructor() {
+        constructor(html: string) {
+            if (html == null) throw Errors.argumentNull('html');
+
+            this._node = document.createElement('page');
+            this._node.innerHTML = html;
+            this._controls = this.createControls(this.element);
+            $(this._node).data('page', this);
         }
 
-        public initialize(container: PageContainer, pageInfo: RouteData, html: string, previous?: chitu.Page) {
+        public initialize(container: PageContainer, pageInfo: RouteData, previous?: chitu.Page) {
             if (!container) throw e.argumentNull('container');
             if (pageInfo == null) throw e.argumentNull('pageInfo');
 
             this._pageContainer = container;
-            this._node = document.createElement('page');
-            this._node.innerHTML = html;
-            $(this._node).data('page', this);
+
+
 
             this._prevous = previous;
             this._routeData = pageInfo
 
-            this._controls = this.createControls(this.element);
+
         }
 
         private createControls(element: HTMLElement): Control[] {
@@ -172,7 +177,7 @@
         private fireEvent<A>(callback: chitu.Callback<Page, A>, args): JQueryPromise<any> {
             return fireCallback(callback, this, args);
         }
-        
+
         on_load(args: Object): JQueryPromise<any> {
             var promises = new Array<JQueryPromise<any>>();
             promises.push(this.fireEvent(this.load, args));
