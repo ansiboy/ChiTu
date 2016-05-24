@@ -276,20 +276,20 @@ namespace chitu {
         get previous(): PageContainer {
             return this._previous;
         }
-        private createActionDeferred(pageInfo: RouteData): JQueryPromise<PageConstructor> {
+        private createActionDeferred(routeData: RouteData): JQueryPromise<PageConstructor> {
 
-            var url = pageInfo.actionPath;
+            var url = routeData.actionPath;
             var result = $.Deferred<PageConstructor>();
             requirejs([url], (Type: PageConstructor) => {
                 //加载脚本失败
                 if (!Type) {
-                    console.warn(chitu.Utility.format('加载活动“{0}”失败。', pageInfo.pageName));
+                    console.warn(chitu.Utility.format('加载活动“{0}”失败。', routeData.pageName));
                     result.reject();
                     return;
                 }
 
-                if (!$.isFunction(Type))
-                    throw chitu.Errors.modelFileExpecteFunction(pageInfo.pageName);
+                if (!$.isFunction(Type) || Type.prototype == null)
+                    throw chitu.Errors.actionTypeError(routeData.pageName);
 
                 result.resolve(Type);
             },
