@@ -36,8 +36,8 @@ declare namespace chitu {
         private start_hash;
         private container_stack;
         constructor(config: ApplicationConfig);
-        on_pageCreating(): JQueryPromise<any>;
-        on_pageCreated(page: chitu.Page): JQueryPromise<any>;
+        private on_pageCreating();
+        private on_pageCreated(page);
         config: chitu.ApplicationConfig;
         currentPage(): chitu.Page;
         pageContainers: Array<PageContainer>;

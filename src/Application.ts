@@ -114,10 +114,10 @@
 
         }
 
-        on_pageCreating() {
+        private on_pageCreating() {
             return chitu.fireCallback(this.pageCreating, this, {});
         }
-        on_pageCreated(page: chitu.Page) {
+        private on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, this, page);
         }
         get config(): chitu.ApplicationConfig {
