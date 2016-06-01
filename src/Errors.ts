@@ -2,7 +2,6 @@
     export class Errors {
         public static argumentNull(paramName: string) {
             var msg = Utility.format('The argument "{0}" cannt be null.', paramName);
-
             return new Error(msg);
         }
         public static modelFileExpecteFunction(script) {
@@ -10,9 +9,6 @@
             return new Error(msg);
         }
         public static paramTypeError(paramName: string, expectedType: string) {
-            /// <param name="paramName" type="String"/>
-            /// <param name="expectedType" type="String"/>
-
             var msg = Utility.format('The param "{0}" is expected "{1}" type.', paramName, expectedType);
             return new Error(msg);
         }
@@ -81,6 +77,7 @@
         }
         public static actionTypeError(pageName: string) {
             var msg = Utility.format('Export of \'{0}\' page is expect chitu.Page type.', pageName);
+            return new Error(msg);
         }
     }
 }
