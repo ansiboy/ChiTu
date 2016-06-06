@@ -747,7 +747,6 @@ var chitu;
         };
         return IScrollView;
     })(ScrollView);
-    chitu.IScrollView = IScrollView;
     var FormLoading = (function (_super) {
         __extends(FormLoading, _super);
         function FormLoading(element, page) {

@@ -113,12 +113,6 @@ declare namespace chitu {
     class ScrollViewStatusBar extends Control {
         constructor(element: HTMLElement, page: Page);
     }
-    class IScrollView extends ScrollView {
-        private iscroller;
-        constructor(element: HTMLElement, page: Page);
-        private init(element);
-        refresh(): void;
-    }
     class FormLoading extends Control {
         private loading_element;
         private _loaded_count;

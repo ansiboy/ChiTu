@@ -487,7 +487,7 @@ namespace chitu {
         }
     }
 
-    export class IScrollView extends ScrollView {
+     class IScrollView extends ScrollView {
         private iscroller: IScroll;
         constructor(element: HTMLElement, page: Page) {
 
