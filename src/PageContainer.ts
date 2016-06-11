@@ -43,7 +43,7 @@ namespace chitu {
             this._previous = previous;
             this._app = app;
 
-            this.gesture = new Gesture();
+            this.gesture = new Gesture(this._node);
             this._enableSwipeBack();
         }
 
@@ -51,7 +51,7 @@ namespace chitu {
             return chitu.fireCallback(this.pageCreated, this, page);
         }
 
-        /// <summary>启用滑动返回</summary>
+        /** 启用滑动返回 */
         private _enableSwipeBack() {
             var container = this;
             if (container.previous == null || this.enableSwipeClose == false)
@@ -63,8 +63,8 @@ namespace chitu {
             var colse_position = $(window).width() / 2; // 关闭的位置，只有过了这个位置，才关闭。
             var horizontal_swipe_angle = 35;            // 水平滑动角度，角度不大于20度时，才认为是水平移动
 
-            var pan = container.gesture.createPan(container.element);
-            pan.start = (e: PanEvent) => {
+            var pan = container.gesture.createPan();
+            pan.start = (e: Hammer.PanEvent) => {
                 node.style.webkitTransform = '';
                 node.style.transform = ''
                 var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
@@ -90,7 +90,7 @@ namespace chitu {
                 return result;
             };
 
-            pan.left = (e: PanEvent) => {
+            pan.left = (e: Hammer.PanEvent) => {
                 if (e.deltaX <= 0) {
 
 
@@ -101,11 +101,11 @@ namespace chitu {
                 move(node).x(e.deltaX).duration(0).end();
                 move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
             }
-            pan.right = (e: PanEvent) => {
+            pan.right = (e: Hammer.PanEvent) => {
                 move(node).x(e.deltaX).duration(0).end();
                 move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
             }
-            pan.end = (e: PanEvent) => {
+            pan.end = (e: Hammer.PanEvent) => {
                 if (e.deltaX > colse_position) {
                     this._app.back();
                     return;
@@ -403,12 +403,12 @@ namespace chitu {
     export class Pan {
 
         cancel: boolean;
-        start: (e: PanEvent) => void;
-        left: (e: PanEvent) => void;
-        right: (e: PanEvent) => void;
-        up: (e: PanEvent) => void;
-        down: (e: PanEvent) => void;
-        end: (e: PanEvent) => void;
+        start: (e: Hammer.PanEvent) => void;
+        left: (e: Hammer.PanEvent) => void;
+        right: (e: Hammer.PanEvent) => void;
+        up: (e: Hammer.PanEvent) => void;
+        down: (e: Hammer.PanEvent) => void;
+        end: (e: Hammer.PanEvent) => void;
 
         constructor(gesture: Gesture) {
             this.cancel = false;
@@ -418,6 +418,9 @@ namespace chitu {
     export class Gesture {
         private executedCount: number;
         private hammersCount: number;
+        private hammer: Hammer.Manager;
+        private _pans: Array<Pan>;
+
         private _prevent = {
             pan: Hammer.DIRECTION_NONE
         }
@@ -426,77 +429,65 @@ namespace chitu {
                 this._prevent.pan = direction;
             }
         }
-        constructor() {
+        constructor(element: HTMLElement) {
             this.executedCount = 0;
             this.hammersCount = 0;
+            // var myCustomBehavior: Hammer.Behavior = Hammer.extend({}, Hammer.defaults.behavior);
+            // myCustomBehavior.touchAction = 'pan-y';
+            this.hammer = new Hammer.Manager(element);
         }
-        private getHammer(element): Hammer.Manager {
-            var hammer: Hammer.Manager = <any>$(element).data('hammer');
-            if (hammer == null) {
-                hammer = new Hammer.Manager(element);
-                hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_HORIZONTAL }));//| Hammer.DIRECTION_VERTICAL 
-                $(element).data('hammer', hammer);
-                this.hammersCount = this.hammersCount + 1;
+        private on_pan(e: Hammer.PanEvent) {
+            var pans = this.pans;
+            for (var i = pans.length - 1; i >= 0; i--) {
 
-                hammer.on('pan', (e: PanEvent) => {
-                    var pans = this.getPans(hammer.element);
-                    for (var i = pans.length - 1; i >= 0; i--) {
+                var state = this.hammer.get('pan').state;
+                if (pans[i]['started'] == null && (state & Hammer.STATE_BEGAN) == Hammer.STATE_BEGAN) {
+                    pans[i]['started'] = <any>pans[i].start(e);
+                }
 
-                        var state = hammer.get('pan').state;
-                        if (pans[i]['started'] == null && (state & Hammer.STATE_BEGAN) == Hammer.STATE_BEGAN) {
-                            pans[i]['started'] = <any>pans[i].start(e);
-                        }
+                var exected = false;
+                var started = pans[i]['started'];
+                if (started == true) {
+                    if ((e.direction & Hammer.DIRECTION_LEFT) == Hammer.DIRECTION_LEFT && pans[i].left != null)
+                        pans[i].left(e);
+                    else if ((e.direction & Hammer.DIRECTION_RIGHT) == Hammer.DIRECTION_RIGHT && pans[i].right != null)
+                        pans[i].right(e);
+                    else if ((e.direction & Hammer.DIRECTION_UP) == Hammer.DIRECTION_UP && pans[i].up != null)
+                        pans[i].up(e);
+                    else if ((e.direction & Hammer.DIRECTION_DOWN) == Hammer.DIRECTION_DOWN && pans[i].down != null)
+                        pans[i].down(e);
 
-                        var exected = false;
-                        var started = pans[i]['started'];
-                        if (started == true) {
-                            if ((e.direction & Hammer.DIRECTION_LEFT) == Hammer.DIRECTION_LEFT && pans[i].left != null)
-                                pans[i].left(e);
-                            else if ((e.direction & Hammer.DIRECTION_RIGHT) == Hammer.DIRECTION_RIGHT && pans[i].right != null)
-                                pans[i].right(e);
-                            else if ((e.direction & Hammer.DIRECTION_UP) == Hammer.DIRECTION_UP && pans[i].up != null)
-                                pans[i].up(e);
-                            else if ((e.direction & Hammer.DIRECTION_DOWN) == Hammer.DIRECTION_DOWN && pans[i].down != null)
-                                pans[i].down(e);
+                    if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED && pans[i].end != null)
+                        pans[i].end(e);
 
-                            if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED && pans[i].end != null)
-                                pans[i].end(e);
+                    exected = true;
 
-                            exected = true;
+                }
 
-                        }
+                if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
+                    pans[i]['started'] = null;
+                }
 
-                        if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
-                            pans[i]['started'] = null;
-                        }
+                //Pan 只执行一个，所以这里 break
+                if (exected == true)
+                    break;
 
-                        //Pan 只执行一个，所以这里 break
-                        if (exected == true)
-                            break;
-
-                    }
-                });
             }
-            return hammer;
         }
-        private getPans(element: HTMLElement): Array<Pan> {
-            var pans: Array<Pan> = <any>$(element).data('pans');
-            if (pans == null) {
-                pans = new Array<Pan>();
-                $(element).data('pans', pans);
+
+        private get pans(): Array<Pan> {
+            if (this._pans == null) {
+                this._pans = new Array<Pan>();
+                this.hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_ALL }));
+                this.hammer.on('pan', $.proxy(this.on_pan, this));
             }
-            return pans;
+
+            return this._pans;
         }
-        private clear() {
-            this._prevent.pan = Hammer.DIRECTION_NONE;
-        }
-        createPan(element: HTMLElement): Pan {
-            if (element == null) throw Errors.argumentNull('element');
-            var hammer = this.getHammer(element);
+        createPan(): Pan {
 
             var pan = new Pan(this);
-            var pans = this.getPans(element);
-            pans.push(pan);
+            this.pans.push(pan);
 
             return pan;
         }
