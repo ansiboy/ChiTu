@@ -4,7 +4,7 @@ var build_dir = 'build';
 var release_dir = 'release';
 module.exports = function(grunt) {
     var config = {
-        typescript: {
+        ts: {
             base: {
                 src: ['src/**/*.ts'],
                 dest: build_dir + '/chitu.js',
@@ -73,11 +73,11 @@ module.exports = function(grunt) {
     grunt.initConfig(config);
 
     grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-typescript');
+    grunt.loadNpmTasks('grunt-ts');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-copy');
 
-    grunt.registerTask('default', ['typescript', 'concat', 'uglify', 'copy']);//,, 'clean'
+    grunt.registerTask('default', ['ts', 'concat', 'uglify', 'copy']);//,, 'clean'
 
 };
