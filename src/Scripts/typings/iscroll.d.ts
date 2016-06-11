@@ -7,6 +7,8 @@ declare class IScroll {
     directionX: number
     directionY: number
     enable()
+    hasHorizontalScroll: boolean;
+    hasVerticalScroll: boolean;
     on(event: string, fn: Function)
     y: number
     refresh()
