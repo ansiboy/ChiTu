@@ -287,18 +287,18 @@ namespace chitu {
         }
     }
 
-    export class ScrollArguments {
-        scrollTop: number
-        scrollHeight: number
-        clientHeight: number
+    export interface ScrollArguments {
+        scrollTop?: number
+        scrollHeight?: number
+        clientHeight?: number
     }
 
     export class ScrollView extends Control {
         private _bottomLoading: ScrollViewStatusBar;
         static scrolling = false;
 
-        scroll: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
-        scrollEnd: Callback<ScrollView, any> = Callbacks<ScrollView, any>();
+        scroll: Callback<ScrollView, ScrollArguments> = Callbacks<ScrollView, ScrollArguments>();
+        scrollEnd: Callback<ScrollView, ScrollArguments> = Callbacks<ScrollView, ScrollArguments>();
         scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;
 
         constructor(element: HTMLElement, page: Page) {
@@ -379,7 +379,7 @@ namespace chitu {
     }
 
     class DocumentScrollView extends ScrollView {
-        private cur_scroll_args = new ScrollArguments();
+        private cur_scroll_args: ScrollArguments = {};
         private checking_num: number;
         private pre_scroll_top: number;
         private CHECK_INTERVAL = 300;
@@ -390,15 +390,19 @@ namespace chitu {
             //this.element.style.display = 'none';
 
             $(document).scroll((event) => {
-                var args = new ScrollArguments();
+                // var args: ScrollArguments = {
+                //     scrollTop: $(document).scrollTop(),
+                //     scrollHeight: document.body.scrollHeight,
+                //     clientHeight: $(window).height()
+                // };
 
-                args.scrollTop = $(document).scrollTop();
-                args.scrollHeight = document.body.scrollHeight;
-                args.clientHeight = $(window).height();
+                // args.scrollTop = $(document).scrollTop();
+                // args.scrollHeight = document.body.scrollHeight;
+                // args.clientHeight = $(window).height();
 
-                this.cur_scroll_args.clientHeight = args.clientHeight;
-                this.cur_scroll_args.scrollHeight = args.scrollHeight;
-                this.cur_scroll_args.scrollTop = args.scrollTop;
+                this.cur_scroll_args.clientHeight = $(window).height();
+                this.cur_scroll_args.scrollHeight = document.body.scrollHeight;
+                this.cur_scroll_args.scrollTop = $(document).scrollTop();
                 this.scrollEndCheck();
             });
         }
@@ -434,10 +438,11 @@ namespace chitu {
 
     class DivScrollView extends ScrollView {
 
-        private cur_scroll_args = new ScrollArguments();
+        private cur_scroll_args: ScrollArguments = {};
         private checking_num: number;
         private pre_scroll_top: number;
         private CHECK_INTERVAL = 30;
+        private hammer: Hammer.Manager;
 
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
@@ -446,7 +451,13 @@ namespace chitu {
                 this.cur_scroll_args.scrollTop = this.element.scrollTop;
                 this.cur_scroll_args.clientHeight = this.element.clientHeight;
                 this.cur_scroll_args.scrollHeight = this.element.scrollHeight;
-                this.on_scroll(this.cur_scroll_args);
+
+                var scroll_args = {
+                    clientHeight: this.element.clientHeight,
+                    scrollHeight: this.element.scrollHeight,
+                    scrollTop: 0 - Math.abs(this.element.scrollTop)
+                };
+                this.on_scroll(scroll_args);
                 this.scrollEndCheck();
             };
         }
@@ -487,7 +498,7 @@ namespace chitu {
         }
     }
 
-     class IScrollView extends ScrollView {
+    export class IScrollView extends ScrollView {
         private iscroller: IScroll;
         constructor(element: HTMLElement, page: Page) {
 
@@ -509,7 +520,7 @@ namespace chitu {
                 useTransition: false,
                 HWCompositing: false,
                 preventDefault: true,   // 必须设置为 True，否是在微信环境下，页面位置在上拉，或下拉时，会移动。
-                probeType: 1,
+                probeType: 2,
                 //bounce: true,
                 //bounceTime: 600
             }
@@ -519,18 +530,19 @@ namespace chitu {
             iscroller.on('scrollEnd', function () {
                 var scroller = <IScroll>this;
                 var args = {
-                    scrollTop: 0 - scroller.y,
+                    scrollTop: scroller.y,
                     scrollHeight: scroller.scrollerHeight,
                     clientHeight: scroller.wrapperHeight
                 };
                 control.on_scrollEnd(args);
             });
+            iscroller.hasVerticalScroll = true;
 
             var control = this;
             iscroller.on('scroll', function () {
                 var scroller = <IScroll>this;
                 var args = {
-                    scrollTop: 0 - scroller.y,
+                    scrollTop: scroller.y,
                     scrollHeight: scroller.scrollerHeight,
                     clientHeight: scroller.wrapperHeight
                 };
