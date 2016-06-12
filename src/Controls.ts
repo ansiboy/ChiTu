@@ -459,6 +459,7 @@ namespace chitu {
             this.scroller_node = scroller_node;
 
             scroller_node.onscroll = $.proxy(this.on_elementScroll, this);
+            new GesturePull(this);
         }
 
         private on_elementScroll() {
@@ -497,6 +498,125 @@ namespace chitu {
                 this.pre_scroll_top = this.cur_scroll_args.scrollTop;
 
             }, this.CHECK_INTERVAL);
+        }
+    }
+
+    class GesturePull {
+        private hammer: Hammer.Manager;
+        private scrollView: chitu.ScrollView;
+        private pullType: 'down' | 'up' | 'none';
+        private is_vertical = false;
+        private pre_y: number;
+        private moved = false;
+        private elementScrollTop: number;
+
+        private scrollerElement: HTMLElement;
+        private containerElement: HTMLElement;
+
+        constructor(scrollView: DivScrollView) {
+            this.scrollView = scrollView;
+            // this.scrollView.scroll.add((sender, args) => {
+            //     console.log(args);
+            // });
+
+            this.containerElement = this.scrollView.element;
+            this.scrollerElement = $(this.scrollView.element).find('scroller')[0];
+            if (this.scrollerElement == null)
+                throw Errors.scrollerElementNotExists();
+
+            this.hammer = new Hammer.Manager(this.containerElement);
+            this.hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_VERTICAL }));
+            this.hammer.on('pandown', $.proxy(this.on_pandown, this));
+            this.hammer.on('panup', $.proxy(this.on_panup, this));
+            this.hammer.on('panstart', $.proxy(this.on_panstart, this));
+            this.hammer.on('panend', $.proxy(this.on_panend, this));
+        }
+
+        private on_panstart(e: Hammer.PanEvent) {
+
+            this.pre_y = e.deltaY;
+            this.elementScrollTop = this.scrollerElement.scrollTop;
+            //==================================================
+            // 说明：计算角度，正切角要达到某个临界值，才认为是垂直。
+            let d = Math.atan(Math.abs(e.deltaY / e.deltaX)) / 3.14159265 * 180;
+            this.is_vertical = d >= 70;
+            //==================================================
+            //var args = this.currentScrollArguments;
+
+            //let element = this.scrollView.element;
+            let enablePullDown = this.scrollerElement.scrollTop == 0 && this.is_vertical;
+            let enablePullUp = (this.scrollerElement.scrollHeight - this.scrollerElement.scrollTop <= this.scrollerElement.clientHeight) && this.is_vertical;
+            // if (enablePullDown && enablePullUp) {
+            //     this.pullType = PullType.vertical;
+            // }
+            // else 
+            if (enablePullDown && e.deltaY > 0) {
+                this.pullType = 'down';
+            }
+            else if (enablePullUp && e.deltaY < 0) {
+                this.pullType = 'up';
+            }
+            else {
+                this.pullType = 'none';
+            }
+
+        }
+
+        private on_pandown(e: Hammer.PanEvent) {
+            if (e.deltaY >= 0 && this.pullType == 'up') {
+                move(this.containerElement).y(0).duration(0).end();
+            }
+            else if (e.deltaY >= 0 && this.pullType == 'down') {
+                this.move(e);
+            }
+            else if (e.deltaY < 0 && this.pullType == 'up') {
+                this.move(e);
+            }
+        }
+
+        private on_panup(e: Hammer.PanEvent) {
+            if (e.deltaY <= 0 && this.pullType == 'down') {
+                move(this.containerElement).y(0).duration(0).end();
+            }
+            else if (e.deltaY <= 0 && this.pullType == 'up') {
+                this.move(e);
+            }
+            else if (e.deltaY > 0 && this.pullType == 'down') {
+                this.move(e);
+            }
+        }
+
+        private on_panend(e: Hammer.PanEvent) {
+            if (this.moved) {
+                $(this.scrollerElement).scrollTop(this.elementScrollTop);
+                move(this.containerElement).y(0).end();
+                this.moved = false;
+            }
+            this.enableNativeScroll();
+        }
+
+        private move(e: Hammer.PanEvent) {
+            this.disableNativeScroll();
+            console.log('deltaY:' + e.deltaY);
+            move(this.containerElement).y(e.deltaY).duration(0).end();
+            this.moved = true;
+
+            var args: chitu.ScrollArguments = {
+                scrollHeight: this.scrollerElement.scrollHeight,
+                clientHeight: this.scrollerElement.clientHeight,
+                scrollTop: e.deltaY - this.scrollerElement.scrollTop
+            }
+            this.scrollView['on_scroll'](args);
+        }
+
+        /** 禁用原生的滚动 */
+        private disableNativeScroll() {
+            this.scrollerElement.style.overflowY = 'hidden';
+        }
+
+        /** 启用原生的滚动 */
+        private enableNativeScroll() {
+            this.scrollerElement.style.overflowY = 'scroll';
         }
     }
 
