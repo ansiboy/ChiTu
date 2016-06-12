@@ -439,7 +439,7 @@ namespace chitu {
     class DivScrollView extends ScrollView {
 
         private static CHECK_INTERVAL = 30;
-        private static SCROLLER_TAG_NAME = 'scroller';
+        private static SCROLLER_TAG_NAME = 'SCROLLER';
 
         private cur_scroll_args: ScrollArguments;// = {};
         private checking_num: number;
@@ -454,7 +454,7 @@ namespace chitu {
                 scroller_node = <HTMLElement>element.firstElementChild;
             }
             else {
-                scroller_node = document.createElement('scroller');
+                scroller_node = document.createElement(DivScrollView.SCROLLER_TAG_NAME);
                 scroller_node.innerHTML = element.innerHTML;
                 element.innerHTML = '';
                 element.appendChild(scroller_node);
@@ -636,7 +636,7 @@ namespace chitu {
     }
 
     export class IScrollView extends ScrollView {
-        private static SCROLLER_TAG_NAME = 'scroller';
+        private static SCROLLER_TAG_NAME = 'SCROLLER';
         private iscroller: IScroll;
         constructor(element: HTMLElement, page: Page) {
 
