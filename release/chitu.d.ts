@@ -91,16 +91,16 @@ declare namespace chitu {
     class PageFooter extends Control {
         constructor(element: HTMLElement, page: Page);
     }
-    class ScrollArguments {
-        scrollTop: number;
-        scrollHeight: number;
-        clientHeight: number;
+    interface ScrollArguments {
+        scrollTop?: number;
+        scrollHeight?: number;
+        clientHeight?: number;
     }
     class ScrollView extends Control {
         private _bottomLoading;
         static scrolling: boolean;
-        scroll: Callback<ScrollView, any>;
-        scrollEnd: Callback<ScrollView, any>;
+        scroll: Callback<ScrollView, ScrollArguments>;
+        scrollEnd: Callback<ScrollView, ScrollArguments>;
         scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;
         constructor(element: HTMLElement, page: Page);
         on_load(args: any): JQueryPromise<any>;
@@ -112,6 +112,12 @@ declare namespace chitu {
     }
     class ScrollViewStatusBar extends Control {
         constructor(element: HTMLElement, page: Page);
+    }
+    class IScrollView extends ScrollView {
+        private iscroller;
+        constructor(element: HTMLElement, page: Page);
+        private init(element);
+        refresh(): void;
     }
     class FormLoading extends Control {
         private loading_element;
@@ -285,26 +291,27 @@ declare namespace chitu {
     }
     class Pan {
         cancel: boolean;
-        start: (e: PanEvent) => void;
-        left: (e: PanEvent) => void;
-        right: (e: PanEvent) => void;
-        up: (e: PanEvent) => void;
-        down: (e: PanEvent) => void;
-        end: (e: PanEvent) => void;
+        start: (e: Hammer.PanEvent) => void;
+        left: (e: Hammer.PanEvent) => void;
+        right: (e: Hammer.PanEvent) => void;
+        up: (e: Hammer.PanEvent) => void;
+        down: (e: Hammer.PanEvent) => void;
+        end: (e: Hammer.PanEvent) => void;
         constructor(gesture: Gesture);
     }
     class Gesture {
         private executedCount;
         private hammersCount;
+        private hammer;
+        private _pans;
         private _prevent;
         prevent: {
             pan: (direction: number) => void;
         };
-        constructor();
-        private getHammer(element);
-        private getPans(element);
-        private clear();
-        createPan(element: HTMLElement): Pan;
+        constructor(element: HTMLElement);
+        private on_pan(e);
+        private pans;
+        createPan(): Pan;
     }
 }
 declare namespace chitu {
