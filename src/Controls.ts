@@ -600,7 +600,6 @@ namespace chitu {
 
         private move(e: Hammer.PanEvent) {
             this.disableNativeScroll();
-            console.log('deltaY:' + e.deltaY);
             move(this.containerElement).y(e.deltaY).duration(0).end();
             this.moved = true;
 
