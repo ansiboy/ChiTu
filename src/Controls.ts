@@ -438,28 +438,35 @@ namespace chitu {
 
     class DivScrollView extends ScrollView {
 
+        private static CHECK_INTERVAL = 30;
+        private static SCROLLER_TAG_NAME = 'scroller';
+
         private cur_scroll_args: ScrollArguments;// = {};
         private checking_num: number;
         private pre_scroll_top: number;
-        private CHECK_INTERVAL;// = 30;
         private hammer: Hammer.Manager;
         private scroller_node: HTMLElement;
 
         constructor(element: HTMLElement, page: Page) {
 
-            var scroller_node = document.createElement('scroller');
-            scroller_node.innerHTML = element.innerHTML;
-            element.innerHTML = '';
-            element.appendChild(scroller_node);
+            let scroller_node: HTMLElement;
+            if (element.firstElementChild != null && element.firstElementChild.tagName == DivScrollView.SCROLLER_TAG_NAME) {
+                scroller_node = <HTMLElement>element.firstElementChild;
+            }
+            else {
+                scroller_node = document.createElement('scroller');
+                scroller_node.innerHTML = element.innerHTML;
+                element.innerHTML = '';
+                element.appendChild(scroller_node);
+            }
 
             super(element, page);
 
             this.cur_scroll_args = {};
-            this.CHECK_INTERVAL = 30;
             this.scroller_node = scroller_node;
 
-            scroller_node.onscroll = $.proxy(this.on_elementScroll, this);
-            new GesturePull(this);
+            this.scroller_node.onscroll = $.proxy(this.on_elementScroll, this);
+            new GesturePull(this, $.proxy(this.on_scroll, this));
         }
 
         private on_elementScroll() {
@@ -497,7 +504,7 @@ namespace chitu {
                 }
                 this.pre_scroll_top = this.cur_scroll_args.scrollTop;
 
-            }, this.CHECK_INTERVAL);
+            }, DivScrollView.CHECK_INTERVAL);
         }
     }
 
@@ -512,12 +519,14 @@ namespace chitu {
 
         private scrollerElement: HTMLElement;
         private containerElement: HTMLElement;
+        private on_scroll: (args: ScrollArguments) => void;
 
-        constructor(scrollView: DivScrollView) {
+        constructor(scrollView: DivScrollView, on_scroll: (args: ScrollArguments) => void) {
+            if (scrollView == null) throw Errors.argumentNull('scrollView');
+            if (on_scroll == null) throw Errors.argumentNull('on_scroll');
+
             this.scrollView = scrollView;
-            // this.scrollView.scroll.add((sender, args) => {
-            //     console.log(args);
-            // });
+            this.on_scroll = on_scroll;
 
             this.containerElement = this.scrollView.element;
             this.scrollerElement = $(this.scrollView.element).find('scroller')[0];
@@ -541,15 +550,9 @@ namespace chitu {
             let d = Math.atan(Math.abs(e.deltaY / e.deltaX)) / 3.14159265 * 180;
             this.is_vertical = d >= 70;
             //==================================================
-            //var args = this.currentScrollArguments;
-
-            //let element = this.scrollView.element;
             let enablePullDown = this.scrollerElement.scrollTop == 0 && this.is_vertical;
             let enablePullUp = (this.scrollerElement.scrollHeight - this.scrollerElement.scrollTop <= this.scrollerElement.clientHeight) && this.is_vertical;
-            // if (enablePullDown && enablePullUp) {
-            //     this.pullType = PullType.vertical;
-            // }
-            // else 
+
             if (enablePullDown && e.deltaY > 0) {
                 this.pullType = 'down';
             }
@@ -606,7 +609,7 @@ namespace chitu {
                 clientHeight: this.scrollerElement.clientHeight,
                 scrollTop: e.deltaY - this.scrollerElement.scrollTop
             }
-            this.scrollView['on_scroll'](args);
+            this.on_scroll(args);
         }
 
         /** 禁用原生的滚动 */
@@ -634,13 +637,16 @@ namespace chitu {
     }
 
     export class IScrollView extends ScrollView {
+        private static SCROLLER_TAG_NAME = 'scroller';
         private iscroller: IScroll;
         constructor(element: HTMLElement, page: Page) {
 
-            var scroller_node = document.createElement('scroller');
-            scroller_node.innerHTML = element.innerHTML;
-            element.innerHTML = '';
-            element.appendChild(scroller_node);
+            if (element.firstElementChild == null || element.firstElementChild.tagName != IScrollView.SCROLLER_TAG_NAME) {
+                let scroller_node = document.createElement(IScrollView.SCROLLER_TAG_NAME);
+                scroller_node.innerHTML = element.innerHTML;
+                element.innerHTML = '';
+                element.appendChild(scroller_node);
+            }
 
             super(element, page)
 
