@@ -438,28 +438,43 @@ namespace chitu {
 
     class DivScrollView extends ScrollView {
 
-        private cur_scroll_args: ScrollArguments = {};
+        private cur_scroll_args: ScrollArguments;// = {};
         private checking_num: number;
         private pre_scroll_top: number;
-        private CHECK_INTERVAL = 30;
+        private CHECK_INTERVAL;// = 30;
         private hammer: Hammer.Manager;
+        private scroller_node: HTMLElement;
 
         constructor(element: HTMLElement, page: Page) {
+
+            var scroller_node = document.createElement('scroller');
+            scroller_node.innerHTML = element.innerHTML;
+            element.innerHTML = '';
+            element.appendChild(scroller_node);
+
             super(element, page);
 
-            this.element.onscroll = () => {
-                this.cur_scroll_args.scrollTop = this.element.scrollTop;
-                this.cur_scroll_args.clientHeight = this.element.clientHeight;
-                this.cur_scroll_args.scrollHeight = this.element.scrollHeight;
+            this.cur_scroll_args = {};
+            this.CHECK_INTERVAL = 30;
+            this.scroller_node = scroller_node;
 
-                var scroll_args = {
-                    clientHeight: this.element.clientHeight,
-                    scrollHeight: this.element.scrollHeight,
-                    scrollTop: 0 - Math.abs(this.element.scrollTop)
-                };
-                this.on_scroll(scroll_args);
-                this.scrollEndCheck();
+            scroller_node.onscroll = $.proxy(this.on_elementScroll, this);
+        }
+
+        private on_elementScroll() {
+            let scroller_node = this.scroller_node;
+
+            this.cur_scroll_args.scrollTop = scroller_node.scrollTop;
+            this.cur_scroll_args.clientHeight = scroller_node.clientHeight;
+            this.cur_scroll_args.scrollHeight = scroller_node.scrollHeight;
+
+            var scroll_args = {
+                clientHeight: scroller_node.clientHeight,
+                scrollHeight: scroller_node.scrollHeight,
+                scrollTop: 0 - scroller_node.scrollTop
             };
+            this.on_scroll(scroll_args);
+            this.scrollEndCheck();
         }
 
         private scrollEndCheck() {
@@ -502,12 +517,10 @@ namespace chitu {
         private iscroller: IScroll;
         constructor(element: HTMLElement, page: Page) {
 
-            //if (scroll_type == scroll_types.iscroll) {
             var scroller_node = document.createElement('scroller');
             scroller_node.innerHTML = element.innerHTML;
             element.innerHTML = '';
             element.appendChild(scroller_node);
-            //}
 
             super(element, page)
 
