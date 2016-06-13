@@ -182,7 +182,7 @@ namespace chitu {
 
         protected _name: string;
 
-        load = chitu.Callbacks();
+        load = chitu.Callbacks<Control, any>();
         parent: Control;
 
         constructor(element: HTMLElement, page: Page) {
