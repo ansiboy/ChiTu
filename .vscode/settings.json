@@ -5,6 +5,7 @@
         "LICENSE.txt": true,
         "README.txt": true,
         "*.doc": true,
-        "**/*.intellisense.js": true
+        "**/*.intellisense.js": true,
+        ".tscache": true
     }
 }
