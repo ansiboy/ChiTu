@@ -1,3 +1,5 @@
-/Build
-/.tscache
+/build
+/release
 /node_modules
+/.git
+/.tscache
