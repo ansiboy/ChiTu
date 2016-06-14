@@ -15,7 +15,8 @@ module.exports = function(grunt) {
                     declaration: true,
                     references: [
                         "src/**/*.ts"
-                    ]
+                    ],
+                    sourceMap:false
                 }
             }
         },
@@ -41,7 +42,7 @@ module.exports = function(grunt) {
             factory($, Hammer, move); \n\
         } \n\
     })(function($, Hammer,move) {",
-                    footer: ' window[\'chitu\']=chitu \n\
+                    footer: '\n\window[\'chitu\'] = window[\'chitu\'] || chitu \n\
                     \n return chitu;\n\
     });',
                 },
