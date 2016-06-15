@@ -57,9 +57,7 @@ namespace chitu {
             return this.os == OS.android;
         }
 
-        /// <summary>
-        /// 是否需要降级
-        /// </summary>
+        /** 是否需要降级 */
         get isDegrade(): boolean {
             if ((this.isWeiXin || this.osVersion <= 4) && this.isAndroid)
                 return true;
