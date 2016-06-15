@@ -360,7 +360,6 @@ namespace chitu {
             var clientHeight = args.clientHeight;
 
             //====================================================================
-
             var marginBottom = clientHeight / 3;
             if (clientHeight + scrollTop < scrollHeight - marginBottom)
                 return;
