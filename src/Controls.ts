@@ -597,13 +597,18 @@ namespace chitu {
 
         private move(e: Hammer.PanEvent) {
             this.disableNativeScroll();
-            move(this.containerElement).y(e.deltaY).duration(0).end();
+
+            //======================================
+            // 说明：ScrollView 移动的距离，取手指移动距离的一半
+            let destY = e.deltaY / 2;
+            //======================================
+            move(this.containerElement).y(destY).duration(0).end();
             this.moved = true;
 
             var args: chitu.ScrollArguments = {
                 scrollHeight: this.scrollerElement.scrollHeight,
                 clientHeight: this.scrollerElement.clientHeight,
-                scrollTop: e.deltaY - this.scrollerElement.scrollTop
+                scrollTop: destY - this.scrollerElement.scrollTop
             }
             this.on_scroll(args);
         }
