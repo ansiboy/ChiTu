@@ -345,17 +345,13 @@ namespace chitu {
             var action_deferred = this.createActionDeferred(routeData);
             var result = $.Deferred();
 
-            var previousPage: Page;
-            if (this._pages.length > 0)
-                previousPage = this._pages[this._pages.length - 1];
-
             $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
 
                 var page: Page = new pageType(html);
                 if (!(page instanceof chitu.Page))
                     throw Errors.actionTypeError(routeData.pageName);
 
-                page.initialize(this, routeData, previousPage);
+                page.initialize(this, routeData);
 
                 this.on_pageCreated(page);
 
