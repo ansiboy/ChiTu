@@ -1,3 +1,5 @@
+/// <reference path="../Scripts/typings/require.d.ts"/>
+
 requirejs.config({
     paths: {
         chitu: 'Scripts/chitu',
@@ -7,4 +9,7 @@ requirejs.config({
         move: 'Scripts/move'
     }
 });
+
+
+
 requirejs(['tests', 'application-test']);

@@ -6,6 +6,7 @@
         "README.txt": true,
         "*.doc": true,
         "**/*.intellisense.js": true,
-        ".tscache": true
+        ".tscache": true,
+        "**/.baseDir.*": true
     }
 }

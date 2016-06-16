@@ -2,7 +2,7 @@
 var ts_output_file = 'release/chitu.d.ts';
 var build_dir = 'build';
 var release_dir = 'release';
-module.exports = function(grunt) {
+module.exports = function (grunt) {
     var config = {
         ts: {
             base: {
@@ -16,7 +16,19 @@ module.exports = function(grunt) {
                     references: [
                         "src/**/*.ts"
                     ],
-                    sourceMap:false
+                    sourceMap: false
+                }
+            },
+            test: {
+                src: ['test/src/*.ts'],
+                dest: 'test/',
+                options: {
+                    basePath: build_dir,
+                    target: 'es5',
+                    removeComments: true,
+                    declaration: false,
+                    sourceMap: false,
+                    module: 'amd'
                 }
             }
         },
@@ -65,6 +77,12 @@ module.exports = function(grunt) {
             files: [///Users/MaiShu/git/ChiTuStore/src/Scripts 
                 { src: [js_output_file], dest: '../ChiTuStore/src/Scripts/chitu.js' },
                 { src: [ts_output_file], dest: '../ChiTuStore/src/Scripts/typings/chitu.d.ts' },
+            ]
+        },
+        test: { // Copy 到测试目录
+            files: [
+                { src: [js_output_file], dest: 'test/Scripts/chitu.js' },
+                { src: [ts_output_file], dest: 'test/Scripts/typings/chitu.d.ts' },
             ]
         }
     };

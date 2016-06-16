@@ -1,0 +1,33 @@
+define(["require", "exports", 'chitu'], function (require, exports, chitu) {
+    "use strict";
+    var app = new chitu.Application();
+    QUnit.test("Application.parseUrl 路径、名称、参数测试", function (assert) {
+        assert.notEqual(app.config, null);
+        var routeData = app.parseUrl('#home/index');
+        console.log(routeData.actionPath);
+        console.log(routeData.viewPath);
+        console.log(routeData.pageName);
+        var actionPath = 'modules/home/index';
+        var viewPath = 'modules/home/index.html';
+        var pageName = 'home.index';
+        assert.equal(routeData.actionPath, actionPath);
+        assert.equal(routeData.viewPath, viewPath);
+        assert.equal(routeData.pageName, pageName);
+        routeData = app.parseUrl('#user/security/setting');
+        actionPath = 'modules/user/security/setting';
+        viewPath = 'modules/user/security/setting.html';
+        pageName = 'user.security.setting';
+        assert.equal(routeData.actionPath, actionPath);
+        assert.equal(routeData.viewPath, viewPath);
+        assert.equal(routeData.pageName, pageName);
+        routeData = app.parseUrl('#user/security/setting?');
+        assert.equal(routeData.actionPath, actionPath);
+        assert.equal(routeData.viewPath, viewPath);
+        assert.equal(routeData.pageName, pageName);
+        routeData = app.parseUrl('#user/security/setting?name=maishu');
+        assert.equal(routeData.actionPath, actionPath);
+        assert.equal(routeData.viewPath, viewPath);
+        assert.equal(routeData.pageName, pageName);
+        assert.equal(routeData.values.name, 'maishu');
+    });
+});
