@@ -300,9 +300,9 @@ namespace chitu {
             return result;
         }
 
-        private createViewDeferred(pageInfo: RouteData): JQueryPromise<string> {
+        private createViewDeferred(url: string): JQueryPromise<string> {
 
-            var url = pageInfo.viewPath;
+            //var url = pageInfo.viewPath;
             var self = this;
             var result = $.Deferred();
             var http = 'http://';
@@ -336,7 +336,12 @@ namespace chitu {
             return result;
         }
         private createPage(routeData: RouteData): JQueryPromise<Page> {
-            var view_deferred = this.createViewDeferred(routeData);
+            let view_deferred: JQueryPromise<string>;
+            if (routeData.viewPath)
+                view_deferred = this.createViewDeferred(routeData.viewPath);
+            else
+                view_deferred = $.Deferred().resolve("");
+
             var action_deferred = this.createActionDeferred(routeData);
             var result = $.Deferred();
 
