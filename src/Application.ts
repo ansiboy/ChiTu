@@ -10,16 +10,25 @@
 
     export class UrlParser {
         private path_string = '';
-        private path_spliter_char = '_';
+        private path_spliter_char = '/';
         private param_spliter = '?'
+        private name_spliter_char = '.';
 
         private _actionPath = '';
         private _viewPath = '';
         private _cssPath = '';
         private _parameters: any = {};
         private _pageName = '';
+        private pathBase = '';
 
-        pathBase = '';
+        private HASH_MINI_LENGTH = 2;
+
+        constructor(pathBase?: string) {
+            if (pathBase == null)
+                pathBase = 'modules/'
+
+            this.pathBase = pathBase;
+        }
 
         public pareeUrl(url: string): RouteData {
             if (!url)
@@ -28,28 +37,28 @@
             let a = document.createElement('a');
             a.href = url;
 
-            if (a.search && a.search.length > 1) {
-                this._parameters = this.pareeUrlQuery(a.search.substr(1));
-            }
-            if (a.hash && a.hash.length > 1) {
-                this._pageName = a.hash.substr(1);
-            }
-
-            let path_parts = a.hash.substr(1).split(this.path_spliter_char);
-            if (path_parts.length < 2)
+            if (!a.hash || a.hash.length < this.HASH_MINI_LENGTH)
                 throw Errors.canntParseUrl(url);
 
-            let controller = path_parts[0];
-            let action = path_parts[1];
+            let path: string;
+            let search: string;
+            let param_spliter_index: number = a.hash.indexOf(this.param_spliter);
+            if (param_spliter_index > 0) {
+                search = a.hash.substr(param_spliter_index + 1);
+                path = a.hash.substring(1, param_spliter_index);
+            }
+            else {
+                path = a.hash.substr(1);
+            }
 
-            this._parameters.controller = controller;
-            this._parameters.action = action;
-            if (path_parts.length > 2)
-                this._parameters.id = path_parts[2];
+            if (!path)
+                throw Errors.canntParseUrl(url);
 
-            let path = controller + '/' + action;
-            let page_name = controller + '.' + action;
-            //path_parts.join('.');
+            if (search) {
+                this._parameters = this.pareeUrlQuery(search);
+            }
+
+            let page_name = path.split(this.path_spliter_char).join(this.name_spliter_char);
             var result = {
                 actionPath: this.pathBase + path,
                 viewPath: this.pathBase + path + '.html',
@@ -80,11 +89,17 @@
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
+    // type ParamConfig = {
+    //     container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
+    //     openSwipe?: (routeData: RouteData) => SwipeDirection,
+    //     closeSwipe?: (route: RouteData) => SwipeDirection,
+    //     pathBase?: string
+    // };
     export interface ApplicationConfig {
         container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
         openSwipe?: (routeData: RouteData) => SwipeDirection,
         closeSwipe?: (route: RouteData) => SwipeDirection,
-        urlParser?: UrlParser,
+        pathBase?: string,
     }
 
     export class Application {
@@ -99,19 +114,23 @@
         private start_hash: string;
         private container_stack = new Array<PageContainer>();
 
-        constructor(config: ApplicationConfig) {
-            if (config == null)
-                throw Errors.argumentNull('container');
+        parseUrl: (url: string) => RouteData;
 
-            this._config = config;
+        constructor(config?: ApplicationConfig) {
+            if (config == null)
+                config = {};
+
+            this._config = {};
             this._config.openSwipe = config.openSwipe || function (routeData: RouteData) { return SwipeDirection.None; };
             this._config.closeSwipe = config.closeSwipe || function (routeData: RouteData) { return SwipeDirection.None; };
             this._config.container = config.container || $.proxy(function (routeData: RouteData, previous: PageContainer) {
                 return PageContainerFactory.createInstance(this.app, routeData, previous);
             }, { app: this });
 
-            this._config.urlParser = this._config.urlParser || new UrlParser();
-
+            let urlParser = new UrlParser(this._config.pathBase);
+            this.parseUrl = (url: string) => {
+                return urlParser.pareeUrl(url);
+            }
         }
 
         private on_pageCreating() {
@@ -180,7 +199,7 @@
             }
 
             var url = location.href;
-            var pageInfo = this.config.urlParser.pareeUrl(url);
+            var pageInfo = this.parseUrl(url);
             var page = this.getPage(pageInfo.pageName);
             var container: PageContainer = page != null ? page.container : null;
             if (container != null && $.inArray(container, this.container_stack) == this.container_stack.length - 2) {
@@ -220,7 +239,7 @@
         public showPage<T extends Page>(url: string, args?: any): JQueryPromise<T> {
             if (!url) throw Errors.argumentNull('url');
 
-            var routeData = this.config.urlParser.pareeUrl(url);
+            var routeData = this.parseUrl(url);
             if (routeData == null) {
                 throw Errors.noneRouteMatched(url);
             }
