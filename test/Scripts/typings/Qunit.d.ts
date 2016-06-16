@@ -1,5 +1,5 @@
 declare module QUnit {
-    
+
     interface Assert {
         /**
          * Instruct QUnit to wait for an asynchronous operation.
@@ -43,7 +43,7 @@ declare module QUnit {
          * @param state Expression being tested
          * @param message A short description of the assertion
          */
-        ok(state: any, message);
+        ok(state: any, message?: string);
     }
 
     /**
@@ -52,6 +52,16 @@ declare module QUnit {
      * @param callback Function to close over assertions
      */
     function asyncTest(name: string, callback: (assert: Assert) => void);
+    /**
+     * PARTIALLY DEPRECATED: Start running tests again after the testrunner was stopped. See QUnit.stop() and QUnit.config.autostart.
+     * @param decrement DEPRECATED: Optional argument to merge multiple start() calls into one. Use with multiple corresponding stop() calls.
+     */
+    function start(decrement?: number);
+    /**
+     * DEPRECATED: Increase the number of QUnit.start() calls the testrunner should wait for before continuing.
+     * @param increment Optional argument to increase the async test depth with multiple steps at once.
+     */
+    function stop(increment?: number);
     /** 
      * Add a test to run. 
      * @param name Title of unit being tested

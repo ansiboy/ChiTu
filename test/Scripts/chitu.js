@@ -1643,8 +1643,7 @@ var chitu;
             }, function (err) { return result.reject(err); });
             return result;
         };
-        PageContainer.prototype.createViewDeferred = function (pageInfo) {
-            var url = pageInfo.viewPath;
+        PageContainer.prototype.createViewDeferred = function (url) {
             var self = this;
             var result = $.Deferred();
             var http = 'http://';
@@ -1672,7 +1671,11 @@ var chitu;
         };
         PageContainer.prototype.createPage = function (routeData) {
             var _this = this;
-            var view_deferred = this.createViewDeferred(routeData);
+            var view_deferred;
+            if (routeData.viewPath)
+                view_deferred = this.createViewDeferred(routeData.viewPath);
+            else
+                view_deferred = $.Deferred().resolve("");
             var action_deferred = this.createActionDeferred(routeData);
             var result = $.Deferred();
             var previousPage;

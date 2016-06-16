@@ -30,4 +30,26 @@ define(["require", "exports", 'chitu'], function (require, exports, chitu) {
         assert.equal(routeData.pageName, pageName);
         assert.equal(routeData.values.name, 'maishu');
     });
+    QUnit.asyncTest('Application.showPage 显示页面', function (assert) {
+        app.showPage('#user/security/setting?name=maishu').done(function () {
+            var element = document.getElementById('user.security.setting');
+            assert.notEqual(element, null);
+            QUnit.start();
+        });
+    });
+    QUnit.asyncTest('Application.showPage 显示无视图页面', function (assert) {
+        var parseUrl = app.parseUrl;
+        app.parseUrl = function (url) {
+            var result = parseUrl.apply(app, [url]);
+            if (result.pageName == 'user.index') {
+                result.viewPath = null;
+            }
+            return result;
+        };
+        app.showPage('#user/index').done(function () {
+            var page = app.getPage('user.index');
+            assert.notEqual(page, null);
+            QUnit.start();
+        });
+    });
 });

@@ -20,7 +20,7 @@ module.exports = function (grunt) {
                 }
             },
             test: {
-                src: ['test/src/*.ts'],
+                src: ['test/src/**/*.ts'],
                 dest: 'test/',
                 options: {
                     basePath: build_dir,
@@ -28,7 +28,10 @@ module.exports = function (grunt) {
                     removeComments: true,
                     declaration: false,
                     sourceMap: false,
-                    module: 'amd'
+                    module: 'amd',
+                    references: [
+                        "/test/src/typings/*.d.ts"
+                    ]
                 }
             }
         },
@@ -81,8 +84,10 @@ module.exports = function (grunt) {
         },
         test: { // Copy 到测试目录
             files: [
-                { src: [js_output_file], dest: 'test/Scripts/chitu.js' },
-                { src: [ts_output_file], dest: 'test/Scripts/typings/chitu.d.ts' },
+                { src: [js_output_file], dest: 'test/scripts/chitu.js' },
+                { src: [ts_output_file], dest: 'test/scripts/typings/chitu.d.ts' },
+                { src: ['modules/**/*.html'], dest: 'test', expand: true, cwd:'test/src' }
+
             ]
         }
     };

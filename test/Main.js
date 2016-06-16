@@ -1,10 +1,11 @@
 requirejs.config({
     paths: {
-        chitu: 'Scripts/chitu',
-        hammer: 'Scripts/hammer',
+        chitu: 'scripts/chitu',
+        hammer: 'scripts/hammer',
         iscroll: 'iscroll-probe',
-        jquery: 'Scripts/jquery-2.1.4',
-        move: 'Scripts/move'
+        jquery: 'scripts/jquery-2.1.4',
+        move: 'scripts/move',
+        text: 'scripts/text'
     }
 });
 requirejs(['tests', 'application-test']);
