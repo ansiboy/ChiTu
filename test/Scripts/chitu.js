@@ -1265,13 +1265,12 @@ var chitu;
             this._controls = this.createControls(this.element);
             $(this._node).data('page', this);
         }
-        Page.prototype.initialize = function (container, pageInfo, previous) {
+        Page.prototype.initialize = function (container, pageInfo) {
             if (!container)
                 throw e.argumentNull('container');
             if (pageInfo == null)
                 throw e.argumentNull('pageInfo');
             this._pageContainer = container;
-            this._prevous = previous;
             this._routeData = pageInfo;
         };
         Page.prototype.createControls = function (element) {
@@ -1301,13 +1300,6 @@ var chitu;
         Object.defineProperty(Page.prototype, "element", {
             get: function () {
                 return this._node;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Page.prototype, "previous", {
-            get: function () {
-                return this._prevous;
             },
             enumerable: true,
             configurable: true
@@ -1678,14 +1670,11 @@ var chitu;
                 view_deferred = $.Deferred().resolve("");
             var action_deferred = this.createActionDeferred(routeData);
             var result = $.Deferred();
-            var previousPage;
-            if (this._pages.length > 0)
-                previousPage = this._pages[this._pages.length - 1];
             $.when(action_deferred, view_deferred).done(function (pageType, html) {
                 var page = new pageType(html);
                 if (!(page instanceof chitu.Page))
                     throw chitu.Errors.actionTypeError(routeData.pageName);
-                page.initialize(_this, routeData, previousPage);
+                page.initialize(_this, routeData);
                 _this.on_pageCreated(page);
                 _this._pages.push(page);
                 _this._pages[page.name] = page;
