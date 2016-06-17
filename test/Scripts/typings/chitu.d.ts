@@ -102,7 +102,6 @@ declare namespace chitu {
     }
     class ScrollView extends Control {
         private _bottomLoading;
-        static scrolling: boolean;
         scroll: Callback<ScrollView, ScrollArguments>;
         scrollEnd: Callback<ScrollView, ScrollArguments>;
         scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;

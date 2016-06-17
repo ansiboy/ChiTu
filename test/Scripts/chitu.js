@@ -555,11 +555,9 @@ var chitu;
             return result;
         };
         ScrollView.prototype.on_scrollEnd = function (args) {
-            ScrollView.scrolling = false;
             return chitu.fireCallback(this.scrollEnd, this, args);
         };
         ScrollView.prototype.on_scroll = function (args) {
-            ScrollView.scrolling = true;
             return chitu.fireCallback(this.scroll, this, args);
         };
         ScrollView.createInstance = function (element, page) {
@@ -596,7 +594,6 @@ var chitu;
                 });
             }
         };
-        ScrollView.scrolling = false;
         return ScrollView;
     }(Control));
     chitu.ScrollView = ScrollView;
@@ -1433,8 +1430,6 @@ var chitu;
                 node.style.transform = '';
                 var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
                 previous_start_x = martix.m41;
-                if (chitu.ScrollView.scrolling == true)
-                    return false;
                 var d = Math.atan(Math.abs(e.deltaY / e.deltaX)) / 3.14159265 * 180;
                 if (d > horizontal_swipe_angle)
                     return false;
