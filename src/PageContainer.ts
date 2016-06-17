@@ -69,8 +69,8 @@ namespace chitu {
                 node.style.transform = ''
                 var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
                 previous_start_x = martix.m41;
-                if (ScrollView.scrolling == true)
-                    return false;
+                // if (ScrollView.scrolling == true)
+                //     return false;
 
                 //==================================================
                 // 说明：计算角度，超过了水平滑动角度，则认为不是水平滑动。

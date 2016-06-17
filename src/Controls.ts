@@ -293,7 +293,7 @@ namespace chitu {
 
     export class ScrollView extends Control {
         private _bottomLoading: ScrollViewStatusBar;
-        static scrolling = false;
+        //static scrolling = false;
 
         scroll: Callback<ScrollView, ScrollArguments> = Callbacks<ScrollView, ScrollArguments>();
         scrollEnd: Callback<ScrollView, ScrollArguments> = Callbacks<ScrollView, ScrollArguments>();
@@ -326,12 +326,12 @@ namespace chitu {
         }
 
         protected on_scrollEnd(args: ScrollArguments) {
-            ScrollView.scrolling = false;
+            //ScrollView.scrolling = false;
             return fireCallback(this.scrollEnd, this, args);
         }
 
         protected on_scroll(args: ScrollArguments) {
-            ScrollView.scrolling = true;
+            //ScrollView.scrolling = true;
             return fireCallback(this.scroll, this, args);
         }
 
