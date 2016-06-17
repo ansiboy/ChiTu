@@ -211,7 +211,6 @@ declare namespace chitu {
         private _hideResult;
         private _showTime;
         private _hideTime;
-        private _prevous;
         private _routeData;
         private _enableScrollLoad;
         private is_closed;
@@ -233,12 +232,11 @@ declare namespace chitu {
         hiding: Callback<{}, {}>;
         hidden: Callback<{}, {}>;
         constructor(html: string);
-        initialize(container: PageContainer, pageInfo: RouteData, previous?: chitu.Page): void;
+        initialize(container: PageContainer, pageInfo: RouteData): void;
         private createControls(element);
         routeData: RouteData;
         name: string;
         element: HTMLElement;
-        previous: chitu.Page;
         visible: boolean;
         container: PageContainer;
         hide(swipe?: SwipeDirection): JQueryPromise<any>;

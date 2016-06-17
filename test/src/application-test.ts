@@ -41,10 +41,14 @@ QUnit.test("Application.parseUrl 路径、名称、参数测试", (assert) => {
 });
 
 QUnit.asyncTest('Application.showPage 显示页面', (assert) => {
-    app.showPage('#user/security/setting?name=maishu').done(() => {
+    app.showPage('#user/security/setting?name=maishu').done(page => {
         var element = document.getElementById('user.security.setting');
-        assert.notEqual(element, null);
-        QUnit.start();
+        assert.notEqual(element, null, "断言页面元素");
+        page.load.add((sender, args) => {
+            assert.equal(args.name, "maishu", "load 事件获取参数");
+            QUnit.start();
+        });
+
     });
 });
 

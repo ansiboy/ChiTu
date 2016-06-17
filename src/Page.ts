@@ -69,7 +69,7 @@
 
         private _showTime = Page.animationTime;
         private _hideTime = Page.animationTime;
-        private _prevous: chitu.Page;
+        //private _prevous: chitu.Page;
 
         private _routeData: RouteData;
         private _enableScrollLoad = false;
@@ -107,18 +107,12 @@
             $(this._node).data('page', this);
         }
 
-        public initialize(container: PageContainer, pageInfo: RouteData, previous?: chitu.Page) {
+        public initialize(container: PageContainer, pageInfo: RouteData) {
             if (!container) throw e.argumentNull('container');
             if (pageInfo == null) throw e.argumentNull('pageInfo');
 
             this._pageContainer = container;
-
-
-
-            this._prevous = previous;
-            this._routeData = pageInfo
-
-
+            this._routeData = pageInfo;
         }
 
         private createControls(element: HTMLElement): Control[] {
@@ -141,9 +135,6 @@
         }
         get element(): HTMLElement {
             return this._node;
-        }
-        get previous(): chitu.Page {
-            return this._prevous;
         }
         get visible(): boolean {
             return $(this._node).is(':visible');
