@@ -198,8 +198,13 @@ declare namespace chitu {
         Div = 1,
         Document = 2,
     }
+    type PageArguemnts = {
+        container: PageContainer;
+        routeData: RouteData;
+        view: string;
+    };
     interface PageConstructor {
-        new (html: string): Page;
+        new (args: PageArguemnts): Page;
     }
     class Page {
         static animationTime: number;
@@ -231,8 +236,8 @@ declare namespace chitu {
         shown: Callback<{}, {}>;
         hiding: Callback<{}, {}>;
         hidden: Callback<{}, {}>;
-        constructor(html: string);
-        initialize(container: PageContainer, pageInfo: RouteData): void;
+        constructor(args: PageArguemnts);
+        private initialize(container, pageInfo);
         private createControls(element);
         routeData: RouteData;
         name: string;

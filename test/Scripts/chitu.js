@@ -1238,7 +1238,7 @@ var chitu;
     })(chitu.ScrollType || (chitu.ScrollType = {}));
     var ScrollType = chitu.ScrollType;
     var Page = (function () {
-        function Page(html) {
+        function Page(args) {
             this._loadViewModelResult = null;
             this._openResult = null;
             this._hideResult = null;
@@ -1255,12 +1255,15 @@ var chitu;
             this.shown = ns.Callbacks();
             this.hiding = ns.Callbacks();
             this.hidden = ns.Callbacks();
-            if (html == null)
-                throw chitu.Errors.argumentNull('html');
+            if (args == null)
+                throw chitu.Errors.argumentNull('args');
+            if (args.view == null)
+                throw chitu.Errors.argumentNull('view');
             this._node = document.createElement('page');
-            this._node.innerHTML = html;
+            this._node.innerHTML = args.view;
             this._controls = this.createControls(this.element);
             $(this._node).data('page', this);
+            this.initialize(args.container, args.routeData);
         }
         Page.prototype.initialize = function (container, pageInfo) {
             if (!container)
@@ -1666,10 +1669,9 @@ var chitu;
             var action_deferred = this.createActionDeferred(routeData);
             var result = $.Deferred();
             $.when(action_deferred, view_deferred).done(function (pageType, html) {
-                var page = new pageType(html);
+                var page = new pageType({ view: html, container: _this, routeData: routeData });
                 if (!(page instanceof chitu.Page))
                     throw chitu.Errors.actionTypeError(routeData.pageName);
-                page.initialize(_this, routeData);
                 _this.on_pageCreated(page);
                 _this._pages.push(page);
                 _this._pages[page.name] = page;

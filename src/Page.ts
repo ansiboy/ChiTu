@@ -51,8 +51,9 @@
         Document,
     }
 
+    export  type PageArguemnts = { container: PageContainer, routeData: RouteData, view: string };
     export interface PageConstructor {
-        new (html: string): Page;
+        new (args: PageArguemnts): Page;
     }
 
 
@@ -98,16 +99,19 @@
         hiding = ns.Callbacks();
         hidden = ns.Callbacks();
 
-        constructor(html: string) {
-            if (html == null) throw Errors.argumentNull('html');
+        constructor(args: PageArguemnts) {
+            if(args == null) throw Errors.argumentNull('args');
+            if (args.view == null) throw Errors.argumentNull('view');
 
             this._node = document.createElement('page');
-            this._node.innerHTML = html;
+            this._node.innerHTML = args.view;
             this._controls = this.createControls(this.element);
             $(this._node).data('page', this);
+
+            this.initialize(args.container,args.routeData);
         }
 
-        public initialize(container: PageContainer, pageInfo: RouteData) {
+        private initialize(container: PageContainer, pageInfo: RouteData) {
             if (!container) throw e.argumentNull('container');
             if (pageInfo == null) throw e.argumentNull('pageInfo');
 
