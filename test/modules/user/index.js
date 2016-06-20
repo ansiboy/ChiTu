@@ -8,8 +8,9 @@ define(["require", "exports", 'chitu'], function (require, exports, chitu) {
     var html = "<h1>User Index Page</h1>";
     return (function (_super) {
         __extends(IndexPage, _super);
-        function IndexPage() {
-            _super.call(this, html);
+        function IndexPage(args) {
+            args.view = html;
+            _super.call(this, args);
         }
         return IndexPage;
     }(chitu.Page));
