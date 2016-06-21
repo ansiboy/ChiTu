@@ -23,10 +23,11 @@ ChiTu 项目托管在 github 上，网址：https://github.com/ansiboy/ChiTu
 	* jquery
 	* hammerjs
 	* iscroll
+	* move
 	* requirejs 及其插件 text，css 。其中 text 是用来加载页面对应视图（html文件）以及样式文件。
 
 	```js
-	requirejs.config({
+requirejs.config({
     urlArgs: "bust=46",
     shim: {
         chitu: {
@@ -35,10 +36,10 @@ ChiTu 项目托管在 github 上，网址：https://github.com/ansiboy/ChiTu
         hammer: {
             exports: 'Hammer'
         },
-        'iscroll': {
+        iscroll: {
             exports: 'IScroll'
         },
-        'move': {
+        move: {
             exports: 'move'
         }
     },
@@ -51,6 +52,7 @@ ChiTu 项目托管在 github 上，网址：https://github.com/ansiboy/ChiTu
         jquery: 'scripts/jquery-2.1.0',
         text: 'scripts/text'
     }
+})
 	```
 
 ### 创建 Application 对象
