@@ -8,7 +8,7 @@
         resource?: string[]
     }
 
-    export class UrlParser {
+    class UrlParser {
         private path_string = '';
         private path_spliter_char = '/';
         private param_spliter = '?'
@@ -30,7 +30,7 @@
             this.pathBase = pathBase;
         }
 
-        public pareeUrl(url: string): RouteData {
+        public parseUrl(url: string): RouteData {
             if (!url)
                 throw Errors.argumentNull('url');
 
@@ -89,16 +89,26 @@
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
-    // type ParamConfig = {
-    //     container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
-    //     openSwipe?: (routeData: RouteData) => SwipeDirection,
-    //     closeSwipe?: (route: RouteData) => SwipeDirection,
-    //     pathBase?: string
-    // };
     export interface ApplicationConfig {
+        /**
+         * 获取页面容器，依据 routeData 获取页面容器
+         * param routeData 页面路由数据
+         * param previous 上一个页面容器，如果当前页面容器是第一个，则为空值 
+         */
         container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
+        /**
+         * 获取页面打开时，滑动的方向
+         * param routeData 页面路由数据
+         */
         openSwipe?: (routeData: RouteData) => SwipeDirection,
+        /**
+         * 获取页面关闭时，滑动的方向
+         * param routeData 页面路由数据
+         */
         closeSwipe?: (route: RouteData) => SwipeDirection,
+        /**
+         * 页面的基本路径
+         */
         pathBase?: string,
     }
 
@@ -129,7 +139,7 @@
 
             let urlParser = new UrlParser(this._config.pathBase);
             this.parseUrl = (url: string) => {
-                return urlParser.pareeUrl(url);
+                return urlParser.parseUrl(url);
             }
         }
 
@@ -139,18 +149,31 @@
         private on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, this, page);
         }
+
+        /**
+         * 获取应用的设置
+         */
         get config(): chitu.ApplicationConfig {
             return this._config;
         }
+
+        /**
+         * 获取当前页面
+         */
         currentPage(): chitu.Page {
             if (this.container_stack.length > 0)
                 return this.container_stack[this.container_stack.length - 1].currentPage;
 
             return null;
         }
+
+        /**
+         * 获取当前应用中的所创建页面容器
+         */
         get pageContainers(): Array<PageContainer> {
             return this.container_stack;
         }
+
         private createPageContainer(routeData: RouteData): PageContainer {
             var container = this.config.container(routeData, this.pageContainers[this.pageContainers.length - 1]);
 
@@ -218,6 +241,9 @@
                 back_deferred.resolve();
         }
 
+        /**
+         * 运行当前应用
+         */
         public run() {
             if (this._runned) return;
 
@@ -228,6 +254,10 @@
 
             this._runned = true;
         }
+
+        /**
+         * 通过页面的名称，获取页面
+         */
         public getPage(name: string): chitu.Page {
             for (var i = this.container_stack.length - 1; i >= 0; i--) {
                 var page = this.container_stack[i].pages[name];
@@ -236,6 +266,12 @@
             }
             return null;
         }
+
+        /**
+         * 显示页面
+         * param url 页面的路径
+         * param args 传递到页面的参数 
+         */
         public showPage<T extends Page>(url: string, args?: any): JQueryPromise<T> {
             if (!url) throw Errors.argumentNull('url');
 
@@ -253,15 +289,26 @@
 
             return result;
         }
+
         protected createPageNode(): HTMLElement {
             var element = document.createElement('div');
             return element;
         }
+
+        /**
+         * 页面跳转
+         * param url 页面路径
+         * param args 传递到页面的参数
+         */
         public redirect<T extends Page>(url: string, args?: any): JQueryPromise<T> {
             window.location['skip'] = true;
             window.location.hash = url;
             return this.showPage<T>(url, args);
         }
+
+        /**
+         * 页面的返回
+         */
         public back(args = undefined): JQueryPromise<any> {
             this.back_deferred = $.Deferred();
             if (window.history.length == 0) {
