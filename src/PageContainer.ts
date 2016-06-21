@@ -63,6 +63,7 @@ namespace chitu {
             var colse_position = $(window).width() / 2; // 关闭的位置，只有过了这个位置，才关闭。
             var horizontal_swipe_angle = 35;            // 水平滑动角度，角度不大于20度时，才认为是水平移动
 
+            let scroll_views: Array<ScrollView>;
             var pan = container.gesture.createPan();
             pan.start = (e: Hammer.PanEvent) => {
                 node.style.webkitTransform = '';
@@ -85,13 +86,13 @@ namespace chitu {
                     this.previous.visible = true;
                 }
 
+                scroll_views = currentPageScrollViews();
                 return result;
             };
 
             pan.left = (e: Hammer.PanEvent) => {
+                discableScrollViews(scroll_views);
                 if (e.deltaX <= 0) {
-
-
                     move(node).x(0).duration(0).end();
                     move(this.previous.element).x(previous_start_x).duration(0).end();
                     return;
@@ -100,6 +101,7 @@ namespace chitu {
                 move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
             }
             pan.right = (e: Hammer.PanEvent) => {
+                discableScrollViews(scroll_views);
                 move(node).x(e.deltaX).duration(0).end();
                 move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
             }
@@ -112,6 +114,20 @@ namespace chitu {
                 move(node).x(0).duration(Page.animationTime).end();
                 move(container.previous.element).x(previous_start_x).duration(Page.animationTime)
                     .end(() => this.previous.visible = previous_visible);
+            }
+
+            let currentPageScrollViews = (): Array<ScrollView> => {
+                var result: Array<ScrollView> = [];
+                $(this.currentPage.element).find('scroll-view').each((index, item) => {
+                    var scroll_view = $(item).data('control');
+                    result.push(scroll_view);
+                });
+                return result;
+            }
+            let discableScrollViews = (views: Array<ScrollView>) => {
+                for (var i = 0; i < views.length; i++) {
+                    views[i].disabled = true;
+                }
             }
         }
 
@@ -345,7 +361,7 @@ namespace chitu {
 
             $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
 
-                var page: Page = new pageType({ view: html, container: this, routeData});
+                var page: Page = new pageType({ view: html, container: this, routeData });
                 if (!(page instanceof chitu.Page))
                     throw Errors.actionTypeError(routeData.pageName);
 
