@@ -358,7 +358,7 @@ var chitu;
                             scroll_type = scroll_types.doc;
                         }
                         else if (Environment.instance.isIOS) {
-                            scroll_type = scroll_types.iscroll;
+                            scroll_type = scroll_types.div;
                         }
                         else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
                             scroll_type = scroll_types.div;
@@ -366,8 +366,8 @@ var chitu;
                         else {
                             scroll_type = scroll_types.doc;
                         }
+                        $(node).attr('scroll-type', scroll_type);
                     }
-                    $(node).attr('scroll-type', scroll_type);
                     break;
             }
             for (var i = 0; i < element.childNodes.length; i++) {
@@ -663,6 +663,20 @@ var chitu;
                 _this.pre_scroll_top = _this.cur_scroll_args.scrollTop;
             }, DivScrollView.CHECK_INTERVAL);
         };
+        Object.defineProperty(DivScrollView.prototype, "disabled", {
+            get: function () {
+                var s = document.defaultView.getComputedStyle(this.scroller_node);
+                return s.overflowY != 'scroll';
+            },
+            set: function (value) {
+                if (value == true)
+                    this.scroller_node.style.overflowY = 'hidden';
+                else
+                    this.scroller_node.style.overflowY = 'scroll';
+            },
+            enumerable: true,
+            configurable: true
+        });
         DivScrollView.CHECK_INTERVAL = 30;
         DivScrollView.SCROLLER_TAG_NAME = 'SCROLLER';
         return DivScrollView;
@@ -837,6 +851,19 @@ var chitu;
             if (this.iscroller != null)
                 this.iscroller.refresh();
         };
+        Object.defineProperty(IScrollView.prototype, "disabled", {
+            get: function () {
+                return !this.iscroller.enabled;
+            },
+            set: function (value) {
+                if (value)
+                    this.iscroller.disable();
+                else
+                    this.iscroller.enable();
+            },
+            enumerable: true,
+            configurable: true
+        });
         IScrollView.SCROLLER_TAG_NAME = 'SCROLLER';
         return IScrollView;
     }(ScrollView));

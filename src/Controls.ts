@@ -118,7 +118,7 @@ namespace chitu {
                             scroll_type = scroll_types.doc;
                         }
                         else if (Environment.instance.isIOS) {
-                            scroll_type = scroll_types.iscroll;
+                            scroll_type = scroll_types.div;
                         }
                         else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
                             scroll_type = scroll_types.div;
@@ -126,11 +126,10 @@ namespace chitu {
                         else {
                             scroll_type = scroll_types.doc;
                         }
+
+                        $(node).attr('scroll-type', scroll_type);
                     }
 
-
-
-                    $(node).attr('scroll-type', scroll_type);
                     break;
             }
 
@@ -353,6 +352,9 @@ namespace chitu {
             return this._bottomLoading;
         }
 
+        // virtual method
+        disabled: boolean;
+
         // private static page_scrollEnd(sender: ScrollView, args: any): JQueryPromise<any> {
 
         //     var scrollTop = args.scrollTop;
@@ -502,6 +504,17 @@ namespace chitu {
                 this.pre_scroll_top = this.cur_scroll_args.scrollTop;
 
             }, DivScrollView.CHECK_INTERVAL);
+        }
+
+        get disabled() {
+            var s = document.defaultView.getComputedStyle(this.scroller_node);
+            return s.overflowY != 'scroll';
+        }
+        set disabled(value: boolean) {
+            if (value == true)
+                this.scroller_node.style.overflowY = 'hidden';
+            else
+                this.scroller_node.style.overflowY = 'scroll';
         }
     }
 
@@ -720,6 +733,16 @@ namespace chitu {
         refresh() {
             if (this.iscroller != null) // 避免 iscroller 尚未初始化就调用
                 this.iscroller.refresh();
+        }
+
+        get disabled(): boolean {
+            return !this.iscroller.enabled;
+        }
+        set disabled(value: boolean) {
+            if (value)
+                this.iscroller.disable();
+            else
+                this.iscroller.enable();
         }
     }
 
