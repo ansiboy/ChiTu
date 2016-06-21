@@ -9,16 +9,16 @@ ChiTu 项目托管在 github 上，网址：https://github.com/ansiboy/ChiTu
 如果对 Grunt 不熟悉，请自行搜索相关教程
 
 ## 项目结构
-src: 源代码
-test: 测试项目，使用的测试类库是 qunit 。
-release: 项目经过 grunt 预处理后，生成文件。
-.vscode: VS Code 的配置文件。（作者是使用 VS Code 进行开发的）
+* src: 源代码
+* test: 测试项目，使用的测试类库是 qunit 。
+* release: 项目经过 grunt 预处理后，生成文件。
+* .vscode: VS Code 的配置文件。（作者是使用 VS Code 进行开发的）
 
 ## 项目脚手架
 ## 入门
 
 ### 配置 requirejs
-1. 依赖的第三方库
+1. 依赖的第三方库
 
 	1. jquery
 	1. hammerjs
@@ -72,10 +72,10 @@ release: 项目经过 grunt 预处理后，生成文件。
 ### 页面跳转与返回
 1. 页面跳转
 2. 页面返回
-3. 重写页面返回
+3. 重写页面返回
 
 ### 滚动视图
 1. 滚动到底加载数据
-2. 通过手势切换视图
+2. 通过手势切换视图
 3. 自定手势动作
 
