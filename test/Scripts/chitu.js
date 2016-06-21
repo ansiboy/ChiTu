@@ -535,7 +535,6 @@ var chitu;
             _super.call(this, element, page);
             this.scroll = chitu.Callbacks();
             this.scrollEnd = chitu.Callbacks();
-            this.scrollEnd.add(ScrollView.page_scrollEnd);
             var $status_bar = $(element).find('STATUS-BAR');
             if ($status_bar.length > 0) {
                 this._bottomLoading = new ScrollViewStatusBar($status_bar[0], page);
@@ -543,9 +542,6 @@ var chitu;
         }
         ScrollView.prototype.on_load = function (args) {
             var result;
-            if (this.scrollLoad != null) {
-                result = this.scrollLoad(this, args);
-            }
             if (result != null) {
                 result = $.when(result, _super.prototype.on_load.call(this, args));
             }
@@ -578,22 +574,6 @@ var chitu;
             enumerable: true,
             configurable: true
         });
-        ScrollView.page_scrollEnd = function (sender, args) {
-            var scrollTop = args.scrollTop;
-            var scrollHeight = args.scrollHeight;
-            var clientHeight = args.clientHeight;
-            var marginBottom = clientHeight / 3;
-            if (clientHeight + scrollTop < scrollHeight - marginBottom)
-                return;
-            if (sender.scrollLoad != null) {
-                var result = sender.scrollLoad(sender, args);
-                result.done(function () {
-                    if (sender.bottomLoading != null) {
-                        sender.bottomLoading.visible = args.enableScrollLoad != false;
-                    }
-                });
-            }
-        };
         return ScrollView;
     }(Control));
     chitu.ScrollView = ScrollView;
@@ -656,13 +636,13 @@ var chitu;
         }
         DivScrollView.prototype.on_elementScroll = function () {
             var scroller_node = this.scroller_node;
-            this.cur_scroll_args.scrollTop = scroller_node.scrollTop;
+            this.cur_scroll_args.scrollTop = 0 - scroller_node.scrollTop;
             this.cur_scroll_args.clientHeight = scroller_node.clientHeight;
             this.cur_scroll_args.scrollHeight = scroller_node.scrollHeight;
             var scroll_args = {
-                clientHeight: scroller_node.clientHeight,
-                scrollHeight: scroller_node.scrollHeight,
-                scrollTop: 0 - scroller_node.scrollTop
+                clientHeight: this.cur_scroll_args.clientHeight,
+                scrollHeight: this.cur_scroll_args.scrollHeight,
+                scrollTop: 0 - this.cur_scroll_args.scrollTop
             };
             this.on_scroll(scroll_args);
             this.scrollEndCheck();
