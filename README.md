@@ -20,10 +20,10 @@ ChiTu 项目托管在 github 上，网址：https://github.com/ansiboy/ChiTu
 ### 配置 requirejs
 1. 依赖的第三方库
 
-	1. jquery
-	1. hammerjs
-	2. iscroll
-	3. requirejs 及其插件 text，css 。其中 text 是用来加载页面对应视图（html文件）以及样式文件。
+	* jquery
+	* hammerjs
+	* iscroll
+	* requirejs 及其插件 text，css 。其中 text 是用来加载页面对应视图（html文件）以及样式文件。
 
 	```js
 	requirejs.config({
