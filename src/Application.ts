@@ -142,6 +142,7 @@
                 return urlParser.parseUrl(url);
             }
         }
+        
 
         private on_pageCreating() {
             return chitu.fireCallback(this.pageCreating, this, {});

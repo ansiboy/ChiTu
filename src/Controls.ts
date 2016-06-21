@@ -13,77 +13,61 @@ namespace chitu {
     }
 
     class Environment {
-        private _environmentType;
-        private _isIIS: boolean;
-        private _os: OS;
-        private _version: number;
-        private static _instance: Environment;
+        private static _environmentType;
+        private static _isIIS: boolean;
+        private static _os: OS;
+        private static _version: number;
 
-        constructor() {
+        private static init = (() => {
             var userAgent = navigator.userAgent;
             if (userAgent.indexOf('iPhone') > 0 || userAgent.indexOf('iPad') > 0) {
-                this._os = OS.ios;
+                Environment._os = OS.ios;
                 var match = userAgent.match(/iPhone OS\s([0-9\-]*)/);
                 if (match) {
                     var major_version = parseInt(match[1], 10);
-                    this._version = major_version;
+                    Environment._version = major_version;
                 }
             }
             else if (userAgent.indexOf('Android') > 0) {
-                this._os = OS.android;
+                Environment._os = OS.android;
 
                 var match = userAgent.match(/Android\s([0-9\.]*)/);
                 if (match) {
                     var major_version = parseInt(match[1], 10);
-                    this._version = major_version;
+                    Environment._version = major_version;
                 }
             }
             else {
-                this._os = OS.other;
+                Environment._os = OS.other;
             }
-        }
-        get osVersion(): number {
+        })();
+
+        static get osVersion(): number {
             return this._version;
         }
 
-        get os(): OS {
-            return this._os;
+        static get os(): OS {
+            return Environment._os;
         }
 
-        get isIOS() {
+        static get isIOS() {
             return this.os == OS.ios;
         }
-        get isAndroid() {
+        static get isAndroid() {
             return this.os == OS.android;
         }
 
-        /** 是否需要降级 */
-        get isDegrade(): boolean {
-            if ((this.isWeiXin || this.osVersion <= 4) && this.isAndroid)
-                return true;
-
-            if (navigator.userAgent.indexOf('MQQBrowser') >= 0) {
-                return true;
-            }
-            return false;
-        }
-        get isWeiXin(): boolean {
+        static get isWeiXin(): boolean {
             var ua = navigator.userAgent.toLowerCase();
             return <any>(ua.match(/MicroMessenger/i)) == 'micromessenger';
         }
-        get isIPhone() {
+        static get isIPhone() {
             return window.navigator.userAgent.indexOf('iPhone') > 0
-        }
-        static get instance(): Environment {
-            if (!Environment._instance)
-                Environment._instance = new Environment();
-
-            return Environment._instance;
         }
     }
     export class ControlFactory {
         static createControls(element: HTMLElement, page: Page): Array<Control> {
-            ControlFactory.transformElement(element);
+            //ControlFactory.transformElement(element);
 
             var controls = new Array<Control>();
             var elements = element.childNodes;
@@ -107,36 +91,36 @@ namespace chitu {
             return Control.createControl(element, page);
         }
 
-        private static transformElement(element: HTMLElement) {
-            var node = element;
+        // private static transformElement(element: HTMLElement) {
+        //     var node = element;
 
-            switch (node.tagName) {
-                case 'SCROLL-VIEW':
-                    var scroll_type: string = $(node).attr('scroll-type');
-                    if (scroll_type == null) {
-                        if (Environment.instance.isDegrade) {
-                            scroll_type = scroll_types.doc;
-                        }
-                        else if (Environment.instance.isIOS) {
-                            scroll_type = scroll_types.div;
-                        }
-                        else if (Environment.instance.isAndroid && Environment.instance.osVersion >= 5) {
-                            scroll_type = scroll_types.div;
-                        }
-                        else {
-                            scroll_type = scroll_types.doc;
-                        }
+        //     switch (node.tagName) {
+        //         case 'SCROLL-VIEW':
+        //             var scroll_type: string = $(node).attr('scroll-type');
+        //             if (scroll_type == null) {
+        //                 if (Environment.isDegrade) {
+        //                     scroll_type = scroll_types.doc;
+        //                 }
+        //                 else if (Environment.isIOS) {
+        //                     scroll_type = scroll_types.div;
+        //                 }
+        //                 else if (Environment.isAndroid && Environment.osVersion >= 5) {
+        //                     scroll_type = scroll_types.div;
+        //                 }
+        //                 else {
+        //                     scroll_type = scroll_types.doc;
+        //                 }
 
-                        $(node).attr('scroll-type', scroll_type);
-                    }
+        //                 $(node).attr('scroll-type', scroll_type);
+        //             }
 
-                    break;
-            }
+        //             break;
+        //     }
 
-            for (var i = 0; i < element.childNodes.length; i++) {
-                ControlFactory.transformElement(<HTMLElement>element.childNodes[i]);
-            }
-        }
+        //     for (var i = 0; i < element.childNodes.length; i++) {
+        //         ControlFactory.transformElement(<HTMLElement>element.childNodes[i]);
+        //     }
+        // }
     }
 
     export class ControlCollection {
@@ -291,29 +275,16 @@ namespace chitu {
     }
 
     export class ScrollView extends Control {
-        private _bottomLoading: ScrollViewStatusBar;
-        //static scrolling = false;
 
         scroll: Callback<ScrollView, ScrollArguments> = Callbacks<ScrollView, ScrollArguments>();
         scrollEnd: Callback<ScrollView, ScrollArguments> = Callbacks<ScrollView, ScrollArguments>();
-        //scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;
 
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
-
-            //this.scrollEnd.add(ScrollView.page_scrollEnd);
-            var $status_bar = $(element).find('STATUS-BAR');
-            if ($status_bar.length > 0) {
-                this._bottomLoading = new ScrollViewStatusBar($status_bar[0], page);
-            }
         }
 
         on_load(args) {
             var result: JQueryPromise<any>;
-            // if (this.scrollLoad != null) {
-            //     result = this.scrollLoad(this, args);
-            // }
-
             if (result != null) {
                 result = $.when(result, super.on_load(args));
             }
@@ -325,56 +296,28 @@ namespace chitu {
         }
 
         protected on_scrollEnd(args: ScrollArguments) {
-            //ScrollView.scrolling = false;
             return fireCallback(this.scrollEnd, this, args);
         }
 
         protected on_scroll(args: ScrollArguments) {
-            //ScrollView.scrolling = true;
             return fireCallback(this.scroll, this, args);
         }
 
         static createInstance(element: HTMLElement, page: Page): ScrollView {
-            var scroll_type = $(element).attr('scroll-type');
-            if (scroll_type == scroll_types.doc)
+
+            if (Environment.isAndroid && Environment.isWeiXin)
                 return new DocumentScrollView(element, page);
 
-            if (scroll_type == scroll_types.iscroll) {
-                return new IScrollView(element, page); //new IScrollView(element, page);
-            }
-
-            if (scroll_type == scroll_types.div)
+            if (Environment.isIOS || (Environment.isAndroid && Environment.osVersion >= 5))
                 return new DivScrollView(element, page);
 
             return new DocumentScrollView(element, page);
         }
-        get bottomLoading(): ScrollViewStatusBar {
-            return this._bottomLoading;
-        }
 
-        // virtual method
+        /**
+         * 是否禁用滚动，true 禁用，false 否。
+         */
         disabled: boolean;
-
-        // private static page_scrollEnd(sender: ScrollView, args: any): JQueryPromise<any> {
-
-        //     var scrollTop = args.scrollTop;
-        //     var scrollHeight = args.scrollHeight;
-        //     var clientHeight = args.clientHeight;
-
-        //     //====================================================================
-        //     var marginBottom = clientHeight / 3;
-        //     if (clientHeight + scrollTop < scrollHeight - marginBottom)
-        //         return;
-
-        //     if (sender.scrollLoad != null) {
-        //         var result = sender.scrollLoad(sender, args);
-        //         result.done(() => {
-        //             if (sender.bottomLoading != null) {
-        //                 sender.bottomLoading.visible = args.enableScrollLoad != false;
-        //             }
-        //         })
-        //     }
-        // }
     }
 
     class DocumentScrollView extends ScrollView {
@@ -386,7 +329,7 @@ namespace chitu {
         constructor(element: HTMLElement, page: Page) {
 
             super(element, page);
-            //this.element.style.display = 'none';
+            $(element).attr('scroll-type', scroll_types.doc);
 
             $(document).scroll((event) => {
                 // var args: ScrollArguments = {
@@ -447,7 +390,7 @@ namespace chitu {
         private scroller_node: HTMLElement;
 
         constructor(element: HTMLElement, page: Page) {
-
+            $(element).attr('scroll-type', scroll_types.div);
             let scroller_node: HTMLElement;
             if (element.firstElementChild != null && element.firstElementChild.tagName == DivScrollView.SCROLLER_TAG_NAME) {
                 scroller_node = <HTMLElement>element.firstElementChild;
@@ -654,7 +597,7 @@ namespace chitu {
         private static SCROLLER_TAG_NAME = 'SCROLLER';
         private iscroller: IScroll;
         constructor(element: HTMLElement, page: Page) {
-
+            $(element).attr('scroll-type', scroll_types.iscroll);
             if (element.firstElementChild == null || element.firstElementChild.tagName != IScrollView.SCROLLER_TAG_NAME) {
                 let scroller_node = document.createElement(IScrollView.SCROLLER_TAG_NAME);
                 scroller_node.innerHTML = element.innerHTML;
@@ -746,59 +689,59 @@ namespace chitu {
         }
     }
 
-    export class FormLoading extends Control {
-        private loading_element: HTMLElement;
-        private _loaded_count: number;
-        private static _on_load = Control.prototype.on_load;
-        constructor(element: HTMLElement, page: Page) {
+    // export class FormLoading extends Control {
+    //     private loading_element: HTMLElement;
+    //     private _loaded_count: number;
+    //     private static _on_load = Control.prototype.on_load;
+    //     constructor(element: HTMLElement, page: Page) {
 
-            super(element, page);
+    //         super(element, page);
 
-            this._loaded_count = 0;
-            this.loading_element = document.createElement('page-loading');
-            this.loading_element.className = 'page-loading';
-            this.loading_element.innerHTML = this.defaultHtml();
-            element.appendChild(this.loading_element);
-        }
+    //         this._loaded_count = 0;
+    //         this.loading_element = document.createElement('page-loading');
+    //         this.loading_element.className = 'page-loading';
+    //         this.loading_element.innerHTML = this.defaultHtml();
+    //         element.appendChild(this.loading_element);
+    //     }
 
-        private defaultHtml(): string {
-            var html = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
-            return html;
-        }
+    //     private defaultHtml(): string {
+    //         var html = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
+    //         return html;
+    //     }
 
-        private set loaded_count(value: number) {
-            this._loaded_count = this._loaded_count + 1;
-            if (this._loaded_count >= this.children.length) {
-                this.loading_element.style.display = 'none';
-                for (var j = 0; j < this.children.length; j++) {
-                    (<Control>this.children[j]).visible = true;
-                }
-            }
-        }
+    //     private set loaded_count(value: number) {
+    //         this._loaded_count = this._loaded_count + 1;
+    //         if (this._loaded_count >= this.children.length) {
+    //             this.loading_element.style.display = 'none';
+    //             for (var j = 0; j < this.children.length; j++) {
+    //                 (<Control>this.children[j]).visible = true;
+    //             }
+    //         }
+    //     }
 
-        protected createChild(element: HTMLElement, page: Page): Control {
-            var self = this;
-            var control = super.createChild(element, page);
-            if (control == null)
-                return;
+    //     protected createChild(element: HTMLElement, page: Page): Control {
+    //         var self = this;
+    //         var control = super.createChild(element, page);
+    //         if (control == null)
+    //             return;
 
-            control.visible = false;
-            control.on_load = function (args: Object) {
-                var result = FormLoading._on_load.apply(this, [args]);
-                if (chitu.Utility.isDeferred(result)) {
-                    (<JQueryDeferred<any>>result).done(() => self.loaded_count = self.loaded_count + 1);
-                }
-                else {
-                    self.loaded_count = self.loaded_count + 1;
-                }
-                return result;
-            }
+    //         control.visible = false;
+    //         control.on_load = function (args: Object) {
+    //             var result = FormLoading._on_load.apply(this, [args]);
+    //             if (chitu.Utility.isDeferred(result)) {
+    //                 (<JQueryDeferred<any>>result).done(() => self.loaded_count = self.loaded_count + 1);
+    //             }
+    //             else {
+    //                 self.loaded_count = self.loaded_count + 1;
+    //             }
+    //             return result;
+    //         }
 
-            return control;
-        }
-    }
+    //         return control;
+    //     }
+    // }
 
-    Control.register('FORM-LOADING', FormLoading);
+    //Control.register('FORM-LOADING', FormLoading);
     Control.register('HEADER', PageHeader);
     Control.register('TOP-BAR', PageHeader);
     Control.register('SCROLL-VIEW', ScrollView.createInstance);
