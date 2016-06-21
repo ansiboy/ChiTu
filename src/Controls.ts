@@ -297,12 +297,12 @@ namespace chitu {
 
         scroll: Callback<ScrollView, ScrollArguments> = Callbacks<ScrollView, ScrollArguments>();
         scrollEnd: Callback<ScrollView, ScrollArguments> = Callbacks<ScrollView, ScrollArguments>();
-        scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;
+        //scrollLoad: (sender: ScrollView, args) => JQueryPromise<any>;
 
         constructor(element: HTMLElement, page: Page) {
             super(element, page);
 
-            this.scrollEnd.add(ScrollView.page_scrollEnd);
+            //this.scrollEnd.add(ScrollView.page_scrollEnd);
             var $status_bar = $(element).find('STATUS-BAR');
             if ($status_bar.length > 0) {
                 this._bottomLoading = new ScrollViewStatusBar($status_bar[0], page);
@@ -311,9 +311,9 @@ namespace chitu {
 
         on_load(args) {
             var result: JQueryPromise<any>;
-            if (this.scrollLoad != null) {
-                result = this.scrollLoad(this, args);
-            }
+            // if (this.scrollLoad != null) {
+            //     result = this.scrollLoad(this, args);
+            // }
 
             if (result != null) {
                 result = $.when(result, super.on_load(args));
@@ -353,26 +353,26 @@ namespace chitu {
             return this._bottomLoading;
         }
 
-        private static page_scrollEnd(sender: ScrollView, args: any): JQueryPromise<any> {
+        // private static page_scrollEnd(sender: ScrollView, args: any): JQueryPromise<any> {
 
-            var scrollTop = args.scrollTop;
-            var scrollHeight = args.scrollHeight;
-            var clientHeight = args.clientHeight;
+        //     var scrollTop = args.scrollTop;
+        //     var scrollHeight = args.scrollHeight;
+        //     var clientHeight = args.clientHeight;
 
-            //====================================================================
-            var marginBottom = clientHeight / 3;
-            if (clientHeight + scrollTop < scrollHeight - marginBottom)
-                return;
+        //     //====================================================================
+        //     var marginBottom = clientHeight / 3;
+        //     if (clientHeight + scrollTop < scrollHeight - marginBottom)
+        //         return;
 
-            if (sender.scrollLoad != null) {
-                var result = sender.scrollLoad(sender, args);
-                result.done(() => {
-                    if (sender.bottomLoading != null) {
-                        sender.bottomLoading.visible = args.enableScrollLoad != false;
-                    }
-                })
-            }
-        }
+        //     if (sender.scrollLoad != null) {
+        //         var result = sender.scrollLoad(sender, args);
+        //         result.done(() => {
+        //             if (sender.bottomLoading != null) {
+        //                 sender.bottomLoading.visible = args.enableScrollLoad != false;
+        //             }
+        //         })
+        //     }
+        // }
     }
 
     class DocumentScrollView extends ScrollView {
@@ -469,14 +469,14 @@ namespace chitu {
         private on_elementScroll() {
             let scroller_node = this.scroller_node;
 
-            this.cur_scroll_args.scrollTop = scroller_node.scrollTop;
+            this.cur_scroll_args.scrollTop = 0 - scroller_node.scrollTop;
             this.cur_scroll_args.clientHeight = scroller_node.clientHeight;
             this.cur_scroll_args.scrollHeight = scroller_node.scrollHeight;
 
             var scroll_args = {
-                clientHeight: scroller_node.clientHeight,
-                scrollHeight: scroller_node.scrollHeight,
-                scrollTop: 0 - scroller_node.scrollTop
+                clientHeight: this.cur_scroll_args.clientHeight,
+                scrollHeight: this.cur_scroll_args.scrollHeight,
+                scrollTop: 0 - this.cur_scroll_args.scrollTop
             };
             this.on_scroll(scroll_args);
             this.scrollEndCheck();
