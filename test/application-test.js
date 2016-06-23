@@ -55,4 +55,12 @@ define(["require", "exports", 'chitu'], function (require, exports, chitu) {
             QUnit.start();
         });
     });
+    QUnit.asyncTest('Application.pageCreated 事件', function (assert) {
+        var app = new chitu.Application();
+        app.pageCreated.add(function (s, p) {
+            assert.equal(p.name, 'home.index');
+            QUnit.start();
+        });
+        app.showPage('#home/index');
+    });
 });

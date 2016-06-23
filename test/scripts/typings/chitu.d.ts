@@ -13,7 +13,6 @@ declare namespace chitu {
         pathBase?: string;
     }
     class Application {
-        pageCreating: Callback<Application, any>;
         pageCreated: Callback<Application, Page>;
         private _config;
         private _runned;
@@ -24,7 +23,6 @@ declare namespace chitu {
         private container_stack;
         parseUrl: (url: string) => RouteData;
         constructor(config?: ApplicationConfig);
-        private on_pageCreating();
         private on_pageCreated(page);
         config: chitu.ApplicationConfig;
         currentPage(): chitu.Page;

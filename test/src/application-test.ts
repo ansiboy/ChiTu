@@ -71,4 +71,13 @@ QUnit.asyncTest('Application.showPage 显示无视图页面', (assert) => {
     });
 });
 
+QUnit.asyncTest('Application.pageCreated 事件', (assert) => {
+    let app = new chitu.Application();
+    app.pageCreated.add((s, p) => {
+        assert.equal(p.name, 'home.index');
+        QUnit.start();
+    });
+    app.showPage('#home/index');
+});
+
 

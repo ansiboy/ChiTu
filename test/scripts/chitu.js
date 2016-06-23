@@ -73,7 +73,6 @@ var chitu;
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
     var Application = (function () {
         function Application(config) {
-            this.pageCreating = chitu.Callbacks();
             this.pageCreated = chitu.Callbacks();
             this._runned = false;
             this.container_stack = new Array();
@@ -90,9 +89,6 @@ var chitu;
                 return urlParser.parseUrl(url);
             };
         }
-        Application.prototype.on_pageCreating = function () {
-            return chitu.fireCallback(this.pageCreating, this, {});
-        };
         Application.prototype.on_pageCreated = function (page) {
             return chitu.fireCallback(this.pageCreated, this, page);
         };
