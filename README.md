@@ -11,7 +11,7 @@
 * 易于扩展
 
 ## 对比其它框架
-Angular
+### Angular
 
 选择 ChiTu 而不选择 Angular，有下面几个原因：
 
