@@ -113,7 +113,10 @@
     }
 
     export class Application {
-        //pageCreating = Callbacks<Application, any>();
+
+        /**
+         * 当页面创建后发生
+         */
         pageCreated = Callbacks<Application, Page>();
 
         private _config: ApplicationConfig;
@@ -124,6 +127,10 @@
         private start_hash: string;
         private container_stack = new Array<PageContainer>();
 
+        /**
+         * 解释 url，将 url 解释为 RouteData
+         * param url 要解释的 url
+         */
         parseUrl: (url: string) => RouteData;
 
         constructor(config?: ApplicationConfig) {
@@ -142,11 +149,7 @@
                 return urlParser.parseUrl(url);
             }
         }
-        
 
-        // private on_pageCreating() {
-        //     return chitu.fireCallback(this.pageCreating, this, {});
-        // }
         private on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, this, page);
         }
