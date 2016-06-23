@@ -113,7 +113,7 @@
     }
 
     export class Application {
-        pageCreating = Callbacks<Application, any>();
+        //pageCreating = Callbacks<Application, any>();
         pageCreated = Callbacks<Application, Page>();
 
         private _config: ApplicationConfig;
@@ -144,9 +144,9 @@
         }
         
 
-        private on_pageCreating() {
-            return chitu.fireCallback(this.pageCreating, this, {});
-        }
+        // private on_pageCreating() {
+        //     return chitu.fireCallback(this.pageCreating, this, {});
+        // }
         private on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, this, page);
         }
