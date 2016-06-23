@@ -15,7 +15,7 @@
 
 选择 ChiTu 而不选择 Angular，有下面几个原因：
 
-* 在 API 设计上，ChiTu 比 Angular 简单得多，因此你可以快速掌握并投入开发
+* 在 API 设计上，ChiTu 比 Angular 简单得多，因为 ChiTu 更多是专注于页面的加载，因此你可以快速掌握并投入开发。
 
 * ChiTu 是一个更加灵活开放的解决方案，它允许你采用你喜欢的组件来进行开发。而不是必须采用为 Angular 编写的组件。比如说：数据绑定你可以使用 knockoutjs，也可以使用 vue。路由你可以采用 crossroads ，也可以采用其它的。
 
