@@ -79,5 +79,25 @@ QUnit.asyncTest('Application.pageCreated 事件', (assert) => {
     });
     app.showPage('#home/index');
 });
+QUnit.asyncTest('Page 关闭事件', (assert) => {
+    var app = new chitu.Application();
+    app.showPage('#home/index').done((page) => {
+        let closing_called = false;
+        let closed_called = false;
+        page.closing.add(() => {
+            closing_called = true;
+        });
+        page.closed.add(() => {
+            closed_called = true;
+        });
 
+        page.container.close(chitu.SwipeDirection.None);
+        setTimeout(() => {
+            assert.equal(closing_called, true, 'closing 事件已调用');
+            assert.equal(closed_called, true, 'closed 事件已调用');
+            QUnit.start();
+        }, 100);
+    });
+
+});
 
