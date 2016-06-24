@@ -93,11 +93,11 @@
         load = ns.Callbacks<Page, any>();
 
         closing = ns.Callbacks<Page, any>();
-        closed = ns.Callbacks();
-        showing = ns.Callbacks();
-        shown = ns.Callbacks();
-        hiding = ns.Callbacks();
-        hidden = ns.Callbacks();
+        closed = ns.Callbacks<Page, any>();
+        showing = ns.Callbacks<Page, any>();
+        shown = ns.Callbacks<Page, any>();
+        hiding = ns.Callbacks<Page, any>();
+        hidden = ns.Callbacks<Page, any>();
 
         constructor(args: PageArguemnts) {
             if(args == null) throw Errors.argumentNull('args');
