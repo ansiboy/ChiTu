@@ -1,10 +1,15 @@
 ﻿namespace chitu {
 
     export interface RouteData {
+        /** 页面的路径，即 js 文件 */
         actionPath: string,
+        /** 视图的路径，即 html 文件 */
         viewPath: string,
+        /** 路由参数值，可以通过它来获取 url 参数 */
         values: any,
+        /** 页面名称 */
         pageName: string,
+        /** 其它资源文件的路径 */
         resource?: string[]
     }
 
