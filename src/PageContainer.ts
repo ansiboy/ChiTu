@@ -254,13 +254,25 @@ namespace chitu {
         }
 
         private is_closing = false;
-        close(swipe: SwipeDirection) {
+        close(swipe?: SwipeDirection) {
+            if (swipe == null)
+                swipe = SwipeDirection.None;
+
             if (this.is_closing)
                 return;
+
+            this.pages.forEach((item, index, Array) => {
+                item.on_closing(item.routeData.values);
+            })
 
             this.is_closing = true;
             this.hide(swipe).done(() => {
                 $(this._node).remove();
+
+                this.pages.forEach((item, index, Array) => {
+                    item.on_closed(item.routeData.values);
+                })
+
             })
         }
         private showLoading() {
