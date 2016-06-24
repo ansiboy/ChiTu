@@ -1475,11 +1475,19 @@ var chitu;
         };
         PageContainer.prototype.close = function (swipe) {
             var _this = this;
+            if (swipe == null)
+                swipe = chitu.SwipeDirection.None;
             if (this.is_closing)
                 return;
+            this.pages.forEach(function (item, index, Array) {
+                item.on_closing(item.routeData.values);
+            });
             this.is_closing = true;
             this.hide(swipe).done(function () {
                 $(_this._node).remove();
+                _this.pages.forEach(function (item, index, Array) {
+                    item.on_closed(item.routeData.values);
+                });
             });
         };
         PageContainer.prototype.showLoading = function () {
