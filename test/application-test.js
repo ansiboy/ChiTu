@@ -63,4 +63,23 @@ define(["require", "exports", 'chitu'], function (require, exports, chitu) {
         });
         app.showPage('#home/index');
     });
+    QUnit.asyncTest('Page 关闭事件', function (assert) {
+        var app = new chitu.Application();
+        app.showPage('#home/index').done(function (page) {
+            var closing_called = false;
+            var closed_called = false;
+            page.closing.add(function () {
+                closing_called = true;
+            });
+            page.closed.add(function () {
+                closed_called = true;
+            });
+            page.container.close(chitu.SwipeDirection.None);
+            setTimeout(function () {
+                assert.equal(closing_called, true, 'closing 事件已调用');
+                assert.equal(closed_called, true, 'closed 事件已调用');
+                QUnit.start();
+            }, 100);
+        });
+    });
 });
