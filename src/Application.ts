@@ -238,7 +238,8 @@
                 var c = this.container_stack.pop();
                 var swipe = this.config.closeSwipe(c.currentPage.routeData);
                 if (c.previous != null) {
-                    c.previous.visible = true;
+                    //c.previous.visible = true;
+                    c.previous.show(SwipeDirection.None);
                 }
                 c.close(swipe);
             }

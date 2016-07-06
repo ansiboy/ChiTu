@@ -154,6 +154,7 @@ namespace chitu {
             if (this.visible == true)
                 return $.Deferred().resolve();
 
+            this.currentPage.on_showing(this.currentPage.routeData.values);
             let container_width = $(this._node).width();
             var container_height = $(this._node).height();
             if (container_width <= 0 || container_height <= 0)
@@ -165,6 +166,7 @@ namespace chitu {
                 if (this.previous != null)
                     this.previous.visible = false;
 
+                this.currentPage.on_shown(this.currentPage.routeData.values);
                 result.resolve();
             };
 
@@ -408,9 +410,9 @@ namespace chitu {
                     this.element.appendChild(page.element);
                     this._currentPage = page;
 
-                    page.on_showing(page.routeData.values);
+                    //page.on_showing(page.routeData.values);
                     this.show(swipe).done(() => {
-                        page.on_shown(page.routeData.values);
+                        //page.on_shown(page.routeData.values);
                     });
                 });
 
