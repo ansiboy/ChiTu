@@ -238,7 +238,8 @@ declare namespace chitu {
         private _app;
         private _previousOffsetRate;
         private open_swipe;
-        enableSwipeClose: boolean;
+        static enableGesture: boolean;
+        static enableSwipeClose: boolean;
         gesture: Gesture;
         pageCreated: chitu.Callback<PageContainer, Page>;
         constructor(app: Application, previous?: PageContainer);

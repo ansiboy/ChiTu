@@ -30,7 +30,8 @@ namespace chitu {
         private _previousOffsetRate = 0.5; // 前一个页面，相对当前页面移动的比率
         private open_swipe: chitu.SwipeDirection;
 
-        public enableSwipeClose = true;
+        public static enableGesture = true;
+        public static enableSwipeClose = true;
 
         gesture: Gesture;
         pageCreated: chitu.Callback<PageContainer, Page> = Callbacks<PageContainer, Page>();
@@ -43,8 +44,11 @@ namespace chitu {
             this._previous = previous;
             this._app = app;
 
-            this.gesture = new Gesture(this._node);
-            this._enableSwipeBack();
+            if (PageContainer.enableGesture)
+                this.gesture = new Gesture(this._node);
+
+            if (this.previous != null && PageContainer.enableSwipeClose == true)
+                this._enableSwipeBack();
         }
 
         on_pageCreated(page: chitu.Page) {
@@ -54,9 +58,6 @@ namespace chitu {
         /** 启用滑动返回 */
         private _enableSwipeBack() {
             var container = this;
-            if (container.previous == null || this.enableSwipeClose == false)
-                return;
-
             var previous_start_x: number;
             var previous_visible: boolean;
             var node = container.element;
