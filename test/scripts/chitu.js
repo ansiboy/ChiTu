@@ -76,14 +76,13 @@ var chitu;
             this.pageCreated = chitu.Callbacks();
             this._runned = false;
             this.container_stack = new Array();
-            if (config == null)
-                config = {};
-            this._config = {};
-            this._config.openSwipe = config.openSwipe || function (routeData) { return chitu.SwipeDirection.None; };
-            this._config.closeSwipe = config.closeSwipe || function (routeData) { return chitu.SwipeDirection.None; };
-            this._config.container = config.container || $.proxy(function (routeData, previous) {
-                return chitu.PageContainerFactory.createInstance(this.app, routeData, previous);
-            }, { app: this });
+            this._config = $.extend({
+                openSwipe: function (routeData) { return chitu.SwipeDirection.None; },
+                closeSwipe: function () { return chitu.SwipeDirection.None; },
+                container: $.proxy(function (routeData, previous) {
+                    return chitu.PageContainerFactory.createInstance(this.app, routeData, previous);
+                }, { app: this })
+            }, config);
             var urlParser = new UrlParser(this._config.pathBase);
             this.parseUrl = function (url) {
                 return urlParser.parseUrl(url);

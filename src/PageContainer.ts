@@ -394,7 +394,7 @@ namespace chitu {
                 });
             }).fail((err) => {
                 result.reject();
-                console.log(err);
+                console.error(err);
                 throw Errors.createPageFail(routeData.pageName);
             });
 

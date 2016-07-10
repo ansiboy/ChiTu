@@ -139,15 +139,24 @@
         parseUrl: (url: string) => RouteData;
 
         constructor(config?: ApplicationConfig) {
-            if (config == null)
-                config = {};
 
-            this._config = {};
-            this._config.openSwipe = config.openSwipe || function (routeData: RouteData) { return SwipeDirection.None; };
-            this._config.closeSwipe = config.closeSwipe || function (routeData: RouteData) { return SwipeDirection.None; };
-            this._config.container = config.container || $.proxy(function (routeData: RouteData, previous: PageContainer) {
-                return PageContainerFactory.createInstance(this.app, routeData, previous);
-            }, { app: this });
+            config = config || {};
+
+            // this._config = {};
+            // this._config.openSwipe = config.openSwipe || function (routeData: RouteData) { return SwipeDirection.None; };
+            // this._config.closeSwipe = config.closeSwipe || function (routeData: RouteData) { return SwipeDirection.None; };
+            // this._config.container = config.container || $.proxy(function (routeData: RouteData, previous: PageContainer) {
+            //     return PageContainerFactory.createInstance(this.app, routeData, previous);
+            // }, { app: this });
+
+            this._config = $.extend({
+                openSwipe: (routeData: RouteData) => SwipeDirection.None,
+                closeSwipe: () => SwipeDirection.None,
+                container: $.proxy(function (routeData: RouteData, previous: PageContainer) {
+                    return PageContainerFactory.createInstance(this.app, routeData, previous);
+                }, { app: this })
+
+            }, config);
 
             let urlParser = new UrlParser(this._config.pathBase);
             this.parseUrl = (url: string) => {
