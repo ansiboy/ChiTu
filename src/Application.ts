@@ -153,7 +153,7 @@
                 openSwipe: (routeData: RouteData) => SwipeDirection.None,
                 closeSwipe: () => SwipeDirection.None,
                 container: $.proxy(function (routeData: RouteData, previous: PageContainer) {
-                    return PageContainerFactory.createInstance(this.app, routeData, previous);
+                    return PageContainerFactory.createInstance({ app: this.app, previous });
                 }, { app: this })
 
             }, config);

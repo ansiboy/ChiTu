@@ -30,24 +30,32 @@ namespace chitu {
         private _previousOffsetRate = 0.5; // 前一个页面，相对当前页面移动的比率
         private open_swipe: chitu.SwipeDirection;
 
-        public static enableGesture = true;
-        public static enableSwipeClose = true;
+        //public enableGesture = true;
+        //public static enableSwipeClose = true;
+        //public enableSwipeClose = true;
 
         gesture: Gesture;
         pageCreated: chitu.Callback<PageContainer, Page> = Callbacks<PageContainer, Page>();
 
-        constructor(app: Application, previous?: PageContainer) {
+        constructor(params: {
+            app: Application,
+            previous?: PageContainer,
+            enableGesture?: boolean,
+            enableSwipeClose?: boolean,
+        }) {
+
+            params = $.extend({ enableGesture: true, enableSwipeClose: true }, params)
 
             this._node = this.createNode();
             this._loading = this.createLoading(this._node);
             this._pages = new Array<Page>();
-            this._previous = previous;
-            this._app = app;
+            this._previous = params.previous;
+            this._app = params.app;
 
-            if (PageContainer.enableGesture)
+            if (params.enableGesture)
                 this.gesture = new Gesture(this._node);
 
-            if (this.previous != null && PageContainer.enableSwipeClose == true)
+            if (this.previous != null && params.enableSwipeClose)
                 this._enableSwipeBack();
         }
 
@@ -425,8 +433,14 @@ namespace chitu {
         constructor(app: Application) {
             this._app = app;
         }
-        static createInstance(app: Application, routeData: RouteData, previous: PageContainer): PageContainer {
-            return new PageContainer(app, previous);
+        static createInstance(params: {
+            app: Application,
+            previous?: PageContainer,
+            enableGesture?: boolean,
+            enableSwipeClose?: boolean,
+        }): PageContainer {
+            let c = new PageContainer(params);
+            return c;
         }
     }
 

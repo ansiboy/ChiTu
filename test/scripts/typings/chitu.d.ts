@@ -238,11 +238,14 @@ declare namespace chitu {
         private _app;
         private _previousOffsetRate;
         private open_swipe;
-        static enableGesture: boolean;
-        static enableSwipeClose: boolean;
         gesture: Gesture;
         pageCreated: chitu.Callback<PageContainer, Page>;
-        constructor(app: Application, previous?: PageContainer);
+        constructor(params: {
+            app: Application;
+            previous?: PageContainer;
+            enableGesture?: boolean;
+            enableSwipeClose?: boolean;
+        });
         on_pageCreated(page: chitu.Page): JQueryPromise<any>;
         private _enableSwipeBack();
         protected createNode(): HTMLElement;
@@ -266,7 +269,12 @@ declare namespace chitu {
     class PageContainerFactory {
         private _app;
         constructor(app: Application);
-        static createInstance(app: Application, routeData: RouteData, previous: PageContainer): PageContainer;
+        static createInstance(params: {
+            app: Application;
+            previous?: PageContainer;
+            enableGesture?: boolean;
+            enableSwipeClose?: boolean;
+        }): PageContainer;
     }
     class Pan {
         cancel: boolean;
