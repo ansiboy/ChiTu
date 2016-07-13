@@ -31,14 +31,6 @@
             var msg = Utility.format('Route named "{0}" is exists.', name);
             return new Error(msg);
         }
-        public static routeResultRequireController(routeName): Error {
-            var msg = Utility.format('The parse result of route "{0}" does not contains controler.', routeName);
-            return new Error(msg);
-        }
-        public static routeResultRequireAction(routeName): Error {
-            var msg = Utility.format('The parse result of route "{0}" does not contains action.', routeName);
-            return new Error(msg);
-        }
         public static ambiguityRouteMatched(url, routeName1, routeName2): Error {
             var msg = Utility.format('Ambiguity route matched, {0} is match in {1} and {2}.', url, routeName1, routeName2);
             return new Error(msg);
