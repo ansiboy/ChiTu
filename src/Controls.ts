@@ -65,63 +65,6 @@ namespace chitu {
             return window.navigator.userAgent.indexOf('iPhone') > 0
         }
     }
-    export class ControlFactory {
-        static createControls(element: HTMLElement, page: Page): Array<Control> {
-            //ControlFactory.transformElement(element);
-
-            var controls = new Array<Control>();
-            var elements = element.childNodes;
-
-            for (var i = 0; i < elements.length; i++) {
-                var element_type = elements[i].nodeType;
-                if (element_type != 1) //1 为 Element 类型
-                    continue;
-
-                var control = ControlFactory.createControl(<HTMLElement>elements[i], page);
-                if (control == null)
-                    continue;
-
-                controls.push(control);
-            }
-
-            return controls;
-        }
-
-        static createControl(element: HTMLElement, page: Page): Control {
-            return Control.createControl(element, page);
-        }
-
-        // private static transformElement(element: HTMLElement) {
-        //     var node = element;
-
-        //     switch (node.tagName) {
-        //         case 'SCROLL-VIEW':
-        //             var scroll_type: string = $(node).attr('scroll-type');
-        //             if (scroll_type == null) {
-        //                 if (Environment.isDegrade) {
-        //                     scroll_type = scroll_types.doc;
-        //                 }
-        //                 else if (Environment.isIOS) {
-        //                     scroll_type = scroll_types.div;
-        //                 }
-        //                 else if (Environment.isAndroid && Environment.osVersion >= 5) {
-        //                     scroll_type = scroll_types.div;
-        //                 }
-        //                 else {
-        //                     scroll_type = scroll_types.doc;
-        //                 }
-
-        //                 $(node).attr('scroll-type', scroll_type);
-        //             }
-
-        //             break;
-        //     }
-
-        //     for (var i = 0; i < element.childNodes.length; i++) {
-        //         ControlFactory.transformElement(<HTMLElement>element.childNodes[i]);
-        //     }
-        // }
-    }
 
     export class ControlCollection {
         private parent: Control;
@@ -184,7 +127,6 @@ namespace chitu {
                     continue;
 
                 var child_control = this.createChild(<HTMLElement>element.childNodes[i], page);
-                //ControlFactory.createControl(<HTMLElement>element.childNodes[i], page);
                 if (child_control == null)
                     continue;
 
@@ -193,7 +135,7 @@ namespace chitu {
         }
 
         protected createChild(element: HTMLElement, page: Page) {
-            var child_control = ControlFactory.createControl(element, page);
+            var child_control = Control.createControl(element, page);
             return child_control;
         }
 
@@ -219,9 +161,6 @@ namespace chitu {
         get page(): Page {
             return this._page;
         }
-        // protected fireEvent<S, A>(callback: chitu.Callback<S, A>, args): JQueryPromise<any> {
-        //     return chitu.fireCallback(callback, this, args);
-        // }
 
         on_load(args: Object): JQueryPromise<any> {
             var promises = new Array<JQueryPromise<any>>();

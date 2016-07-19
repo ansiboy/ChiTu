@@ -114,14 +114,29 @@
         }
 
         private createControls(element: HTMLElement): Control[] {
-            this._controls = ControlFactory.createControls(element, this);
-            var stack = new Array<Control>();
+            var controls = new Array<Control>();
+            var elements = element.childNodes;
 
-            for (var i = 0; i < this._controls.length; i++) {
-                stack.push(this._controls[i]);
+            for (var i = 0; i < elements.length; i++) {
+                var element_type = elements[i].nodeType;
+                if (element_type != 1) //1 为 Element 类型
+                    continue;
+
+                var control = Control.createControl(<HTMLElement>elements[i], this);
+                if (control == null)
+                    continue;
+
+                controls.push(control);
             }
-            return this._controls;
+
+            return controls;
         }
+
+        protected createControl(element: HTMLElement) {
+            return Control.createControl(element, this);
+        }
+
+
         get routeData(): RouteData {
             return this._routeData;
         }

@@ -425,14 +425,6 @@ namespace chitu {
 
             return result;
         }
-
-        // private loadPage<T extends Page>(routeData: RouteData): JQueryPromise<T> {
-        //     return this.createPage(routeData)
-        //         .done((page: Page) => {
-
-        //         });
-
-        // }
     }
 
     export class PageContainerFactory {
