@@ -50,16 +50,16 @@
         Document,
     }
 
-    export type PageArguemnts = { container: PageContainer, routeData: RouteData, view: string };
+    export type PageArguemnts = { container: PageContainer, routeData: RouteData, element: HTMLElement };
     export interface PageConstructor {
         new (args: PageArguemnts): Page;
     }
 
 
-    export class Page {
+    export class Page extends Control {
         static animationTime: number = 300;
 
-        private _name: string;
+        //private _name: string;
         private _viewDeferred: JQueryPromise<string>;
         private _actionDeferred: JQueryPromise<Function>;
 
@@ -81,15 +81,10 @@
         private _formLoading: PageLoading;
         private _bottomLoading: PageLoading;
         private _pageContainer: PageContainer;
-        private _node: HTMLElement;
         private _viewHtml: string;
 
         // Controls
         private _loading: Control;
-        private _controls: Array<Control>;
-
-        preLoad = Callbacks<Page, any>();
-        load = Callbacks<Page, any>();
 
         closing = Callbacks<Page, any>();
         closed = Callbacks<Page, any>();
@@ -98,13 +93,10 @@
         hidden = Callbacks<Page, any>();
 
         constructor(args: PageArguemnts) {
+            super(args.element);
             if (args == null) throw Errors.argumentNull('args');
-            if (args.view == null) throw Errors.argumentNull('view');
 
-            this._node = document.createElement('page');
-            this._node.innerHTML = args.view;
-            this._controls = this.createControls(this.element);
-            $(this._node).data('page', this);
+            $(this.element).data('page', this);
 
             this._pageContainer = args.container;
             this._routeData = args.routeData;
@@ -112,30 +104,6 @@
             this._pageContainer.closing.add(() => this.on_closing(this.routeData.values));
             this._pageContainer.closed.add(() => this.on_closed(this.routeData.values))
         }
-
-        private createControls(element: HTMLElement): Control[] {
-            var controls = new Array<Control>();
-            var elements = element.childNodes;
-
-            for (var i = 0; i < elements.length; i++) {
-                var element_type = elements[i].nodeType;
-                if (element_type != 1) //1 为 Element 类型
-                    continue;
-
-                var control = Control.createControl(<HTMLElement>elements[i], this);
-                if (control == null)
-                    continue;
-
-                controls.push(control);
-            }
-
-            return controls;
-        }
-
-        protected createControl(element: HTMLElement) {
-            return Control.createControl(element, this);
-        }
-
 
         get routeData(): RouteData {
             return this._routeData;
@@ -146,11 +114,8 @@
 
             return this._name;
         }
-        get element(): HTMLElement {
-            return this._node;
-        }
         get visible(): boolean {
-            return $(this._node).is(':visible');
+            return $(this.element).is(':visible');
         }
         get container(): PageContainer {
             return this._pageContainer;
@@ -163,12 +128,12 @@
             if (!name) throw Errors.argumentNull('name');
 
             var stack = new Array<Control>();
-            for (var i = 0; i < this._controls.length; i++) {
-                var control = this._controls[i];
+            for (var i = 0; i < this.children.length; i++) {
+                let control = this.children[i];
                 stack.push(control);
             }
             while (stack.length > 0) {
-                var control = stack.pop();
+                let control = stack.pop();
                 if (control.name == name)
                     return <T>control;
 
@@ -182,16 +147,6 @@
             return fireCallback(callback, this, args);
         }
 
-        on_load(args: Object): JQueryPromise<any> {
-            var promises = new Array<JQueryPromise<any>>();
-            promises.push(this.fireEvent(this.load, args));
-            for (var i = 0; i < this._controls.length; i++) {
-                var p = this._controls[i].on_load(args);
-                promises.push(p);
-            }
-            var result = $.when.apply($, promises);
-            return result;
-        }
         on_closing(args) {
             return this.fireEvent(this.closing, args);
         }

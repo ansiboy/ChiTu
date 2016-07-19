@@ -400,8 +400,11 @@ namespace chitu {
             var result = $.Deferred();
 
             $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
+                let pageElement = document.createElement('page');
+                pageElement.innerHTML = html;
+                pageElement.setAttribute('name', routeData.pageName);
 
-                var page: Page = new pageType({ view: html, container: this, routeData });
+                var page: Page = new pageType({ container: this, element: pageElement, routeData });
                 if (!(page instanceof chitu.Page))
                     throw Errors.actionTypeError(routeData.pageName);
 
