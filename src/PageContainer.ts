@@ -111,7 +111,7 @@ namespace chitu {
                     this.previous.visible = true;
                 }
 
-                scroll_views = currentPageScrollViews();
+                scroll_views = activePageScrollViews(node);
                 return result;
             };
 
@@ -138,20 +138,29 @@ namespace chitu {
 
                 move(node).x(0).duration(Page.animationTime).end();
                 move(container.previous.element).x(previous_start_x).duration(Page.animationTime)
-                    .end(() => this.previous.visible = previous_visible);
+                    .end(() => {
+                        this.previous.visible = previous_visible;
+                        enableScrollViews(scroll_views);
+                    });
             }
 
-            let currentPageScrollViews = (): Array<ScrollView> => {
+            let activePageScrollViews = (node): Array<ScrollView> => {
                 var result: Array<ScrollView> = [];
-                $(this.page.element).find('scroll-view').each((index, item) => {
-                    var scroll_view = $(item).data('control');
-                    result.push(scroll_view);
+                $(node).find('scroll-view').each((index, item) => {
+                    var scroll_view = <ScrollView>$(item).data('control');
+                    if (scroll_view.disabled == false)
+                        result.push(scroll_view);
                 });
                 return result;
             }
             let discableScrollViews = (views: Array<ScrollView>) => {
                 for (var i = 0; i < views.length; i++) {
                     views[i].disabled = true;
+                }
+            }
+            let enableScrollViews = (views: Array<ScrollView>) => {
+                for (var i = 0; i < views.length; i++) {
+                    views[i].disabled = false;
                 }
             }
         }
