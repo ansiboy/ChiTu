@@ -1,6 +1,5 @@
 ﻿namespace chitu {
 
-    var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
 
@@ -51,7 +50,7 @@
         Document,
     }
 
-    export  type PageArguemnts = { container: PageContainer, routeData: RouteData, view: string };
+    export type PageArguemnts = { container: PageContainer, routeData: RouteData, view: string };
     export interface PageConstructor {
         new (args: PageArguemnts): Page;
     }
@@ -89,18 +88,17 @@
         private _loading: Control;
         private _controls: Array<Control>;
 
-        preLoad = ns.Callbacks<Page, any>();
-        load = ns.Callbacks<Page, any>();
+        preLoad = Callbacks<Page, any>();
+        load = Callbacks<Page, any>();
 
-        closing = ns.Callbacks<Page, any>();
-        closed = ns.Callbacks<Page, any>();
-        showing = ns.Callbacks<Page, any>();
-        shown = ns.Callbacks<Page, any>();
-        hiding = ns.Callbacks<Page, any>();
-        hidden = ns.Callbacks<Page, any>();
+        closing = Callbacks<Page, any>();
+        closed = Callbacks<Page, any>();
+
+        hiding = Callbacks<Page, any>();
+        hidden = Callbacks<Page, any>();
 
         constructor(args: PageArguemnts) {
-            if(args == null) throw Errors.argumentNull('args');
+            if (args == null) throw Errors.argumentNull('args');
             if (args.view == null) throw Errors.argumentNull('view');
 
             this._node = document.createElement('page');
@@ -108,15 +106,11 @@
             this._controls = this.createControls(this.element);
             $(this._node).data('page', this);
 
-            this.initialize(args.container,args.routeData);
-        }
+            this._pageContainer = args.container;
+            this._routeData = args.routeData;
 
-        private initialize(container: PageContainer, pageInfo: RouteData) {
-            if (!container) throw e.argumentNull('container');
-            if (pageInfo == null) throw e.argumentNull('pageInfo');
-
-            this._pageContainer = container;
-            this._routeData = pageInfo;
+            this._pageContainer.closing.add(() => this.on_closing(this.routeData.values));
+            this._pageContainer.closed.add(() => this.on_closed(this.routeData.values))
         }
 
         private createControls(element: HTMLElement): Control[] {
@@ -190,12 +184,6 @@
             return this.fireEvent(this.closed, args);
         }
 
-        on_showing(args) {
-            return this.fireEvent(this.showing, args);
-        }
-        on_shown(args) {
-            return this.fireEvent(this.shown, args);
-        }
         on_hiding(args) {
             return this.fireEvent(this.hiding, args);
         }
