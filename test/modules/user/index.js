@@ -9,7 +9,7 @@ define(["require", "exports", 'chitu'], function (require, exports, chitu) {
     return (function (_super) {
         __extends(IndexPage, _super);
         function IndexPage(args) {
-            args.view = html;
+            args.element.innerHTML = html;
             _super.call(this, args);
         }
         return IndexPage;
