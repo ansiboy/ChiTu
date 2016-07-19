@@ -292,10 +292,14 @@
 
             routeData.values = $.extend(routeData.values, args || {});
 
-            var container = this.createPageContainer(routeData);
-            container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
-            var swipe = this.config.openSwipe(routeData);
-            var result = container.show(swipe); //container.showPage(routeData, swipe);
+            let result = $.Deferred<T>();
+            let container = this.createPageContainer(routeData);
+            container.pageCreated.add((sender, page: T) => {
+                this.on_pageCreated(page);
+                result.resolve(page);
+            });
+            let swipe = this.config.openSwipe(routeData);
+            container.show(swipe); 
 
             return result;
         }

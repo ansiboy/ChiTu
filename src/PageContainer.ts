@@ -1,8 +1,6 @@
 // TODO:
 // 1，关闭当页面容器并显示之前容器时，更新URL
 // 2, 侧滑时，底容器带有遮罩效果。
-//import Hammer = require('hammer');
-
 namespace chitu {
 
     class ScrollArguments {
@@ -61,7 +59,7 @@ namespace chitu {
             if (this.previous != null && params.enableSwipeClose)
                 this._enableSwipeBack();
 
-            this.loadPage(params.routeData);
+            this.createPage(params.routeData);
         }
 
         on_pageCreated(page: chitu.Page) {
@@ -407,6 +405,9 @@ namespace chitu {
                 if (!(page instanceof chitu.Page))
                     throw Errors.actionTypeError(routeData.pageName);
 
+                this._currentPage = page;
+                this.element.appendChild(page.element);
+
                 this.on_pageCreated(page);
                 result.resolve(page);
                 page.on_load(routeData.values).done(() => {
@@ -425,14 +426,13 @@ namespace chitu {
             return result;
         }
 
-        private loadPage<T extends Page>(routeData: RouteData): JQueryPromise<T> {
-            return this.createPage(routeData)
-                .done((page: Page) => {
-                    this.element.appendChild(page.element);
-                    this._currentPage = page;
-                });
+        // private loadPage<T extends Page>(routeData: RouteData): JQueryPromise<T> {
+        //     return this.createPage(routeData)
+        //         .done((page: Page) => {
 
-        }
+        //         });
+
+        // }
     }
 
     export class PageContainerFactory {
