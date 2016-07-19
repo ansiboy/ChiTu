@@ -847,14 +847,6 @@ var chitu;
             var msg = chitu.Utility.format('Route named "{0}" is exists.', name);
             return new Error(msg);
         };
-        Errors.routeResultRequireController = function (routeName) {
-            var msg = chitu.Utility.format('The parse result of route "{0}" does not contains controler.', routeName);
-            return new Error(msg);
-        };
-        Errors.routeResultRequireAction = function (routeName) {
-            var msg = chitu.Utility.format('The parse result of route "{0}" does not contains action.', routeName);
-            return new Error(msg);
-        };
         Errors.ambiguityRouteMatched = function (url, routeName1, routeName2) {
             var msg = chitu.Utility.format('Ambiguity route matched, {0} is match in {1} and {2}.', url, routeName1, routeName2);
             return new Error(msg);

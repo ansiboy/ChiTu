@@ -30,10 +30,6 @@ namespace chitu {
         private _previousOffsetRate = 0.5; // 前一个页面，相对当前页面移动的比率
         private open_swipe: chitu.SwipeDirection;
 
-        //public enableGesture = true;
-        //public static enableSwipeClose = true;
-        //public enableSwipeClose = true;
-
         gesture: Gesture;
         pageCreated: chitu.Callback<PageContainer, Page> = Callbacks<PageContainer, Page>();
 
