@@ -76,6 +76,7 @@ var chitu;
             this.pageCreated = chitu.Callbacks();
             this._runned = false;
             this.container_stack = new Array();
+            this.backFail = chitu.Callbacks();
             config = config || {};
             this._config = $.extend({
                 openSwipe: function (routeData) { return chitu.SwipeDirection.None; },
@@ -211,6 +212,7 @@ var chitu;
             this.back_deferred = $.Deferred();
             if (window.history.length == 0) {
                 this.back_deferred.reject();
+                chitu.fireCallback(this.backFail, this, {});
                 return this.back_deferred;
             }
             window.history.back();
@@ -845,14 +847,6 @@ var chitu;
         };
         Errors.routeExists = function (name) {
             var msg = chitu.Utility.format('Route named "{0}" is exists.', name);
-            return new Error(msg);
-        };
-        Errors.routeResultRequireController = function (routeName) {
-            var msg = chitu.Utility.format('The parse result of route "{0}" does not contains controler.', routeName);
-            return new Error(msg);
-        };
-        Errors.routeResultRequireAction = function (routeName) {
-            var msg = chitu.Utility.format('The parse result of route "{0}" does not contains action.', routeName);
             return new Error(msg);
         };
         Errors.ambiguityRouteMatched = function (url, routeName1, routeName2) {

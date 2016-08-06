@@ -138,6 +138,11 @@
          */
         parseUrl: (url: string) => RouteData;
 
+        /**
+         * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
+         */
+        backFail = Callbacks<Application,{}>();
+
         constructor(config?: ApplicationConfig) {
 
             config = config || {};
@@ -324,6 +329,7 @@
             this.back_deferred = $.Deferred();
             if (window.history.length == 0) {
                 this.back_deferred.reject();
+                fireCallback(this.backFail, this, {});
                 return this.back_deferred;
             }
 

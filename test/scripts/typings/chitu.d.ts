@@ -22,6 +22,7 @@ declare namespace chitu {
         private start_hash;
         private container_stack;
         parseUrl: (url: string) => RouteData;
+        backFail: Callback<Application, {}>;
         constructor(config?: ApplicationConfig);
         private on_pageCreated(page);
         config: chitu.ApplicationConfig;
@@ -113,8 +114,6 @@ declare namespace chitu {
         static pathPairRequireView(index: any): Error;
         static notImplemented(name: any): Error;
         static routeExists(name: any): Error;
-        static routeResultRequireController(routeName: any): Error;
-        static routeResultRequireAction(routeName: any): Error;
         static ambiguityRouteMatched(url: any, routeName1: any, routeName2: any): Error;
         static noneRouteMatched(url: any): Error;
         static emptyStack(): Error;
