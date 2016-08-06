@@ -1,8 +1,6 @@
 // TODO:
 // 1，关闭当页面容器并显示之前容器时，更新URL
 // 2, 侧滑时，底容器带有遮罩效果。
-//import Hammer = require('hammer');
-
 namespace chitu {
 
     class ScrollArguments {
@@ -23,22 +21,25 @@ namespace chitu {
 
         private _node: HTMLElement;
         private _loading: HTMLElement;
-        private _pages: Array<Page>;
         private _currentPage: Page;
         private _previous: PageContainer;
         private _app: Application;
         private _previousOffsetRate = 0.5; // 前一个页面，相对当前页面移动的比率
         private open_swipe: chitu.SwipeDirection;
+        private _routeData: RouteData;
 
-        //public enableGesture = true;
-        //public static enableSwipeClose = true;
-        //public enableSwipeClose = true;
+        showing = Callbacks<PageContainer, any>();
+        shown = Callbacks<PageContainer, any>();
+
+        closing = Callbacks<PageContainer, any>();
+        closed = Callbacks<PageContainer, any>();
 
         gesture: Gesture;
         pageCreated: chitu.Callback<PageContainer, Page> = Callbacks<PageContainer, Page>();
 
         constructor(params: {
             app: Application,
+            routeData: RouteData,
             previous?: PageContainer,
             enableGesture?: boolean,
             enableSwipeClose?: boolean,
@@ -48,19 +49,34 @@ namespace chitu {
 
             this._node = this.createNode();
             this._loading = this.createLoading(this._node);
-            this._pages = new Array<Page>();
             this._previous = params.previous;
             this._app = params.app;
+            this._routeData = params.routeData;
 
             if (params.enableGesture)
                 this.gesture = new Gesture(this._node);
 
             if (this.previous != null && params.enableSwipeClose)
                 this._enableSwipeBack();
+
+            this.createPage(params.routeData);
         }
 
         on_pageCreated(page: chitu.Page) {
             return chitu.fireCallback(this.pageCreated, this, page);
+        }
+
+        on_showing(args) {
+            return fireCallback(this.showing, this, args);
+        }
+        on_shown(args) {
+            return fireCallback(this.shown, this, args);
+        }
+        on_closing(args) {
+            return fireCallback(this.closing, this, args);
+        }
+        on_closed(args) {
+            return fireCallback(this.closed, this, args);
         }
 
         /** 启用滑动返回 */
@@ -95,7 +111,7 @@ namespace chitu {
                     this.previous.visible = true;
                 }
 
-                scroll_views = currentPageScrollViews();
+                scroll_views = activePageScrollViews(node);
                 return result;
             };
 
@@ -122,20 +138,29 @@ namespace chitu {
 
                 move(node).x(0).duration(Page.animationTime).end();
                 move(container.previous.element).x(previous_start_x).duration(Page.animationTime)
-                    .end(() => this.previous.visible = previous_visible);
+                    .end(() => {
+                        this.previous.visible = previous_visible;
+                        enableScrollViews(scroll_views);
+                    });
             }
 
-            let currentPageScrollViews = (): Array<ScrollView> => {
+            let activePageScrollViews = (node): Array<ScrollView> => {
                 var result: Array<ScrollView> = [];
-                $(this.currentPage.element).find('scroll-view').each((index, item) => {
-                    var scroll_view = $(item).data('control');
-                    result.push(scroll_view);
+                $(node).find('scroll-view').each((index, item) => {
+                    var scroll_view = <ScrollView>$(item).data('control');
+                    if (scroll_view.disabled == false)
+                        result.push(scroll_view);
                 });
                 return result;
             }
             let discableScrollViews = (views: Array<ScrollView>) => {
                 for (var i = 0; i < views.length; i++) {
                     views[i].disabled = true;
+                }
+            }
+            let enableScrollViews = (views: Array<ScrollView>) => {
+                for (var i = 0; i < views.length; i++) {
+                    views[i].disabled = false;
                 }
             }
         }
@@ -163,7 +188,7 @@ namespace chitu {
             if (this.visible == true)
                 return $.Deferred().resolve();
 
-            this.currentPage.on_showing(this.currentPage.routeData.values);
+            this.on_showing(this.routeData.values);
             let container_width = $(this._node).width();
             var container_height = $(this._node).height();
             if (container_width <= 0 || container_height <= 0)
@@ -175,7 +200,7 @@ namespace chitu {
                 if (this.previous != null)
                     this.previous.visible = false;
 
-                this.currentPage.on_shown(this.currentPage.routeData.values);
+                this.on_shown(this.routeData.values);
                 result.resolve();
             };
 
@@ -272,18 +297,19 @@ namespace chitu {
             if (this.is_closing)
                 return;
 
-            this.pages.forEach((item, index, Array) => {
-                item.on_closing(item.routeData.values);
-            })
+            this.on_closing(this.routeData.values);
+            //this.pages.forEach((item, index, Array) => {
+            //this.page.on_closing(this.page.routeData.values);
+            //})
 
             this.is_closing = true;
             this.hide(swipe).done(() => {
                 $(this._node).remove();
 
-                this.pages.forEach((item, index, Array) => {
-                    item.on_closed(item.routeData.values);
-                })
-
+                //this.pages.forEach((item, index, Array) => {
+                //this.page.on_closed(this.page.routeData.values);
+                //})
+                this.on_closed(this.routeData.values);
             })
         }
         private showLoading() {
@@ -304,14 +330,14 @@ namespace chitu {
         get element(): HTMLElement {
             return this._node;
         }
-        get currentPage(): Page {
+        get page(): Page {
             return this._currentPage;
-        }
-        get pages(): Array<Page> {
-            return this._pages;
         }
         get previous(): PageContainer {
             return this._previous;
+        }
+        get routeData(): RouteData {
+            return this._routeData;
         }
         private createActionDeferred(routeData: RouteData): JQueryPromise<PageConstructor> {
 
@@ -383,20 +409,19 @@ namespace chitu {
             var result = $.Deferred();
 
             $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
+                let pageElement = document.createElement('page');
+                pageElement.innerHTML = html;
+                pageElement.setAttribute('name', routeData.pageName);
 
-                var page: Page = new pageType({ view: html, container: this, routeData });
+                var page: Page = new pageType({ container: this, element: pageElement, routeData });
                 if (!(page instanceof chitu.Page))
                     throw Errors.actionTypeError(routeData.pageName);
 
-                //page.initialize(this, routeData);
+                this._currentPage = page;
+                this.element.appendChild(page.element);
 
                 this.on_pageCreated(page);
-
-                this._pages.push(page);
-                this._pages[page.name] = page;
-
                 result.resolve(page);
-
                 page.on_load(routeData.values).done(() => {
                     this.hideLoading();
                 });
@@ -412,20 +437,6 @@ namespace chitu {
 
             return result;
         }
-
-        showPage<T extends Page>(routeData: RouteData, swipe: SwipeDirection): JQueryPromise<T> {
-            return this.createPage(routeData)
-                .done((page: Page) => {
-                    this.element.appendChild(page.element);
-                    this._currentPage = page;
-
-                    //page.on_showing(page.routeData.values);
-                    this.show(swipe).done(() => {
-                        //page.on_shown(page.routeData.values);
-                    });
-                });
-
-        }
     }
 
     export class PageContainerFactory {
@@ -435,6 +446,7 @@ namespace chitu {
         }
         static createInstance(params: {
             app: Application,
+            routeData: RouteData,
             previous?: PageContainer,
             enableGesture?: boolean,
             enableSwipeClose?: boolean,

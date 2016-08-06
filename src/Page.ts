@@ -1,6 +1,5 @@
 ﻿namespace chitu {
 
-    var ns = chitu;
     var u = chitu.Utility;
     var e = chitu.Errors;
 
@@ -51,16 +50,16 @@
         Document,
     }
 
-    export  type PageArguemnts = { container: PageContainer, routeData: RouteData, view: string };
+    export type PageArguemnts = { container: PageContainer, routeData: RouteData, element: HTMLElement };
     export interface PageConstructor {
         new (args: PageArguemnts): Page;
     }
 
 
-    export class Page {
+    export class Page extends Control {
         static animationTime: number = 300;
 
-        private _name: string;
+        //private _name: string;
         private _viewDeferred: JQueryPromise<string>;
         private _actionDeferred: JQueryPromise<Function>;
 
@@ -82,52 +81,30 @@
         private _formLoading: PageLoading;
         private _bottomLoading: PageLoading;
         private _pageContainer: PageContainer;
-        private _node: HTMLElement;
         private _viewHtml: string;
 
         // Controls
         private _loading: Control;
-        private _controls: Array<Control>;
 
-        preLoad = ns.Callbacks<Page, any>();
-        load = ns.Callbacks<Page, any>();
+        closing = Callbacks<Page, any>();
+        closed = Callbacks<Page, any>();
 
-        closing = ns.Callbacks<Page, any>();
-        closed = ns.Callbacks<Page, any>();
-        showing = ns.Callbacks<Page, any>();
-        shown = ns.Callbacks<Page, any>();
-        hiding = ns.Callbacks<Page, any>();
-        hidden = ns.Callbacks<Page, any>();
+        hiding = Callbacks<Page, any>();
+        hidden = Callbacks<Page, any>();
 
         constructor(args: PageArguemnts) {
-            if(args == null) throw Errors.argumentNull('args');
-            if (args.view == null) throw Errors.argumentNull('view');
+            super(args.element);
+            if (args == null) throw Errors.argumentNull('args');
 
-            this._node = document.createElement('page');
-            this._node.innerHTML = args.view;
-            this._controls = this.createControls(this.element);
-            $(this._node).data('page', this);
+            $(this.element).data('page', this);
 
-            this.initialize(args.container,args.routeData);
+            this._pageContainer = args.container;
+            this._routeData = args.routeData;
+
+            this._pageContainer.closing.add(() => this.on_closing(this.routeData.values));
+            this._pageContainer.closed.add(() => this.on_closed(this.routeData.values))
         }
 
-        private initialize(container: PageContainer, pageInfo: RouteData) {
-            if (!container) throw e.argumentNull('container');
-            if (pageInfo == null) throw e.argumentNull('pageInfo');
-
-            this._pageContainer = container;
-            this._routeData = pageInfo;
-        }
-
-        private createControls(element: HTMLElement): Control[] {
-            this._controls = ControlFactory.createControls(element, this);
-            var stack = new Array<Control>();
-
-            for (var i = 0; i < this._controls.length; i++) {
-                stack.push(this._controls[i]);
-            }
-            return this._controls;
-        }
         get routeData(): RouteData {
             return this._routeData;
         }
@@ -137,11 +114,8 @@
 
             return this._name;
         }
-        get element(): HTMLElement {
-            return this._node;
-        }
         get visible(): boolean {
-            return $(this._node).is(':visible');
+            return $(this.element).is(':visible');
         }
         get container(): PageContainer {
             return this._pageContainer;
@@ -154,12 +128,12 @@
             if (!name) throw Errors.argumentNull('name');
 
             var stack = new Array<Control>();
-            for (var i = 0; i < this._controls.length; i++) {
-                var control = this._controls[i];
+            for (var i = 0; i < this.children.length; i++) {
+                let control = this.children[i];
                 stack.push(control);
             }
             while (stack.length > 0) {
-                var control = stack.pop();
+                let control = stack.pop();
                 if (control.name == name)
                     return <T>control;
 
@@ -173,16 +147,6 @@
             return fireCallback(callback, this, args);
         }
 
-        on_load(args: Object): JQueryPromise<any> {
-            var promises = new Array<JQueryPromise<any>>();
-            promises.push(this.fireEvent(this.load, args));
-            for (var i = 0; i < this._controls.length; i++) {
-                var p = this._controls[i].on_load(args);
-                promises.push(p);
-            }
-            var result = $.when.apply($, promises);
-            return result;
-        }
         on_closing(args) {
             return this.fireEvent(this.closing, args);
         }
@@ -190,12 +154,6 @@
             return this.fireEvent(this.closed, args);
         }
 
-        on_showing(args) {
-            return this.fireEvent(this.showing, args);
-        }
-        on_shown(args) {
-            return this.fireEvent(this.shown, args);
-        }
         on_hiding(args) {
             return this.fireEvent(this.hiding, args);
         }

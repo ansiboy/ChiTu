@@ -150,7 +150,7 @@
                 openSwipe: (routeData: RouteData) => SwipeDirection.None,
                 closeSwipe: () => SwipeDirection.None,
                 container: $.proxy(function (routeData: RouteData, previous: PageContainer) {
-                    return PageContainerFactory.createInstance({ app: this.app, previous });
+                    return PageContainerFactory.createInstance({ app: this.app, previous, routeData });
                 }, { app: this })
 
             }, config);
@@ -177,7 +177,7 @@
          */
         currentPage(): chitu.Page {
             if (this.container_stack.length > 0)
-                return this.container_stack[this.container_stack.length - 1].currentPage;
+                return this.container_stack[this.container_stack.length - 1].page;
 
             return null;
         }
@@ -242,9 +242,8 @@
             var container: PageContainer = page != null ? page.container : null;
             if (container != null && $.inArray(container, this.container_stack) == this.container_stack.length - 2) {
                 var c = this.container_stack.pop();
-                var swipe = this.config.closeSwipe(c.currentPage.routeData);
+                var swipe = this.config.closeSwipe(c.page.routeData);
                 if (c.previous != null) {
-                    //c.previous.visible = true;
                     c.previous.show(SwipeDirection.None);
                 }
                 c.close(swipe);
@@ -276,8 +275,8 @@
          */
         public getPage(name: string): chitu.Page {
             for (var i = this.container_stack.length - 1; i >= 0; i--) {
-                var page = this.container_stack[i].pages[name];
-                if (page != null)
+                var page = this.container_stack[i].page; //.pages[name];
+                if (page != null && page.name == name)
                     return page;
             }
             return null;
@@ -298,10 +297,14 @@
 
             routeData.values = $.extend(routeData.values, args || {});
 
-            var container = this.createPageContainer(routeData);
-            container.pageCreated.add((sender, page: Page) => this.on_pageCreated(page));
-            var swipe = this.config.openSwipe(routeData);
-            var result = container.showPage(routeData, swipe);
+            let result = $.Deferred<T>();
+            let container = this.createPageContainer(routeData);
+            container.pageCreated.add((sender, page: T) => {
+                this.on_pageCreated(page);
+                result.resolve(page);
+            });
+            let swipe = this.config.openSwipe(routeData);
+            container.show(swipe); 
 
             return result;
         }
