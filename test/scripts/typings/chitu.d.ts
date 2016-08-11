@@ -26,7 +26,7 @@ declare namespace chitu {
         constructor(config?: ApplicationConfig);
         private on_pageCreated(page);
         config: chitu.ApplicationConfig;
-        currentPage(): chitu.Page;
+        currentPage: chitu.Page;
         pageContainers: Array<PageContainer>;
         private createPageContainer(routeData);
         protected hashchange(): void;

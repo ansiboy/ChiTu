@@ -100,11 +100,15 @@ var chitu;
             enumerable: true,
             configurable: true
         });
-        Application.prototype.currentPage = function () {
-            if (this.container_stack.length > 0)
-                return this.container_stack[this.container_stack.length - 1].page;
-            return null;
-        };
+        Object.defineProperty(Application.prototype, "currentPage", {
+            get: function () {
+                if (this.container_stack.length > 0)
+                    return this.container_stack[this.container_stack.length - 1].page;
+                return null;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Object.defineProperty(Application.prototype, "pageContainers", {
             get: function () {
                 return this.container_stack;
@@ -216,6 +220,7 @@ var chitu;
             this.back_deferred = $.Deferred();
             if (window.history.length == 0) {
                 this.back_deferred.reject();
+                this.container_stack.pop();
                 chitu.fireCallback(this.backFail, this, {});
                 return this.back_deferred;
             }

@@ -141,7 +141,7 @@
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
          */
-        backFail = Callbacks<Application,{}>();
+        backFail = Callbacks<Application, {}>();
 
         constructor(config?: ApplicationConfig) {
 
@@ -175,7 +175,7 @@
         /**
          * 获取当前页面
          */
-        currentPage(): chitu.Page {
+        get currentPage(): chitu.Page {
             if (this.container_stack.length > 0)
                 return this.container_stack[this.container_stack.length - 1].page;
 
@@ -304,7 +304,7 @@
                 result.resolve(page);
             });
             let swipe = this.config.openSwipe(routeData);
-            container.show(swipe); 
+            container.show(swipe);
 
             return result;
         }
@@ -332,6 +332,10 @@
             this.back_deferred = $.Deferred();
             if (window.history.length == 0) {
                 this.back_deferred.reject();
+                //================================
+                // 移除最后一个页面
+                this.container_stack.pop();
+                //================================
                 fireCallback(this.backFail, this, {});
                 return this.back_deferred;
             }
