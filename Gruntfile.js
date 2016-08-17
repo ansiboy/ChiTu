@@ -39,7 +39,6 @@ module.exports = function (grunt) {
             chitudts: {
                 options: {
                     stripBanners: true,
-                    //banner: '/// <reference path="jquery.d.ts" /> \r\n',
                     footer: 'declare module "chitu" { \n\
     export = chitu; \n\
 }\n'
@@ -52,11 +51,11 @@ module.exports = function (grunt) {
                     banner:
                     "(function(factory) { \n\
         if (typeof define === 'function' && define['amd']) { \n\
-            define(['jquery', 'hammer', 'move'], factory);  \n\
+            define(['jquery'], factory);  \n\
         } else { \n\
-            factory($, Hammer, move); \n\
+            factory($); \n\
         } \n\
-    })(function($, Hammer,move) {",
+    })(function($) {",
                     footer: '\n\window[\'chitu\'] = window[\'chitu\'] || chitu \n\
                     \n return chitu;\n\
     });',
@@ -76,12 +75,12 @@ module.exports = function (grunt) {
     };
 
     config.copy = {
-        main: {
-            files: [///Users/MaiShu/git/ChiTuStore/src/Scripts 
-                { src: [js_output_file], dest: '../ChiTuStore/src/Scripts/chitu.js' },
-                { src: [ts_output_file], dest: '../ChiTuStore/src/Scripts/typings/chitu.d.ts' },
-            ]
-        },
+        // main: {
+        //     files: [
+        //         { src: [js_output_file], dest: '../ChiTuStore/src/Scripts/chitu.js' },
+        //         { src: [ts_output_file], dest: '../ChiTuStore/src/Scripts/typings/chitu.d.ts' },
+        //     ]
+        // },
         test: { // Copy 到测试目录
             files: [
                 { src: [js_output_file], dest: 'test/scripts/chitu.js' },

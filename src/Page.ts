@@ -36,13 +36,13 @@
         closed
     }
 
-    export enum SwipeDirection {
-        None,
-        Left,
-        Right,
-        Up,
-        Down,
-    }
+    // export enum SwipeDirection {
+    //     None,
+    //     Left,
+    //     Right,
+    //     Up,
+    //     Down,
+    // }
 
     export enum ScrollType {
         IScroll,
@@ -83,7 +83,6 @@
         private _pageContainer: PageContainer;
         private _viewHtml: string;
 
-        // Controls
         private _loading: Control;
 
         closing = Callbacks<Page, any>();
@@ -120,9 +119,8 @@
         get container(): PageContainer {
             return this._pageContainer;
         }
-        hide(swipe?: SwipeDirection): JQueryPromise<any> {
-            swipe = swipe || SwipeDirection.None;
-            return this.container.hide(swipe);
+        hide() {
+            return this.container.hide();
         }
         findControl<T extends Control>(name: string): T {
             if (!name) throw Errors.argumentNull('name');

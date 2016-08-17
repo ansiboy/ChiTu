@@ -8,8 +8,6 @@ declare namespace chitu {
     }
     interface ApplicationConfig {
         container?: (routeData: RouteData, prevous: PageContainer) => PageContainer;
-        openSwipe?: (routeData: RouteData) => SwipeDirection;
-        closeSwipe?: (route: RouteData) => SwipeDirection;
         pathBase?: string;
     }
     class Application {
@@ -66,37 +64,6 @@ declare namespace chitu {
         static register(tagName: string, createControlMethod: (new (element: HTMLElement, page: Page) => Control) | ((element: HTMLElement, page: Page) => Control)): void;
         static createControl(element: HTMLElement): Control;
     }
-    class PageHeader extends Control {
-        constructor(element: HTMLElement, page: Page);
-    }
-    class PageFooter extends Control {
-        constructor(element: HTMLElement, page: Page);
-    }
-    interface ScrollArguments {
-        scrollTop?: number;
-        scrollHeight?: number;
-        clientHeight?: number;
-    }
-    class ScrollView extends Control {
-        scroll: Callback<ScrollView, ScrollArguments>;
-        scrollEnd: Callback<ScrollView, ScrollArguments>;
-        constructor(element: HTMLElement);
-        protected on_scrollEnd(args: ScrollArguments): JQueryPromise<any>;
-        protected on_scroll(args: ScrollArguments): JQueryPromise<any>;
-        static createInstance(element: HTMLElement, page: Page): ScrollView;
-        disabled: boolean;
-    }
-    class ScrollViewStatusBar extends Control {
-        constructor(element: HTMLElement, page: Page);
-    }
-    class IScrollView extends ScrollView {
-        private static SCROLLER_TAG_NAME;
-        private iscroller;
-        constructor(element: HTMLElement, page: Page);
-        private init(element);
-        refresh(): void;
-        disabled: boolean;
-    }
 }
 declare namespace chitu {
     class Errors {
@@ -149,13 +116,6 @@ declare namespace chitu {
         show(): any;
         hide(): any;
     }
-    enum SwipeDirection {
-        None = 0,
-        Left = 1,
-        Right = 2,
-        Up = 3,
-        Down = 4,
-    }
     enum ScrollType {
         IScroll = 0,
         Div = 1,
@@ -197,7 +157,7 @@ declare namespace chitu {
         name: string;
         visible: boolean;
         container: PageContainer;
-        hide(swipe?: SwipeDirection): JQueryPromise<any>;
+        hide(): void;
         findControl<T extends Control>(name: string): T;
         private fireEvent<A>(callback, args);
         on_closing(args: any): JQueryPromise<any>;
@@ -216,33 +176,28 @@ declare namespace chitu {
         private _previous;
         private _app;
         private _previousOffsetRate;
-        private open_swipe;
         private _routeData;
         showing: Callback<PageContainer, any>;
         shown: Callback<PageContainer, any>;
         closing: Callback<PageContainer, any>;
         closed: Callback<PageContainer, any>;
-        gesture: Gesture;
         pageCreated: chitu.Callback<PageContainer, Page>;
         constructor(params: {
             app: Application;
             routeData: RouteData;
             previous?: PageContainer;
-            enableGesture?: boolean;
-            enableSwipeClose?: boolean;
         });
         on_pageCreated(page: chitu.Page): JQueryPromise<any>;
         on_showing(args: any): JQueryPromise<any>;
         on_shown(args: any): JQueryPromise<any>;
         on_closing(args: any): JQueryPromise<any>;
         on_closed(args: any): JQueryPromise<any>;
-        private _enableSwipeBack();
         protected createNode(): HTMLElement;
         protected createLoading(parent: HTMLElement): HTMLElement;
-        show(swipe: SwipeDirection): JQueryPromise<any>;
-        hide(swipe: SwipeDirection): JQueryPromise<any>;
+        show(): void;
+        hide(): void;
         private is_closing;
-        close(swipe?: SwipeDirection): void;
+        close(): void;
         private showLoading();
         private hideLoading();
         visible: boolean;
@@ -264,30 +219,6 @@ declare namespace chitu {
             enableGesture?: boolean;
             enableSwipeClose?: boolean;
         }): PageContainer;
-    }
-    class Pan {
-        cancel: boolean;
-        start: (e: Hammer.PanEvent) => void;
-        left: (e: Hammer.PanEvent) => void;
-        right: (e: Hammer.PanEvent) => void;
-        up: (e: Hammer.PanEvent) => void;
-        down: (e: Hammer.PanEvent) => void;
-        end: (e: Hammer.PanEvent) => void;
-        constructor(gesture: Gesture);
-    }
-    class Gesture {
-        private executedCount;
-        private hammersCount;
-        private hammer;
-        private _pans;
-        private _prevent;
-        prevent: {
-            pan: (direction: number) => void;
-        };
-        constructor(element: HTMLElement);
-        private on_pan(e);
-        private pans;
-        createPan(): Pan;
     }
 }
 declare namespace chitu {

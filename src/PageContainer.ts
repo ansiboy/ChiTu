@@ -25,7 +25,6 @@ namespace chitu {
         private _previous: PageContainer;
         private _app: Application;
         private _previousOffsetRate = 0.5; // 前一个页面，相对当前页面移动的比率
-        private open_swipe: chitu.SwipeDirection;
         private _routeData: RouteData;
 
         showing = Callbacks<PageContainer, any>();
@@ -34,15 +33,13 @@ namespace chitu {
         closing = Callbacks<PageContainer, any>();
         closed = Callbacks<PageContainer, any>();
 
-        gesture: Gesture;
+        //gesture: Gesture;
         pageCreated: chitu.Callback<PageContainer, Page> = Callbacks<PageContainer, Page>();
 
         constructor(params: {
             app: Application,
             routeData: RouteData,
             previous?: PageContainer,
-            enableGesture?: boolean,
-            enableSwipeClose?: boolean,
         }) {
 
             params = $.extend({ enableGesture: true, enableSwipeClose: true }, params)
@@ -52,12 +49,6 @@ namespace chitu {
             this._previous = params.previous;
             this._app = params.app;
             this._routeData = params.routeData;
-
-            if (params.enableGesture)
-                this.gesture = new Gesture(this._node);
-
-            if (this.previous != null && params.enableSwipeClose)
-                this._enableSwipeBack();
 
             this.createPage(params.routeData);
         }
@@ -79,92 +70,6 @@ namespace chitu {
             return fireCallback(this.closed, this, args);
         }
 
-        /** 启用滑动返回 */
-        private _enableSwipeBack() {
-            var container = this;
-            var previous_start_x: number;
-            var previous_visible: boolean;
-            var node = container.element;
-            var colse_position = $(window).width() / 2; // 关闭的位置，只有过了这个位置，才关闭。
-            var horizontal_swipe_angle = 35;            // 水平滑动角度，角度不大于20度时，才认为是水平移动
-
-            let scroll_views: Array<ScrollView>;
-            var pan = container.gesture.createPan();
-            pan.start = (e: Hammer.PanEvent) => {
-                node.style.webkitTransform = '';
-                node.style.transform = ''
-                var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
-                previous_start_x = martix.m41;
-
-                //==================================================
-                // 说明：计算角度，超过了水平滑动角度，则认为不是水平滑动。
-                var d = Math.atan(Math.abs(e.deltaY / e.deltaX)) / 3.14159265 * 180;
-                if (d > horizontal_swipe_angle)
-                    return false;
-                //==================================================
-
-                var result = (container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0) &&
-                    (this.open_swipe == SwipeDirection.Left || this.open_swipe == SwipeDirection.Right);
-
-                if (result == true) {
-                    previous_visible = this.previous.visible;
-                    this.previous.visible = true;
-                }
-
-                scroll_views = activePageScrollViews(node);
-                return result;
-            };
-
-            pan.left = (e: Hammer.PanEvent) => {
-                discableScrollViews(scroll_views);
-                if (e.deltaX <= 0) {
-                    move(node).x(0).duration(0).end();
-                    move(this.previous.element).x(previous_start_x).duration(0).end();
-                    return;
-                }
-                move(node).x(e.deltaX).duration(0).end();
-                move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
-            }
-            pan.right = (e: Hammer.PanEvent) => {
-                discableScrollViews(scroll_views);
-                move(node).x(e.deltaX).duration(0).end();
-                move(this.previous.element).x(previous_start_x + e.deltaX * this._previousOffsetRate).duration(0).end();
-            }
-            pan.end = (e: Hammer.PanEvent) => {
-                if (e.deltaX > colse_position) {
-                    this._app.back();
-                    return;
-                }
-
-                move(node).x(0).duration(Page.animationTime).end();
-                move(container.previous.element).x(previous_start_x).duration(Page.animationTime)
-                    .end(() => {
-                        this.previous.visible = previous_visible;
-                        enableScrollViews(scroll_views);
-                    });
-            }
-
-            let activePageScrollViews = (node): Array<ScrollView> => {
-                var result: Array<ScrollView> = [];
-                $(node).find('scroll-view').each((index, item) => {
-                    var scroll_view = <ScrollView>$(item).data('control');
-                    if (scroll_view.disabled == false)
-                        result.push(scroll_view);
-                });
-                return result;
-            }
-            let discableScrollViews = (views: Array<ScrollView>) => {
-                for (var i = 0; i < views.length; i++) {
-                    views[i].disabled = true;
-                }
-            }
-            let enableScrollViews = (views: Array<ScrollView>) => {
-                for (var i = 0; i < views.length; i++) {
-                    views[i].disabled = false;
-                }
-            }
-        }
-
         protected createNode(): HTMLElement {
             this._node = document.createElement('div');
             this._node.className = 'page-container';
@@ -184,133 +89,28 @@ namespace chitu {
             return loading_element;
         }
 
-        show(swipe: SwipeDirection): JQueryPromise<any> {
+        show(): void {
             if (this.visible == true)
-                return $.Deferred().resolve();
+                return;
 
-            this.on_showing(this.routeData.values);
-            let container_width = $(this._node).width();
-            var container_height = $(this._node).height();
-            if (container_width <= 0 || container_height <= 0)
-                swipe = SwipeDirection.None;
-
-            let interval = 30;
-            var result = $.Deferred();
-            var on_end = () => {
-                if (this.previous != null)
-                    this.previous.visible = false;
-
-                this.on_shown(this.routeData.values);
-                result.resolve();
-            };
-
-            this.open_swipe = swipe;
-            switch (swipe) {
-                case SwipeDirection.None:
-                default:
-                    $(this._node).show();
-                    on_end();
-                    break;
-                case SwipeDirection.Down:
-                    move(this.element).y(0 - container_height).duration(0).end();
-                    $(this._node).show();
-                    //======================================
-                    // 不要问我为什么这里要设置 timeout，反正不设置不起作用。
-                    window.setTimeout(() => {
-                        move(this.element).y(0).duration(this.animationTime).end(on_end);
-                    }, interval);
-                    //======================================
-                    break;
-                case SwipeDirection.Up:
-                    move(this.element).y(container_height).duration(0).end();
-                    $(this._node).show();
-                    window.setTimeout(() => {
-                        move(this.element).y(0).duration(this.animationTime).end(on_end);
-                    }, interval);
-                    break;
-                case SwipeDirection.Right:
-                    move(this.element).x(0 - container_width).duration(0).end();
-                    $(this._node).show();
-                    window.setTimeout(() => {
-                        if (this.previous != null)
-                            move(this.previous.element).x(container_width * this._previousOffsetRate).duration(this.animationTime).end();
-
-                        move(this.element).x(0).duration(this.animationTime).end(on_end);
-                    }, interval);
-                    break;
-                case SwipeDirection.Left:
-                    move(this.element).x(container_width).duration(0).end();
-                    $(this._node).show();
-                    window.setTimeout(() => {
-                        if (this.previous != null)
-                            move(this.previous.element).x(0 - container_width * this._previousOffsetRate).duration(this.animationTime).end();
-
-                        move(this.element).x(0).duration(this.animationTime).end(on_end);
-                    }, interval);
-                    break;
-            }
-            return result;
+            $(this._node).show();
         }
 
-        hide(swipe: SwipeDirection): JQueryPromise<any> {
+        hide() {
             if (this.visible == false)
-                return $.Deferred().resolve();
+                return;
 
-            var container_width = $(this._node).width();
-            var container_height = $(this._node).height();
-            var result = $.Deferred();
-            switch (swipe) {
-                case SwipeDirection.None:
-                default:
-                    if (this.previous != null)
-                        move(this.previous.element).x(0).duration(this.animationTime).end();
-
-                    result.resolve();
-                    break;
-                case SwipeDirection.Down:
-                    move(this.element).y(container_height).duration(this.animationTime).end(() => result.resolve())
-                    break;
-                case SwipeDirection.Up:
-                    move(this.element).y(0 - container_height).duration(this.animationTime).end(() => result.resolve());
-                    break;
-                case SwipeDirection.Right:
-                    if (this.previous != null)
-                        move(this.previous.element).x(0).duration(this.animationTime).end();
-
-                    move(this.element).x(container_width).duration(this.animationTime).end(() => result.resolve());
-                    break;
-                case SwipeDirection.Left:
-                    if (this.previous != null)
-                        move(this.previous.element).x(0).duration(this.animationTime).end();
-
-                    move(this.element).x(0 - container_width).duration(this.animationTime).end(() => result.resolve());
-                    break;
-            }
-            return result;
+            $(this._node).hide();
         }
 
         private is_closing = false;
-        close(swipe?: SwipeDirection) {
-            if (swipe == null)
-                swipe = SwipeDirection.None;
-
-            if (this.is_closing)
-                return;
+        close() {
 
             this.on_closing(this.routeData.values);
-            //this.pages.forEach((item, index, Array) => {
-            //this.page.on_closing(this.page.routeData.values);
-            //})
 
             this.is_closing = true;
-            this.hide(swipe).done(() => {
-                $(this._node).remove();
-
-                //this.pages.forEach((item, index, Array) => {
-                //this.page.on_closed(this.page.routeData.values);
-                //})
-                this.on_closed(this.routeData.values);
-            })
+            $(this._node).remove();
+            this.on_closed(this.routeData.values);
         }
         private showLoading() {
             this._loading.style.display = 'block';
@@ -456,96 +256,96 @@ namespace chitu {
         }
     }
 
-    export class Pan {
+    // export class Pan {
 
-        cancel: boolean;
-        start: (e: Hammer.PanEvent) => void;
-        left: (e: Hammer.PanEvent) => void;
-        right: (e: Hammer.PanEvent) => void;
-        up: (e: Hammer.PanEvent) => void;
-        down: (e: Hammer.PanEvent) => void;
-        end: (e: Hammer.PanEvent) => void;
+    //     cancel: boolean;
+    //     start: (e: Hammer.PanEvent) => void;
+    //     left: (e: Hammer.PanEvent) => void;
+    //     right: (e: Hammer.PanEvent) => void;
+    //     up: (e: Hammer.PanEvent) => void;
+    //     down: (e: Hammer.PanEvent) => void;
+    //     end: (e: Hammer.PanEvent) => void;
 
-        constructor(gesture: Gesture) {
-            this.cancel = false;
-        }
-    }
+    //     constructor(gesture: Gesture) {
+    //         this.cancel = false;
+    //     }
+    // }
 
-    export class Gesture {
-        private executedCount: number;
-        private hammersCount: number;
-        private hammer: Hammer.Manager;
-        private _pans: Array<Pan>;
+    // export class Gesture {
+    //     private executedCount: number;
+    //     private hammersCount: number;
+    //     private hammer: Hammer.Manager;
+    //     private _pans: Array<Pan>;
 
-        private _prevent = {
-            pan: Hammer.DIRECTION_NONE
-        }
-        prevent = {
-            pan: (direction: number) => {
-                this._prevent.pan = direction;
-            }
-        }
-        constructor(element: HTMLElement) {
-            this.executedCount = 0;
-            this.hammersCount = 0;
-            // var myCustomBehavior: Hammer.Behavior = Hammer.extend({}, Hammer.defaults.behavior);
-            // myCustomBehavior.touchAction = 'pan-y';
-            this.hammer = new Hammer.Manager(element);
-        }
-        private on_pan(e: Hammer.PanEvent) {
-            var pans = this.pans;
-            for (var i = pans.length - 1; i >= 0; i--) {
+    //     private _prevent = {
+    //         pan: Hammer.DIRECTION_NONE
+    //     }
+    //     prevent = {
+    //         pan: (direction: number) => {
+    //             this._prevent.pan = direction;
+    //         }
+    //     }
+    //     constructor(element: HTMLElement) {
+    //         this.executedCount = 0;
+    //         this.hammersCount = 0;
+    //         // var myCustomBehavior: Hammer.Behavior = Hammer.extend({}, Hammer.defaults.behavior);
+    //         // myCustomBehavior.touchAction = 'pan-y';
+    //         this.hammer = new Hammer.Manager(element);
+    //     }
+    //     private on_pan(e: Hammer.PanEvent) {
+    //         var pans = this.pans;
+    //         for (var i = pans.length - 1; i >= 0; i--) {
 
-                var state = this.hammer.get('pan').state;
-                if (pans[i]['started'] == null && (state & Hammer.STATE_BEGAN) == Hammer.STATE_BEGAN) {
-                    pans[i]['started'] = <any>pans[i].start(e);
-                }
+    //             var state = this.hammer.get('pan').state;
+    //             if (pans[i]['started'] == null && (state & Hammer.STATE_BEGAN) == Hammer.STATE_BEGAN) {
+    //                 pans[i]['started'] = <any>pans[i].start(e);
+    //             }
 
-                var exected = false;
-                var started = pans[i]['started'];
-                if (started == true) {
-                    if ((e.direction & Hammer.DIRECTION_LEFT) == Hammer.DIRECTION_LEFT && pans[i].left != null)
-                        pans[i].left(e);
-                    else if ((e.direction & Hammer.DIRECTION_RIGHT) == Hammer.DIRECTION_RIGHT && pans[i].right != null)
-                        pans[i].right(e);
-                    else if ((e.direction & Hammer.DIRECTION_UP) == Hammer.DIRECTION_UP && pans[i].up != null)
-                        pans[i].up(e);
-                    else if ((e.direction & Hammer.DIRECTION_DOWN) == Hammer.DIRECTION_DOWN && pans[i].down != null)
-                        pans[i].down(e);
+    //             var exected = false;
+    //             var started = pans[i]['started'];
+    //             if (started == true) {
+    //                 if ((e.direction & Hammer.DIRECTION_LEFT) == Hammer.DIRECTION_LEFT && pans[i].left != null)
+    //                     pans[i].left(e);
+    //                 else if ((e.direction & Hammer.DIRECTION_RIGHT) == Hammer.DIRECTION_RIGHT && pans[i].right != null)
+    //                     pans[i].right(e);
+    //                 else if ((e.direction & Hammer.DIRECTION_UP) == Hammer.DIRECTION_UP && pans[i].up != null)
+    //                     pans[i].up(e);
+    //                 else if ((e.direction & Hammer.DIRECTION_DOWN) == Hammer.DIRECTION_DOWN && pans[i].down != null)
+    //                     pans[i].down(e);
 
-                    if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED && pans[i].end != null)
-                        pans[i].end(e);
+    //                 if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED && pans[i].end != null)
+    //                     pans[i].end(e);
 
-                    exected = true;
+    //                 exected = true;
 
-                }
+    //             }
 
-                if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
-                    pans[i]['started'] = null;
-                }
+    //             if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
+    //                 pans[i]['started'] = null;
+    //             }
 
-                //Pan 只执行一个，所以这里 break
-                if (exected == true)
-                    break;
+    //             //Pan 只执行一个，所以这里 break
+    //             if (exected == true)
+    //                 break;
 
-            }
-        }
+    //         }
+    //     }
 
-        private get pans(): Array<Pan> {
-            if (this._pans == null) {
-                this._pans = new Array<Pan>();
-                this.hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_ALL }));
-                this.hammer.on('pan', $.proxy(this.on_pan, this));
-            }
+    //     private get pans(): Array<Pan> {
+    //         if (this._pans == null) {
+    //             this._pans = new Array<Pan>();
+    //             this.hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_ALL }));
+    //             this.hammer.on('pan', $.proxy(this.on_pan, this));
+    //         }
 
-            return this._pans;
-        }
-        createPan(): Pan {
+    //         return this._pans;
+    //     }
+    //     createPan(): Pan {
 
-            var pan = new Pan(this);
-            this.pans.push(pan);
+    //         var pan = new Pan(this);
+    //         this.pans.push(pan);
 
-            return pan;
-        }
-    }
+    //         return pan;
+    //     }
+    // }
 }

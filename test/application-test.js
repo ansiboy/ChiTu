@@ -74,7 +74,7 @@ define(["require", "exports", 'chitu'], function (require, exports, chitu) {
             page.closed.add(function () {
                 closed_called = true;
             });
-            page.container.close(chitu.SwipeDirection.None);
+            page.container.close();
             setTimeout(function () {
                 assert.equal(closing_called, true, 'closing 事件已调用');
                 assert.equal(closed_called, true, 'closed 事件已调用');

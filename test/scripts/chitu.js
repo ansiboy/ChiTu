@@ -1,10 +1,10 @@
 (function(factory) { 
         if (typeof define === 'function' && define['amd']) { 
-            define(['jquery', 'hammer', 'move'], factory);  
+            define(['jquery'], factory);  
         } else { 
-            factory($, Hammer, move); 
+            factory($); 
         } 
-    })(function($, Hammer,move) {var __extends = (this && this.__extends) || function (d, b) {
+    })(function($) {var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -79,8 +79,6 @@ var chitu;
             this.backFail = chitu.Callbacks();
             config = config || {};
             this._config = $.extend({
-                openSwipe: function (routeData) { return chitu.SwipeDirection.None; },
-                closeSwipe: function () { return chitu.SwipeDirection.None; },
                 container: $.proxy(function (routeData, previous) {
                     return chitu.PageContainerFactory.createInstance({ app: this.app, previous: previous, routeData: routeData });
                 }, { app: this })
@@ -121,7 +119,7 @@ var chitu;
             this.container_stack.push(container);
             if (this.container_stack.length > PAGE_STACK_MAX_SIZE) {
                 var c = this.container_stack.shift();
-                c.close(chitu.SwipeDirection.None);
+                c.close();
             }
             return container;
         };
@@ -159,11 +157,10 @@ var chitu;
             var container = page != null ? page.container : null;
             if (container != null && $.inArray(container, this.container_stack) == this.container_stack.length - 2) {
                 var c = this.container_stack.pop();
-                var swipe = this.config.closeSwipe(c.page.routeData);
                 if (c.previous != null) {
-                    c.previous.show(chitu.SwipeDirection.None);
+                    c.previous.show();
                 }
-                c.close(swipe);
+                c.close();
             }
             else {
                 this.showPage(url);
@@ -196,14 +193,16 @@ var chitu;
                 throw chitu.Errors.noneRouteMatched(url);
             }
             routeData.values = $.extend(routeData.values, args || {});
+            var previous = this.currentPage;
             var result = $.Deferred();
             var container = this.createPageContainer(routeData);
             container.pageCreated.add(function (sender, page) {
                 _this.on_pageCreated(page);
                 result.resolve(page);
             });
-            var swipe = this.config.openSwipe(routeData);
-            container.show(swipe);
+            container.show();
+            if (previous != null)
+                previous.container.hide();
             return result;
         };
         Application.prototype.createPageNode = function () {
@@ -447,356 +446,6 @@ var chitu;
         return Control;
     }());
     chitu.Control = Control;
-    var PageHeader = (function (_super) {
-        __extends(PageHeader, _super);
-        function PageHeader(element, page) {
-            _super.call(this, element);
-        }
-        return PageHeader;
-    }(Control));
-    chitu.PageHeader = PageHeader;
-    var PageFooter = (function (_super) {
-        __extends(PageFooter, _super);
-        function PageFooter(element, page) {
-            _super.call(this, element);
-        }
-        return PageFooter;
-    }(Control));
-    chitu.PageFooter = PageFooter;
-    var ScrollView = (function (_super) {
-        __extends(ScrollView, _super);
-        function ScrollView(element) {
-            _super.call(this, element);
-            this.scroll = chitu.Callbacks();
-            this.scrollEnd = chitu.Callbacks();
-        }
-        ScrollView.prototype.on_scrollEnd = function (args) {
-            return chitu.fireCallback(this.scrollEnd, this, args);
-        };
-        ScrollView.prototype.on_scroll = function (args) {
-            return chitu.fireCallback(this.scroll, this, args);
-        };
-        ScrollView.createInstance = function (element, page) {
-            var scrollType = $(element).attr('scroll-type');
-            if (scrollType != null) {
-                if (scrollType == scroll_types.doc) {
-                    return new DocumentScrollView(element);
-                }
-                else if (scrollType == scroll_types.iscroll) {
-                    return new IScrollView(element, page);
-                }
-                else {
-                    return new DocumentScrollView(element);
-                }
-            }
-            if (Environment.isAndroid && Environment.isWeiXin)
-                return new DocumentScrollView(element);
-            if (Environment.isIOS || (Environment.isAndroid && Environment.osVersion >= 5))
-                return new DivScrollView(element);
-            return new DocumentScrollView(element);
-        };
-        return ScrollView;
-    }(Control));
-    chitu.ScrollView = ScrollView;
-    var DocumentScrollView = (function (_super) {
-        __extends(DocumentScrollView, _super);
-        function DocumentScrollView(element) {
-            var _this = this;
-            _super.call(this, element);
-            this.cur_scroll_args = {};
-            this.CHECK_INTERVAL = 300;
-            $(element).attr('scroll-type', scroll_types.doc);
-            $(document).scroll(function (event) {
-                _this.cur_scroll_args.clientHeight = $(window).height();
-                _this.cur_scroll_args.scrollHeight = document.body.scrollHeight;
-                _this.cur_scroll_args.scrollTop = $(document).scrollTop();
-                _this.scrollEndCheck();
-            });
-        }
-        DocumentScrollView.createElement = function (html, page) {
-            var element = document.createElement('div');
-            element.innerHTML = html;
-            page.element.appendChild(element);
-            return element;
-        };
-        DocumentScrollView.prototype.scrollEndCheck = function () {
-            var _this = this;
-            if (this.checking_num != null)
-                return;
-            this.checking_num = 0;
-            this.checking_num = window.setInterval(function () {
-                if (_this.pre_scroll_top == _this.cur_scroll_args.scrollTop) {
-                    window.clearInterval(_this.checking_num);
-                    _this.checking_num = null;
-                    _this.pre_scroll_top = null;
-                    _this.on_scrollEnd(_this.cur_scroll_args);
-                    return;
-                }
-                _this.pre_scroll_top = _this.cur_scroll_args.scrollTop;
-            }, this.CHECK_INTERVAL);
-        };
-        return DocumentScrollView;
-    }(ScrollView));
-    var DivScrollView = (function (_super) {
-        __extends(DivScrollView, _super);
-        function DivScrollView(element) {
-            $(element).attr('scroll-type', scroll_types.div);
-            var scroller_node;
-            if (element.firstElementChild != null && element.firstElementChild.tagName == DivScrollView.SCROLLER_TAG_NAME) {
-                scroller_node = element.firstElementChild;
-            }
-            else {
-                scroller_node = document.createElement(DivScrollView.SCROLLER_TAG_NAME);
-                scroller_node.innerHTML = element.innerHTML;
-                element.innerHTML = '';
-                element.appendChild(scroller_node);
-            }
-            _super.call(this, element);
-            this.cur_scroll_args = {};
-            this.scroller_node = scroller_node;
-            this.scroller_node.onscroll = $.proxy(this.on_elementScroll, this);
-            new GesturePull(this, $.proxy(this.on_scroll, this));
-        }
-        DivScrollView.prototype.on_elementScroll = function () {
-            var scroller_node = this.scroller_node;
-            this.cur_scroll_args.scrollTop = 0 - scroller_node.scrollTop;
-            this.cur_scroll_args.clientHeight = scroller_node.clientHeight;
-            this.cur_scroll_args.scrollHeight = scroller_node.scrollHeight;
-            var scroll_args = {
-                clientHeight: this.cur_scroll_args.clientHeight,
-                scrollHeight: this.cur_scroll_args.scrollHeight,
-                scrollTop: 0 - this.cur_scroll_args.scrollTop
-            };
-            this.on_scroll(scroll_args);
-            this.scrollEndCheck();
-        };
-        DivScrollView.prototype.scrollEndCheck = function () {
-            var _this = this;
-            if (this.checking_num != null)
-                return;
-            this.checking_num = 0;
-            this.checking_num = window.setInterval(function () {
-                if (_this.pre_scroll_top == _this.cur_scroll_args.scrollTop) {
-                    window.clearInterval(_this.checking_num);
-                    _this.checking_num = null;
-                    _this.pre_scroll_top = null;
-                    _this.on_scrollEnd(_this.cur_scroll_args);
-                    return;
-                }
-                _this.pre_scroll_top = _this.cur_scroll_args.scrollTop;
-            }, DivScrollView.CHECK_INTERVAL);
-        };
-        Object.defineProperty(DivScrollView.prototype, "disabled", {
-            get: function () {
-                var s = document.defaultView.getComputedStyle(this.scroller_node);
-                return s.overflowY != 'scroll';
-            },
-            set: function (value) {
-                if (value == true)
-                    this.scroller_node.style.overflowY = 'hidden';
-                else
-                    this.scroller_node.style.overflowY = 'scroll';
-            },
-            enumerable: true,
-            configurable: true
-        });
-        DivScrollView.CHECK_INTERVAL = 30;
-        DivScrollView.SCROLLER_TAG_NAME = 'SCROLLER';
-        return DivScrollView;
-    }(ScrollView));
-    var GesturePull = (function () {
-        function GesturePull(scrollView, on_scroll) {
-            this.is_vertical = false;
-            this.moved = false;
-            if (scrollView == null)
-                throw chitu.Errors.argumentNull('scrollView');
-            if (on_scroll == null)
-                throw chitu.Errors.argumentNull('on_scroll');
-            this.scrollView = scrollView;
-            this.on_scroll = on_scroll;
-            this.containerElement = this.scrollView.element;
-            this.scrollerElement = $(this.scrollView.element).find('scroller')[0];
-            if (this.scrollerElement == null)
-                throw chitu.Errors.scrollerElementNotExists();
-            this.hammer = new Hammer.Manager(this.containerElement);
-            this.hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_VERTICAL }));
-            this.hammer.on('pandown', $.proxy(this.on_pandown, this));
-            this.hammer.on('panup', $.proxy(this.on_panup, this));
-            this.hammer.on('panstart', $.proxy(this.on_panstart, this));
-            this.hammer.on('panend', $.proxy(this.on_panend, this));
-        }
-        GesturePull.prototype.on_panstart = function (e) {
-            this.pre_y = e.deltaY;
-            this.elementScrollTop = this.scrollerElement.scrollTop;
-            var d = Math.atan(Math.abs(e.deltaY / e.deltaX)) / 3.14159265 * 180;
-            this.is_vertical = d >= 70;
-            var enablePullDown = this.scrollerElement.scrollTop == 0 && this.is_vertical;
-            var enablePullUp = (this.scrollerElement.scrollHeight - this.scrollerElement.scrollTop <= this.scrollerElement.clientHeight) && this.is_vertical;
-            if (enablePullDown && e.deltaY > 0) {
-                this.pullType = 'down';
-            }
-            else if (enablePullUp && e.deltaY < 0) {
-                this.pullType = 'up';
-            }
-            else {
-                this.pullType = 'none';
-            }
-        };
-        GesturePull.prototype.on_pandown = function (e) {
-            if (e.deltaY >= 0 && this.pullType == 'up') {
-                move(this.containerElement).y(0).duration(0).end();
-            }
-            else if (e.deltaY >= 0 && this.pullType == 'down') {
-                this.move(e);
-            }
-            else if (e.deltaY < 0 && this.pullType == 'up') {
-                this.move(e);
-            }
-        };
-        GesturePull.prototype.on_panup = function (e) {
-            if (e.deltaY <= 0 && this.pullType == 'down') {
-                move(this.containerElement).y(0).duration(0).end();
-            }
-            else if (e.deltaY <= 0 && this.pullType == 'up') {
-                this.move(e);
-            }
-            else if (e.deltaY > 0 && this.pullType == 'down') {
-                this.move(e);
-            }
-        };
-        GesturePull.prototype.on_panend = function (e) {
-            if (this.moved) {
-                $(this.scrollerElement).scrollTop(this.elementScrollTop);
-                move(this.containerElement).y(0).end();
-                this.moved = false;
-            }
-            this.enableNativeScroll();
-        };
-        GesturePull.prototype.move = function (e) {
-            this.disableNativeScroll();
-            var destY = e.deltaY / 2;
-            move(this.containerElement).y(destY).duration(0).end();
-            this.moved = true;
-            var args = {
-                scrollHeight: this.scrollerElement.scrollHeight,
-                clientHeight: this.scrollerElement.clientHeight,
-                scrollTop: destY - this.scrollerElement.scrollTop
-            };
-            this.on_scroll(args);
-        };
-        GesturePull.prototype.disableNativeScroll = function () {
-            this.scrollerElement.style.overflowY = 'hidden';
-        };
-        GesturePull.prototype.enableNativeScroll = function () {
-            this.scrollerElement.style.overflowY = 'scroll';
-        };
-        return GesturePull;
-    }());
-    var ScrollViewStatusBar = (function (_super) {
-        __extends(ScrollViewStatusBar, _super);
-        function ScrollViewStatusBar(element, page) {
-            _super.call(this, element);
-            element.innerHTML =
-                '<div name="scrollLoad_loading" style="padding:10px 0px 10px 0px;"> \
-        <h5 class="text-center"> \
-                <i class="icon-spinner icon-spin"></i><span style="padding-left:10px;">数据正在加载中...</span> \
-            </h5> \
-    </div>';
-        }
-        return ScrollViewStatusBar;
-    }(Control));
-    chitu.ScrollViewStatusBar = ScrollViewStatusBar;
-    var IScrollView = (function (_super) {
-        __extends(IScrollView, _super);
-        function IScrollView(element, page) {
-            var _this = this;
-            $(element).attr('scroll-type', scroll_types.iscroll);
-            if (element.firstElementChild == null || element.firstElementChild.tagName != IScrollView.SCROLLER_TAG_NAME) {
-                var scroller_node = document.createElement(IScrollView.SCROLLER_TAG_NAME);
-                scroller_node.innerHTML = element.innerHTML;
-                element.innerHTML = '';
-                element.appendChild(scroller_node);
-            }
-            _super.call(this, element);
-            requirejs(['iscroll'], function () { return _this.init(_this.element); });
-        }
-        IScrollView.prototype.init = function (element) {
-            var options = {
-                tap: true,
-                useTransition: false,
-                HWCompositing: false,
-                preventDefault: true,
-                probeType: 2,
-            };
-            var iscroller = this.iscroller = new IScroll(element, options);
-            iscroller['page_container'] = this;
-            iscroller.on('scrollEnd', function () {
-                var scroller = this;
-                var args = {
-                    scrollTop: scroller.y,
-                    scrollHeight: scroller.scrollerHeight,
-                    clientHeight: scroller.wrapperHeight
-                };
-                control.on_scrollEnd(args);
-            });
-            iscroller.hasVerticalScroll = true;
-            var control = this;
-            iscroller.on('scroll', function () {
-                var scroller = this;
-                var args = {
-                    scrollTop: scroller.y,
-                    scrollHeight: scroller.scrollerHeight,
-                    clientHeight: scroller.wrapperHeight
-                };
-                control.on_scroll(args);
-            });
-            (function (scroller, wrapperNode) {
-                $(wrapperNode).on('tap', function (event) {
-                    if (scroller.enabled == false)
-                        return;
-                    var MAX_DEEPH = 4;
-                    var deeph = 1;
-                    var node = event.target;
-                    while (node != null) {
-                        if (node.tagName == 'A')
-                            return window.open($(node).attr('href'), '_self');
-                        node = node.parentNode;
-                        deeph = deeph + 1;
-                        if (deeph > MAX_DEEPH)
-                            return;
-                    }
-                });
-            })(iscroller, element);
-            $(window).on('resize', function () {
-                window.setTimeout(function () { return iscroller.refresh(); }, 500);
-            });
-        };
-        IScrollView.prototype.refresh = function () {
-            if (this.iscroller != null)
-                this.iscroller.refresh();
-        };
-        Object.defineProperty(IScrollView.prototype, "disabled", {
-            get: function () {
-                return !this.iscroller.enabled;
-            },
-            set: function (value) {
-                if (value)
-                    this.iscroller.disable();
-                else
-                    this.iscroller.enable();
-            },
-            enumerable: true,
-            configurable: true
-        });
-        IScrollView.SCROLLER_TAG_NAME = 'SCROLLER';
-        return IScrollView;
-    }(ScrollView));
-    chitu.IScrollView = IScrollView;
-    Control.register('HEADER', PageHeader);
-    Control.register('TOP-BAR', PageHeader);
-    Control.register('SCROLL-VIEW', ScrollView.createInstance);
-    Control.register('FOOTER', PageFooter);
-    Control.register('BOTTOM-BAR', PageFooter);
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {
@@ -1095,14 +744,6 @@ var chitu;
         PageStatus[PageStatus["open"] = 0] = "open";
         PageStatus[PageStatus["closed"] = 1] = "closed";
     })(PageStatus || (PageStatus = {}));
-    (function (SwipeDirection) {
-        SwipeDirection[SwipeDirection["None"] = 0] = "None";
-        SwipeDirection[SwipeDirection["Left"] = 1] = "Left";
-        SwipeDirection[SwipeDirection["Right"] = 2] = "Right";
-        SwipeDirection[SwipeDirection["Up"] = 3] = "Up";
-        SwipeDirection[SwipeDirection["Down"] = 4] = "Down";
-    })(chitu.SwipeDirection || (chitu.SwipeDirection = {}));
-    var SwipeDirection = chitu.SwipeDirection;
     (function (ScrollType) {
         ScrollType[ScrollType["IScroll"] = 0] = "IScroll";
         ScrollType[ScrollType["Div"] = 1] = "Div";
@@ -1164,9 +805,8 @@ var chitu;
             enumerable: true,
             configurable: true
         });
-        Page.prototype.hide = function (swipe) {
-            swipe = swipe || SwipeDirection.None;
-            return this.container.hide(swipe);
+        Page.prototype.hide = function () {
+            return this.container.hide();
         };
         Page.prototype.findControl = function (name) {
             if (!name)
@@ -1237,10 +877,6 @@ var chitu;
             this._previous = params.previous;
             this._app = params.app;
             this._routeData = params.routeData;
-            if (params.enableGesture)
-                this.gesture = new Gesture(this._node);
-            if (this.previous != null && params.enableSwipeClose)
-                this._enableSwipeBack();
             this.createPage(params.routeData);
         }
         PageContainer.prototype.on_pageCreated = function (page) {
@@ -1258,80 +894,6 @@ var chitu;
         PageContainer.prototype.on_closed = function (args) {
             return chitu.fireCallback(this.closed, this, args);
         };
-        PageContainer.prototype._enableSwipeBack = function () {
-            var _this = this;
-            var container = this;
-            var previous_start_x;
-            var previous_visible;
-            var node = container.element;
-            var colse_position = $(window).width() / 2;
-            var horizontal_swipe_angle = 35;
-            var scroll_views;
-            var pan = container.gesture.createPan();
-            pan.start = function (e) {
-                node.style.webkitTransform = '';
-                node.style.transform = '';
-                var martix = new WebKitCSSMatrix(container.previous.element.style.webkitTransform);
-                previous_start_x = martix.m41;
-                var d = Math.atan(Math.abs(e.deltaY / e.deltaX)) / 3.14159265 * 180;
-                if (d > horizontal_swipe_angle)
-                    return false;
-                var result = (container.previous != null && (e.direction & Hammer.DIRECTION_RIGHT) != 0) &&
-                    (_this.open_swipe == chitu.SwipeDirection.Left || _this.open_swipe == chitu.SwipeDirection.Right);
-                if (result == true) {
-                    previous_visible = _this.previous.visible;
-                    _this.previous.visible = true;
-                }
-                scroll_views = activePageScrollViews(node);
-                return result;
-            };
-            pan.left = function (e) {
-                discableScrollViews(scroll_views);
-                if (e.deltaX <= 0) {
-                    move(node).x(0).duration(0).end();
-                    move(_this.previous.element).x(previous_start_x).duration(0).end();
-                    return;
-                }
-                move(node).x(e.deltaX).duration(0).end();
-                move(_this.previous.element).x(previous_start_x + e.deltaX * _this._previousOffsetRate).duration(0).end();
-            };
-            pan.right = function (e) {
-                discableScrollViews(scroll_views);
-                move(node).x(e.deltaX).duration(0).end();
-                move(_this.previous.element).x(previous_start_x + e.deltaX * _this._previousOffsetRate).duration(0).end();
-            };
-            pan.end = function (e) {
-                if (e.deltaX > colse_position) {
-                    _this._app.back();
-                    return;
-                }
-                move(node).x(0).duration(chitu.Page.animationTime).end();
-                move(container.previous.element).x(previous_start_x).duration(chitu.Page.animationTime)
-                    .end(function () {
-                    _this.previous.visible = previous_visible;
-                    enableScrollViews(scroll_views);
-                });
-            };
-            var activePageScrollViews = function (node) {
-                var result = [];
-                $(node).find('scroll-view').each(function (index, item) {
-                    var scroll_view = $(item).data('control');
-                    if (scroll_view.disabled == false)
-                        result.push(scroll_view);
-                });
-                return result;
-            };
-            var discableScrollViews = function (views) {
-                for (var i = 0; i < views.length; i++) {
-                    views[i].disabled = true;
-                }
-            };
-            var enableScrollViews = function (views) {
-                for (var i = 0; i < views.length; i++) {
-                    views[i].disabled = false;
-                }
-            };
-        };
         PageContainer.prototype.createNode = function () {
             this._node = document.createElement('div');
             this._node.className = 'page-container';
@@ -1346,109 +908,21 @@ var chitu;
             parent.appendChild(loading_element);
             return loading_element;
         };
-        PageContainer.prototype.show = function (swipe) {
-            var _this = this;
+        PageContainer.prototype.show = function () {
             if (this.visible == true)
-                return $.Deferred().resolve();
-            this.on_showing(this.routeData.values);
-            var container_width = $(this._node).width();
-            var container_height = $(this._node).height();
-            if (container_width <= 0 || container_height <= 0)
-                swipe = chitu.SwipeDirection.None;
-            var interval = 30;
-            var result = $.Deferred();
-            var on_end = function () {
-                if (_this.previous != null)
-                    _this.previous.visible = false;
-                _this.on_shown(_this.routeData.values);
-                result.resolve();
-            };
-            this.open_swipe = swipe;
-            switch (swipe) {
-                case chitu.SwipeDirection.None:
-                default:
-                    $(this._node).show();
-                    on_end();
-                    break;
-                case chitu.SwipeDirection.Down:
-                    move(this.element).y(0 - container_height).duration(0).end();
-                    $(this._node).show();
-                    window.setTimeout(function () {
-                        move(_this.element).y(0).duration(_this.animationTime).end(on_end);
-                    }, interval);
-                    break;
-                case chitu.SwipeDirection.Up:
-                    move(this.element).y(container_height).duration(0).end();
-                    $(this._node).show();
-                    window.setTimeout(function () {
-                        move(_this.element).y(0).duration(_this.animationTime).end(on_end);
-                    }, interval);
-                    break;
-                case chitu.SwipeDirection.Right:
-                    move(this.element).x(0 - container_width).duration(0).end();
-                    $(this._node).show();
-                    window.setTimeout(function () {
-                        if (_this.previous != null)
-                            move(_this.previous.element).x(container_width * _this._previousOffsetRate).duration(_this.animationTime).end();
-                        move(_this.element).x(0).duration(_this.animationTime).end(on_end);
-                    }, interval);
-                    break;
-                case chitu.SwipeDirection.Left:
-                    move(this.element).x(container_width).duration(0).end();
-                    $(this._node).show();
-                    window.setTimeout(function () {
-                        if (_this.previous != null)
-                            move(_this.previous.element).x(0 - container_width * _this._previousOffsetRate).duration(_this.animationTime).end();
-                        move(_this.element).x(0).duration(_this.animationTime).end(on_end);
-                    }, interval);
-                    break;
-            }
-            return result;
-        };
-        PageContainer.prototype.hide = function (swipe) {
-            if (this.visible == false)
-                return $.Deferred().resolve();
-            var container_width = $(this._node).width();
-            var container_height = $(this._node).height();
-            var result = $.Deferred();
-            switch (swipe) {
-                case chitu.SwipeDirection.None:
-                default:
-                    if (this.previous != null)
-                        move(this.previous.element).x(0).duration(this.animationTime).end();
-                    result.resolve();
-                    break;
-                case chitu.SwipeDirection.Down:
-                    move(this.element).y(container_height).duration(this.animationTime).end(function () { return result.resolve(); });
-                    break;
-                case chitu.SwipeDirection.Up:
-                    move(this.element).y(0 - container_height).duration(this.animationTime).end(function () { return result.resolve(); });
-                    break;
-                case chitu.SwipeDirection.Right:
-                    if (this.previous != null)
-                        move(this.previous.element).x(0).duration(this.animationTime).end();
-                    move(this.element).x(container_width).duration(this.animationTime).end(function () { return result.resolve(); });
-                    break;
-                case chitu.SwipeDirection.Left:
-                    if (this.previous != null)
-                        move(this.previous.element).x(0).duration(this.animationTime).end();
-                    move(this.element).x(0 - container_width).duration(this.animationTime).end(function () { return result.resolve(); });
-                    break;
-            }
-            return result;
-        };
-        PageContainer.prototype.close = function (swipe) {
-            var _this = this;
-            if (swipe == null)
-                swipe = chitu.SwipeDirection.None;
-            if (this.is_closing)
                 return;
+            $(this._node).show();
+        };
+        PageContainer.prototype.hide = function () {
+            if (this.visible == false)
+                return;
+            $(this._node).hide();
+        };
+        PageContainer.prototype.close = function () {
             this.on_closing(this.routeData.values);
             this.is_closing = true;
-            this.hide(swipe).done(function () {
-                $(_this._node).remove();
-                _this.on_closed(_this.routeData.values);
-            });
+            $(this._node).remove();
+            this.on_closed(this.routeData.values);
         };
         PageContainer.prototype.showLoading = function () {
             this._loading.style.display = 'block';
@@ -1585,77 +1059,6 @@ var chitu;
         return PageContainerFactory;
     }());
     chitu.PageContainerFactory = PageContainerFactory;
-    var Pan = (function () {
-        function Pan(gesture) {
-            this.cancel = false;
-        }
-        return Pan;
-    }());
-    chitu.Pan = Pan;
-    var Gesture = (function () {
-        function Gesture(element) {
-            var _this = this;
-            this._prevent = {
-                pan: Hammer.DIRECTION_NONE
-            };
-            this.prevent = {
-                pan: function (direction) {
-                    _this._prevent.pan = direction;
-                }
-            };
-            this.executedCount = 0;
-            this.hammersCount = 0;
-            this.hammer = new Hammer.Manager(element);
-        }
-        Gesture.prototype.on_pan = function (e) {
-            var pans = this.pans;
-            for (var i = pans.length - 1; i >= 0; i--) {
-                var state = this.hammer.get('pan').state;
-                if (pans[i]['started'] == null && (state & Hammer.STATE_BEGAN) == Hammer.STATE_BEGAN) {
-                    pans[i]['started'] = pans[i].start(e);
-                }
-                var exected = false;
-                var started = pans[i]['started'];
-                if (started == true) {
-                    if ((e.direction & Hammer.DIRECTION_LEFT) == Hammer.DIRECTION_LEFT && pans[i].left != null)
-                        pans[i].left(e);
-                    else if ((e.direction & Hammer.DIRECTION_RIGHT) == Hammer.DIRECTION_RIGHT && pans[i].right != null)
-                        pans[i].right(e);
-                    else if ((e.direction & Hammer.DIRECTION_UP) == Hammer.DIRECTION_UP && pans[i].up != null)
-                        pans[i].up(e);
-                    else if ((e.direction & Hammer.DIRECTION_DOWN) == Hammer.DIRECTION_DOWN && pans[i].down != null)
-                        pans[i].down(e);
-                    if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED && pans[i].end != null)
-                        pans[i].end(e);
-                    exected = true;
-                }
-                if ((state & Hammer.STATE_ENDED) == Hammer.STATE_ENDED) {
-                    pans[i]['started'] = null;
-                }
-                if (exected == true)
-                    break;
-            }
-        };
-        Object.defineProperty(Gesture.prototype, "pans", {
-            get: function () {
-                if (this._pans == null) {
-                    this._pans = new Array();
-                    this.hammer.add(new Hammer.Pan({ direction: Hammer.DIRECTION_ALL }));
-                    this.hammer.on('pan', $.proxy(this.on_pan, this));
-                }
-                return this._pans;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Gesture.prototype.createPan = function () {
-            var pan = new Pan(this);
-            this.pans.push(pan);
-            return pan;
-        };
-        return Gesture;
-    }());
-    chitu.Gesture = Gesture;
 })(chitu || (chitu = {}));
 var chitu;
 (function (chitu) {

@@ -91,7 +91,7 @@ QUnit.asyncTest('Page 关闭事件', (assert) => {
             closed_called = true;
         });
 
-        page.container.close(chitu.SwipeDirection.None);
+        page.container.close();
         setTimeout(() => {
             assert.equal(closing_called, true, 'closing 事件已调用');
             assert.equal(closed_called, true, 'closed 事件已调用');
