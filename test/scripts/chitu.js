@@ -867,6 +867,8 @@ var chitu;
             this._previousOffsetRate = 0.5;
             this.showing = chitu.Callbacks();
             this.shown = chitu.Callbacks();
+            this.hiding = chitu.Callbacks();
+            this.hidden = chitu.Callbacks();
             this.closing = chitu.Callbacks();
             this.closed = chitu.Callbacks();
             this.pageCreated = chitu.Callbacks();
@@ -887,6 +889,12 @@ var chitu;
         };
         PageContainer.prototype.on_shown = function (args) {
             return chitu.fireCallback(this.shown, this, args);
+        };
+        PageContainer.prototype.on_hiding = function (args) {
+            return chitu.fireCallback(this.hiding, this, args);
+        };
+        PageContainer.prototype.on_hidden = function (args) {
+            return chitu.fireCallback(this.hidden, this, args);
         };
         PageContainer.prototype.on_closing = function (args) {
             return chitu.fireCallback(this.closing, this, args);
@@ -911,7 +919,9 @@ var chitu;
         PageContainer.prototype.show = function () {
             if (this.visible == true)
                 return;
+            this.on_showing(this.routeData.values);
             $(this._node).show();
+            this.on_shown(this.routeData.values);
         };
         PageContainer.prototype.hide = function () {
             if (this.visible == false)

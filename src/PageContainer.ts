@@ -29,6 +29,9 @@ namespace chitu {
 
         showing = Callbacks<PageContainer, any>();
         shown = Callbacks<PageContainer, any>();
+        
+        hiding = Callbacks<PageContainer, any>();
+        hidden = Callbacks<PageContainer, any>();
 
         closing = Callbacks<PageContainer, any>();
         closed = Callbacks<PageContainer, any>();
@@ -63,6 +66,12 @@ namespace chitu {
         on_shown(args) {
             return fireCallback(this.shown, this, args);
         }
+        on_hiding(args) {
+            return fireCallback(this.hiding, this, args);
+        }
+        on_hidden(args) {
+            return fireCallback(this.hidden, this, args);
+        }
         on_closing(args) {
             return fireCallback(this.closing, this, args);
         }
@@ -93,7 +102,9 @@ namespace chitu {
             if (this.visible == true)
                 return;
 
+            this.on_showing(this.routeData.values);
             $(this._node).show();
+            this.on_shown(this.routeData.values);
         }
 
         hide() {

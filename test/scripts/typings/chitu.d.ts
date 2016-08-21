@@ -179,6 +179,8 @@ declare namespace chitu {
         private _routeData;
         showing: Callback<PageContainer, any>;
         shown: Callback<PageContainer, any>;
+        hiding: Callback<PageContainer, any>;
+        hidden: Callback<PageContainer, any>;
         closing: Callback<PageContainer, any>;
         closed: Callback<PageContainer, any>;
         pageCreated: chitu.Callback<PageContainer, Page>;
@@ -190,6 +192,8 @@ declare namespace chitu {
         on_pageCreated(page: chitu.Page): JQueryPromise<any>;
         on_showing(args: any): JQueryPromise<any>;
         on_shown(args: any): JQueryPromise<any>;
+        on_hiding(args: any): JQueryPromise<any>;
+        on_hidden(args: any): JQueryPromise<any>;
         on_closing(args: any): JQueryPromise<any>;
         on_closed(args: any): JQueryPromise<any>;
         protected createNode(): HTMLElement;
