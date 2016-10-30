@@ -100,18 +100,7 @@
          * param routeData 页面路由数据
          * param previous 上一个页面容器，如果当前页面容器是第一个，则为空值 
          */
-        container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
-        /**
-         * 获取页面打开时，滑动的方向
-         * param routeData 页面路由数据
-         */
-        //openSwipe?: (routeData: RouteData) => SwipeDirection,
-
-        /**
-         * 获取页面关闭时，滑动的方向
-         * param routeData 页面路由数据
-         */
-        //closeSwipe?: (route: RouteData) => SwipeDirection,
+        //container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
 
         /**
          * 页面的基本路径
@@ -124,7 +113,7 @@
         /**
          * 当页面创建后发生
          */
-        pageCreated = Callbacks<Application, Page>();
+        pageCreated = Callbacks<Application, Pageview>();
 
         private _config: ApplicationConfig;
         private _runned: boolean = false;
@@ -132,7 +121,7 @@
         private back_deferred: JQueryDeferred<any>;
         private start_flag_hash: string;
         private start_hash: string;
-        private container_stack = new Array<PageContainer>();
+        private container_stack = new Array<Page>();
 
         /**
          * 解释 url，将 url 解释为 RouteData
@@ -148,14 +137,7 @@
         constructor(config?: ApplicationConfig) {
 
             config = config || {};
-            this._config = $.extend({
-                //openSwipe: (routeData: RouteData) => SwipeDirection.None,
-                //closeSwipe: () => SwipeDirection.None,
-                container: $.proxy(function (routeData: RouteData, previous: PageContainer) {
-                    return PageContainerFactory.createInstance({ app: this.app, previous, routeData });
-                }, { app: this })
-
-            }, config);
+            this._config = config;
 
             let urlParser = new UrlParser(this._config.pathBase);
             this.parseUrl = (url: string) => {
@@ -163,7 +145,7 @@
             }
         }
 
-        private on_pageCreated(page: chitu.Page) {
+        private on_pageCreated(page: Pageview) {
             return chitu.fireCallback(this.pageCreated, this, page);
         }
 
@@ -177,7 +159,7 @@
         /**
          * 获取当前页面
          */
-        get currentPage(): chitu.Page {
+        get currentPage(): chitu.Pageview {
             if (this.container_stack.length > 0)
                 return this.container_stack[this.container_stack.length - 1].page;
 
@@ -187,16 +169,17 @@
         /**
          * 获取当前应用中的所创建页面容器
          */
-        get pageContainers(): Array<PageContainer> {
+        get pageContainers(): Array<Page> {
             return this.container_stack;
         }
 
-        private createPageContainer(routeData: RouteData): PageContainer {
-            var container = this.config.container(routeData, this.pageContainers[this.pageContainers.length - 1]);
+        private createPageContainer(routeData: RouteData): Page {
+            let previous_container = this.pageContainers[this.pageContainers.length - 1];
+            let container = PageFactory.createInstance({app:this,routeData,previous:previous_container });
 
             this.container_stack.push(container);
             if (this.container_stack.length > PAGE_STACK_MAX_SIZE) {
-                var c = this.container_stack.shift();
+                let c = this.container_stack.shift();
                 c.close();
             }
 
@@ -240,15 +223,14 @@
 
             var url = location.href;
             var pageInfo = this.parseUrl(url);
-            var page = this.getPage(pageInfo.pageName);
-            var container: PageContainer = page != null ? page.container : null;
+            var page = this.getPageView(pageInfo.pageName);
+            var container: Page = page != null ? page.container : null;
             if (container != null && $.inArray(container, this.container_stack) == this.container_stack.length - 2) {
                 var c = this.container_stack.pop();
-                //var swipe = this.config.closeSwipe(c.page.routeData);
                 if (c.previous != null) {
-                    c.previous.show();//SwipeDirection.None
+                    c.previous.show();
                 }
-                c.close();//swipe
+                c.close();
             }
             else {
                 this.showPage(url);
@@ -275,7 +257,7 @@
         /**
          * 通过页面的名称，获取页面
          */
-        public getPage(name: string): chitu.Page {
+        public getPageView(name: string): Pageview {
             for (var i = this.container_stack.length - 1; i >= 0; i--) {
                 var page = this.container_stack[i].page; //.pages[name];
                 if (page != null && page.name == name)
@@ -289,7 +271,7 @@
          * param url 页面的路径
          * param args 传递到页面的参数 
          */
-        public showPage<T extends Page>(url: string, args?: any): JQueryPromise<T> {
+        public showPage<T extends Pageview>(url: string, args?: any): JQueryPromise<T> {
             if (!url) throw Errors.argumentNull('url');
 
             var routeData = this.parseUrl(url);
@@ -323,7 +305,7 @@
          * param url 页面路径
          * param args 传递到页面的参数
          */
-        public redirect<T extends Page>(url: string, args?: any): JQueryPromise<T> {
+        public redirect<T extends Pageview>(url: string, args?: any): JQueryPromise<T> {
             window.location['skip'] = true;
             window.location.hash = url;
             return this.showPage<T>(url, args);

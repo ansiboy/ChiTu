@@ -1,3 +1,3 @@
-export = class SettingPage extends chitu.Page {
+export = class SettingPage extends chitu.Pageview {
 
 }

@@ -1,202 +1,136 @@
 namespace chitu {
 
-    enum OS {
-        ios,
-        android,
-        other
-    }
+    // export class ControlCollection {
+    //     private parent: Control;
+    //     private items: Array<Control>;
 
-    var scroll_types = {
-        div: 'div',
-        iscroll: 'iscroll',
-        doc: 'doc'
-    }
+    //     constructor(parent: Control) {
+    //         this.parent = parent;
+    //         this.items = [];
+    //     }
+    //     add(control: Control) {
+    //         if (control == null)
+    //             throw Errors.argumentNull('control');
 
-    class Environment {
-        private static _environmentType;
-        private static _isIIS: boolean;
-        private static _os: OS;
-        private static _version: number;
+    //         this[this.length] = this.items[this.items.length] = control;
+    //         control.parent = this.parent;
+    //     }
+    //     get length(): number {
+    //         return this.items.length;
+    //     }
+    //     item(indexOrName: number | string) {
+    //         if (typeof (indexOrName) == 'number')
+    //             return this.items[indexOrName];
 
-        private static init = (() => {
-            var userAgent = navigator.userAgent;
-            if (userAgent.indexOf('iPhone') > 0 || userAgent.indexOf('iPad') > 0) {
-                Environment._os = OS.ios;
-                var match = userAgent.match(/iPhone OS\s([0-9\-]*)/);
-                if (match) {
-                    var major_version = parseInt(match[1], 10);
-                    Environment._version = major_version;
-                }
-            }
-            else if (userAgent.indexOf('Android') > 0) {
-                Environment._os = OS.android;
+    //         var name = <string>indexOrName;
+    //         for (var i = 0; i < this.items.length; i++) {
+    //             if (this.items[i].name == name)
+    //                 return this.items[i];
+    //         }
 
-                var match = userAgent.match(/Android\s([0-9\.]*)/);
-                if (match) {
-                    var major_version = parseInt(match[1], 10);
-                    Environment._version = major_version;
-                }
-            }
-            else {
-                Environment._os = OS.other;
-            }
-        })();
+    //         return null;
+    //     }
+    // }
 
-        static get osVersion(): number {
-            return this._version;
-        }
+    // export class Control {
+    //     private _element: HTMLElement;
+    //     private _children = new ControlCollection(this);;
+    //     private static ControlTags = {};
+    //     private _parent: Control;
 
-        static get os(): OS {
-            return Environment._os;
-        }
+    //     protected _name: string;
 
-        static get isIOS() {
-            return this.os == OS.ios;
-        }
-        static get isAndroid() {
-            return this.os == OS.android;
-        }
+    //     load = chitu.Callbacks<Control, any>();
 
-        static get isWeiXin(): boolean {
-            var ua = navigator.userAgent.toLowerCase();
-            return <any>(ua.match(/MicroMessenger/i)) == 'micromessenger';
-        }
-        static get isIPhone() {
-            return window.navigator.userAgent.indexOf('iPhone') > 0
-        }
-    }
+    //     constructor(element: HTMLElement) {
 
-    export class ControlCollection {
-        private parent: Control;
-        private items: Array<Control>;
+    //         if (element == null) throw Errors.argumentNull('element');
 
-        constructor(parent: Control) {
-            this.parent = parent;
-            this.items = [];
-        }
-        add(control: Control) {
-            if (control == null)
-                throw Errors.argumentNull('control');
+    //         this._element = element;
+    //         //this._parent = parent;
+    //         this._name = $(element).attr('name');
+    //         this.createChildren(element, this);
 
-            this[this.length] = this.items[this.items.length] = control;
-            control.parent = this.parent;
-        }
-        get length(): number {
-            return this.items.length;
-        }
-        item(indexOrName: number | string) {
-            if (typeof (indexOrName) == 'number')
-                return this.items[indexOrName];
+    //         $(element).data('control', this);
+    //     }
 
-            var name = <string>indexOrName;
-            for (var i = 0; i < this.items.length; i++) {
-                if (this.items[i].name == name)
-                    return this.items[i];
-            }
+    //     private createChildren(element: HTMLElement, parent: Control) {
 
-            return null;
-        }
-    }
+    //         for (var i = 0; i < element.childNodes.length; i++) {
+    //             if (element.childNodes[i].nodeType != 1)
+    //                 continue;
 
-    export class Control {
-        private _element: HTMLElement;
-        private _children = new ControlCollection(this);;
-        private static ControlTags = {};
-        private _parent: Control;
+    //             var child_control = this.createChild(<HTMLElement>element.childNodes[i], parent);
+    //             if (child_control == null)
+    //                 continue;
 
-        protected _name: string;
+    //             this.children.add(child_control);
+    //         }
+    //     }
 
-        load = chitu.Callbacks<Control, any>();
+    //     protected createChild(element: HTMLElement, parent: Control) {
+    //         var child_control = Control.createControl(element);
+    //         if (child_control)
+    //             child_control._parent = parent;
 
-        constructor(element: HTMLElement) {
+    //         return child_control;
+    //     }
 
-            if (element == null) throw Errors.argumentNull('element');
+    //     get visible(): boolean {
+    //         var display = this.element.style.display;
+    //         return display != 'none';
+    //     }
+    //     set visible(value: boolean) {
+    //         if (value == true)
+    //             this.element.style.display = 'block';
+    //         else
+    //             this.element.style.display = 'none';
+    //     }
+    //     get element(): HTMLElement {
+    //         return this._element;
+    //     }
+    //     get children(): ControlCollection {
+    //         return this._children;
+    //     }
+    //     get name(): string {
+    //         return this._name;
+    //     }
+    //     get parent(): Control {
+    //         return this._parent;
+    //     }
 
-            this._element = element;
-            //this._parent = parent;
-            this._name = $(element).attr('name');
-            this.createChildren(element, this);
+    //     on_load(args: Object): JQueryPromise<any> {
+    //         var promises = new Array<JQueryPromise<any>>();
+    //         promises.push(fireCallback(this.load, this, args));
+    //         for (var i = 0; i < this.children.length; i++) {
+    //             var promise = this.children.item(i).on_load(args);
+    //             if (chitu.Utility.isDeferred(promise))
+    //                 promises.push(promise);
+    //         }
+    //         var result = $.when.apply($, promises);
+    //         return result;
+    //     }
+    //     static register(tagName: string, createControlMethod: (new (element: HTMLElement, page: Page) => Control) | ((element: HTMLElement, page: Page) => Control)) {
+    //         Control.ControlTags[tagName] = createControlMethod;
+    //     }
+    //     static createControl(element: HTMLElement) {
+    //         if (element == null) throw Errors.argumentNull('element');
+    //         //if (page == null) throw Errors.argumentNull('page');
 
-            $(element).data('control', this);
-        }
+    //         var tagName: string = element.tagName;
+    //         var createControlMethod = Control.ControlTags[tagName];
+    //         if (createControlMethod == null)
+    //             return null;
 
-        private createChildren(element: HTMLElement, parent: Control) {
+    //         var instance: Control;
+    //         if (createControlMethod.prototype != null)
+    //             instance = new createControlMethod(element);
+    //         else
+    //             instance = createControlMethod(element);
 
-            for (var i = 0; i < element.childNodes.length; i++) {
-                if (element.childNodes[i].nodeType != 1)
-                    continue;
-
-                var child_control = this.createChild(<HTMLElement>element.childNodes[i], parent);
-                if (child_control == null)
-                    continue;
-
-                this.children.add(child_control);
-            }
-        }
-
-        protected createChild(element: HTMLElement, parent: Control) {
-            var child_control = Control.createControl(element);
-            if (child_control)
-                child_control._parent = parent;
-
-            return child_control;
-        }
-
-        get visible(): boolean {
-            var display = this.element.style.display;
-            return display != 'none';
-        }
-        set visible(value: boolean) {
-            if (value == true)
-                this.element.style.display = 'block';
-            else
-                this.element.style.display = 'none';
-        }
-        get element(): HTMLElement {
-            return this._element;
-        }
-        get children(): ControlCollection {
-            return this._children;
-        }
-        get name(): string {
-            return this._name;
-        }
-        get parent(): Control {
-            return this._parent;
-        }
-
-        on_load(args: Object): JQueryPromise<any> {
-            var promises = new Array<JQueryPromise<any>>();
-            promises.push(fireCallback(this.load, this, args));
-            for (var i = 0; i < this.children.length; i++) {
-                var promise = this.children.item(i).on_load(args);
-                if (chitu.Utility.isDeferred(promise))
-                    promises.push(promise);
-            }
-            var result = $.when.apply($, promises);
-            return result;
-        }
-        static register(tagName: string, createControlMethod: (new (element: HTMLElement, page: Page) => Control) | ((element: HTMLElement, page: Page) => Control)) {
-            Control.ControlTags[tagName] = createControlMethod;
-        }
-        static createControl(element: HTMLElement) {
-            if (element == null) throw Errors.argumentNull('element');
-            //if (page == null) throw Errors.argumentNull('page');
-
-            var tagName: string = element.tagName;
-            var createControlMethod = Control.ControlTags[tagName];
-            if (createControlMethod == null)
-                return null;
-
-            var instance: Control;
-            if (createControlMethod.prototype != null)
-                instance = new createControlMethod(element);
-            else
-                instance = createControlMethod(element);
-
-            return instance;
-        }
-    }
+    //         return instance;
+    //     }
+    // }
 
     // export class PageHeader extends Control {
     //     constructor(element: HTMLElement, page: Page) {

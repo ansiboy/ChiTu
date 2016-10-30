@@ -1,7 +1,7 @@
 /// <reference path="../scripts/typings/require.d.ts"/>
 /// <reference path="../scripts/typings/jquery.d.ts"/>
 /// <reference path="../scripts/typings/chitu.d.ts"/>
-/// <reference path="../scripts/typings/qunit.d.ts"/>
+/// <reference path="../scripts/typings/Qunit.d.ts"/>
 /// <reference path="../scripts/typings/hammer.d.ts"/>
 
 requirejs.config({

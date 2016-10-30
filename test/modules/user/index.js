@@ -13,5 +13,5 @@ define(["require", "exports", 'chitu'], function (require, exports, chitu) {
             _super.call(this, args);
         }
         return IndexPage;
-    }(chitu.Page));
+    }(chitu.Pageview));
 });
