@@ -32,7 +32,6 @@ ChiTu 框架采用面向对象，事件驱件的编程模式，各个模块间�
 
 * ChiTu 是基于 TypeScript 开发，从开发的开始，就考虑了要使强类型，来尽可能地让发人员避免一些不必要的错语。
 
-## 文档
-https://github.com/ansiboy/ChiTu/wiki 
+
 
 
