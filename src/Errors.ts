@@ -47,6 +47,10 @@
             var msg = Utility.format('Can not parse the url "{0}" to route data.', url);
             return new Error(msg);
         }
+        public static canntRouteString(routeString: string): Error {
+            var msg = Utility.format('Can not parse the route string "{0}" to route data.', routeString);
+            return new Error(msg);
+        }
         public static routeDataRequireController(): Error {
             var msg = 'The route data does not contains a "controller" file.';
             return new Error(msg);
@@ -67,9 +71,13 @@
             var msg = Utility.format('Create page "{0}" fail.', pageName);
             return new Error(msg);
         }
-        public static actionTypeError(pageName: string): Error {
-            var msg = Utility.format('Export of \'{0}\' page is expect chitu.Page type.', pageName);
+        public static actionTypeError(actionName:string, pageName: string): Error {
+            let msg = `The '${actionName}' in page '${pageName}' is expect as function or Class.`;
             return new Error(msg);
+        }
+        public static canntFindAction(actionName:string,pageName){
+            let msg = `Cannt find action '${actionName}' in page '${pageName}'.`;
+            return  new Error(msg);
         }
         public static scrollerElementNotExists(): Error {
             let msg = "Scroller element is not exists.";

@@ -19,7 +19,7 @@
         }
         public static format(source: string, ...params: string[]): string {
             for (var i = 0; i < params.length; i++) {
-                source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function() {
+                source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {
                     return params[i];
                 });
             }
@@ -55,17 +55,16 @@
             var txt = this.format.apply(this, arguments);
             console.log(txt);
         }
-        static loadjs(...modules: string[]): JQueryPromise<any> {
-            var deferred = $.Deferred();
-            requirejs(modules, function() {
-                //deferred.resolve(arguments);
-                var args = [];
-                for (var i = 0; i < arguments.length; i++)
-                    args[i] = arguments[i];
+        static loadjs(...modules: string[]): Promise<any> {
+            return new Promise((reslove, reject) => {
+                requirejs(modules, function () {
+                    var args = [];
+                    for (var i = 0; i < arguments.length; i++)
+                        args[i] = arguments[i];
 
-                deferred.resolve.apply(deferred, args);
+                    reslove.apply({}, args);
+                });
             });
-            return deferred;
         }
     }
 

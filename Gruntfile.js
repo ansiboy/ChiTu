@@ -1,16 +1,16 @@
 ﻿var js_output_file = 'release/chitu.js';
 var ts_output_file = 'release/chitu.d.ts';
-var build_dir = 'build';
+//var build_dir = 'build';
 var release_dir = 'release';
 module.exports = function (grunt) {
     var config = {
         ts: {
-            base: {
+            chitu: {
                 src: ['src/**/*.ts'],
-                dest: build_dir + '/chitu.js',
+                dest: release_dir + '/chitu.js',
                 options: {
-                    basePath: build_dir,
-                    target: 'es5',
+                    basePath: release_dir,
+                    target: 'es6',
                     removeComments: true,
                     declaration: true,
                     references: [
@@ -18,60 +18,60 @@ module.exports = function (grunt) {
                     ],
                     sourceMap: false
                 }
-            },
-            test: {
-                src: ['test/src/**/*.ts'],
-                dest: 'test/',
-                options: {
-                    basePath: build_dir,
-                    target: 'es5',
-                    removeComments: true,
-                    declaration: false,
-                    sourceMap: false,
-                    module: 'amd',
-                    references: [
-                        "/test/src/typings/*.d.ts"
-                    ]
-                }
-            }
+            }//,
+            // test: {
+            //     src: ['test/src/**/*.ts'],
+            //     dest: 'test/',
+            //     options: {
+            //         basePath: build_dir,
+            //         target: 'es5',
+            //         removeComments: true,
+            //         declaration: false,
+            //         sourceMap: false,
+            //         module: 'amd',
+            //         references: [
+            //             "/test/src/typings/*.d.ts"
+            //         ]
+            //     }
+            // }
         },
-        concat: {
-            chitudts: {
-                options: {
-                    stripBanners: true,
-                    footer: 'declare module "chitu" { \n\
-    export = chitu; \n\
-}\n'
-                },
-                src: [build_dir + '/**/*.d.ts'],
-                dest: ts_output_file
-            },
-            chitujs: {
-                options: {
-                    banner:
-                    "(function(factory) { \n\
-        if (typeof define === 'function' && define['amd']) { \n\
-            define(['jquery'], factory);  \n\
-        } else { \n\
-            factory($); \n\
-        } \n\
-    })(function($) {",
-                    footer: '\n\window[\'chitu\'] = window[\'chitu\'] || chitu \n\
-                    \n return chitu;\n\
-    });',
-                },
-                src: [build_dir + '/**/*.js'],
-                dest: js_output_file
+//         concat: {
+//             chitudts: {
+//                 options: {
+//                     stripBanners: true,
+//                     footer: 'declare module "chitu" { \n\
+//     export = chitu; \n\
+// }\n'
+//                 },
+//                 src: [build_dir + '/**/*.d.ts'],
+//                 dest: ts_output_file
+//             },
+//             chitujs: {
+//                 options: {
+//                     banner:
+//                     "(function(factory) { \n\
+//         if (typeof define === 'function' && define['amd']) { \n\
+//             define(['jquery'], factory);  \n\
+//         } else { \n\
+//             factory($); \n\
+//         } \n\
+//     })(function($) {",
+//                     footer: '\n\window[\'chitu\'] = window[\'chitu\'] || chitu \n\
+//                     \n return chitu;\n\
+//     });',
+//                 },
+//                 src: [build_dir + '/**/*.js'],
+//                 dest: js_output_file
 
-            }
-        },
-        uglify: {
-            build: {
-                src: release_dir + '/chitu.js',
-                dest: release_dir + '/chitu.min.js'
-            }
-        },
-        clean: [build_dir + '/**/*.d.ts', ts_output_file]
+//             }
+//         },
+        // uglify: {
+        //     build: {
+        //         src: release_dir + '/chitu.js',
+        //         dest: release_dir + '/chitu.min.js'
+        //     }
+        // },
+        //clean: [build_dir + '/**/*.d.ts', ts_output_file]
     };
 
     config.copy = {
@@ -101,6 +101,6 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-copy');
 
-    grunt.registerTask('default', ['ts', 'concat', 'uglify', 'copy']);//,, 'clean'
+    grunt.registerTask('default', ['ts:chitu', 'copy']);//,, 'clean'  'concat', 'uglify',
 
 };

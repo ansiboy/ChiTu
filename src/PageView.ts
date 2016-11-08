@@ -1,150 +1,87 @@
-﻿namespace chitu {
+﻿// namespace chitu {
 
-    // var u = chitu.Utility;
-    // var e = chitu.Errors;
-
-    //var LOAD_COMPLETE_HTML = '<span style="padding-left:10px;">数据已全部加载完毕</span>';
-
-    // export enum PageLoadType {
-    //     init,
-    //     scroll,
-    //     pullDown,
-    //     pullUp,
-    //     custom
-    // }
-
-    // export interface PageLoading {
-    //     show()
-    //     hide()
-    // }
-
-    // enum ShowTypes {
-    //     swipeLeft,
-    //     swipeRight,
-    //     none
-    // }
-
-    // enum PageNodeParts {
-    //     header = 1,
-    //     body = 2,
-    //     loading = 4,
-    //     footer = 8
-    // }
-
-    // enum PageStatus {
-    //     open,
-    //     closed
-    // }
-
-    // export enum SwipeDirection {
-    //     None,
-    //     Left,
-    //     Right,
-    //     Up,
-    //     Down,
-    // }
-
-    // export enum ScrollType {
-    //     IScroll,
-    //     Div,
-    //     Document,
-    // }
-
-    export type PageArguemnts = { container: Page, routeData: RouteData, element: HTMLElement };
-    export interface PageConstructor {
-        new (args: PageArguemnts): Pageview;
-    }
+//     export type PageViewArguemnts = { container: Page, routeData: RouteData, element: HTMLElement };
+//     export interface PageViewConstructor {
+//         new (args: PageViewArguemnts): Pageview;
+//     }
 
 
-    export class Pageview {
+//     export class Pageview {
 
-        private _name: string;
-        // private _viewDeferred: JQueryPromise<string>;
-        // private _actionDeferred: JQueryPromise<Function>;
+//         private _name: string;
+//         private _openResult: JQueryDeferred<any> = null;
+//         private _hideResult = null;
 
-        //private _loadViewModelResult = null;
-        private _openResult: JQueryDeferred<any> = null;
-        private _hideResult = null;
+//         private _routeData: RouteData;
+//         private _pageContainer: Page;
+//         private _viewHtml: string;
+//         private _element: HTMLElement;
 
-        private _routeData: RouteData;
-        //private _enableScrollLoad = false;
-        private is_closed = false;
-        //private _scrollLoad_loading_bar: HTMLElement;
+//         load = chitu.Callbacks<Pageview, any>();
 
-        //private isActionExecuted = false;
+//         closing = Callbacks<Pageview, any>();
+//         closed = Callbacks<Pageview, any>();
 
-        // private _formLoading: PageLoading;
-        // private _bottomLoading: PageLoading;
-        private _pageContainer: Page;
-        private _viewHtml: string;
-        private _element: HTMLElement;
-        //private _loading: Control;
+//         hiding = Callbacks<Pageview, any>();
+//         hidden = Callbacks<Pageview, any>();
 
-        load = chitu.Callbacks<Pageview, any>();
+//         constructor(args: PageViewArguemnts) {
 
-        closing = Callbacks<Pageview, any>();
-        closed = Callbacks<Pageview, any>();
+//             if (args == null) throw Errors.argumentNull('args');
 
-        hiding = Callbacks<Pageview, any>();
-        hidden = Callbacks<Pageview, any>();
+//             this._element = args.element;
+//             this._pageContainer = args.container;
+//             this._routeData = args.routeData;
 
-        constructor(args: PageArguemnts) {
+//             $(this.element).data('page', this);
 
-            if (args == null) throw Errors.argumentNull('args');
+//             this._pageContainer.closing.add(() => this.on_closing(this.routeData.values));
+//             this._pageContainer.closed.add(() => this.on_closed(this.routeData.values))
+//         }
 
-            this._element = args.element;
-            this._pageContainer = args.container;
-            this._routeData = args.routeData;
+//         get element(): HTMLElement {
+//             return this._element;
+//         }
 
-            $(this.element).data('page', this);
+//         get routeData(): RouteData {
+//             return this._routeData;
+//         }
+//         get name(): string {
+//             if (!this._name)
+//                 this._name = this.routeData.pageName;
 
-            this._pageContainer.closing.add(() => this.on_closing(this.routeData.values));
-            this._pageContainer.closed.add(() => this.on_closed(this.routeData.values))
-        }
+//             return this._name;
+//         }
+//         get visible(): boolean {
+//             return $(this.element).is(':visible');
+//         }
+//         get container(): Page {
+//             return this._pageContainer;
+//         }
+//         hide() {
+//             return this.container.hide();
+//         }
 
-        get element(): HTMLElement {
-            return this._element;
-        }
+//         on_load(args: Object): JQueryPromise<any> {
+//             return this.fireEvent(this.load,args);
+//         }
 
-        get routeData(): RouteData {
-            return this._routeData;
-        }
-        get name(): string {
-            if (!this._name)
-                this._name = this.routeData.pageName;
+//         private fireEvent<A>(callback: chitu.Callback<Pageview, A>, args): JQueryPromise<any> {
+//             return fireCallback(callback, this, args);
+//         }
 
-            return this._name;
-        }
-        get visible(): boolean {
-            return $(this.element).is(':visible');
-        }
-        get container(): Page {
-            return this._pageContainer;
-        }
-        hide() {
-            return this.container.hide();
-        }
+//         on_closing(args) {
+//             return this.fireEvent(this.closing, args);
+//         }
+//         on_closed(args) {
+//             return this.fireEvent(this.closed, args);
+//         }
 
-        on_load(args: Object): JQueryPromise<any> {
-            return this.fireEvent(this.load,args);
-        }
-
-        private fireEvent<A>(callback: chitu.Callback<Pageview, A>, args): JQueryPromise<any> {
-            return fireCallback(callback, this, args);
-        }
-
-        on_closing(args) {
-            return this.fireEvent(this.closing, args);
-        }
-        on_closed(args) {
-            return this.fireEvent(this.closed, args);
-        }
-
-        on_hiding(args) {
-            return this.fireEvent(this.hiding, args);
-        }
-        on_hidden(args) {
-            return this.fireEvent(this.hidden, args);
-        }
-    }
-};
+//         on_hiding(args) {
+//             return this.fireEvent(this.hiding, args);
+//         }
+//         on_hidden(args) {
+//             return this.fireEvent(this.hidden, args);
+//         }
+//     }
+// };

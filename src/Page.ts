@@ -1,61 +1,55 @@
-// TODO:
-// 1，关闭当页面容器并显示之前容器时，更新URL
-// 2, 侧滑时，底容器带有遮罩效果。
+
 namespace chitu {
+    export interface PageActionConstructor {
+        new (args: Page);
+    }
 
-    // class ScrollArguments {
-    //     scrollTop: number
-    //     scrollHeight: number
-    //     clientHeight: number
-    // }
-
-    // class PageContainerTypeClassNames {
-    //     Div = 'div'
-    //     IScroll = 'iscroll'
-    //     Document = 'doc'
-    // }
+    export interface PageDisplayer {
+        show(page: Page);
+        hide(page: Page);
+        visible(page: Page): boolean;
+    }
 
     export class Page {
         private animationTime: number = 300;
         private num: Number;
 
-        private _node: HTMLElement;
-        //private _loading: HTMLElement;
-        private _currentPage: Pageview;
+        private _element: HTMLElement;
         private _previous: Page;
         private _app: Application;
         private _routeData: RouteData;
+        private _name: string;
+        private _displayer: PageDisplayer;
+
+        load = chitu.Callbacks<Page, any>();
 
         showing = Callbacks<Page, any>();
         shown = Callbacks<Page, any>();
-        
+
         hiding = Callbacks<Page, any>();
         hidden = Callbacks<Page, any>();
 
         closing = Callbacks<Page, any>();
         closed = Callbacks<Page, any>();
 
-        pageCreated: chitu.Callback<Page, Pageview> = Callbacks<Page, Pageview>();
-
         constructor(params: {
             app: Application,
             routeData: RouteData,
+            element: HTMLElement,
+            displayer: PageDisplayer,
             previous?: Page,
         }) {
 
-            this._node = this.createNode();
-            //this._loading = this.createLoading(this._node);
+            this._element = params.element;
             this._previous = params.previous;
             this._app = params.app;
             this._routeData = params.routeData;
-
-            this.createPage(params.routeData);
+            this._displayer = params.displayer;
+            this.loadPageAction(params.routeData);
         }
-
-        on_pageCreated(page: chitu.Pageview) {
-            return chitu.fireCallback(this.pageCreated, this, page);
+        on_load(args) {
+            return fireCallback(this.load, this, args);
         }
-
         on_showing(args) {
             return fireCallback(this.showing, this, args);
         }
@@ -74,71 +68,33 @@ namespace chitu {
         on_closed(args) {
             return fireCallback(this.closed, this, args);
         }
-
-        protected createNode(): HTMLElement {
-            this._node = document.createElement('div');
-            this._node.className = 'page-container';
-            this._node.style.display = 'none';
-
-            document.body.appendChild(this._node);
-
-            return this._node;
-        }
-
-        // protected createLoading(parent: HTMLElement): HTMLElement {
-        //     var loading_element = document.createElement('div');
-        //     loading_element.className = 'page-loading';
-        //     loading_element.innerHTML = '<div class="spin"><i class="icon-spinner icon-spin"></i><div>';
-        //     parent.appendChild(loading_element);
-
-        //     return loading_element;
-        // }
-
         show(): void {
             if (this.visible == true)
                 return;
 
             this.on_showing(this.routeData.values);
-            $(this._node).show();
+            this._displayer.show(this);
             this.on_shown(this.routeData.values);
         }
-
         hide() {
-            if (this.visible == false)
+            if (this._displayer.visible(this))
                 return;
 
-            $(this._node).hide();
+            this.on_hiding(this.routeData.values);
+            this._displayer.hide(this);
+            this.on_hidden(this.routeData.values);
         }
-
-        private is_closing = false;
         close() {
-
+            this.hide();
             this.on_closing(this.routeData.values);
-
-            this.is_closing = true;
-            $(this._node).remove();
+            $(this._element).remove();
             this.on_closed(this.routeData.values);
         }
-        // private showLoading() {
-        //     this._loading.style.display = 'block';
-        // }
-        // private hideLoading() {
-        //     this._loading.style.display = 'none';
-        // }
         get visible() {
-            return $(this._node).is(':visible');
-        }
-        set visible(value: boolean) {
-            if (value)
-                $(this._node).show();
-            else
-                $(this._node).hide();
+            return this._displayer.visible(this);
         }
         get element(): HTMLElement {
-            return this._node;
-        }
-        get page(): Pageview {
-            return this._currentPage;
+            return this._element;
         }
         get previous(): Page {
             return this._previous;
@@ -146,104 +102,86 @@ namespace chitu {
         get routeData(): RouteData {
             return this._routeData;
         }
-        private createActionDeferred(routeData: RouteData): JQueryPromise<PageConstructor> {
-
-            var url = routeData.actionPath;
-            var result = $.Deferred<PageConstructor>();
-            requirejs([url], (Type: PageConstructor) => {
-                //加载脚本失败
-                if (!Type) {
-                    console.warn(chitu.Utility.format('加载活动“{0}”失败。', routeData.pageName));
-                    result.reject();
-                    return;
-                }
-
-                if (!$.isFunction(Type) || Type.prototype == null)
-                    throw chitu.Errors.actionTypeError(routeData.pageName);
-
-                result.resolve(Type);
-            },
-
-                (err) => result.reject(err)
-            );
-
-            return result;
+        get name(): string {
+            return this._name;
         }
-
-        private createViewDeferred(url: string): JQueryPromise<string> {
-
-            //var url = pageInfo.viewPath;
-            var self = this;
-            var result = $.Deferred();
-            var http = 'http://';
-            if (url.substr(0, http.length).toLowerCase() == http) {
-                //=======================================================
-                // 说明：不使用 require text 是因为加载远的 html 文件，会作
-                // 为 script 去解释而导致错误 
-                $.ajax({ url: url })
-                    .done((html) => {
-                        if (html != null)
-                            result.resolve(html);
-                        else
-                            result.reject();
-                    })
-                    .fail((err) => result.reject(err));
-                //=======================================================
-            }
-            else {
-                requirejs(['text!' + url],
-                    function (html) {
-                        if (html != null)
-                            result.resolve(html);
-                        else
-                            result.reject();
-                    },
-                    function (err) {
-                        result.reject(err)
-                    });
-            }
-
-            return result;
+        set name(value: string) {
+            this._name = value;
         }
+        private createActionDeferred(routeData: RouteData): Promise<PageActionConstructor> {
 
-        private createPage(routeData: RouteData): JQueryPromise<Pageview> {
-            let view_deferred: JQueryPromise<string>;
-            if (routeData.viewPath)
-                view_deferred = this.createViewDeferred(routeData.viewPath);
-            else
-                view_deferred = $.Deferred().resolve("");
+            return new Promise((resolve, reject) => {
+                var url = routeData.actionPath;
+                requirejs([url], (obj: any) => {
+                    //加载脚本失败
+                    if (!obj) {
+                        console.warn(chitu.Utility.format('加载活动“{0}”失败。', routeData.pageName));
+                        reject();
+                        return;
+                    }
 
-            var action_deferred = this.createActionDeferred(routeData);
-            var result = $.Deferred();
+                    resolve(obj);
+                },
 
-            $.when<any>(action_deferred, view_deferred).done((pageType: PageConstructor, html: string) => {
-                let pageElement = document.createElement('page');
-                pageElement.innerHTML = html;
-                pageElement.setAttribute('name', routeData.pageName);
+                    (err) => reject(err)
+                );
 
-                var page: Pageview = new pageType({ container: this, element: pageElement, routeData });
-                if (!(page instanceof Pageview))
-                    throw Errors.actionTypeError(routeData.pageName);
-
-                this._currentPage = page;
-                this.element.appendChild(page.element);
-
-                this.on_pageCreated(page);
-                result.resolve(page);
-                page.on_load(routeData.values).done(() => {
-                    //this.hideLoading();
-                });
-            }).fail((err) => {
-                result.reject();
-                console.error(err);
-                throw Errors.createPageFail(routeData.pageName);
             });
+        }
 
-            if (routeData.resource != null && routeData.resource.length > 0) {
-                Utility.loadjs.apply(Utility, routeData.resource);
+        private loadPageAction(routeData: RouteData) {
+            var action_deferred = this.createActionDeferred(routeData);
+            return action_deferred
+                .then((obj) => {
+                    let action = obj[routeData.actionName];
+                    if (action == null) {
+                        throw Errors.actionTypeError
+                    }
+
+                    if (typeof action == 'function') {
+                        action(this);
+                    }
+                    else if (action['prototype'] != null) {
+                        new action(this);
+                    }
+                    else {
+                        throw Errors.actionTypeError(routeData.actionName, routeData.pageName);
+                    }
+
+
+                    let q: Promise<any> = Promise.resolve();// = $.Deferred();
+                    if (routeData.resource != null && routeData.resource.length > 0) {
+                        q = Utility.loadjs.apply(Utility, routeData.resource);
+                    }
+
+                    q.then(() => {
+                        this.on_load(routeData.values);
+                    });
+
+                })
+                .catch((err) => {
+                    //result.reject();
+                    console.error(err);
+                    throw Errors.createPageFail(routeData.pageName);
+                });
+        }
+    }
+
+    export class PageDisplayerImplement implements PageDisplayer {
+        show(page: Page) {
+            $(page.element).show();
+            if (page.previous != null) {
+                $(page.previous.element).hide();
             }
-
-            return result;
+        }
+        hide(page: Page) {
+            $(page.element).hide();
+            if (page.previous != null) {
+                $(page.previous.element).show();
+            }
+        }
+        visible(page: Page) {
+            return $(page.element).is(':visible');
         }
     }
 
@@ -257,7 +195,21 @@ namespace chitu {
             routeData: RouteData,
             previous?: Page,
         }): Page {
-            let c = new Page(params);
+
+            params = params || <{ app: Application, routeData: RouteData, }>{}
+            if (params.app == null) throw Errors.argumentNull('app');
+            if (params.routeData == null) throw Errors.argumentNull('routeData');
+
+            let displayer = new PageDisplayerImplement();
+            let element: HTMLElement = document.createElement('page');
+            element.className = params.routeData.pageName;
+            let c = new Page({
+                app: params.app,
+                previous: params.previous,
+                routeData: params.routeData,
+                displayer,
+                element
+            });
             return c;
         }
     }

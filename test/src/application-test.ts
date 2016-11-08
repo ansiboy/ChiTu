@@ -8,7 +8,7 @@ QUnit.test("Application.parseUrl 路径、名称、参数测试", (assert) => {
     let routeData = app.parseUrl('#home/index');
 
     console.log(routeData.actionPath);
-    console.log(routeData.viewPath);
+    //console.log(routeData.viewPath);
     console.log(routeData.pageName);
 
     let actionPath = 'modules/home/index';
@@ -16,7 +16,7 @@ QUnit.test("Application.parseUrl 路径、名称、参数测试", (assert) => {
     let pageName = 'home.index';
 
     assert.equal(routeData.actionPath, actionPath);
-    assert.equal(routeData.viewPath, viewPath);
+    //assert.equal(routeData.viewPath, viewPath);
     assert.equal(routeData.pageName, pageName);
 
     routeData = app.parseUrl('#user/security/setting');
@@ -25,17 +25,17 @@ QUnit.test("Application.parseUrl 路径、名称、参数测试", (assert) => {
     pageName = 'user.security.setting';
 
     assert.equal(routeData.actionPath, actionPath);
-    assert.equal(routeData.viewPath, viewPath);
+    //assert.equal(routeData.viewPath, viewPath);
     assert.equal(routeData.pageName, pageName);
 
     routeData = app.parseUrl('#user/security/setting?');
     assert.equal(routeData.actionPath, actionPath);
-    assert.equal(routeData.viewPath, viewPath);
+    //assert.equal(routeData.viewPath, viewPath);
     assert.equal(routeData.pageName, pageName);
 
     routeData = app.parseUrl('#user/security/setting?name=maishu');
     assert.equal(routeData.actionPath, actionPath);
-    assert.equal(routeData.viewPath, viewPath);
+    //assert.equal(routeData.viewPath, viewPath);
     assert.equal(routeData.pageName, pageName);
     assert.equal(routeData.values.name, 'maishu');
 });
@@ -57,9 +57,9 @@ QUnit.asyncTest('Application.showPage 显示无视图页面', (assert) => {
     let parseUrl = app.parseUrl;
     app.parseUrl = (url: string): chitu.RouteData => {
         var result = <chitu.RouteData>parseUrl.apply(app, [url]);
-        if (result.pageName == 'user.index') {
-            result.viewPath = null;
-        }
+        // if (result.pageName == 'user.index') {
+        //     result.viewPath = null;
+        // }
         return result;
     };
 
@@ -81,7 +81,7 @@ QUnit.asyncTest('Application.pageCreated 事件', (assert) => {
 });
 QUnit.asyncTest('Page 关闭事件', (assert) => {
     var app = new chitu.Application();
-    app.showPage('#home/index').done((page) => {
+    app.showPage('#home/index').done((page:chitu.Page) => {
         let closing_called = false;
         let closed_called = false;
         page.closing.add(() => {
@@ -91,7 +91,7 @@ QUnit.asyncTest('Page 关闭事件', (assert) => {
             closed_called = true;
         });
 
-        page.container.close();
+        page.close();
         setTimeout(() => {
             assert.equal(closing_called, true, 'closing 事件已调用');
             assert.equal(closed_called, true, 'closed 事件已调用');

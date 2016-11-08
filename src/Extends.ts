@@ -15,7 +15,7 @@ namespace chitu {
     }
 
     export interface EventCallback<S, A> {
-        (sender: S, args: A): JQueryPromise<any> | void
+        (sender: S, args: A): Promise<any> | void
     }
 
     export class Callback<S, A> {
@@ -214,19 +214,22 @@ namespace chitu {
         return new chitu.Callback(self);
     }
 
-    export function fireCallback<S, A>(callback: chitu.Callback<S, A>, sender: S, args: A): JQueryPromise<any> {
+    export function fireCallback<S, A>(callback: chitu.Callback<S, A>, sender: S, args: A): Promise<any> {
         let context = sender;
-        var results = callback.fireWith(context, [sender, args]); //callback.fire.apply(callback, args);
-        var deferreds = [];
+        var results = callback.fireWith(context, [sender, args]); 
+        var deferreds = new Array<Promise<any>>();
         for (var i = 0; i < results.length; i++) {
-            if (chitu.Utility.isDeferred(results[i]))
+            if (results[i] instanceof Promise) 
                 deferreds.push(results[i]);
         }
 
-        if (deferreds.length == 0)
-            return $.Deferred().resolve();
+        if (deferreds.length == 0) {
+            return new Promise<any>((reslove) => {
+                reslove();
+            });
+        }
 
-        return $.when.apply($, deferreds);
+        return Promise.all(deferreds);
     }
 
 
