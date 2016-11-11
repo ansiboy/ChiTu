@@ -10,7 +10,7 @@
         /** 页面名称 */
         pageName: string,
         /** 其它资源文件的路径 */
-        resource?: string[]
+        resource?: string[],
     }
 
     export class RouteParser {
@@ -20,7 +20,6 @@
         private name_spliter_char = '.';
 
         private _actionPath = '';
-        //private _viewPath = '';
         private _cssPath = '';
         private _parameters: any = {};
         private _pageName = '';
@@ -36,31 +35,41 @@
         }
 
         public parseRouteString(routeString: string): RouteData {
-            let path: string;
+            let routePath: string;
             let search: string;
             let param_spliter_index: number = routeString.indexOf(this.param_spliter);
             if (param_spliter_index > 0) {
                 search = routeString.substr(param_spliter_index + 1);
-                path = routeString.substring(0, param_spliter_index);
+                routePath = routeString.substring(0, param_spliter_index);
             }
             else {
-                path = routeString;//.substr(1);
+                routePath = routeString;
             }
 
-            if (!path)
-                throw Errors.canntRouteString(routeString);
+            if (!routePath)
+                throw Errors.canntParseRouteString(routeString);
 
             if (search) {
                 this._parameters = this.pareeUrlQuery(search);
             }
 
-            let path_parts = path.split(this.path_spliter_char);
+            let path_parts = routePath.split(this.path_spliter_char).filter(o => (o || '').trim() != '');
+            if (routePath[routePath.length - 1] != '/' && path_parts.length < 2) {
+                throw Errors.canntParseRouteString(routeString);
+            }
+
             let actionName = path_parts[path_parts.length - 1];
-            let page_name = path_parts.join(this.name_spliter_char);
+            if (routePath[routePath.length - 1] != '/') {
+                path_parts.pop();
+            }
+
+            let file_path = path_parts.join(this.path_spliter_char);
+            let page_name = file_path.split(this.path_spliter_char)
+                .join(this.name_spliter_char) + this.name_spliter_char + actionName;
+
             var result = {
-                actionPath: this.pathBase + path,
+                actionPath: this.pathBase + file_path,
                 actionName,
-                viewPath: this.pathBase + path + '.html',
                 values: this._parameters,
                 pageName: page_name,
             }
@@ -82,20 +91,17 @@
         }
     }
 
+    interface MyLocation extends Location {
+        skip: boolean//HashChanged
+    }
 
 
-    var PAGE_STACK_MAX_SIZE = 10;
+
+    var PAGE_STACK_MAX_SIZE = 16;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
     export interface ApplicationConfig {
-        /**
-         * 获取页面容器，依据 routeData 获取页面容器
-         * param routeData 页面路由数据
-         * param previous 上一个页面容器，如果当前页面容器是第一个，则为空值 
-         */
-        //container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
-
         /**
          * 页面的基本路径
          */
@@ -112,9 +118,8 @@
         private _config: ApplicationConfig;
         private _runned: boolean = false;
         private zindex: number;
-        private back_deferred: JQueryDeferred<any>;
-        private start_flag_hash: string;
-        private start_hash: string;
+        //private start_flag_hash: string;
+        //private start_hash: string;
         private page_stack = new Array<Page>();
 
         /**
@@ -140,20 +145,20 @@
         }
 
         private on_pageCreated(page: Page) {
-            return chitu.fireCallback(this.pageCreated, this, page);
+            return fireCallback(this.pageCreated, this, page);
         }
 
         /**
          * 获取应用的设置
          */
-        get config(): chitu.ApplicationConfig {
+        get config(): ApplicationConfig {
             return this._config;
         }
 
         /**
          * 获取当前页面
          */
-        get currentPage(): chitu.Page {
+        get currentPage(): Page {
             if (this.page_stack.length > 0)
                 return this.page_stack[this.page_stack.length - 1];
 
@@ -181,39 +186,16 @@
         }
 
         protected hashchange() {
-            if (window.location['skip'] == true) {
-                window.location['skip'] = false;
+            let location = window.location as MyLocation;
+            if (location.skip == true) {
+                location.skip = false;
                 return;
-            }
-
-            var back_deferred: JQueryDeferred<any>
-            if (this.back_deferred && this.back_deferred['processed'] == null) {
-                back_deferred = this.back_deferred;
-                back_deferred['processed'] = true;
             }
 
             var hash = window.location.hash;
-            if (!hash || hash == this.start_flag_hash) {
-                if (!hash)
-                    console.log('The url is not contains hash.url is ' + window.location.href);
-
-                if (hash == this.start_flag_hash) {
-                    window.history.pushState({}, '', this.start_hash);
-                    console.log('The hash is start url, the hash is ' + hash);
-                }
-
-                if (back_deferred)
-                    back_deferred.reject();
-
+            if (!hash) {
+                console.log('The url is not contains hash.url is ' + window.location.href);
                 return;
-            }
-
-            if (!this.start_flag_hash) {
-                //TODO:生成随机字符串
-                this.start_flag_hash = '#AABBCCDDEEFF';
-                this.start_hash = hash;
-                window.history.replaceState({}, '', this.start_flag_hash);
-                window.history.pushState({}, '', hash);
             }
 
             var routeString: string;
@@ -222,21 +204,9 @@
 
             var pageInfo = this.parseRouteString(routeString);
             var page = this.getPage(pageInfo.pageName);
-            //var container: Page = page != null ? page.container : null;
 
-            if (page != null && this.page_stack.indexOf(page) == this.page_stack.length - 2) {
-                var c = this.page_stack.pop();
-                if (c.previous != null) {
-                    c.previous.show();
-                }
-                c.close();
-            }
-            else {
-                this.showPage(routeString);
-            }
 
-            if (back_deferred)
-                back_deferred.resolve();
+            this.showPage(routeString);
         }
 
         /**
@@ -269,8 +239,8 @@
 
         /**
          * 显示页面
-         * param url 页面的路径
-         * param args 传递到页面的参数 
+         * @param url 页面的路径
+         * @param args 传递到页面的参数 
          */
         public showPage<T extends Page>(routeString: string, args?: any): Promise<T> {
             if (!routeString) throw Errors.argumentNull('routeString');
@@ -280,16 +250,25 @@
                 throw Errors.noneRouteMatched(routeString);
             }
 
-            routeData.values = $.extend(routeData.values, args || {});
+            routeData.values = Utility.extend(routeData.values, args || {});
 
             let previous = this.currentPage;
             let result = new Promise((resolve, reject) => {
                 let page = this.createPage(routeData);
                 this.on_pageCreated(page);
+                page.show();
                 resolve(page);
+
+                this.changeLocationHash(routeString);
             });
 
             return result;
+        }
+
+        private changeLocationHash(hash: string) {
+            let location = window.location as MyLocation;
+            location.skip = true;
+            location.hash = '#' + hash;
         }
 
         protected createPageNode(): HTMLElement {
@@ -299,13 +278,14 @@
 
         /**
          * 页面跳转
-         * param url 页面路径
-         * param args 传递到页面的参数
+         * @param url 页面路径
+         * @param args 传递到页面的参数
          */
-        public redirect<T extends Page>(url: string, args?: any): Promise<T> {
-            window.location['skip'] = true;
-            window.location.hash = url;
-            return this.showPage<T>(url, args);
+        public redirect<T extends Page>(routeString: string, args?: any): Promise<T> {
+            let location = window.location as MyLocation;
+            location.skip = true;
+            window.location.hash = routeString;
+            return this.showPage<T>(routeString, args);
         }
 
         /**
@@ -313,17 +293,19 @@
          */
         public back(args = undefined): Promise<void> {
             return new Promise<void>((reslove, reject) => {
-                if (window.history.length == 0) {
+                if (this.page_stack.length == 0) {
                     reject();
-                    //================================
-                    // 移除最后一个页面
-                    this.page_stack.pop();
-                    //================================
+
                     fireCallback(this.backFail, this, {});
-                    return this.back_deferred;
+                    return;
                 }
 
-                window.history.back();
+                this.currentPage.close();
+                //================================
+                // 移除最后一个页面
+                this.page_stack.pop();
+                //================================
+
                 reslove();
             });
 

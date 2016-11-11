@@ -47,7 +47,7 @@
             var msg = Utility.format('Can not parse the url "{0}" to route data.', url);
             return new Error(msg);
         }
-        public static canntRouteString(routeString: string): Error {
+        public static canntParseRouteString(routeString: string): Error {
             var msg = Utility.format('Can not parse the route string "{0}" to route data.', routeString);
             return new Error(msg);
         }

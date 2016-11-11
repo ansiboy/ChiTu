@@ -29,27 +29,26 @@ declare namespace chitu {
         private _config;
         private _runned;
         private zindex;
-        private back_deferred;
-        private start_flag_hash;
-        private start_hash;
         private page_stack;
         parseRouteString: (routeString: string) => RouteData;
         backFail: Callback<Application, {}>;
         constructor(config?: ApplicationConfig);
         private on_pageCreated(page);
-        config: chitu.ApplicationConfig;
-        currentPage: chitu.Page;
+        config: ApplicationConfig;
+        currentPage: Page;
         pages: Array<Page>;
         private createPage(routeData);
         protected hashchange(): void;
         run(): void;
         getPage(name: string): Page;
         showPage<T extends Page>(routeString: string, args?: any): Promise<T>;
+        private changeLocationHash(hash);
         protected createPageNode(): HTMLElement;
-        redirect<T extends Page>(url: string, args?: any): Promise<T>;
+        redirect<T extends Page>(routeString: string, args?: any): Promise<T>;
         back(args?: any): Promise<void>;
     }
 }
+
 declare namespace chitu {
     class Errors {
         static argumentNull(paramName: string): Error;
@@ -64,7 +63,7 @@ declare namespace chitu {
         static noneRouteMatched(url: any): Error;
         static emptyStack(): Error;
         static canntParseUrl(url: string): Error;
-        static canntRouteString(routeString: string): Error;
+        static canntParseRouteString(routeString: string): Error;
         static routeDataRequireController(): Error;
         static routeDataRequireAction(): Error;
         static parameterRequireField(fileName: any, parameterName: any): Error;
@@ -75,6 +74,7 @@ declare namespace chitu {
         static scrollerElementNotExists(): Error;
     }
 }
+
 declare namespace chitu {
     interface EventCallback<S, A> {
         (sender: S, args: A): Promise<any> | void;
@@ -89,8 +89,9 @@ declare namespace chitu {
         fire(arg1?: any, arg2?: any, arg3?: any, arg4?: any): any;
     }
     function Callbacks<S, A>(options?: any): Callback<S, A>;
-    function fireCallback<S, A>(callback: chitu.Callback<S, A>, sender: S, args: A): Promise<any>;
+    function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A): Promise<any>;
 }
+
 declare namespace chitu {
     interface PageActionConstructor {
         new (args: Page): any;
@@ -107,7 +108,6 @@ declare namespace chitu {
         private _previous;
         private _app;
         private _routeData;
-        private _name;
         private _displayer;
         load: Callback<Page, any>;
         showing: Callback<Page, any>;
@@ -156,8 +156,11 @@ declare namespace chitu {
         }): Page;
     }
 }
+
+
 declare namespace chitu {
     class Utility {
+        static extend(obj1: any, obj2: any): any;
         static isType(targetType: Function, obj: any): boolean;
         static isDeferred(obj: any): boolean;
         static format(source: string, ...params: string[]): string;
@@ -166,3 +169,6 @@ declare namespace chitu {
         static loadjs(...modules: string[]): Promise<any>;
     }
 }
+declare module "chitu" { 
+            export = chitu; 
+        }

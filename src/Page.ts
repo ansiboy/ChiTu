@@ -18,10 +18,10 @@ namespace chitu {
         private _previous: Page;
         private _app: Application;
         private _routeData: RouteData;
-        private _name: string;
+        //private _name: string;
         private _displayer: PageDisplayer;
 
-        load = chitu.Callbacks<Page, any>();
+        load = Callbacks<Page, any>();
 
         showing = Callbacks<Page, any>();
         shown = Callbacks<Page, any>();
@@ -87,7 +87,7 @@ namespace chitu {
         close() {
             this.hide();
             this.on_closing(this.routeData.values);
-            $(this._element).remove();
+            this._element.remove();
             this.on_closed(this.routeData.values);
         }
         get visible() {
@@ -103,10 +103,7 @@ namespace chitu {
             return this._routeData;
         }
         get name(): string {
-            return this._name;
-        }
-        set name(value: string) {
-            this._name = value;
+            return this.routeData.pageName;
         }
         private createActionDeferred(routeData: RouteData): Promise<PageActionConstructor> {
 
@@ -169,19 +166,19 @@ namespace chitu {
 
     export class PageDisplayerImplement implements PageDisplayer {
         show(page: Page) {
-            $(page.element).show();
+            page.element.style.display = 'block';
             if (page.previous != null) {
-                $(page.previous.element).hide();
+                page.previous.element.style.display = 'none';
             }
         }
         hide(page: Page) {
-            $(page.element).hide();
+            page.element.style.display = 'none';
             if (page.previous != null) {
-                $(page.previous.element).show();
+                page.previous.element.style.display = 'block';
             }
         }
         visible(page: Page) {
-            return $(page.element).is(':visible');
+            return page.element.style.display == 'block' || !page.element.style.display;
         }
     }
 
@@ -202,7 +199,7 @@ namespace chitu {
 
             let displayer = new PageDisplayerImplement();
             let element: HTMLElement = document.createElement('page');
-            element.className = params.routeData.pageName;
+            element.setAttribute('name', params.routeData.pageName);
             let c = new Page({
                 app: params.app,
                 previous: params.previous,
@@ -210,6 +207,9 @@ namespace chitu {
                 displayer,
                 element
             });
+
+            document.body.appendChild(element);
+
             return c;
         }
     }

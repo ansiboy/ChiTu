@@ -1,9 +1,8 @@
-define(["require", "exports"], function (require, exports) {
-    "use strict";
-    var html = "<h1>User Index Page</h1>";
-    return (function () {
-        function IndexPage() {
-        }
-        return IndexPage;
-    }());
-});
+/** @param page {chitu.Page} */
+function index(page) {
+    page.element.innerHTML = '<h1>User.Index</h1>'
+}
+
+define(['exports'], (exports) => {
+    exports.index = index;
+})

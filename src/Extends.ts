@@ -211,10 +211,10 @@ namespace chitu {
                 }
             };
 
-        return new chitu.Callback(self);
+        return new Callback(self);
     }
 
-    export function fireCallback<S, A>(callback: chitu.Callback<S, A>, sender: S, args: A): Promise<any> {
+    export function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A): Promise<any> {
         let context = sender;
         var results = callback.fireWith(context, [sender, args]); 
         var deferreds = new Array<Promise<any>>();
