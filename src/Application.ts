@@ -1,5 +1,7 @@
 ﻿namespace chitu {
 
+    const DEFAULT_FILE_BASE_PATH = 'modules'
+
     export interface RouteData {
         /** 页面的路径，即 js 文件 */
         actionPath: string,
@@ -27,11 +29,8 @@
 
         private HASH_MINI_LENGTH = 2;
 
-        constructor(basePath?: string) {
-            if (basePath == null)
-                basePath = 'modules'
-
-            this._pathBase = basePath;
+        constructor(basePath: string) {
+            this._pathBase = basePath || '';
         }
 
         public parseRouteString(routeString: string): RouteData {
@@ -58,8 +57,6 @@
                 throw Errors.canntParseRouteString(routeString);
             }
 
-
-
             let actionName = route_parts[route_parts.length - 1];
             let path_parts = route_parts.slice(0, route_parts.length - 1);
             let file_path = path_parts.join(this.path_spliter_char);
@@ -68,7 +65,7 @@
                 page_name = page_name + this.name_spliter_char + actionName;
 
             var result = {
-                actionPath: combinePath(this.basePath, file_path),
+                actionPath: (this.basePath ? combinePath(this.basePath, file_path) : file_path),
                 actionName,
                 values: this._parameters,
                 pageName: page_name,
@@ -100,18 +97,9 @@
         skipHashChanged: boolean
     }
 
-
-
     var PAGE_STACK_MAX_SIZE = 16;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
-
-    export interface ApplicationConfig {
-        /**
-         * 页面的基本路径
-         */
-        pathBase?: string,
-    }
 
     export class Application {
 
@@ -120,42 +108,36 @@
          */
         pageCreated = Callbacks<Application, Page>();
 
-        private _config: ApplicationConfig;
         private _runned: boolean = false;
         private zindex: number;
         private page_stack = new Array<Page>();
 
         /**
-         * 解释 url，将 url 解释为 RouteData
-         * param url 要解释的 url
+         * 加载文件的基本路径
          */
-        parseRouteString: (routeString: string) => RouteData;
+        fileBasePath: string = DEFAULT_FILE_BASE_PATH;
 
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
          */
         backFail = Callbacks<Application, {}>();
 
-        constructor(config?: ApplicationConfig) {
+        constructor() {
+            // config = config || {};
+            // this._config = config;
+        }
 
-            config = config || {};
-            this._config = config;
-
-            let urlParser = new RouteParser(this._config.pathBase);
-            this.parseRouteString = (routeString: string) => {
-                return urlParser.parseRouteString(routeString);
-            }
+        /**
+         * 解释路由，将路由字符串解释为 RouteData 对象
+         * @param routeString 要解释的 路由字符串
+         */
+        protected parseRouteString(routeString: string): RouteData {
+            let urlParser = new RouteParser(this.fileBasePath);
+            return urlParser.parseRouteString(routeString);
         }
 
         private on_pageCreated(page: Page) {
             return fireCallback(this.pageCreated, this, page);
-        }
-
-        /**
-         * 获取应用的设置
-         */
-        get config(): ApplicationConfig {
-            return this._config;
         }
 
         /**
@@ -327,31 +309,5 @@
             });
 
         }
-
-        //       protected createPage(params: {
-        //     app: Application,
-        //     routeData: RouteData,
-        //     previous?: Page,
-        // }): Page {
-
-        //     params = params || <{ app: Application, routeData: RouteData, }>{}
-        //     if (params.app == null) throw Errors.argumentNull('app');
-        //     if (params.routeData == null) throw Errors.argumentNull('routeData');
-
-        //     let displayer = new PageDisplayerImplement();
-        //     let element: HTMLElement = document.createElement('page');
-        //     element.setAttribute('name', params.routeData.pageName);
-        //     let c = new Page({
-        //         app: params.app,
-        //         previous: params.previous,
-        //         routeData: params.routeData,
-        //         displayer,
-        //         element
-        //     });
-
-        //     document.body.appendChild(element);
-
-        //     return c;
-        // }
     }
 } 

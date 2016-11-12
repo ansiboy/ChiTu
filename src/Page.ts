@@ -7,7 +7,6 @@ namespace chitu {
     export interface PageDisplayer {
         show(page: Page);
         hide(page: Page);
-        //visible(page: Page): boolean;
     }
 
     export class Page {
@@ -47,52 +46,49 @@ namespace chitu {
             this._displayer = params.displayer;
             this.loadPageAction(params.routeData);
         }
-        on_load(args) {
-            return fireCallback(this.load, this, args);
+        on_load(...resources: Array<any>) {
+            return fireCallback(this.load, this, resources);
         }
-        on_showing(args) {
-            return fireCallback(this.showing, this, args);
+        on_showing() {
+            return fireCallback(this.showing, this);
         }
-        on_shown(args) {
-            return fireCallback(this.shown, this, args);
+        on_shown() {
+            return fireCallback(this.shown, this);
         }
-        on_hiding(args) {
-            return fireCallback(this.hiding, this, args);
+        on_hiding() {
+            return fireCallback(this.hiding, this);
         }
-        on_hidden(args) {
-            return fireCallback(this.hidden, this, args);
+        on_hidden() {
+            return fireCallback(this.hidden, this);
         }
-        on_closing(args) {
-            return fireCallback(this.closing, this, args);
+        on_closing() {
+            return fireCallback(this.closing, this);
         }
-        on_closed(args) {
-            return fireCallback(this.closed, this, args);
+        on_closed() {
+            return fireCallback(this.closed, this);
         }
         show(): void {
             // if (this.visible == true)
             //     return;
 
-            this.on_showing(this.routeData.values);
+            this.on_showing();
             this._displayer.show(this);
-            this.on_shown(this.routeData.values);
+            this.on_shown();
         }
         hide() {
             // if (this._displayer.visible(this))
             //     return;
 
-            this.on_hiding(this.routeData.values);
+            this.on_hiding();
             this._displayer.hide(this);
-            this.on_hidden(this.routeData.values);
+            this.on_hidden();
         }
         close() {
             this.hide();
-            this.on_closing(this.routeData.values);
+            this.on_closing();
             this._element.remove();
-            this.on_closed(this.routeData.values);
+            this.on_closed();
         }
-        // get visible() {
-        //     return this._displayer.visible(this);
-        // }
         get element(): HTMLElement {
             return this._element;
         }
@@ -127,11 +123,10 @@ namespace chitu {
         }
 
         private loadPageAction(routeData: RouteData) {
-            var action_deferred = this.createActionDeferred(routeData);
-            return action_deferred
-                .then((obj) => {
+            var action_deferred = new Promise((reslove, reject) => {
+                this.createActionDeferred(routeData).then((actionResult) => {
                     let actionName = routeData.actionName || 'default';
-                    let action = obj[actionName];
+                    let action = actionResult[actionName];
                     if (action == null) {
                         throw Errors.canntFindAction(routeData.actionName, routeData.pageName);
                     }
@@ -141,27 +136,22 @@ namespace chitu {
                             new action(this);
                         else
                             action(this);
+
+                        reslove();
                     }
                     else {
+                        reject();
                         throw Errors.actionTypeError(routeData.actionName, routeData.pageName);
                     }
-
-
-                    let q: Promise<any> = Promise.resolve();// = $.Deferred();
-                    if (routeData.resource != null && routeData.resource.length > 0) {
-                        q = Utility.loadjs.apply(Utility, routeData.resource);
-                    }
-
-                    q.then(() => {
-                        this.on_load(routeData.values);
-                    });
-
-                })
-                .catch((err) => {
-                    //result.reject();
-                    console.error(err);
-                    throw Errors.createPageFail(routeData.pageName);
                 });
+            });
+
+            let result = Promise.all([action_deferred, loadjs(...routeData.resource || [])]).then((results) => {
+                let resourceResults = results[1];
+                this.on_load(...resourceResults);
+            });
+
+            return result;
         }
     }
 

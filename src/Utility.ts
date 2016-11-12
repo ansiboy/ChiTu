@@ -56,17 +56,7 @@
             var txt = this.format.apply(this, arguments);
             console.log(txt);
         }
-        static loadjs(...modules: string[]): Promise<any> {
-            return new Promise((reslove, reject) => {
-                requirejs(modules, function () {
-                    var args = [];
-                    for (var i = 0; i < arguments.length; i++)
-                        args[i] = arguments[i];
-
-                    reslove.apply({}, args);
-                });
-            });
-        }
+        static loadjs = loadjs
     }
 
     export function extend(obj1, obj2) {
@@ -87,6 +77,25 @@
             path1 = path1 + '/';
 
         return path1 + path2;
+    }
+
+    export function loadjs(...modules: string[]): Promise<Array<any>> {
+        if (modules.length == 0)
+            return Promise.resolve([]);
+
+        return new Promise<Array<any>>((reslove, reject) => {
+            requirejs(modules,
+                function () {
+                    var args = [];
+                    for (var i = 0; i < arguments.length; i++)
+                        args[i] = arguments[i];
+
+                    reslove(args);
+                },
+                function () {
+                    reject();
+                });
+        });
     }
 
 

@@ -17,25 +17,21 @@ declare namespace chitu {
         private _pageName;
         private _pathBase;
         private HASH_MINI_LENGTH;
-        constructor(basePath?: string);
+        constructor(basePath: string);
         parseRouteString(routeString: string): RouteData;
         basePath: string;
         private pareeUrlQuery(query);
     }
-    interface ApplicationConfig {
-        pathBase?: string;
-    }
     class Application {
-        pageCreated: Callback<Application, Page>;
-        private _config;
+        pageCreated: Callback<Application>;
         private _runned;
         private zindex;
         private page_stack;
-        parseRouteString: (routeString: string) => RouteData;
-        backFail: Callback<Application, {}>;
-        constructor(config?: ApplicationConfig);
+        fileBasePath: string;
+        backFail: Callback<Application>;
+        constructor();
+        protected parseRouteString(routeString: string): RouteData;
         private on_pageCreated(page);
-        config: ApplicationConfig;
         currentPage: Page;
         pages: Array<Page>;
         protected createPage(routeData: RouteData): Page;
@@ -80,17 +76,17 @@ declare namespace chitu {
     interface EventCallback<S, A> {
         (sender: S, args: A): Promise<any> | void;
     }
-    class Callback<S, A> {
+    class Callback<S> {
         source: any;
         constructor(source: any);
-        add(func: (S, A) => any): void;
+        add(func: (sender: S) => any): void;
         remove(func: Function): void;
         has(func: Function): boolean;
         fireWith(context: any, args: any): any;
         fire(arg1?: any, arg2?: any, arg3?: any, arg4?: any): any;
     }
-    function Callbacks<S, A>(options?: any): Callback<S, A>;
-    function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A): Promise<any>;
+    function Callbacks<S, A>(options?: any): Callback<S>;
+    function fireCallback<S>(callback: Callback<S>, sender: S, ...args: Array<any>): Promise<any>;
 }
 
 declare namespace chitu {
@@ -109,13 +105,13 @@ declare namespace chitu {
         private _app;
         private _routeData;
         private _displayer;
-        load: Callback<Page, any>;
-        showing: Callback<Page, any>;
-        shown: Callback<Page, any>;
-        hiding: Callback<Page, any>;
-        hidden: Callback<Page, any>;
-        closing: Callback<Page, any>;
-        closed: Callback<Page, any>;
+        load: Callback<Page>;
+        showing: Callback<Page>;
+        shown: Callback<Page>;
+        hiding: Callback<Page>;
+        hidden: Callback<Page>;
+        closing: Callback<Page>;
+        closed: Callback<Page>;
         constructor(params: {
             app: Application;
             routeData: RouteData;
@@ -123,13 +119,13 @@ declare namespace chitu {
             displayer: PageDisplayer;
             previous?: Page;
         });
-        on_load(args: any): Promise<any>;
-        on_showing(args: any): Promise<any>;
-        on_shown(args: any): Promise<any>;
-        on_hiding(args: any): Promise<any>;
-        on_hidden(args: any): Promise<any>;
-        on_closing(args: any): Promise<any>;
-        on_closed(args: any): Promise<any>;
+        on_load(...resources: Array<any>): Promise<any>;
+        on_showing(): Promise<any>;
+        on_shown(): Promise<any>;
+        on_hiding(): Promise<any>;
+        on_hidden(): Promise<any>;
+        on_closing(): Promise<any>;
+        on_closed(): Promise<any>;
         show(): void;
         hide(): void;
         close(): void;
@@ -154,10 +150,11 @@ declare namespace chitu {
         static format(source: string, ...params: string[]): string;
         static fileName(url: any, withExt: any): string;
         static log(msg: any, args?: any[]): void;
-        static loadjs(...modules: string[]): Promise<any>;
+        static loadjs: typeof loadjs;
     }
     function extend(obj1: any, obj2: any): any;
     function combinePath(path1: string, path2: string): string;
+    function loadjs(...modules: string[]): Promise<Array<any>>;
 }
 declare module "chitu" { 
             export = chitu; 

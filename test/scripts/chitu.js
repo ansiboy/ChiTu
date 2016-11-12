@@ -6,6 +6,7 @@
                 } 
             })(function($) {var chitu;
 (function (chitu) {
+    const DEFAULT_FILE_BASE_PATH = 'modules';
     class RouteParser {
         constructor(basePath) {
             this.path_string = '';
@@ -18,9 +19,7 @@
             this._pageName = '';
             this._pathBase = '';
             this.HASH_MINI_LENGTH = 2;
-            if (basePath == null)
-                basePath = 'modules';
-            this._pathBase = basePath;
+            this._pathBase = basePath || '';
         }
         parseRouteString(routeString) {
             let routePath;
@@ -49,7 +48,7 @@
             if (actionName)
                 page_name = page_name + this.name_spliter_char + actionName;
             var result = {
-                actionPath: chitu.combinePath(this.basePath, file_path),
+                actionPath: (this.basePath ? chitu.combinePath(this.basePath, file_path) : file_path),
                 actionName,
                 values: this._parameters,
                 pageName: page_name,
@@ -72,23 +71,19 @@
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
     class Application {
-        constructor(config) {
+        constructor() {
             this.pageCreated = chitu.Callbacks();
             this._runned = false;
             this.page_stack = new Array();
+            this.fileBasePath = DEFAULT_FILE_BASE_PATH;
             this.backFail = chitu.Callbacks();
-            config = config || {};
-            this._config = config;
-            let urlParser = new RouteParser(this._config.pathBase);
-            this.parseRouteString = (routeString) => {
-                return urlParser.parseRouteString(routeString);
-            };
+        }
+        parseRouteString(routeString) {
+            let urlParser = new RouteParser(this.fileBasePath);
+            return urlParser.parseRouteString(routeString);
         }
         on_pageCreated(page) {
             return chitu.fireCallback(this.pageCreated, this, page);
-        }
-        get config() {
-            return this._config;
         }
         get currentPage() {
             if (this.page_stack.length > 0)
@@ -461,9 +456,10 @@ var chitu;
         return new Callback(self);
     }
     chitu.Callbacks = Callbacks;
-    function fireCallback(callback, sender, args) {
+    function fireCallback(callback, sender, ...args) {
         let context = sender;
-        var results = callback.fireWith(context, [sender, args]);
+        args.unshift(sender);
+        var results = callback.fireWith(context, args);
         var deferreds = new Array();
         for (var i = 0; i < results.length; i++) {
             if (results[i] instanceof Promise)
@@ -498,42 +494,42 @@ var chitu;
             this._displayer = params.displayer;
             this.loadPageAction(params.routeData);
         }
-        on_load(args) {
-            return chitu.fireCallback(this.load, this, args);
+        on_load(...resources) {
+            return chitu.fireCallback(this.load, this, resources);
         }
-        on_showing(args) {
-            return chitu.fireCallback(this.showing, this, args);
+        on_showing() {
+            return chitu.fireCallback(this.showing, this);
         }
-        on_shown(args) {
-            return chitu.fireCallback(this.shown, this, args);
+        on_shown() {
+            return chitu.fireCallback(this.shown, this);
         }
-        on_hiding(args) {
-            return chitu.fireCallback(this.hiding, this, args);
+        on_hiding() {
+            return chitu.fireCallback(this.hiding, this);
         }
-        on_hidden(args) {
-            return chitu.fireCallback(this.hidden, this, args);
+        on_hidden() {
+            return chitu.fireCallback(this.hidden, this);
         }
-        on_closing(args) {
-            return chitu.fireCallback(this.closing, this, args);
+        on_closing() {
+            return chitu.fireCallback(this.closing, this);
         }
-        on_closed(args) {
-            return chitu.fireCallback(this.closed, this, args);
+        on_closed() {
+            return chitu.fireCallback(this.closed, this);
         }
         show() {
-            this.on_showing(this.routeData.values);
+            this.on_showing();
             this._displayer.show(this);
-            this.on_shown(this.routeData.values);
+            this.on_shown();
         }
         hide() {
-            this.on_hiding(this.routeData.values);
+            this.on_hiding();
             this._displayer.hide(this);
-            this.on_hidden(this.routeData.values);
+            this.on_hidden();
         }
         close() {
             this.hide();
-            this.on_closing(this.routeData.values);
+            this.on_closing();
             this._element.remove();
-            this.on_closed(this.routeData.values);
+            this.on_closed();
         }
         get element() {
             return this._element;
@@ -562,34 +558,26 @@ var chitu;
         }
         loadPageAction(routeData) {
             var action_deferred = this.createActionDeferred(routeData);
-            return action_deferred
-                .then((obj) => {
+            let result = Promise.all([action_deferred, chitu.loadjs(...routeData.resource || [])]).then((results) => {
+                let actionResult = results[0];
+                let resourceResults = results[1];
                 let actionName = routeData.actionName || 'default';
-                let action = obj[actionName];
+                let action = actionResult[actionName];
                 if (action == null) {
                     throw chitu.Errors.canntFindAction(routeData.actionName, routeData.pageName);
                 }
                 if (typeof action == 'function') {
                     if (action['prototype'] != null)
-                        new action(this);
+                        new action(this, ...resourceResults);
                     else
-                        action(this);
+                        action(this, ...resourceResults);
+                    this.on_load(...resourceResults);
                 }
                 else {
                     throw chitu.Errors.actionTypeError(routeData.actionName, routeData.pageName);
                 }
-                let q = Promise.resolve();
-                if (routeData.resource != null && routeData.resource.length > 0) {
-                    q = chitu.Utility.loadjs.apply(chitu.Utility, routeData.resource);
-                }
-                q.then(() => {
-                    this.on_load(routeData.values);
-                });
-            })
-                .catch((err) => {
-                console.error(err);
-                throw chitu.Errors.createPageFail(routeData.pageName);
             });
+            return result;
         }
     }
     chitu.Page = Page;
@@ -659,17 +647,8 @@ var chitu;
             var txt = this.format.apply(this, arguments);
             console.log(txt);
         }
-        static loadjs(...modules) {
-            return new Promise((reslove, reject) => {
-                requirejs(modules, function () {
-                    var args = [];
-                    for (var i = 0; i < arguments.length; i++)
-                        args[i] = arguments[i];
-                    reslove.apply({}, args);
-                });
-            });
-        }
     }
+    Utility.loadjs = loadjs;
     chitu.Utility = Utility;
     function extend(obj1, obj2) {
         if (obj1 == null)
@@ -693,6 +672,21 @@ var chitu;
         return path1 + path2;
     }
     chitu.combinePath = combinePath;
+    function loadjs(...modules) {
+        if (modules.length == 0)
+            return Promise.resolve([]);
+        return new Promise((reslove, reject) => {
+            requirejs(modules, function () {
+                var args = [];
+                for (var i = 0; i < arguments.length; i++)
+                    args[i] = arguments[i];
+                reslove(args);
+            }, function () {
+                reject();
+            });
+        });
+    }
+    chitu.loadjs = loadjs;
 })(chitu || (chitu = {}));
 
 window['chitu'] = window['chitu'] || chitu 

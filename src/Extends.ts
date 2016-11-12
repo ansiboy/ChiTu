@@ -18,12 +18,12 @@ namespace chitu {
         (sender: S, args: A): Promise<any> | void
     }
 
-    export class Callback<S, A> {
+    export class Callback<S> {
         source: any
         constructor(source: any) {
             this.source = source;
         }
-        add(func: (S, A) => any) {
+        add(func: (sender: S) => any) {
             this.source.add(func);
         }
         remove(func: Function) {
@@ -40,7 +40,7 @@ namespace chitu {
         }
     }
 
-    export function Callbacks<S, A>(options: any = null): Callback<S, A> {
+    export function Callbacks<S, A>(options: any = null): Callback<S> {
         // Convert options from String-formatted to Object-formatted if needed
         // (we check in cache first)
         options = typeof options === "string" ?
@@ -214,9 +214,10 @@ namespace chitu {
         return new Callback(self);
     }
 
-    export function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A): Promise<any> {
+    export function fireCallback<S>(callback: Callback<S>, sender: S, ...args: Array<any>): Promise<any> {
         let context = sender;
-        var results = callback.fireWith(context, [sender, args]);
+        args.unshift(sender);
+        var results = callback.fireWith(context, args);
         var deferreds = new Array<Promise<any>>();
         for (var i = 0; i < results.length; i++) {
             if (results[i] instanceof Promise)
