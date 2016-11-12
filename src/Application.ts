@@ -175,9 +175,20 @@
             return this.page_stack;
         }
 
-        private createPage(routeData: RouteData): Page {
+        protected createPage(routeData: RouteData): Page {
             let previous_page = this.pages[this.pages.length - 1];
-            let page = PageFactory.createInstance({ app: this, routeData, previous: previous_page });
+
+            let element = this.createPageElement();
+            let displayer = new PageDisplayerImplement();
+
+            element.setAttribute('name', routeData.pageName);
+            let page = new Page({
+                app: this,
+                previous: previous_page,
+                routeData: routeData,
+                displayer,
+                element
+            });
 
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -186,6 +197,12 @@
             }
 
             return page;
+        }
+
+        protected createPageElement() {
+            let element: HTMLElement = document.createElement('page');
+            document.body.appendChild(element);
+            return element;
         }
 
         protected hashchange() {
@@ -310,5 +327,31 @@
             });
 
         }
+
+        //       protected createPage(params: {
+        //     app: Application,
+        //     routeData: RouteData,
+        //     previous?: Page,
+        // }): Page {
+
+        //     params = params || <{ app: Application, routeData: RouteData, }>{}
+        //     if (params.app == null) throw Errors.argumentNull('app');
+        //     if (params.routeData == null) throw Errors.argumentNull('routeData');
+
+        //     let displayer = new PageDisplayerImplement();
+        //     let element: HTMLElement = document.createElement('page');
+        //     element.setAttribute('name', params.routeData.pageName);
+        //     let c = new Page({
+        //         app: params.app,
+        //         previous: params.previous,
+        //         routeData: params.routeData,
+        //         displayer,
+        //         element
+        //     });
+
+        //     document.body.appendChild(element);
+
+        //     return c;
+        // }
     }
 } 

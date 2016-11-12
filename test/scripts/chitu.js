@@ -100,13 +100,27 @@
         }
         createPage(routeData) {
             let previous_page = this.pages[this.pages.length - 1];
-            let page = chitu.PageFactory.createInstance({ app: this, routeData, previous: previous_page });
+            let element = this.createPageElement();
+            let displayer = new chitu.PageDisplayerImplement();
+            element.setAttribute('name', routeData.pageName);
+            let page = new chitu.Page({
+                app: this,
+                previous: previous_page,
+                routeData: routeData,
+                displayer,
+                element
+            });
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
                 c.close();
             }
             return page;
+        }
+        createPageElement() {
+            let element = document.createElement('page');
+            document.body.appendChild(element);
+            return element;
         }
         hashchange() {
             let location = window.location;
@@ -594,31 +608,6 @@ var chitu;
         }
     }
     chitu.PageDisplayerImplement = PageDisplayerImplement;
-    class PageFactory {
-        constructor(app) {
-            this._app = app;
-        }
-        static createInstance(params) {
-            params = params || {};
-            if (params.app == null)
-                throw chitu.Errors.argumentNull('app');
-            if (params.routeData == null)
-                throw chitu.Errors.argumentNull('routeData');
-            let displayer = new PageDisplayerImplement();
-            let element = document.createElement('page');
-            element.setAttribute('name', params.routeData.pageName);
-            let c = new Page({
-                app: params.app,
-                previous: params.previous,
-                routeData: params.routeData,
-                displayer,
-                element
-            });
-            document.body.appendChild(element);
-            return c;
-        }
-    }
-    chitu.PageFactory = PageFactory;
 })(chitu || (chitu = {}));
 
 

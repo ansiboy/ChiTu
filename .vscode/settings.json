@@ -8,4 +8,6 @@
         ".tscache": true,
         "**/.baseDir.*": true
     }
+,
+"typescript.tsdk": "./node_modules/typescript/lib"
 }

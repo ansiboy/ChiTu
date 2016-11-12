@@ -38,7 +38,8 @@ declare namespace chitu {
         config: ApplicationConfig;
         currentPage: Page;
         pages: Array<Page>;
-        private createPage(routeData);
+        protected createPage(routeData: RouteData): Page;
+        protected createPageElement(): HTMLElement;
         protected hashchange(): void;
         run(): void;
         getPage(name: string): Page;
@@ -142,15 +143,6 @@ declare namespace chitu {
     class PageDisplayerImplement implements PageDisplayer {
         show(page: Page): void;
         hide(page: Page): void;
-    }
-    class PageFactory {
-        private _app;
-        constructor(app: Application);
-        static createInstance(params: {
-            app: Application;
-            routeData: RouteData;
-            previous?: Page;
-        }): Page;
     }
 }
 

@@ -183,35 +183,35 @@ namespace chitu {
         // }
     }
 
-    export class PageFactory {
-        private _app: Application;
-        constructor(app: Application) {
-            this._app = app;
-        }
-        static createInstance(params: {
-            app: Application,
-            routeData: RouteData,
-            previous?: Page,
-        }): Page {
+    // export class PageFactory {
+    //     private _app: Application;
+    //     constructor(app: Application) {
+    //         this._app = app;
+    //     }
+    //     static createInstance(params: {
+    //         app: Application,
+    //         routeData: RouteData,
+    //         previous?: Page,
+    //     }): Page {
 
-            params = params || <{ app: Application, routeData: RouteData, }>{}
-            if (params.app == null) throw Errors.argumentNull('app');
-            if (params.routeData == null) throw Errors.argumentNull('routeData');
+    //         params = params || <{ app: Application, routeData: RouteData, }>{}
+    //         if (params.app == null) throw Errors.argumentNull('app');
+    //         if (params.routeData == null) throw Errors.argumentNull('routeData');
 
-            let displayer = new PageDisplayerImplement();
-            let element: HTMLElement = document.createElement('page');
-            element.setAttribute('name', params.routeData.pageName);
-            let c = new Page({
-                app: params.app,
-                previous: params.previous,
-                routeData: params.routeData,
-                displayer,
-                element
-            });
+    //         let displayer = new PageDisplayerImplement();
+    //         let element: HTMLElement = document.createElement('page');
+    //         element.setAttribute('name', params.routeData.pageName);
+    //         let c = new Page({
+    //             app: params.app,
+    //             previous: params.previous,
+    //             routeData: params.routeData,
+    //             displayer,
+    //             element
+    //         });
 
-            document.body.appendChild(element);
+    //         document.body.appendChild(element);
 
-            return c;
-        }
-    }
+    //         return c;
+    //     }
+    // }
 }
