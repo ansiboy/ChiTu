@@ -23,15 +23,15 @@
         private _cssPath = '';
         private _parameters: any = {};
         private _pageName = '';
-        private pathBase = '';
+        private _pathBase = '';
 
         private HASH_MINI_LENGTH = 2;
 
-        constructor(pathBase?: string) {
-            if (pathBase == null)
-                pathBase = 'modules/'
+        constructor(basePath?: string) {
+            if (basePath == null)
+                basePath = 'modules'
 
-            this.pathBase = pathBase;
+            this._pathBase = basePath;
         }
 
         public parseRouteString(routeString: string): RouteData {
@@ -53,28 +53,33 @@
                 this._parameters = this.pareeUrlQuery(search);
             }
 
-            let path_parts = routePath.split(this.path_spliter_char).filter(o => (o || '').trim() != '');
-            if (routePath[routePath.length - 1] != '/' && path_parts.length < 2) {
+            let route_parts = routePath.split(this.path_spliter_char).map(o => o.trim());//.filter(o => (o || '').trim() != '');
+            if (route_parts.length < 2) {
                 throw Errors.canntParseRouteString(routeString);
             }
 
-            let actionName = path_parts[path_parts.length - 1];
-            if (routePath[routePath.length - 1] != '/') {
-                path_parts.pop();
-            }
 
+
+            let actionName = route_parts[route_parts.length - 1];
+            let path_parts = route_parts.slice(0, route_parts.length - 1);
             let file_path = path_parts.join(this.path_spliter_char);
-            let page_name = file_path.split(this.path_spliter_char)
-                .join(this.name_spliter_char) + this.name_spliter_char + actionName;
+            let page_name = file_path.split(this.path_spliter_char).join(this.name_spliter_char);
+            if (actionName)
+                page_name = page_name + this.name_spliter_char + actionName;
 
             var result = {
-                actionPath: this.pathBase + file_path,
+                actionPath: combinePath(this.basePath, file_path),
                 actionName,
                 values: this._parameters,
                 pageName: page_name,
             }
 
             return result;
+        }
+
+
+        get basePath(): string {
+            return this._pathBase;
         }
 
         private pareeUrlQuery(query: string): Object {
@@ -92,7 +97,7 @@
     }
 
     interface MyLocation extends Location {
-        skip: boolean//HashChanged
+        skipHashChanged: boolean
     }
 
 
@@ -118,8 +123,6 @@
         private _config: ApplicationConfig;
         private _runned: boolean = false;
         private zindex: number;
-        //private start_flag_hash: string;
-        //private start_hash: string;
         private page_stack = new Array<Page>();
 
         /**
@@ -187,8 +190,8 @@
 
         protected hashchange() {
             let location = window.location as MyLocation;
-            if (location.skip == true) {
-                location.skip = false;
+            if (location.skipHashChanged == true) {
+                location.skipHashChanged = false;
                 return;
             }
 
@@ -250,7 +253,7 @@
                 throw Errors.noneRouteMatched(routeString);
             }
 
-            routeData.values = Utility.extend(routeData.values, args || {});
+            routeData.values = extend(routeData.values, args || {});
 
             let previous = this.currentPage;
             let result = new Promise((resolve, reject) => {
@@ -259,7 +262,9 @@
                 page.show();
                 resolve(page);
 
-                this.changeLocationHash(routeString);
+                if (window.location.hash != '#' + routeString) {
+                    this.changeLocationHash(routeString);
+                }
             });
 
             return result;
@@ -267,13 +272,8 @@
 
         private changeLocationHash(hash: string) {
             let location = window.location as MyLocation;
-            location.skip = true;
+            location.skipHashChanged = true;
             location.hash = '#' + hash;
-        }
-
-        protected createPageNode(): HTMLElement {
-            var element = document.createElement('div');
-            return element;
         }
 
         /**
@@ -283,7 +283,7 @@
          */
         public redirect<T extends Page>(routeString: string, args?: any): Promise<T> {
             let location = window.location as MyLocation;
-            location.skip = true;
+            location.skipHashChanged = true;
             window.location.hash = routeString;
             return this.showPage<T>(routeString, args);
         }

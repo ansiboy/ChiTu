@@ -17,4 +17,6 @@ requirejs.config({
         text: 'scripts/text'
     }
 });
-requirejs(['tests']);//, 'application-test'
+requirejs(['chitu'], () => {
+    requirejs(['tests', 'routeParserTest']);//, 'application-test'
+})

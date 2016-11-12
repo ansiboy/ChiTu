@@ -4,5 +4,5 @@ function index(page) {
 }
 
 define(["require", "exports"], function (require, exports) {
-    exports.index = index;
+    exports.default = index;
 });

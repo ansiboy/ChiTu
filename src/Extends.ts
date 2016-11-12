@@ -23,7 +23,7 @@ namespace chitu {
         constructor(source: any) {
             this.source = source;
         }
-        add(func: EventCallback<S, A>) {
+        add(func: (S, A) => any) {
             this.source.add(func);
         }
         remove(func: Function) {
@@ -216,10 +216,10 @@ namespace chitu {
 
     export function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A): Promise<any> {
         let context = sender;
-        var results = callback.fireWith(context, [sender, args]); 
+        var results = callback.fireWith(context, [sender, args]);
         var deferreds = new Array<Promise<any>>();
         for (var i = 0; i < results.length; i++) {
-            if (results[i] instanceof Promise) 
+            if (results[i] instanceof Promise)
                 deferreds.push(results[i]);
         }
 

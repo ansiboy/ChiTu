@@ -1,14 +1,7 @@
 ﻿namespace chitu {
     var e = chitu.Errors;
     export class Utility {
-        static extend(obj1, obj2) {
-            if (obj1 == null) throw Errors.argumentNull('obj1');
-            if (obj2 == null) throw Errors.argumentNull('obj2');
-            for (let key in obj2) {
-                obj1[key] = obj2[key];
-            }
-            return obj1;
-        }
+
         public static isType(targetType: Function, obj: any): boolean {
             for (var key in targetType.prototype) {
                 if (obj[key] === undefined)
@@ -74,6 +67,26 @@
                 });
             });
         }
+    }
+
+    export function extend(obj1, obj2) {
+        if (obj1 == null) throw Errors.argumentNull('obj1');
+        if (obj2 == null) throw Errors.argumentNull('obj2');
+        for (let key in obj2) {
+            obj1[key] = obj2[key];
+        }
+        return obj1;
+    }
+
+    export function combinePath(path1: string, path2: string): string {
+        if (!path1) throw Errors.argumentNull('path1');
+        if (!path2) throw Errors.argumentNull('path2');
+
+        path1 = path1.trim();
+        if (!path1.endsWith('/'))
+            path1 = path1 + '/';
+
+        return path1 + path2;
     }
 
 

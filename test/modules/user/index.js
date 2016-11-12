@@ -4,5 +4,5 @@ function index(page) {
 }
 
 define(['exports'], (exports) => {
-    exports.index = index;
+    exports.default = index;
 })

@@ -15,10 +15,11 @@ declare namespace chitu {
         private _cssPath;
         private _parameters;
         private _pageName;
-        private pathBase;
+        private _pathBase;
         private HASH_MINI_LENGTH;
-        constructor(pathBase?: string);
+        constructor(basePath?: string);
         parseRouteString(routeString: string): RouteData;
+        basePath: string;
         private pareeUrlQuery(query);
     }
     interface ApplicationConfig {
@@ -43,7 +44,6 @@ declare namespace chitu {
         getPage(name: string): Page;
         showPage<T extends Page>(routeString: string, args?: any): Promise<T>;
         private changeLocationHash(hash);
-        protected createPageNode(): HTMLElement;
         redirect<T extends Page>(routeString: string, args?: any): Promise<T>;
         back(args?: any): Promise<void>;
     }
@@ -82,7 +82,7 @@ declare namespace chitu {
     class Callback<S, A> {
         source: any;
         constructor(source: any);
-        add(func: EventCallback<S, A>): void;
+        add(func: (S, A) => any): void;
         remove(func: Function): void;
         has(func: Function): boolean;
         fireWith(context: any, args: any): any;
@@ -99,7 +99,6 @@ declare namespace chitu {
     interface PageDisplayer {
         show(page: Page): any;
         hide(page: Page): any;
-        visible(page: Page): boolean;
     }
     class Page {
         private animationTime;
@@ -133,7 +132,6 @@ declare namespace chitu {
         show(): void;
         hide(): void;
         close(): void;
-        visible: boolean;
         element: HTMLElement;
         previous: Page;
         routeData: RouteData;
@@ -144,7 +142,6 @@ declare namespace chitu {
     class PageDisplayerImplement implements PageDisplayer {
         show(page: Page): void;
         hide(page: Page): void;
-        visible(page: Page): boolean;
     }
     class PageFactory {
         private _app;
@@ -160,7 +157,6 @@ declare namespace chitu {
 
 declare namespace chitu {
     class Utility {
-        static extend(obj1: any, obj2: any): any;
         static isType(targetType: Function, obj: any): boolean;
         static isDeferred(obj: any): boolean;
         static format(source: string, ...params: string[]): string;
@@ -168,6 +164,8 @@ declare namespace chitu {
         static log(msg: any, args?: any[]): void;
         static loadjs(...modules: string[]): Promise<any>;
     }
+    function extend(obj1: any, obj2: any): any;
+    function combinePath(path1: string, path2: string): string;
 }
 declare module "chitu" { 
             export = chitu; 

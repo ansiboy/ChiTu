@@ -7,7 +7,7 @@ namespace chitu {
     export interface PageDisplayer {
         show(page: Page);
         hide(page: Page);
-        visible(page: Page): boolean;
+        //visible(page: Page): boolean;
     }
 
     export class Page {
@@ -69,16 +69,16 @@ namespace chitu {
             return fireCallback(this.closed, this, args);
         }
         show(): void {
-            if (this.visible == true)
-                return;
+            // if (this.visible == true)
+            //     return;
 
             this.on_showing(this.routeData.values);
             this._displayer.show(this);
             this.on_shown(this.routeData.values);
         }
         hide() {
-            if (this._displayer.visible(this))
-                return;
+            // if (this._displayer.visible(this))
+            //     return;
 
             this.on_hiding(this.routeData.values);
             this._displayer.hide(this);
@@ -90,9 +90,9 @@ namespace chitu {
             this._element.remove();
             this.on_closed(this.routeData.values);
         }
-        get visible() {
-            return this._displayer.visible(this);
-        }
+        // get visible() {
+        //     return this._displayer.visible(this);
+        // }
         get element(): HTMLElement {
             return this._element;
         }
@@ -130,16 +130,17 @@ namespace chitu {
             var action_deferred = this.createActionDeferred(routeData);
             return action_deferred
                 .then((obj) => {
-                    let action = obj[routeData.actionName];
+                    let actionName = routeData.actionName || 'default';
+                    let action = obj[actionName];
                     if (action == null) {
-                        throw Errors.actionTypeError
+                        throw Errors.canntFindAction(routeData.actionName, routeData.pageName);
                     }
 
                     if (typeof action == 'function') {
-                        action(this);
-                    }
-                    else if (action['prototype'] != null) {
-                        new action(this);
+                        if (action['prototype'] != null)
+                            new action(this);
+                        else
+                            action(this);
                     }
                     else {
                         throw Errors.actionTypeError(routeData.actionName, routeData.pageName);
@@ -177,9 +178,9 @@ namespace chitu {
                 page.previous.element.style.display = 'block';
             }
         }
-        visible(page: Page) {
-            return page.element.style.display == 'block' || !page.element.style.display;
-        }
+        // visible(page: Page) {
+        //     return page.element.style.display == 'block' || !page.element.style.display;
+        // }
     }
 
     export class PageFactory {
