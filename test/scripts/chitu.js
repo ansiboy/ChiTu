@@ -95,7 +95,7 @@
         }
         createPage(routeData) {
             let previous_page = this.pages[this.pages.length - 1];
-            let element = this.createPageElement();
+            let element = this.createPageElement(routeData);
             let displayer = new chitu.PageDisplayerImplement();
             element.setAttribute('name', routeData.pageName);
             let page = new chitu.Page({
@@ -112,7 +112,7 @@
             }
             return page;
         }
-        createPageElement() {
+        createPageElement(routeData) {
             let element = document.createElement('page');
             document.body.appendChild(element);
             return element;
@@ -322,7 +322,17 @@ var chitu;
         }
     }
     chitu.Callback = Callback;
-    function Callbacks(options = null) {
+    class Callback2 extends Callback {
+        constructor(source) {
+            super(source);
+        }
+        add(func) {
+            super.add(func);
+        }
+    }
+    chitu.Callback2 = Callback2;
+    function Callbacks() {
+        let options = null;
         options = typeof options === "string" ?
             (optionsCache[options] || createOptions(options)) :
             jQuery.extend({}, options);
@@ -557,25 +567,29 @@ var chitu;
             });
         }
         loadPageAction(routeData) {
-            var action_deferred = this.createActionDeferred(routeData);
+            var action_deferred = new Promise((reslove, reject) => {
+                this.createActionDeferred(routeData).then((actionResult) => {
+                    let actionName = routeData.actionName || 'default';
+                    let action = actionResult[actionName];
+                    if (action == null) {
+                        throw chitu.Errors.canntFindAction(routeData.actionName, routeData.pageName);
+                    }
+                    if (typeof action == 'function') {
+                        if (action['prototype'] != null)
+                            new action(this);
+                        else
+                            action(this);
+                        reslove();
+                    }
+                    else {
+                        reject();
+                        throw chitu.Errors.actionTypeError(routeData.actionName, routeData.pageName);
+                    }
+                });
+            });
             let result = Promise.all([action_deferred, chitu.loadjs(...routeData.resource || [])]).then((results) => {
-                let actionResult = results[0];
                 let resourceResults = results[1];
-                let actionName = routeData.actionName || 'default';
-                let action = actionResult[actionName];
-                if (action == null) {
-                    throw chitu.Errors.canntFindAction(routeData.actionName, routeData.pageName);
-                }
-                if (typeof action == 'function') {
-                    if (action['prototype'] != null)
-                        new action(this, ...resourceResults);
-                    else
-                        action(this, ...resourceResults);
-                    this.on_load(...resourceResults);
-                }
-                else {
-                    throw chitu.Errors.actionTypeError(routeData.actionName, routeData.pageName);
-                }
+                this.on_load(...resourceResults);
             });
             return result;
         }

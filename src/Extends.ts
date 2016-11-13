@@ -23,7 +23,7 @@ namespace chitu {
         constructor(source: any) {
             this.source = source;
         }
-        add(func: (sender: S) => any) {
+        add(func: (sender: S, ...args: Array<any>) => any) {
             this.source.add(func);
         }
         remove(func: Function) {
@@ -40,9 +40,19 @@ namespace chitu {
         }
     }
 
-    export function Callbacks<S, A>(options: any = null): Callback<S> {
+    export class Callback2<S, A> extends Callback<S> {
+        constructor(source: any) {
+            super(source);
+        }
+        add(func: (sender: S, arg: A) => any) {
+            super.add(func);
+        }
+    }
+
+    export function Callbacks<S>(): Callback<S> {
         // Convert options from String-formatted to Object-formatted if needed
         // (we check in cache first)
+        let options: any = null;
         options = typeof options === "string" ?
             (optionsCache[options] || createOptions(options)) :
             jQuery.extend({}, options);

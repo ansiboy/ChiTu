@@ -106,7 +106,7 @@
         /**
          * 当页面创建后发生
          */
-        pageCreated = Callbacks<Application, Page>();
+        pageCreated = Callbacks<Application>();
 
         private _runned: boolean = false;
         private zindex: number;
@@ -120,7 +120,7 @@
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
          */
-        backFail = Callbacks<Application, {}>();
+        backFail = Callbacks<Application>();
 
         constructor() {
             // config = config || {};
@@ -160,7 +160,7 @@
         protected createPage(routeData: RouteData): Page {
             let previous_page = this.pages[this.pages.length - 1];
 
-            let element = this.createPageElement();
+            let element = this.createPageElement(routeData);
             let displayer = new PageDisplayerImplement();
 
             element.setAttribute('name', routeData.pageName);
@@ -181,7 +181,7 @@
             return page;
         }
 
-        protected createPageElement() {
+        protected createPageElement(routeData:chitu.RouteData) {
             let element: HTMLElement = document.createElement('page');
             document.body.appendChild(element);
             return element;

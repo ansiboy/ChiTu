@@ -20,16 +20,16 @@ namespace chitu {
         //private _name: string;
         private _displayer: PageDisplayer;
 
-        load = Callbacks<Page, any>();
+        load = Callbacks<Page>();
 
-        showing = Callbacks<Page, any>();
-        shown = Callbacks<Page, any>();
+        showing = Callbacks<Page>();
+        shown = Callbacks<Page>();
 
-        hiding = Callbacks<Page, any>();
-        hidden = Callbacks<Page, any>();
+        hiding = Callbacks<Page>();
+        hidden = Callbacks<Page>();
 
-        closing = Callbacks<Page, any>();
-        closed = Callbacks<Page, any>();
+        closing = Callbacks<Page>();
+        closed = Callbacks<Page>();
 
         constructor(params: {
             app: Application,

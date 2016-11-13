@@ -35,7 +35,7 @@ declare namespace chitu {
         currentPage: Page;
         pages: Array<Page>;
         protected createPage(routeData: RouteData): Page;
-        protected createPageElement(): HTMLElement;
+        protected createPageElement(routeData: chitu.RouteData): HTMLElement;
         protected hashchange(): void;
         run(): void;
         getPage(name: string): Page;
@@ -79,13 +79,17 @@ declare namespace chitu {
     class Callback<S> {
         source: any;
         constructor(source: any);
-        add(func: (sender: S) => any): void;
+        add(func: (sender: S, ...args: Array<any>) => any): void;
         remove(func: Function): void;
         has(func: Function): boolean;
         fireWith(context: any, args: any): any;
         fire(arg1?: any, arg2?: any, arg3?: any, arg4?: any): any;
     }
-    function Callbacks<S, A>(options?: any): Callback<S>;
+    class Callback2<S, A> extends Callback<S> {
+        constructor(source: any);
+        add(func: (sender: S, arg: A) => any): void;
+    }
+    function Callbacks<S>(): Callback<S>;
     function fireCallback<S>(callback: Callback<S>, sender: S, ...args: Array<any>): Promise<any>;
 }
 
