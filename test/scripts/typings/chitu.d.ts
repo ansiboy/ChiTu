@@ -1,10 +1,10 @@
 declare namespace chitu {
     interface RouteData {
         actionPath: string;
-        actionName: string;
         values: any;
         pageName: string;
         resource?: string[];
+        routeString: string;
     }
     class RouteParser {
         private path_string;
@@ -40,7 +40,8 @@ declare namespace chitu {
         run(): void;
         getPage(name: string): Page;
         showPage<T extends Page>(routeString: string, args?: any): Promise<T>;
-        private changeLocationHash(hash);
+        private setLocationHash(routeString);
+        private closeCurrentPage();
         redirect<T extends Page>(routeString: string, args?: any): Promise<T>;
         back(args?: any): Promise<void>;
     }
@@ -66,8 +67,8 @@ declare namespace chitu {
         static parameterRequireField(fileName: any, parameterName: any): Error;
         static viewCanntNull(): Error;
         static createPageFail(pageName: string): Error;
-        static actionTypeError(actionName: string, pageName: string): Error;
-        static canntFindAction(actionName: string, pageName: any): Error;
+        static actionTypeError(pageName: string): Error;
+        static canntFindAction(pageName: any): Error;
         static scrollerElementNotExists(): Error;
     }
 }
@@ -145,7 +146,6 @@ declare namespace chitu {
         hide(page: Page): void;
     }
 }
-
 
 declare namespace chitu {
     class Utility {

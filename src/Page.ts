@@ -125,10 +125,10 @@ namespace chitu {
         private loadPageAction(routeData: RouteData) {
             var action_deferred = new Promise((reslove, reject) => {
                 this.createActionDeferred(routeData).then((actionResult) => {
-                    let actionName = routeData.actionName || 'default';
+                    let actionName =  'default';
                     let action = actionResult[actionName];
                     if (action == null) {
-                        throw Errors.canntFindAction(routeData.actionName, routeData.pageName);
+                        throw Errors.canntFindAction(routeData.pageName);
                     }
 
                     if (typeof action == 'function') {
@@ -141,7 +141,7 @@ namespace chitu {
                     }
                     else {
                         reject();
-                        throw Errors.actionTypeError(routeData.actionName, routeData.pageName);
+                        throw Errors.actionTypeError(routeData.pageName);
                     }
                 });
             });

@@ -18,5 +18,5 @@ requirejs.config({
     }
 });
 requirejs(['chitu'], () => {
-    requirejs(['tests', 'routeParserTest', 'applicationTest']);
+    requirejs(['routeParserTest', 'applicationTest', 'tests']);//, 'routeParserTest', 'applicationTest'
 })

@@ -1,10 +1,10 @@
 (function(factory) { 
                 if (typeof define === 'function' && define['amd']) { 
-                    define(['jquery'], factory);  
+                    define(factory);  
                 } else { 
-                    factory($); 
+                    factory(); 
                 } 
-            })(function($) {var chitu;
+            })(function() {var chitu;
 (function (chitu) {
     const DEFAULT_FILE_BASE_PATH = 'modules';
     class RouteParser {
@@ -37,21 +37,17 @@
             if (search) {
                 this._parameters = this.pareeUrlQuery(search);
             }
-            let route_parts = routePath.split(this.path_spliter_char).map(o => o.trim());
-            if (route_parts.length < 2) {
+            let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
+            if (path_parts.length < 2) {
                 throw chitu.Errors.canntParseRouteString(routeString);
             }
-            let actionName = route_parts[route_parts.length - 1];
-            let path_parts = route_parts.slice(0, route_parts.length - 1);
             let file_path = path_parts.join(this.path_spliter_char);
-            let page_name = file_path.split(this.path_spliter_char).join(this.name_spliter_char);
-            if (actionName)
-                page_name = page_name + this.name_spliter_char + actionName;
+            let page_name = path_parts.join(this.name_spliter_char);
             var result = {
                 actionPath: (this.basePath ? chitu.combinePath(this.basePath, file_path) : file_path),
-                actionName,
                 values: this._parameters,
                 pageName: page_name,
+                routeString
             };
             return result;
         }
@@ -131,9 +127,15 @@
             var routeString;
             if (location.hash.length > 1)
                 routeString = location.hash.substr(1);
-            var pageInfo = this.parseRouteString(routeString);
-            var page = this.getPage(pageInfo.pageName);
-            this.showPage(routeString);
+            var routeData = this.parseRouteString(routeString);
+            var page = this.getPage(routeData.pageName);
+            let previousPageIndex = this.page_stack.length - 2;
+            if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
+                this.closeCurrentPage();
+            }
+            else {
+                this.showPage(routeString);
+            }
         }
         run() {
             if (this._runned)
@@ -167,22 +169,29 @@
                 this.on_pageCreated(page);
                 page.show();
                 resolve(page);
-                if (window.location.hash != '#' + routeString) {
-                    this.changeLocationHash(routeString);
-                }
             });
             return result;
         }
-        changeLocationHash(hash) {
+        setLocationHash(routeString) {
+            if (window.location.hash == '#' + routeString) {
+                return;
+            }
             let location = window.location;
             location.skipHashChanged = true;
-            location.hash = '#' + hash;
+            location.hash = '#' + routeString;
+        }
+        closeCurrentPage() {
+            if (this.page_stack.length <= 0)
+                return;
+            var c = this.page_stack.pop();
+            c.close();
+            this.setLocationHash(this.currentPage.routeData.routeString);
         }
         redirect(routeString, args) {
             let location = window.location;
-            location.skipHashChanged = true;
-            window.location.hash = routeString;
-            return this.showPage(routeString, args);
+            let result = this.showPage(routeString, args);
+            this.setLocationHash(routeString);
+            return result;
         }
         back(args = undefined) {
             return new Promise((reslove, reject) => {
@@ -191,8 +200,7 @@
                     chitu.fireCallback(this.backFail, this, {});
                     return;
                 }
-                this.currentPage.close();
-                this.page_stack.pop();
+                this.closeCurrentPage();
                 reslove();
             });
         }
@@ -274,12 +282,12 @@ var chitu;
             var msg = chitu.Utility.format('Create page "{0}" fail.', pageName);
             return new Error(msg);
         }
-        static actionTypeError(actionName, pageName) {
-            let msg = `The '${actionName}' in page '${pageName}' is expect as function or Class.`;
+        static actionTypeError(pageName) {
+            let msg = `The action in page '${pageName}' is expect as function or Class.`;
             return new Error(msg);
         }
-        static canntFindAction(actionName, pageName) {
-            let msg = `Cannt find action '${actionName}' in page '${pageName}'.`;
+        static canntFindAction(pageName) {
+            let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;
             return new Error(msg);
         }
         static scrollerElementNotExists() {
@@ -569,10 +577,10 @@ var chitu;
         loadPageAction(routeData) {
             var action_deferred = new Promise((reslove, reject) => {
                 this.createActionDeferred(routeData).then((actionResult) => {
-                    let actionName = routeData.actionName || 'default';
+                    let actionName = 'default';
                     let action = actionResult[actionName];
                     if (action == null) {
-                        throw chitu.Errors.canntFindAction(routeData.actionName, routeData.pageName);
+                        throw chitu.Errors.canntFindAction(routeData.pageName);
                     }
                     if (typeof action == 'function') {
                         if (action['prototype'] != null)
@@ -583,7 +591,7 @@ var chitu;
                     }
                     else {
                         reject();
-                        throw chitu.Errors.actionTypeError(routeData.actionName, routeData.pageName);
+                        throw chitu.Errors.actionTypeError(routeData.pageName);
                     }
                 });
             });
@@ -611,7 +619,6 @@ var chitu;
     }
     chitu.PageDisplayerImplement = PageDisplayerImplement;
 })(chitu || (chitu = {}));
-
 
 var chitu;
 (function (chitu) {

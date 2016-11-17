@@ -51,11 +51,11 @@ module.exports = function (grunt) {
                     banner:
                     "(function(factory) { \n\
                 if (typeof define === 'function' && define['amd']) { \n\
-                    define(['jquery'], factory);  \n\
+                    define(factory);  \n\
                 } else { \n\
-                    factory($); \n\
+                    factory(); \n\
                 } \n\
-            })(function($) {",
+            })(function() {",
                     footer: '\n\window[\'chitu\'] = window[\'chitu\'] || chitu \n\
                             \n return chitu;\n\
             });',

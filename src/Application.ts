@@ -5,14 +5,14 @@
     export interface RouteData {
         /** 页面的路径，即 js 文件 */
         actionPath: string,
-        /** action 名称 */
-        actionName: string;
         /** 路由参数值，可以通过它来获取 url 参数 */
         values: any,
         /** 页面名称 */
         pageName: string,
         /** 其它资源文件的路径 */
         resource?: string[],
+        /** 路由字符串 */
+        routeString: string,
     }
 
     export class RouteParser {
@@ -52,23 +52,19 @@
                 this._parameters = this.pareeUrlQuery(search);
             }
 
-            let route_parts = routePath.split(this.path_spliter_char).map(o => o.trim());//.filter(o => (o || '').trim() != '');
-            if (route_parts.length < 2) {
+            let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
+            if (path_parts.length < 2) {
                 throw Errors.canntParseRouteString(routeString);
             }
 
-            let actionName = route_parts[route_parts.length - 1];
-            let path_parts = route_parts.slice(0, route_parts.length - 1);
             let file_path = path_parts.join(this.path_spliter_char);
-            let page_name = file_path.split(this.path_spliter_char).join(this.name_spliter_char);
-            if (actionName)
-                page_name = page_name + this.name_spliter_char + actionName;
-
+            let page_name = path_parts.join(this.name_spliter_char);
             var result = {
                 actionPath: (this.basePath ? combinePath(this.basePath, file_path) : file_path),
-                actionName,
+                //actionName,
                 values: this._parameters,
                 pageName: page_name,
+                routeString
             }
 
             return result;
@@ -181,7 +177,7 @@
             return page;
         }
 
-        protected createPageElement(routeData:chitu.RouteData) {
+        protected createPageElement(routeData: chitu.RouteData) {
             let element: HTMLElement = document.createElement('page');
             document.body.appendChild(element);
             return element;
@@ -204,11 +200,15 @@
             if (location.hash.length > 1)
                 routeString = location.hash.substr(1);
 
-            var pageInfo = this.parseRouteString(routeString);
-            var page = this.getPage(pageInfo.pageName);
-
-
-            this.showPage(routeString);
+            var routeData = this.parseRouteString(routeString);
+            var page = this.getPage(routeData.pageName);
+            let previousPageIndex = this.page_stack.length - 2;
+            if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
+                this.closeCurrentPage();
+            }
+            else {
+                this.showPage(routeString);
+            }
         }
 
         /**
@@ -261,18 +261,29 @@
                 page.show();
                 resolve(page);
 
-                if (window.location.hash != '#' + routeString) {
-                    this.changeLocationHash(routeString);
-                }
+                //this.setLocationHash(routeData.routeString);
             });
 
             return result;
         }
 
-        private changeLocationHash(hash: string) {
+        private setLocationHash(routeString: string) {
+            if (window.location.hash == '#' + routeString) {
+                return;
+            }
+
             let location = window.location as MyLocation;
             location.skipHashChanged = true;
-            location.hash = '#' + hash;
+            location.hash = '#' + routeString;
+        }
+
+        private closeCurrentPage() {
+            if (this.page_stack.length <= 0)
+                return;
+
+            var c = this.page_stack.pop();
+            c.close();
+            this.setLocationHash(this.currentPage.routeData.routeString);
         }
 
         /**
@@ -282,9 +293,11 @@
          */
         public redirect<T extends Page>(routeString: string, args?: any): Promise<T> {
             let location = window.location as MyLocation;
-            location.skipHashChanged = true;
-            window.location.hash = routeString;
-            return this.showPage<T>(routeString, args);
+            // location.skipHashChanged = true;
+            // window.location.hash = routeString;
+            let result = this.showPage<T>(routeString, args);
+            this.setLocationHash(routeString);
+            return result;
         }
 
         /**
@@ -299,11 +312,7 @@
                     return;
                 }
 
-                this.currentPage.close();
-                //================================
-                // 移除最后一个页面
-                this.page_stack.pop();
-                //================================
+                this.closeCurrentPage();
 
                 reslove();
             });

@@ -71,12 +71,12 @@
             var msg = Utility.format('Create page "{0}" fail.', pageName);
             return new Error(msg);
         }
-        public static actionTypeError(actionName:string, pageName: string): Error {
-            let msg = `The '${actionName}' in page '${pageName}' is expect as function or Class.`;
+        public static actionTypeError(pageName: string): Error {
+            let msg = `The action in page '${pageName}' is expect as function or Class.`;
             return new Error(msg);
         }
-        public static canntFindAction(actionName:string,pageName){
-            let msg = `Cannt find action '${actionName}' in page '${pageName}'.`;
+        public static canntFindAction(pageName){
+            let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;
             return  new Error(msg);
         }
         public static scrollerElementNotExists(): Error {
