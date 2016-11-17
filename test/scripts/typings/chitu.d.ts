@@ -78,20 +78,16 @@ declare namespace chitu {
         (sender: S, args: A): Promise<any> | void;
     }
     class Callback<S> {
-        source: any;
-        constructor(source: any);
+        private event;
+        private element;
+        private event_name;
+        constructor();
         add(func: (sender: S, ...args: Array<any>) => any): void;
-        remove(func: Function): void;
-        has(func: Function): boolean;
-        fireWith(context: any, args: any): any;
-        fire(arg1?: any, arg2?: any, arg3?: any, arg4?: any): any;
-    }
-    class Callback2<S, A> extends Callback<S> {
-        constructor(source: any);
-        add(func: (sender: S, arg: A) => any): void;
+        remove(func: EventListener): void;
+        fire(args: any): void;
     }
     function Callbacks<S>(): Callback<S>;
-    function fireCallback<S>(callback: Callback<S>, sender: S, ...args: Array<any>): Promise<any>;
+    function fireCallback<S>(callback: Callback<S>, sender: S, ...args: Array<any>): void;
 }
 
 declare namespace chitu {
@@ -124,13 +120,13 @@ declare namespace chitu {
             displayer: PageDisplayer;
             previous?: Page;
         });
-        on_load(...resources: Array<any>): Promise<any>;
-        on_showing(): Promise<any>;
-        on_shown(): Promise<any>;
-        on_hiding(): Promise<any>;
-        on_hidden(): Promise<any>;
-        on_closing(): Promise<any>;
-        on_closed(): Promise<any>;
+        on_load(...resources: Array<any>): void;
+        on_showing(): void;
+        on_shown(): void;
+        on_hiding(): void;
+        on_hidden(): void;
+        on_closing(): void;
+        on_closed(): void;
         show(): void;
         hide(): void;
         close(): void;
