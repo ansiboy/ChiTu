@@ -1,22 +1,5 @@
 ﻿
 namespace chitu {
-    var rnotwhite = (/\S+/g);
-
-    // String to Object options format cache
-    var optionsCache = {};
-
-    // Convert String-formatted options into Object-formatted ones and store in cache
-    function createOptions(options) {
-        var object = optionsCache[options] = {};
-        jQuery.each(options.match(rnotwhite) || [], function (_, flag) {
-            object[flag] = true;
-        });
-        return object;
-    }
-
-    export interface EventCallback<S, A> {
-        (sender: S, args: A): Promise<any> | void
-    }
 
     export class Callback<S> {
         private event: CustomEvent;

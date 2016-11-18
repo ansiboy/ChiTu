@@ -4,9 +4,21 @@ namespace chitu {
         new (args: Page);
     }
 
+    export interface PageConstructor {
+        new (args: PageParams)
+    }
+
     export interface PageDisplayer {
         show(page: Page);
         hide(page: Page);
+    }
+
+    export interface PageParams {
+        app: Application,
+        routeData: RouteData,
+        element: HTMLElement,
+        displayer: PageDisplayer,
+        previous?: Page,
     }
 
     export class Page {
@@ -31,13 +43,7 @@ namespace chitu {
         closing = Callbacks<Page>();
         closed = Callbacks<Page>();
 
-        constructor(params: {
-            app: Application,
-            routeData: RouteData,
-            element: HTMLElement,
-            displayer: PageDisplayer,
-            previous?: Page,
-        }) {
+        constructor(params: PageParams) {
 
             this._element = params.element;
             this._previous = params.previous;
@@ -108,8 +114,9 @@ namespace chitu {
                 requirejs([url], (obj: any) => {
                     //加载脚本失败
                     if (!obj) {
-                        console.warn(chitu.Utility.format('加载活动“{0}”失败。', routeData.pageName));
-                        reject();
+                        let msg = `Load action '${routeData.pageName}' fail.`;
+                        let err = new Error(msg);
+                        reject(err);
                         return;
                     }
 
@@ -125,7 +132,10 @@ namespace chitu {
         private loadPageAction(routeData: RouteData) {
             var action_deferred = new Promise((reslove, reject) => {
                 this.createActionDeferred(routeData).then((actionResult) => {
-                    let actionName =  'default';
+                    if (!actionResult)
+                        throw Errors.exportsCanntNull(routeData.pageName);
+
+                    let actionName = 'default';
                     let action = actionResult[actionName];
                     if (action == null) {
                         throw Errors.canntFindAction(routeData.pageName);
@@ -143,6 +153,8 @@ namespace chitu {
                         reject();
                         throw Errors.actionTypeError(routeData.pageName);
                     }
+                }).catch((err) => {
+                    reject(err);
                 });
             });
 

@@ -24,6 +24,7 @@ declare namespace chitu {
     }
     class Application {
         pageCreated: Callback<Application>;
+        protected pageType: PageConstructor;
         private _runned;
         private zindex;
         private page_stack;
@@ -57,26 +58,22 @@ declare namespace chitu {
         static pathPairRequireView(index: any): Error;
         static notImplemented(name: any): Error;
         static routeExists(name: any): Error;
-        static ambiguityRouteMatched(url: any, routeName1: any, routeName2: any): Error;
         static noneRouteMatched(url: any): Error;
         static emptyStack(): Error;
         static canntParseUrl(url: string): Error;
         static canntParseRouteString(routeString: string): Error;
         static routeDataRequireController(): Error;
         static routeDataRequireAction(): Error;
-        static parameterRequireField(fileName: any, parameterName: any): Error;
         static viewCanntNull(): Error;
         static createPageFail(pageName: string): Error;
         static actionTypeError(pageName: string): Error;
         static canntFindAction(pageName: any): Error;
+        static exportsCanntNull(pageName: string): void;
         static scrollerElementNotExists(): Error;
     }
 }
 
 declare namespace chitu {
-    interface EventCallback<S, A> {
-        (sender: S, args: A): Promise<any> | void;
-    }
     class Callback<S> {
         private event;
         private element;
@@ -94,9 +91,19 @@ declare namespace chitu {
     interface PageActionConstructor {
         new (args: Page): any;
     }
+    interface PageConstructor {
+        new (args: PageParams): any;
+    }
     interface PageDisplayer {
         show(page: Page): any;
         hide(page: Page): any;
+    }
+    interface PageParams {
+        app: Application;
+        routeData: RouteData;
+        element: HTMLElement;
+        displayer: PageDisplayer;
+        previous?: Page;
     }
     class Page {
         private animationTime;
@@ -113,13 +120,7 @@ declare namespace chitu {
         hidden: Callback<Page>;
         closing: Callback<Page>;
         closed: Callback<Page>;
-        constructor(params: {
-            app: Application;
-            routeData: RouteData;
-            element: HTMLElement;
-            displayer: PageDisplayer;
-            previous?: Page;
-        });
+        constructor(params: PageParams);
         on_load(...resources: Array<any>): void;
         on_showing(): void;
         on_shown(): void;
@@ -144,14 +145,6 @@ declare namespace chitu {
 }
 
 declare namespace chitu {
-    class Utility {
-        static isType(targetType: Function, obj: any): boolean;
-        static isDeferred(obj: any): boolean;
-        static format(source: string, ...params: string[]): string;
-        static fileName(url: any, withExt: any): string;
-        static log(msg: any, args?: any[]): void;
-        static loadjs: typeof loadjs;
-    }
     function extend(obj1: any, obj2: any): any;
     function combinePath(path1: string, path2: string): string;
     function loadjs(...modules: string[]): Promise<Array<any>>;

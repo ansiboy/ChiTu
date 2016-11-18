@@ -53,7 +53,7 @@
             }
 
             let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
-            if (path_parts.length < 2) {
+            if (path_parts.length < 1) {
                 throw Errors.canntParseRouteString(routeString);
             }
 
@@ -103,6 +103,8 @@
          * 当页面创建后发生
          */
         pageCreated = Callbacks<Application>();
+
+        protected pageType: PageConstructor = Page;
 
         private _runned: boolean = false;
         private zindex: number;
@@ -160,7 +162,8 @@
             let displayer = new PageDisplayerImplement();
 
             element.setAttribute('name', routeData.pageName);
-            let page = new Page({
+            console.assert(this.pageType != null);
+            let page = new this.pageType({
                 app: this,
                 previous: previous_page,
                 routeData: routeData,

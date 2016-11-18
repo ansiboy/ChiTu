@@ -38,7 +38,7 @@
                 this._parameters = this.pareeUrlQuery(search);
             }
             let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
-            if (path_parts.length < 2) {
+            if (path_parts.length < 1) {
                 throw chitu.Errors.canntParseRouteString(routeString);
             }
             let file_path = path_parts.join(this.path_spliter_char);
@@ -69,6 +69,7 @@
     class Application {
         constructor() {
             this.pageCreated = chitu.Callbacks();
+            this.pageType = chitu.Page;
             this._runned = false;
             this.page_stack = new Array();
             this.fileBasePath = DEFAULT_FILE_BASE_PATH;
@@ -94,7 +95,8 @@
             let element = this.createPageElement(routeData);
             let displayer = new chitu.PageDisplayerImplement();
             element.setAttribute('name', routeData.pageName);
-            let page = new chitu.Page({
+            console.assert(this.pageType != null);
+            let page = new this.pageType({
                 app: this,
                 previous: previous_page,
                 routeData: routeData,
@@ -212,42 +214,38 @@ var chitu;
 (function (chitu) {
     class Errors {
         static argumentNull(paramName) {
-            var msg = chitu.Utility.format('The argument "{0}" cannt be null.', paramName);
+            var msg = `The argument "${paramName}" cannt be null.`;
             return new Error(msg);
         }
         static modelFileExpecteFunction(script) {
-            var msg = chitu.Utility.format('The eval result of script file "{0}" is expected a function.', script);
+            var msg = `The eval result of script file "${script}" is expected a function.`;
             return new Error(msg);
         }
         static paramTypeError(paramName, expectedType) {
-            var msg = chitu.Utility.format('The param "{0}" is expected "{1}" type.', paramName, expectedType);
+            var msg = `The param "${paramName}" is expected "${expectedType}" type.`;
             return new Error(msg);
         }
         static paramError(msg) {
             return new Error(msg);
         }
         static viewNodeNotExists(name) {
-            var msg = chitu.Utility.format('The view node "{0}" is not exists.', name);
+            var msg = `The view node "${name}" is not exists.`;
             return new Error(msg);
         }
         static pathPairRequireView(index) {
-            var msg = chitu.Utility.format('The view value is required for path pair, but the item with index "{0}" is miss it.', index);
+            var msg = `The view value is required for path pair, but the item with index "${index}" is miss it.`;
             return new Error(msg);
         }
         static notImplemented(name) {
-            var msg = chitu.Utility.format('The method "{0}" is not implemented.', name);
+            var msg = `'The method "${name}" is not implemented.'`;
             return new Error(msg);
         }
         static routeExists(name) {
-            var msg = chitu.Utility.format('Route named "{0}" is exists.', name);
-            return new Error(msg);
-        }
-        static ambiguityRouteMatched(url, routeName1, routeName2) {
-            var msg = chitu.Utility.format('Ambiguity route matched, {0} is match in {1} and {2}.', url, routeName1, routeName2);
+            var msg = `Route named "${name}" is exists.`;
             return new Error(msg);
         }
         static noneRouteMatched(url) {
-            var msg = chitu.Utility.format('None route matched with url "{0}".', url);
+            var msg = `None route matched with url "${url}".`;
             var error = new Error(msg);
             return error;
         }
@@ -255,11 +253,11 @@ var chitu;
             return new Error('The stack is empty.');
         }
         static canntParseUrl(url) {
-            var msg = chitu.Utility.format('Can not parse the url "{0}" to route data.', url);
+            var msg = `Can not parse the url "${url}" to route data.`;
             return new Error(msg);
         }
         static canntParseRouteString(routeString) {
-            var msg = chitu.Utility.format('Can not parse the route string "{0}" to route data.', routeString);
+            var msg = `Can not parse the route string "${routeString}" to route data.;`;
             return new Error(msg);
         }
         static routeDataRequireController() {
@@ -270,16 +268,12 @@ var chitu;
             var msg = 'The route data does not contains a "action" file.';
             return new Error(msg);
         }
-        static parameterRequireField(fileName, parameterName) {
-            var msg = chitu.Utility.format('Parameter {1} does not contains field {0}.', fileName, parameterName);
-            return new Error(msg);
-        }
         static viewCanntNull() {
             var msg = 'The view or viewDeferred of the page cannt null.';
             return new Error(msg);
         }
         static createPageFail(pageName) {
-            var msg = chitu.Utility.format('Create page "{0}" fail.', pageName);
+            var msg = `Create page "${pageName}" fail.`;
             return new Error(msg);
         }
         static actionTypeError(pageName) {
@@ -289,6 +283,9 @@ var chitu;
         static canntFindAction(pageName) {
             let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;
             return new Error(msg);
+        }
+        static exportsCanntNull(pageName) {
+            let msg = `Exports of page '${pageName}' is null.`;
         }
         static scrollerElementNotExists() {
             let msg = "Scroller element is not exists.";
@@ -300,15 +297,6 @@ var chitu;
 
 var chitu;
 (function (chitu) {
-    var rnotwhite = (/\S+/g);
-    var optionsCache = {};
-    function createOptions(options) {
-        var object = optionsCache[options] = {};
-        jQuery.each(options.match(rnotwhite) || [], function (_, flag) {
-            object[flag] = true;
-        });
-        return object;
-    }
     class Callback {
         constructor() {
             this.event_name = 'chitu-event';
@@ -414,8 +402,9 @@ var chitu;
                 var url = routeData.actionPath;
                 requirejs([url], (obj) => {
                     if (!obj) {
-                        console.warn(chitu.Utility.format('加载活动“{0}”失败。', routeData.pageName));
-                        reject();
+                        let msg = `Load action '${routeData.pageName}' fail.`;
+                        let err = new Error(msg);
+                        reject(err);
                         return;
                     }
                     resolve(obj);
@@ -425,6 +414,8 @@ var chitu;
         loadPageAction(routeData) {
             var action_deferred = new Promise((reslove, reject) => {
                 this.createActionDeferred(routeData).then((actionResult) => {
+                    if (!actionResult)
+                        throw chitu.Errors.exportsCanntNull(routeData.pageName);
                     let actionName = 'default';
                     let action = actionResult[actionName];
                     if (action == null) {
@@ -441,6 +432,8 @@ var chitu;
                         reject();
                         throw chitu.Errors.actionTypeError(routeData.pageName);
                     }
+                }).catch((err) => {
+                    reject(err);
                 });
             });
             let result = Promise.all([action_deferred, chitu.loadjs(...routeData.resource || [])]).then((results) => {
@@ -470,55 +463,6 @@ var chitu;
 
 var chitu;
 (function (chitu) {
-    var e = chitu.Errors;
-    class Utility {
-        static isType(targetType, obj) {
-            for (var key in targetType.prototype) {
-                if (obj[key] === undefined)
-                    return false;
-            }
-            return true;
-        }
-        static isDeferred(obj) {
-            if (obj == null)
-                return false;
-            if (obj.pipe != null && obj.always != null && obj.done != null)
-                return true;
-            return false;
-        }
-        static format(source, ...params) {
-            for (var i = 0; i < params.length; i++) {
-                source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function () {
-                    return params[i];
-                });
-            }
-            return source;
-        }
-        static fileName(url, withExt) {
-            if (!url)
-                throw e.argumentNull('url');
-            withExt = withExt || true;
-            url = url.replace('http://', '/');
-            var filename = url.replace(/^.*[\\\/]/, '');
-            if (withExt === true) {
-                var arr = filename.split('.');
-                filename = arr[0];
-            }
-            return filename;
-        }
-        static log(msg, args = []) {
-            if (!window.console)
-                return;
-            if (args == null) {
-                console.log(msg);
-                return;
-            }
-            var txt = this.format.apply(this, arguments);
-            console.log(txt);
-        }
-    }
-    Utility.loadjs = loadjs;
-    chitu.Utility = Utility;
     function extend(obj1, obj2) {
         if (obj1 == null)
             throw chitu.Errors.argumentNull('obj1');
