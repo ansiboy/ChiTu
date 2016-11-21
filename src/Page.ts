@@ -32,19 +32,18 @@ namespace chitu {
         //private _name: string;
         private _displayer: PageDisplayer;
 
-        load = Callbacks<Page>();
+        load = Callbacks<Page, any>();
 
-        showing = Callbacks<Page>();
-        shown = Callbacks<Page>();
+        showing = Callbacks<Page, {}>();
+        shown = Callbacks<Page, {}>();
 
-        hiding = Callbacks<Page>();
-        hidden = Callbacks<Page>();
+        hiding = Callbacks<Page, {}>();
+        hidden = Callbacks<Page, {}>();
 
-        closing = Callbacks<Page>();
-        closed = Callbacks<Page>();
+        closing = Callbacks<Page, {}>();
+        closed = Callbacks<Page, {}>();
 
         constructor(params: PageParams) {
-
             this._element = params.element;
             this._previous = params.previous;
             this._app = params.app;
@@ -52,39 +51,33 @@ namespace chitu {
             this._displayer = params.displayer;
             this.loadPageAction(params.routeData);
         }
-        on_load(...resources: Array<any>) {
-            return fireCallback(this.load, this, resources);
+        on_load(args: any) {
+            return fireCallback(this.load, this, args);
         }
         on_showing() {
-            return fireCallback(this.showing, this);
+            return fireCallback(this.showing, this, {});
         }
         on_shown() {
-            return fireCallback(this.shown, this);
+            return fireCallback(this.shown, this, {});
         }
         on_hiding() {
-            return fireCallback(this.hiding, this);
+            return fireCallback(this.hiding, this, {});
         }
         on_hidden() {
-            return fireCallback(this.hidden, this);
+            return fireCallback(this.hidden, this, {});
         }
         on_closing() {
-            return fireCallback(this.closing, this);
+            return fireCallback(this.closing, this, {});
         }
         on_closed() {
-            return fireCallback(this.closed, this);
+            return fireCallback(this.closed, this, {});
         }
         show(): void {
-            // if (this.visible == true)
-            //     return;
-
             this.on_showing();
             this._displayer.show(this);
             this.on_shown();
         }
         hide() {
-            // if (this._displayer.visible(this))
-            //     return;
-
             this.on_hiding();
             this._displayer.hide(this);
             this.on_hidden();
@@ -158,9 +151,16 @@ namespace chitu {
                 });
             });
 
-            let result = Promise.all([action_deferred, loadjs(...routeData.resource || [])]).then((results) => {
-                let resourceResults = results[1];
-                this.on_load(...resourceResults);
+            let resourcePaths = routeData.resources.map(o => o.path);
+            let resourceNames = routeData.resources.map(o => o.name);
+            let result = Promise.all([action_deferred, loadjs(...resourcePaths || [])]).then((data) => {
+                let resourceResults = data[1];
+                let args = {};
+                for (let i = 0; i < resourceResults.length; i++) {
+                    let name = resourceNames[i];
+                    args[name] = resourceResults[i];
+                }
+                this.on_load(args);
             });
 
             return result;
@@ -180,40 +180,5 @@ namespace chitu {
                 page.previous.element.style.display = 'block';
             }
         }
-        // visible(page: Page) {
-        //     return page.element.style.display == 'block' || !page.element.style.display;
-        // }
     }
-
-    // export class PageFactory {
-    //     private _app: Application;
-    //     constructor(app: Application) {
-    //         this._app = app;
-    //     }
-    //     static createInstance(params: {
-    //         app: Application,
-    //         routeData: RouteData,
-    //         previous?: Page,
-    //     }): Page {
-
-    //         params = params || <{ app: Application, routeData: RouteData, }>{}
-    //         if (params.app == null) throw Errors.argumentNull('app');
-    //         if (params.routeData == null) throw Errors.argumentNull('routeData');
-
-    //         let displayer = new PageDisplayerImplement();
-    //         let element: HTMLElement = document.createElement('page');
-    //         element.setAttribute('name', params.routeData.pageName);
-    //         let c = new Page({
-    //             app: params.app,
-    //             previous: params.previous,
-    //             routeData: params.routeData,
-    //             displayer,
-    //             element
-    //         });
-
-    //         document.body.appendChild(element);
-
-    //         return c;
-    //     }
-    // }
 }

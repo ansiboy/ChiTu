@@ -1,14 +1,4 @@
 ﻿namespace chitu {
-   
-    export function extend(obj1, obj2) {
-        if (obj1 == null) throw Errors.argumentNull('obj1');
-        if (obj2 == null) throw Errors.argumentNull('obj2');
-        for (let key in obj2) {
-            obj1[key] = obj2[key];
-        }
-        return obj1;
-    }
-
     export function combinePath(path1: string, path2: string): string {
         if (!path1) throw Errors.argumentNull('path1');
         if (!path2) throw Errors.argumentNull('path2');

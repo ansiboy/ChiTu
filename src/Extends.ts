@@ -1,7 +1,7 @@
 ﻿
 namespace chitu {
 
-    export class Callback<S> {
+    export class Callback<S, A> {
         private event: CustomEvent;
         private element: HTMLElement;
         private event_name = 'chitu-event';
@@ -10,29 +10,28 @@ namespace chitu {
             this.event = document.createEvent('CustomEvent');
             this.element = document.createElement('div');
         }
-        add(func: (sender: S, ...args: Array<any>) => any) {
+        add(func: (sender: S, args: A) => any) {
             this.element.addEventListener(this.event_name, (event: CustomEvent) => {
-                const sender = event.detail.sender;
-                const args = event.detail.args;
-                func(sender, ...args);
+                let { sender, args } = event.detail;
+                func(sender, args);
             });
         }
         remove(func: EventListener) {
             this.element.removeEventListener(this.event_name, func);
         }
-        fire(args: any) {
-            this.event.initCustomEvent(this.event_name, true, false, args);
+        fire(sender: S, args: A) {
+            this.event.initCustomEvent(this.event_name, true, false, { sender, args });
             this.element.dispatchEvent(this.event);
         }
     }
 
 
-    export function Callbacks<S>(): Callback<S> {
-        return new Callback<S>();
+    export function Callbacks<S, A>(): Callback<S, A> {
+        return new Callback<S, A>();
     }
 
-    export function fireCallback<S>(callback: Callback<S>, sender: S, ...args: Array<any>) {
-        callback.fire({ sender, args });
+    export function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A) {
+        callback.fire(sender, args);
     }
 
 

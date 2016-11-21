@@ -1,39 +1,74 @@
-﻿namespace chitu {
+﻿
+namespace chitu {
 
     const DEFAULT_FILE_BASE_PATH = 'modules'
 
-    export interface RouteData {
-        /** 页面的路径，即 js 文件 */
-        actionPath: string,
-        /** 路由参数值，可以通过它来获取 url 参数 */
-        values: any,
-        /** 页面名称 */
-        pageName: string,
-        /** 其它资源文件的路径 */
-        resource?: string[],
-        /** 路由字符串 */
-        routeString: string,
-    }
+    // export interface RouteData {
+    //     /** 页面的路径，即 js 文件 */
+    //     actionPath: string,
+    //     /** 路由参数值，可以通过它来获取 url 参数 */
+    //     values: any,
+    //     /** 页面名称 */
+    //     pageName: string,
+    //     /** 其它资源文件的路径 */
+    //     resource?: string[],
+    //     /** 路由字符串 */
+    //     routeString: string,
+    // }
 
-    export class RouteParser {
+
+    export class RouteData {
+        private _parameters: any = {};
         private path_string = '';
         private path_spliter_char = '/';
         private param_spliter = '?'
         private name_spliter_char = '.';
-
-        private _actionPath = '';
-        private _cssPath = '';
-        private _parameters: any = {};
-        private _pageName = '';
         private _pathBase = '';
+        private _pageName;
 
-        private HASH_MINI_LENGTH = 2;
+        private _actionPath: string;
 
-        constructor(basePath: string) {
-            this._pathBase = basePath || '';
+        private _resources: Array<{ name: string, path: string }>;
+        private _routeString: string;
+
+        constructor(basePath, routeString: string) {
+            if (!basePath) throw Errors.argumentNull('basePath');
+            if (!routeString) throw Errors.argumentNull('routeString');
+
+            this._routeString = routeString;
+            this._pathBase = basePath;
+            this.parseRouteString();
+
+            this._resources = [];
+            let routeData = this;
+            this._resources['_push'] = this.resources.push;
+            this._resources.push = function (...items: { name: string, path: string }[]) {
+
+                //=========================================================================
+                // 说明：检查是否有名称重复
+                let tmp: Array<{ name: string, path: string }> = this;
+                for (let i = 0; i < tmp.length; i++) {
+                    for (let j = 0; j < items.length; j++) {
+                        if (tmp[i].name == items[j].name) {
+                            throw Errors.resourceExists(tmp[i].name, routeData.pageName);
+                        }
+                    }
+                }
+
+                for (let i = 0; i < items.length; i++) {
+                    for (let j = i + 1; j < items.length; j++) {
+                        if (items[i].name == items[j].name) {
+                            throw Errors.resourceExists(items[i].name, routeData.pageName);
+                        }
+                    }
+                }
+                //=========================================================================
+                return this._push(...items);
+            }
         }
 
-        public parseRouteString(routeString: string): RouteData {
+        public parseRouteString() {
+            let routeString: string = this.routeString;
             let routePath: string;
             let search: string;
             let param_spliter_index: number = routeString.indexOf(this.param_spliter);
@@ -58,21 +93,8 @@
             }
 
             let file_path = path_parts.join(this.path_spliter_char);
-            let page_name = path_parts.join(this.name_spliter_char);
-            var result = {
-                actionPath: (this.basePath ? combinePath(this.basePath, file_path) : file_path),
-                //actionName,
-                values: this._parameters,
-                pageName: page_name,
-                routeString
-            }
-
-            return result;
-        }
-
-
-        get basePath(): string {
-            return this._pathBase;
+            this._pageName = path_parts.join(this.name_spliter_char);
+            this._actionPath = (this.basePath ? combinePath(this.basePath, file_path) : file_path);
         }
 
         private pareeUrlQuery(query: string): Object {
@@ -86,6 +108,35 @@
                 urlParams[decode(match[1])] = decode(match[2]);
 
             return urlParams;
+        }
+
+        get basePath(): string {
+            return this._pathBase;
+        }
+
+        /** 路由参数值，可以通过它来获取 url 参数 */
+        get values(): any {
+            return this._parameters;
+        }
+
+        /** 页面名称 */
+        get pageName(): string {
+            return this._pageName;
+        }
+
+        /** 其它资源文件的路径 */
+        get resources(): Array<{ name: string, path: string }> {
+            return this._resources;
+        }
+
+        /** 路由字符串 */
+        get routeString(): string {
+            return this._routeString;
+        }
+
+        /** 页面脚本的路径，即 js 文件 */
+        get actionPath(): string {
+            return this._actionPath;
         }
     }
 
@@ -102,7 +153,7 @@
         /**
          * 当页面创建后发生
          */
-        pageCreated = Callbacks<Application>();
+        pageCreated = Callbacks<Application, Page>();
 
         protected pageType: PageConstructor = Page;
 
@@ -118,7 +169,7 @@
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
          */
-        backFail = Callbacks<Application>();
+        backFail = Callbacks<Application, {}>();
 
         constructor() {
             // config = config || {};
@@ -130,8 +181,8 @@
          * @param routeString 要解释的 路由字符串
          */
         protected parseRouteString(routeString: string): RouteData {
-            let urlParser = new RouteParser(this.fileBasePath);
-            return urlParser.parseRouteString(routeString);
+            let routeData = new RouteData(this.fileBasePath, routeString);
+            return routeData;
         }
 
         private on_pageCreated(page: Page) {
@@ -161,7 +212,6 @@
             let element = this.createPageElement(routeData);
             let displayer = new PageDisplayerImplement();
 
-            element.setAttribute('name', routeData.pageName);
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
@@ -255,7 +305,7 @@
                 throw Errors.noneRouteMatched(routeString);
             }
 
-            routeData.values = extend(routeData.values, args || {});
+            Object.assign(routeData.values, args || {});
 
             let previous = this.currentPage;
             let result = new Promise((resolve, reject) => {

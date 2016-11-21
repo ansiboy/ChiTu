@@ -3,37 +3,38 @@ var ts_output_file = 'release/chitu.d.ts';
 var build_dir = 'build';
 var release_dir = 'release';
 module.exports = function (grunt) {
+    let chitu_js_banner =
+        "(function(factory) { \n\
+        if (typeof define === 'function' && define['amd']) { \n\
+            define(factory);  \n\
+        } else { \n\
+            factory(); \n\
+        } \n\
+    })(function() {";
+    let chitu_js_footer =
+        '\n\window[\'chitu\'] = window[\'chitu\'] || chitu \n\
+                            \n return chitu;\n\
+            });'
+
     var config = {
-        ts: {
-            chitu: {
-                src: ['src/**/*.ts'],
-                dest: build_dir, //release_dir + '/chitu.js',
+        babel: {
+            options: {
+                sourceMap: true,
+                presets: ["es2015"]
+            },
+            dist: {
+                files: [
+                    { expand: true, cwd: build_dir + '/es6', src: ['*.js'], dest: build_dir + '/es5' }
+                ]
+            }
+        },
+        shell: {
+            ts: {
+                command: 'tsc -p ./src',
                 options: {
-                    basePath: build_dir,
-                    target: 'es6',
-                    removeComments: true,
-                    declaration: true,
-                    references: [
-                        "src/**/*.ts"
-                    ],
-                    sourceMap: false
+                    failOnError: false
                 }
-            }//,
-            // test: {
-            //     src: ['test/src/**/*.ts'],
-            //     dest: 'test/',
-            //     options: {
-            //         basePath: build_dir,
-            //         target: 'es5',
-            //         removeComments: true,
-            //         declaration: false,
-            //         sourceMap: false,
-            //         module: 'amd',
-            //         references: [
-            //             "/test/src/typings/*.d.ts"
-            //         ]
-            //     }
-            // }
+            },
         },
         concat: {
             chitudts: {
@@ -46,31 +47,23 @@ module.exports = function (grunt) {
                 src: [build_dir + '/**/*.d.ts'],
                 dest: ts_output_file
             },
-            chitujs: {
+            chitujs_es6: {
                 options: {
-                    banner:
-                    "(function(factory) { \n\
-                if (typeof define === 'function' && define['amd']) { \n\
-                    define(factory);  \n\
-                } else { \n\
-                    factory(); \n\
-                } \n\
-            })(function() {",
-                    footer: '\n\window[\'chitu\'] = window[\'chitu\'] || chitu \n\
-                            \n return chitu;\n\
-            });',
+                    banner: chitu_js_banner,
+                    footer: chitu_js_footer,
                 },
-                src: [build_dir + '/**/*.js'],
-                dest: js_output_file
-
+                src: [build_dir + '/es6/**/*.js'],
+                dest: release_dir + '/chitu.js'
+            },
+            chitujs_es5: {
+                options: {
+                    banner: chitu_js_banner,
+                    footer: chitu_js_footer,
+                },
+                src: [build_dir + '/es5/**/*.js'],
+                dest: release_dir + '/chitu.es5.js'
             }
         },
-        // uglify: {
-        //     build: {
-        //         src: release_dir + '/chitu.js',
-        //         dest: release_dir + '/chitu.min.js'
-        //     }
-        // },
         clean: [build_dir + '/**/*.d.ts', build_dir + '/**/*.js']
     };
 
@@ -93,12 +86,13 @@ module.exports = function (grunt) {
 
     grunt.initConfig(config);
 
+    grunt.loadNpmTasks('grunt-babel');
     grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-ts');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-copy');
-
-    grunt.registerTask('default', ['ts', 'concat', 'copy', 'clean']);//,, 'clean'  'concat', 'uglify',
+    grunt.loadNpmTasks('grunt-shell');
+    grunt.loadNpmTasks('grunt-ts');
+    grunt.registerTask('default', ['shell', 'babel', 'concat', 'copy']);//,, 'clean'  'concat', 'uglify',
 
 };

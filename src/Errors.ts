@@ -67,15 +67,19 @@
             let msg = `The action in page '${pageName}' is expect as function or Class.`;
             return new Error(msg);
         }
-        public static canntFindAction(pageName){
+        public static canntFindAction(pageName) {
             let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;
-            return  new Error(msg);
+            return new Error(msg);
         }
-        public static exportsCanntNull(pageName:string){
+        public static exportsCanntNull(pageName: string) {
             let msg = `Exports of page '${pageName}' is null.`;
         }
         public static scrollerElementNotExists(): Error {
             let msg = "Scroller element is not exists.";
+            return new Error(msg);
+        }
+        public static resourceExists(resourceName: string, pageName: string) {
+            let msg = `Rosource '${resourceName}' is exists in the resources of page '${pageName}'.`;
             return new Error(msg);
         }
     }
