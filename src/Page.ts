@@ -32,6 +32,8 @@ namespace chitu {
         //private _name: string;
         private _displayer: PageDisplayer;
 
+        static tagName = 'page';
+
         load = Callbacks<Page, any>();
 
         showing = Callbacks<Page, {}>();

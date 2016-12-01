@@ -231,7 +231,7 @@ namespace chitu {
         }
 
         protected createPageElement(routeData: chitu.RouteData) {
-            let element: HTMLElement = document.createElement('page');
+            let element: HTMLElement = document.createElement(Page.tagName);
             document.body.appendChild(element);
             return element;
         }
