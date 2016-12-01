@@ -7,6 +7,50 @@
     })(function() {var chitu;
 (function (chitu) {
     const DEFAULT_FILE_BASE_PATH = 'modules';
+    class Resources {
+        constructor(routeData) {
+            this.items = [];
+            this.routeData = routeData;
+        }
+        push(...items) {
+            let tmp = this.items;
+            for (let i = 0; i < tmp.length; i++) {
+                for (let j = 0; j < items.length; j++) {
+                    if (tmp[i].name == items[j].name) {
+                        throw chitu.Errors.resourceExists(tmp[i].name, this.routeData.pageName);
+                    }
+                }
+            }
+            for (let i = 0; i < items.length; i++) {
+                for (let j = i + 1; j < items.length; j++) {
+                    if (items[i].name == items[j].name) {
+                        throw chitu.Errors.resourceExists(items[i].name, this.routeData.pageName);
+                    }
+                }
+            }
+            return this.items.push(...items);
+        }
+        load() {
+            this._loadCompleted = false;
+            return new Promise((reslove, reject) => {
+                let resourcePaths = this.items.map(o => o.path);
+                let resourceNames = this.items.map(o => o.name);
+                chitu.loadjs(...resourcePaths || []).then((resourceResults) => {
+                    this._loadCompleted = true;
+                    resourceResults = resourceResults || [];
+                    let args = {};
+                    for (let i = 0; i < resourceResults.length; i++) {
+                        let name = resourceNames[i];
+                        args[name] = resourceResults[i];
+                    }
+                    reslove(args);
+                }).catch((err) => {
+                    reject(err);
+                });
+            });
+        }
+    }
+    chitu.Resources = Resources;
     class RouteData {
         constructor(basePath, routeString) {
             this._parameters = {};
@@ -19,30 +63,12 @@
                 throw chitu.Errors.argumentNull('basePath');
             if (!routeString)
                 throw chitu.Errors.argumentNull('routeString');
+            this._loadCompleted = false;
             this._routeString = routeString;
             this._pathBase = basePath;
             this.parseRouteString();
-            this._resources = [];
+            this._resources = new Resources(this);
             let routeData = this;
-            this._resources['_push'] = this.resources.push;
-            this._resources.push = function (...items) {
-                let tmp = this;
-                for (let i = 0; i < tmp.length; i++) {
-                    for (let j = 0; j < items.length; j++) {
-                        if (tmp[i].name == items[j].name) {
-                            throw chitu.Errors.resourceExists(tmp[i].name, routeData.pageName);
-                        }
-                    }
-                }
-                for (let i = 0; i < items.length; i++) {
-                    for (let j = i + 1; j < items.length; j++) {
-                        if (items[i].name == items[j].name) {
-                            throw chitu.Errors.resourceExists(items[i].name, routeData.pageName);
-                        }
-                    }
-                }
-                return this._push(...items);
-            };
         }
         parseRouteString() {
             let routeString = this.routeString;
@@ -94,6 +120,9 @@
         get actionPath() {
             return this._actionPath;
         }
+        get loadCompleted() {
+            return this._loadCompleted;
+        }
     }
     chitu.RouteData = RouteData;
     var PAGE_STACK_MAX_SIZE = 16;
@@ -143,7 +172,7 @@
             return page;
         }
         createPageElement(routeData) {
-            let element = document.createElement('page');
+            let element = document.createElement('div');
             document.body.appendChild(element);
             return element;
         }
@@ -219,7 +248,8 @@
                 return;
             var c = this.page_stack.pop();
             c.close();
-            this.setLocationHash(this.currentPage.routeData.routeString);
+            if (this.currentPage != null)
+                this.setLocationHash(this.currentPage.routeData.routeString);
         }
         redirect(routeString, args) {
             let location = window.location;
