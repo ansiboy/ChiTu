@@ -1,4 +1,15 @@
 declare namespace chitu {
+    class Resources {
+        private items;
+        private routeData;
+        private _loadCompleted;
+        constructor(routeData: RouteData);
+        push(...items: {
+            name: string;
+            path: string;
+        }[]): number;
+        load(): Promise<{}>;
+    }
     class RouteData {
         private _parameters;
         private path_string;
@@ -10,18 +21,17 @@ declare namespace chitu {
         private _actionPath;
         private _resources;
         private _routeString;
+        private _loadCompleted;
         constructor(basePath: any, routeString: string);
         parseRouteString(): void;
         private pareeUrlQuery(query);
         readonly basePath: string;
         readonly values: any;
         readonly pageName: string;
-        readonly resources: Array<{
-            name: string;
-            path: string;
-        }>;
+        readonly resources: Resources;
         readonly routeString: string;
         readonly actionPath: string;
+        readonly loadCompleted: boolean;
     }
     class Application {
         pageCreated: Callback<Application, Page>;

@@ -4,7 +4,7 @@ QUnit.asyncTest('Application.showPage 显示页面', (assert) => {
     let app = new chitu.Application();
     app.showPage('home/index/').then((page) => {
         assert.equal(page.name, 'home.index');
-        let element = document.querySelector(`page[name='${page.name}']`);
+        let element = page.element;
         assert.notEqual(element, null);
         QUnit.start();
     });
