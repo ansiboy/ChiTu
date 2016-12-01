@@ -9,6 +9,10 @@ declare namespace chitu {
             path: string;
         }[]): number;
         load(): Promise<{}>;
+        map<U>(callbackfn: (value: {
+            name: string;
+            path: string;
+        }) => U): U[];
     }
     class RouteData {
         private _parameters;
@@ -125,6 +129,7 @@ declare namespace chitu {
         private _app;
         private _routeData;
         private _displayer;
+        static tagName: string;
         load: Callback<Page, any>;
         showing: Callback<Page, {}>;
         shown: Callback<Page, {}>;

@@ -49,6 +49,9 @@
                 });
             });
         }
+        map(callbackfn) {
+            return this.items.map(callbackfn);
+        }
     }
     chitu.Resources = Resources;
     class RouteData {
@@ -172,7 +175,7 @@
             return page;
         }
         createPageElement(routeData) {
-            let element = document.createElement('div');
+            let element = document.createElement(chitu.Page.tagName);
             document.body.appendChild(element);
             return element;
         }
@@ -515,6 +518,7 @@ var chitu;
             return result;
         }
     }
+    Page.tagName = 'div';
     chitu.Page = Page;
     class PageDisplayerImplement {
         show(page) {

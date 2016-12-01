@@ -32,7 +32,7 @@ namespace chitu {
         //private _name: string;
         private _displayer: PageDisplayer;
 
-        static tagName = 'page';
+        static tagName = 'div';
 
         load = Callbacks<Page, any>();
 
