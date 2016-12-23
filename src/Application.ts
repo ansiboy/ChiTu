@@ -242,7 +242,7 @@ namespace chitu {
             let previous_page = this.pages[this.pages.length - 1];
 
             let element = this.createPageElement(routeData);
-            let displayer = new PageDisplayerImplement();
+            let displayer = new this.pageDisplayType();
 
             console.assert(this.pageType != null);
             let page = new this.pageType({
@@ -389,6 +389,10 @@ namespace chitu {
                 this.setLocationHash(this.currentPage.routeData.routeString);
         }
 
+        private clearPageStack() {
+            this.page_stack = [];
+        }
+
         /**
          * 页面跳转
          * @param url 页面路径
@@ -407,16 +411,13 @@ namespace chitu {
          */
         public back(args = undefined): Promise<void> {
             return new Promise<void>((reslove, reject) => {
-                // 如果只有一个页，就回退不了
-                if (this.page_stack.length <= 1) {
+                this.closeCurrentPage();
+                // 如果页面没有了，就表示回退失败
+                if (this.page_stack.length == 0) {
                     reject();
-
                     fireCallback(this.backFail, this, {});
                     return;
                 }
-
-                this.closeCurrentPage();
-
                 reslove();
             });
 

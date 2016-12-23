@@ -13,8 +13,8 @@ namespace chitu {
     }
 
     export interface PageDisplayer {
-        show(page: Page);
-        hide(page: Page);
+        show(page: Page): Promise<any>;
+        hide(page: Page): Promise<any>;
     }
 
     export interface PageParams {
@@ -80,21 +80,24 @@ namespace chitu {
         on_closed() {
             return fireCallback(this.closed, this, {});
         }
-        show(): void {
+        show(): Promise<any> {
             this.on_showing();
-            this._displayer.show(this);
-            this.on_shown();
+            return this._displayer.show(this).then(o => {
+                this.on_shown();
+            });
         }
-        hide() {
+        hide(): Promise<any> {
             this.on_hiding();
-            this._displayer.hide(this);
-            this.on_hidden();
+            return this._displayer.hide(this).then(o => {
+                this.on_hidden();
+            });
         }
-        close() {
-            this.hide();
-            this.on_closing();
-            this._element.remove();
-            this.on_closed();
+        close(): Promise<any> {
+            return this.hide().then(() => {
+                this.on_closing();
+                this._element.remove();
+                this.on_closed();
+            });
         }
         get element(): HTMLElement {
             return this._element;
@@ -102,7 +105,7 @@ namespace chitu {
         get previous(): Page {
             return this._previous;
         }
-        set previous(value:Page){
+        set previous(value: Page) {
             this._previous = value;
         }
         get routeData(): RouteData {
@@ -184,12 +187,14 @@ namespace chitu {
             if (page.previous != null) {
                 page.previous.element.style.display = 'none';
             }
+            return Promise.resolve();
         }
         hide(page: Page) {
             page.element.style.display = 'none';
             if (page.previous != null) {
                 page.previous.element.style.display = 'block';
             }
+            return Promise.resolve();
         }
     }
 }
