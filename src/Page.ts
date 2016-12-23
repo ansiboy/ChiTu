@@ -34,6 +34,8 @@ namespace chitu {
 
         static tagName = 'div';
 
+        allowCache = false;
+
         load = Callbacks<Page, any>();
 
         showing = Callbacks<Page, {}>();
@@ -95,6 +97,9 @@ namespace chitu {
         }
         get previous(): Page {
             return this._previous;
+        }
+        set previous(value:Page){
+            this._previous = value;
         }
         get routeData(): RouteData {
             return this._routeData;

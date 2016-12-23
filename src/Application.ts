@@ -57,7 +57,7 @@ namespace chitu {
             });
         }
 
-        map<U>(callbackfn: (value: { name: string, path: string }) => U): U[]{
+        map<U>(callbackfn: (value: { name: string, path: string }) => U): U[] {
             return this.items.map(callbackfn);
         }
     }
@@ -67,6 +67,7 @@ namespace chitu {
         private _parameters: any = {};
         private path_string = '';
         private path_spliter_char = '/';
+        private path_contact_char = '/';
         private param_spliter = '?'
         private name_spliter_char = '.';
         private _pathBase = '';
@@ -78,9 +79,12 @@ namespace chitu {
         private _routeString: string;
         private _loadCompleted: boolean;
 
-        constructor(basePath, routeString: string) {
+        constructor(basePath: string, routeString: string, pathSpliterChar?: string) {
             if (!basePath) throw Errors.argumentNull('basePath');
             if (!routeString) throw Errors.argumentNull('routeString');
+
+            if (pathSpliterChar)
+                this.path_spliter_char = pathSpliterChar;
 
             this._loadCompleted = false;
             this._routeString = routeString;
@@ -89,30 +93,6 @@ namespace chitu {
 
             this._resources = new Resources(this);
             let routeData = this;
-            // this._resources['_push'] = this.resources.push;
-            // this._resources.push = function (...items: { name: string, path: string }[]) {
-
-            //     //=========================================================================
-            //     // 说明：检查是否有名称重复
-            //     let tmp: Array<{ name: string, path: string }> = this;
-            //     for (let i = 0; i < tmp.length; i++) {
-            //         for (let j = 0; j < items.length; j++) {
-            //             if (tmp[i].name == items[j].name) {
-            //                 throw Errors.resourceExists(tmp[i].name, routeData.pageName);
-            //             }
-            //         }
-            //     }
-
-            //     for (let i = 0; i < items.length; i++) {
-            //         for (let j = i + 1; j < items.length; j++) {
-            //             if (items[i].name == items[j].name) {
-            //                 throw Errors.resourceExists(items[i].name, routeData.pageName);
-            //             }
-            //         }
-            //     }
-            //     //=========================================================================
-            //     return this._push(...items);
-            //}
         }
 
         public parseRouteString() {
@@ -140,7 +120,7 @@ namespace chitu {
                 throw Errors.canntParseRouteString(routeString);
             }
 
-            let file_path = path_parts.join(this.path_spliter_char);
+            let file_path = path_parts.join(this.path_contact_char);
             this._pageName = path_parts.join(this.name_spliter_char);
             this._actionPath = (this.basePath ? combinePath(this.basePath, file_path) : file_path);
         }
@@ -198,7 +178,7 @@ namespace chitu {
         skipHashChanged: boolean
     }
 
-    var PAGE_STACK_MAX_SIZE = 16;
+    var PAGE_STACK_MAX_SIZE = 50;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
@@ -214,6 +194,7 @@ namespace chitu {
         private _runned: boolean = false;
         private zindex: number;
         private page_stack = new Array<Page>();
+        private cachePages: { [name: string]: Page } = {};
 
         /**
          * 加载文件的基本路径
@@ -226,8 +207,6 @@ namespace chitu {
         backFail = Callbacks<Application, {}>();
 
         constructor() {
-            // config = config || {};
-            // this._config = config;
         }
 
         /**
@@ -275,12 +254,7 @@ namespace chitu {
                 element
             });
 
-            this.page_stack.push(page);
-            if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
-                let c = this.page_stack.shift();
-                c.close();
-            }
-
+            this.on_pageCreated(page);
             return page;
         }
 
@@ -351,7 +325,7 @@ namespace chitu {
          * @param url 页面的路径
          * @param args 传递到页面的参数 
          */
-        public showPage<T extends Page>(routeString: string, args?: any): Promise<T> {
+        public showPage(routeString: string, args?: any): Page {
             if (!routeString) throw Errors.argumentNull('routeString');
 
             var routeData = this.parseRouteString(routeString);
@@ -361,17 +335,31 @@ namespace chitu {
 
             Object.assign(routeData.values, args || {});
 
+            //let result = new Promise((resolve, reject) => {
+            let page = this.cachePages[routeData.pageName];
+            //==============================
+            if (page == null) {
+                page = this.createPage(routeData);
+                if (page.allowCache) {
+                    this.cachePages[routeData.pageName] = page;
+                }
+            }
+
+            if (page == this.currentPage) {
+                return page;
+            }
+
             let previous = this.currentPage;
-            let result = new Promise((resolve, reject) => {
-                let page = this.createPage(routeData);
-                this.on_pageCreated(page);
-                page.show();
-                resolve(page);
+            this.page_stack.push(page);
+            if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
+                let c = this.page_stack.shift();
+                c.close();
+            }
 
-                //this.setLocationHash(routeData.routeString);
-            });
+            page.previous = previous;
+            page.show();
 
-            return result;
+            return page;
         }
 
         private setLocationHash(routeString: string) {
@@ -388,8 +376,16 @@ namespace chitu {
             if (this.page_stack.length <= 0)
                 return;
 
-            var c = this.page_stack.pop();
-            c.close();
+            var page = this.page_stack.pop();
+            if (page.allowCache) {
+                page.hide();
+            }
+            else {
+                page.close();
+                if (this.cachePages[page.name])
+                    this.cachePages[page.name] = null;
+            }
+
             if (this.currentPage != null)
                 this.setLocationHash(this.currentPage.routeData.routeString);
         }
@@ -399,11 +395,10 @@ namespace chitu {
          * @param url 页面路径
          * @param args 传递到页面的参数
          */
-        public redirect<T extends Page>(routeString: string, args?: any): Promise<T> {
+        public redirect(routeString: string, args?: any): Page {
             let location = window.location as MyLocation;
-            // location.skipHashChanged = true;
-            // window.location.hash = routeString;
-            let result = this.showPage<T>(routeString, args);
+
+            let result = this.showPage(routeString, args);
             this.setLocationHash(routeString);
             return result;
         }
