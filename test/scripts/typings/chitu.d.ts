@@ -18,6 +18,7 @@ declare namespace chitu {
         private _parameters;
         private path_string;
         private path_spliter_char;
+        private path_contact_char;
         private param_spliter;
         private name_spliter_char;
         private _pathBase;
@@ -26,7 +27,7 @@ declare namespace chitu {
         private _resources;
         private _routeString;
         private _loadCompleted;
-        constructor(basePath: any, routeString: string);
+        constructor(basePath: string, routeString: string, pathSpliterChar?: string);
         parseRouteString(): void;
         private pareeUrlQuery(query);
         readonly basePath: string;
@@ -43,6 +44,7 @@ declare namespace chitu {
         private _runned;
         private zindex;
         private page_stack;
+        private cachePages;
         fileBasePath: string;
         backFail: Callback<Application, {}>;
         constructor();
@@ -55,10 +57,10 @@ declare namespace chitu {
         protected hashchange(): void;
         run(): void;
         getPage(name: string): Page;
-        showPage<T extends Page>(routeString: string, args?: any): Promise<T>;
+        showPage(routeString: string, args?: any): Page;
         private setLocationHash(routeString);
         private closeCurrentPage();
-        redirect<T extends Page>(routeString: string, args?: any): Promise<T>;
+        redirect(routeString: string, args?: any): Page;
         back(args?: any): Promise<void>;
     }
 }
@@ -130,6 +132,7 @@ declare namespace chitu {
         private _routeData;
         private _displayer;
         static tagName: string;
+        allowCache: boolean;
         load: Callback<Page, any>;
         showing: Callback<Page, {}>;
         shown: Callback<Page, {}>;
@@ -149,7 +152,7 @@ declare namespace chitu {
         hide(): void;
         close(): void;
         readonly element: HTMLElement;
-        readonly previous: Page;
+        previous: Page;
         readonly routeData: RouteData;
         readonly name: string;
         private createActionDeferred(routeData);
