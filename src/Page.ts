@@ -5,7 +5,11 @@ namespace chitu {
     }
 
     export interface PageConstructor {
-        new (args: PageParams)
+        new (args: PageParams): Page
+    }
+
+    export interface PageDisplayConstructor {
+        new (): PageDisplayer
     }
 
     export interface PageDisplayer {

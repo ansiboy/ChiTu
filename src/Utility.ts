@@ -23,8 +23,8 @@
 
                     reslove(args);
                 },
-                function () {
-                    reject();
+                function (err) {
+                    reject(err);
                 });
         });
     }

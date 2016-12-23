@@ -57,7 +57,7 @@ namespace chitu {
             });
         }
 
-        map<U>(callbackfn: (value: { name: string, path: string }) => U): U[]{
+        map<U>(callbackfn: (value: { name: string, path: string }) => U): U[] {
             return this.items.map(callbackfn);
         }
     }
@@ -89,30 +89,6 @@ namespace chitu {
 
             this._resources = new Resources(this);
             let routeData = this;
-            // this._resources['_push'] = this.resources.push;
-            // this._resources.push = function (...items: { name: string, path: string }[]) {
-
-            //     //=========================================================================
-            //     // 说明：检查是否有名称重复
-            //     let tmp: Array<{ name: string, path: string }> = this;
-            //     for (let i = 0; i < tmp.length; i++) {
-            //         for (let j = 0; j < items.length; j++) {
-            //             if (tmp[i].name == items[j].name) {
-            //                 throw Errors.resourceExists(tmp[i].name, routeData.pageName);
-            //             }
-            //         }
-            //     }
-
-            //     for (let i = 0; i < items.length; i++) {
-            //         for (let j = i + 1; j < items.length; j++) {
-            //             if (items[i].name == items[j].name) {
-            //                 throw Errors.resourceExists(items[i].name, routeData.pageName);
-            //             }
-            //         }
-            //     }
-            //     //=========================================================================
-            //     return this._push(...items);
-            //}
         }
 
         public parseRouteString() {
@@ -157,8 +133,6 @@ namespace chitu {
 
             return urlParams;
         }
-
-
 
         get basePath(): string {
             return this._pathBase;
@@ -210,6 +184,7 @@ namespace chitu {
         pageCreated = Callbacks<Application, Page>();
 
         protected pageType: PageConstructor = Page;
+        protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
 
         private _runned: boolean = false;
         private zindex: number;
@@ -413,7 +388,8 @@ namespace chitu {
          */
         public back(args = undefined): Promise<void> {
             return new Promise<void>((reslove, reject) => {
-                if (this.page_stack.length == 0) {
+                // 如果只有一个页，就回退不了
+                if (this.page_stack.length <= 1) {
                     reject();
 
                     fireCallback(this.backFail, this, {});
