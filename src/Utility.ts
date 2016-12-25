@@ -10,18 +10,18 @@
         return path1 + path2;
     }
 
-    export function loadjs(...modules: string[]): Promise<Array<any>> {
-        if (modules.length == 0)
-            return Promise.resolve([]);
+    export function loadjs(path): Promise<any> {
+        // if (modules.length == 0)
+        //     return Promise.resolve([]);
 
         return new Promise<Array<any>>((reslove, reject) => {
-            requirejs(modules,
-                function () {
-                    var args = [];
-                    for (var i = 0; i < arguments.length; i++)
-                        args[i] = arguments[i];
+            requirejs([path],
+                function (result) {
+                    // var args = [];
+                    // for (var i = 0; i < arguments.length; i++)
+                    //     args[i] = arguments[i];
 
-                    reslove(args);
+                    reslove(result);
                 },
                 function (err) {
                     reject(err);

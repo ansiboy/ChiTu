@@ -9,7 +9,7 @@ namespace chitu {
     }
 
     export interface PageDisplayConstructor {
-        new (): PageDisplayer
+        new (app: Application): PageDisplayer
     }
 
     export interface PageDisplayer {
@@ -165,15 +165,15 @@ namespace chitu {
                 });
             });
 
-            let resourcePaths = routeData.resources.map(o => o.path);
-            let resourceNames = routeData.resources.map(o => o.name);
-            let result = Promise.all([action_deferred, loadjs(...resourcePaths || [])]).then((data) => {
-                let resourceResults = data[1];
+            // let resourcePaths = routeData.resources.map(o => o.path);
+            // let resourceNames = routeData.resources.map(o => o.name);
+            let result = action_deferred.then((data) => {
+                // let resourceResults = data[1];
                 let args = {};
-                for (let i = 0; i < resourceResults.length; i++) {
-                    let name = resourceNames[i];
-                    args[name] = resourceResults[i];
-                }
+                // for (let i = 0; i < resourceResults.length; i++) {
+                //     let name = resourceNames[i];
+                //     args[name] = resourceResults[i];
+                // }
                 this.on_load(args);
             });
 

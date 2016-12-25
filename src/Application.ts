@@ -3,64 +3,67 @@ namespace chitu {
 
     const DEFAULT_FILE_BASE_PATH = 'modules'
 
-    export class Resources {
-        private items: Array<{ name: string, path: string }> = [];
-        private routeData: RouteData;
-        private _loadCompleted;
+    // export class Resources {
+    //     private items: Array<{ name: string, path: string }> = [];
+    //     private routeData: RouteData;
+    //     private _loadCompleted;
 
-        constructor(routeData: RouteData) {
-            this.routeData = routeData;
-        }
+    //     constructor(routeData: RouteData) {
+    //         this.routeData = routeData;
+    //     }
 
-        push(...items: { name: string, path: string }[]) {
+    //     push(...items: { name: string, path: string }[]) {
 
-            //=========================================================================
-            // 说明：检查是否有名称重复
-            let tmp: Array<{ name: string, path: string }> = this.items;
-            for (let i = 0; i < tmp.length; i++) {
-                for (let j = 0; j < items.length; j++) {
-                    if (tmp[i].name == items[j].name) {
-                        throw Errors.resourceExists(tmp[i].name, this.routeData.pageName);
-                    }
-                }
-            }
+    //         //=========================================================================
+    //         // 说明：检查是否有名称重复
+    //         let tmp: Array<{ name: string, path: string }> = this.items;
+    //         for (let i = 0; i < tmp.length; i++) {
+    //             for (let j = 0; j < items.length; j++) {
+    //                 if (tmp[i].name == items[j].name) {
+    //                     throw Errors.resourceExists(tmp[i].name, this.routeData.pageName);
+    //                 }
+    //             }
+    //         }
 
-            for (let i = 0; i < items.length; i++) {
-                for (let j = i + 1; j < items.length; j++) {
-                    if (items[i].name == items[j].name) {
-                        throw Errors.resourceExists(items[i].name, this.routeData.pageName);
-                    }
-                }
-            }
-            //=========================================================================
-            return this.items.push(...items);
-        }
+    //         for (let i = 0; i < items.length; i++) {
+    //             for (let j = i + 1; j < items.length; j++) {
+    //                 if (items[i].name == items[j].name) {
+    //                     throw Errors.resourceExists(items[i].name, this.routeData.pageName);
+    //                 }
+    //             }
+    //         }
+    //         //=========================================================================
+    //         return this.items.push(...items);
+    //     }
 
-        load() {
-            this._loadCompleted = false;
-            return new Promise((reslove, reject) => {
-                let resourcePaths = this.items.map(o => o.path);
-                let resourceNames = this.items.map(o => o.name)
-                loadjs(...resourcePaths || []).then((resourceResults) => {
-                    this._loadCompleted = true;
-                    //let resourceResults = data[1];
-                    resourceResults = resourceResults || [];
-                    let args = {};
-                    for (let i = 0; i < resourceResults.length; i++) {
-                        let name = resourceNames[i];
-                        args[name] = resourceResults[i];
-                    }
-                    reslove(args);
-                }).catch((err) => {
-                    reject(err);
-                });
-            });
-        }
+    //     load() {
+    //         this._loadCompleted = false;
+    //         return new Promise((reslove, reject) => {
+    //             let resourcePaths = this.items.map(o => o.path);
+    //             let resourceNames = this.items.map(o => o.name)
+    //             requirejs(resourcePaths || [],
+    //                 (resourceResults) => {
+    //                     this._loadCompleted = true;
+    //                     //let resourceResults = data[1];
+    //                     resourceResults = resourceResults || [];
+    //                     let args = {};
+    //                     for (let i = 0; i < resourceResults.length; i++) {
+    //                         let name = resourceNames[i];
+    //                         args[name] = resourceResults[i];
+    //                     }
+    //                     reslove(args);
+    //                 },
 
-        map<U>(callbackfn: (value: { name: string, path: string }) => U): U[] {
-            return this.items.map(callbackfn);
-        }
-    }
+    //                 function (err) {
+    //                     reject(err)
+    //                 });
+    //         });
+    //     }
+
+    //     map<U>(callbackfn: (value: { name: string, path: string }) => U): U[] {
+    //         return this.items.map(callbackfn);
+    //     }
+    // }
 
 
     export class RouteData {
@@ -75,7 +78,7 @@ namespace chitu {
 
         private _actionPath: string;
 
-        private _resources: Resources;
+        //private _resources: Resources;
         private _routeString: string;
         private _loadCompleted: boolean;
 
@@ -91,7 +94,7 @@ namespace chitu {
             this._pathBase = basePath;
             this.parseRouteString();
 
-            this._resources = new Resources(this);
+            //this._resources = new Resources(this);
             let routeData = this;
         }
 
@@ -152,10 +155,10 @@ namespace chitu {
             return this._pageName;
         }
 
-        /** 其它资源文件的路径 */
-        get resources(): Resources {
-            return this._resources;
-        }
+        // /** 其它资源文件的路径 */
+        // get resources(): Resources {
+        //     return this._resources;
+        // }
 
         /** 路由字符串 */
         get routeString(): string {
@@ -242,7 +245,7 @@ namespace chitu {
             let previous_page = this.pages[this.pages.length - 1];
 
             let element = this.createPageElement(routeData);
-            let displayer = new this.pageDisplayType();
+            let displayer = new this.pageDisplayType(this);
 
             console.assert(this.pageType != null);
             let page = new this.pageType({
@@ -409,18 +412,12 @@ namespace chitu {
         /**
          * 页面的返回
          */
-        public back(args = undefined): Promise<void> {
-            return new Promise<void>((reslove, reject) => {
-                this.closeCurrentPage();
-                // 如果页面没有了，就表示回退失败
-                if (this.page_stack.length == 0) {
-                    reject();
-                    fireCallback(this.backFail, this, {});
-                    return;
-                }
-                reslove();
-            });
-
+        public back(args = undefined) {
+            this.closeCurrentPage();
+            // 如果页面没有了，就表示回退失败
+            if (this.page_stack.length == 0) {
+                fireCallback(this.backFail, this, {});
+            }
         }
     }
 } 
