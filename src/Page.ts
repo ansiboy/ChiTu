@@ -57,7 +57,7 @@ namespace chitu {
             this._app = params.app;
             this._routeData = params.routeData;
             this._displayer = params.displayer;
-            this.loadPageAction(params.routeData);
+            this.loadPageAction();
         }
         on_load(args: any) {
             return fireCallback(this.load, this, args);
@@ -114,30 +114,13 @@ namespace chitu {
         get name(): string {
             return this.routeData.pageName;
         }
-        private createActionDeferred(routeData: RouteData): Promise<PageActionConstructor> {
 
-            return new Promise((resolve, reject) => {
-                var url = routeData.actionPath;
-                requirejs([url], (obj: any) => {
-                    //加载脚本失败
-                    if (!obj) {
-                        let msg = `Load action '${routeData.pageName}' fail.`;
-                        let err = new Error(msg);
-                        reject(err);
-                        return;
-                    }
+        private async loadPageAction() {
+            console.assert(this._routeData != null);
 
-                    resolve(obj);
-                },
-
-                    (err) => reject(err)
-                );
-
-            });
-        }
-
-        private async loadPageAction(routeData: RouteData) {
-            let actionResult = await this.createActionDeferred(routeData);
+            let routeData = this._routeData;
+            var url = routeData.actionPath;
+            let actionResult = await loadjs(url);
             if (!actionResult)
                 throw Errors.exportsCanntNull(routeData.pageName);
 
