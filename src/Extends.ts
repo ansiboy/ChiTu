@@ -2,26 +2,18 @@
 namespace chitu {
 
     export class Callback<S, A> {
-        private event: CustomEvent;
-        private element: HTMLElement;
-        private event_name = 'chitu-event';
+        private funcs = new Array<(ender: S, args: A) => void>();
 
         constructor() {
-            this.event = document.createEvent('CustomEvent');
-            this.element = document.createElement('div');
         }
         add(func: (sender: S, args: A) => any) {
-            this.element.addEventListener(this.event_name, (event: CustomEvent) => {
-                let { sender, args } = event.detail;
-                func(sender, args);
-            });
+            this.funcs.push(func);
         }
-        remove(func: EventListener) {
-            this.element.removeEventListener(this.event_name, func);
+        remove(func: (sender: S, args: A) => any) {
+            this.funcs = this.funcs.filter(o => o != func);
         }
         fire(sender: S, args: A) {
-            this.event.initCustomEvent(this.event_name, true, false, { sender, args });
-            this.element.dispatchEvent(this.event);
+            this.funcs.forEach(o => o(sender, args));
         }
     }
 

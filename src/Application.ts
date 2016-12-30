@@ -2,70 +2,6 @@
 namespace chitu {
 
     const DEFAULT_FILE_BASE_PATH = 'modules'
-
-    // export class Resources {
-    //     private items: Array<{ name: string, path: string }> = [];
-    //     private routeData: RouteData;
-    //     private _loadCompleted;
-
-    //     constructor(routeData: RouteData) {
-    //         this.routeData = routeData;
-    //     }
-
-    //     push(...items: { name: string, path: string }[]) {
-
-    //         //=========================================================================
-    //         // 说明：检查是否有名称重复
-    //         let tmp: Array<{ name: string, path: string }> = this.items;
-    //         for (let i = 0; i < tmp.length; i++) {
-    //             for (let j = 0; j < items.length; j++) {
-    //                 if (tmp[i].name == items[j].name) {
-    //                     throw Errors.resourceExists(tmp[i].name, this.routeData.pageName);
-    //                 }
-    //             }
-    //         }
-
-    //         for (let i = 0; i < items.length; i++) {
-    //             for (let j = i + 1; j < items.length; j++) {
-    //                 if (items[i].name == items[j].name) {
-    //                     throw Errors.resourceExists(items[i].name, this.routeData.pageName);
-    //                 }
-    //             }
-    //         }
-    //         //=========================================================================
-    //         return this.items.push(...items);
-    //     }
-
-    //     load() {
-    //         this._loadCompleted = false;
-    //         return new Promise((reslove, reject) => {
-    //             let resourcePaths = this.items.map(o => o.path);
-    //             let resourceNames = this.items.map(o => o.name)
-    //             requirejs(resourcePaths || [],
-    //                 (resourceResults) => {
-    //                     this._loadCompleted = true;
-    //                     //let resourceResults = data[1];
-    //                     resourceResults = resourceResults || [];
-    //                     let args = {};
-    //                     for (let i = 0; i < resourceResults.length; i++) {
-    //                         let name = resourceNames[i];
-    //                         args[name] = resourceResults[i];
-    //                     }
-    //                     reslove(args);
-    //                 },
-
-    //                 function (err) {
-    //                     reject(err)
-    //                 });
-    //         });
-    //     }
-
-    //     map<U>(callbackfn: (value: { name: string, path: string }) => U): U[] {
-    //         return this.items.map(callbackfn);
-    //     }
-    // }
-
-
     export class RouteData {
         private _parameters: any = {};
         private path_string = '';
@@ -77,8 +13,6 @@ namespace chitu {
         private _pageName;
 
         private _actionPath: string;
-
-        //private _resources: Resources;
         private _routeString: string;
         private _loadCompleted: boolean;
 
@@ -155,11 +89,6 @@ namespace chitu {
             return this._pageName;
         }
 
-        // /** 其它资源文件的路径 */
-        // get resources(): Resources {
-        //     return this._resources;
-        // }
-
         /** 路由字符串 */
         get routeString(): string {
             return this._routeString;
@@ -179,7 +108,7 @@ namespace chitu {
         skipHashChanged: boolean
     }
 
-    var PAGE_STACK_MAX_SIZE = 50;
+    var PAGE_STACK_MAX_SIZE = 20;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
@@ -355,7 +284,8 @@ namespace chitu {
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
-                c.close();
+                if (this.cachePages[routeData.pageName])
+                    c.close();
             }
 
             page.previous = previous;

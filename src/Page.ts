@@ -136,48 +136,29 @@ namespace chitu {
             });
         }
 
-        private loadPageAction(routeData: RouteData) {
-            var action_deferred = new Promise((reslove, reject) => {
-                this.createActionDeferred(routeData).then((actionResult) => {
-                    if (!actionResult)
-                        throw Errors.exportsCanntNull(routeData.pageName);
+        private async loadPageAction(routeData: RouteData) {
+            let actionResult = await this.createActionDeferred(routeData);
+            if (!actionResult)
+                throw Errors.exportsCanntNull(routeData.pageName);
 
-                    let actionName = 'default';
-                    let action = actionResult[actionName];
-                    if (action == null) {
-                        throw Errors.canntFindAction(routeData.pageName);
-                    }
+            let actionName = 'default';
+            let action = actionResult[actionName];
+            if (action == null) {
+                throw Errors.canntFindAction(routeData.pageName);
+            }
 
-                    if (typeof action == 'function') {
-                        if (action['prototype'] != null)
-                            new action(this);
-                        else
-                            action(this);
+            if (typeof action == 'function') {
+                if (action['prototype'] != null)
+                    new action(this);
+                else
+                    action(this);
+            }
+            else {
+                throw Errors.actionTypeError(routeData.pageName);
+            }
 
-                        reslove();
-                    }
-                    else {
-                        reject();
-                        throw Errors.actionTypeError(routeData.pageName);
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-            });
-
-            // let resourcePaths = routeData.resources.map(o => o.path);
-            // let resourceNames = routeData.resources.map(o => o.name);
-            let result = action_deferred.then((data) => {
-                // let resourceResults = data[1];
-                let args = {};
-                // for (let i = 0; i < resourceResults.length; i++) {
-                //     let name = resourceNames[i];
-                //     args[name] = resourceResults[i];
-                // }
-                this.on_load(args);
-            });
-
-            return result;
+            let args = {};
+            this.on_load(args);
         }
     }
 
