@@ -193,7 +193,7 @@
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
-                if (this.cachePages[routeData.pageName])
+                if (!this.cachePages[routeData.pageName])
                     c.close();
             }
             page.previous = previous;
@@ -466,6 +466,9 @@ var chitu;
                 let args = {};
                 this.on_load(args);
             });
+        }
+        reload() {
+            return this.loadPageAction();
         }
     }
     Page.tagName = 'div';

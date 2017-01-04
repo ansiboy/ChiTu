@@ -40,16 +40,16 @@ namespace chitu {
 
         allowCache = false;
 
-        load = Callbacks<Page, any>();
+        load = Callbacks<this, any>();
 
-        showing = Callbacks<Page, {}>();
-        shown = Callbacks<Page, {}>();
+        showing = Callbacks<this, {}>();
+        shown = Callbacks<this, {}>();
 
-        hiding = Callbacks<Page, {}>();
-        hidden = Callbacks<Page, {}>();
+        hiding = Callbacks<this, {}>();
+        hidden = Callbacks<this, {}>();
 
-        closing = Callbacks<Page, {}>();
-        closed = Callbacks<Page, {}>();
+        closing = Callbacks<this, {}>();
+        closed = Callbacks<this, {}>();
 
         constructor(params: PageParams) {
             this._element = params.element;
@@ -142,6 +142,10 @@ namespace chitu {
 
             let args = {};
             this.on_load(args);
+        }
+
+        reload() {
+            return this.loadPageAction();
         }
     }
 

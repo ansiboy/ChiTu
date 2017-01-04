@@ -284,7 +284,7 @@ namespace chitu {
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
-                if (this.cachePages[routeData.pageName])
+                if (!this.cachePages[routeData.pageName])
                     c.close();
             }
 
