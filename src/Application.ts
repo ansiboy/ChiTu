@@ -294,7 +294,7 @@ namespace chitu {
             return page;
         }
 
-        private setLocationHash(routeString: string) {
+        public setLocationHash(routeString: string) {
             if (window.location.hash == '#' + routeString) {
                 return;
             }
