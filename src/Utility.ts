@@ -17,10 +17,6 @@
         return new Promise<Array<any>>((reslove, reject) => {
             requirejs([path],
                 function (result) {
-                    // var args = [];
-                    // for (var i = 0; i < arguments.length; i++)
-                    //     args[i] = arguments[i];
-
                     reslove(result);
                 },
                 function (err) {
