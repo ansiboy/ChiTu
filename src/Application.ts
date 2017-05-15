@@ -215,12 +215,12 @@ namespace chitu {
             var routeData = this.parseRouteString(routeString);
             var page = this.getPage(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
-            if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
-                this.closeCurrentPage();
-            }
-            else {
-                this.showPage(routeString);
-            }
+            // if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
+            //     this.closeCurrentPage();
+            // }
+            // else {
+            this.showPage(routeString);
+            // }
         }
 
         /**
