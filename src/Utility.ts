@@ -1,72 +1,28 @@
 ﻿namespace chitu {
-    var e = chitu.Errors;
-    export class Utility {
-        public static isType(targetType: Function, obj: any): boolean {
-            for (var key in targetType.prototype) {
-                if (obj[key] === undefined)
-                    return false;
-            }
-            return true;
-        }
-        public static isDeferred(obj: any): boolean {
-            if (obj == null)
-                return false;
+    export function combinePath(path1: string, path2: string): string {
+        if (!path1) throw Errors.argumentNull('path1');
+        if (!path2) throw Errors.argumentNull('path2');
 
-            if (obj.pipe != null && obj.always != null && obj.done != null)
-                return true;
+        path1 = path1.trim();
+        if (!path1.endsWith('/'))
+            path1 = path1 + '/';
 
-            return false;
-        }
-        public static format(source: string, ...params: string[]): string {
-            for (var i = 0; i < params.length; i++) {
-                source = source.replace(new RegExp("\\{" + i + "\\}", "g"), function() {
-                    return params[i];
+        return path1 + path2;
+    }
+
+    export function loadjs(path): Promise<any> {
+        // if (modules.length == 0)
+        //     return Promise.resolve([]);
+
+        return new Promise<Array<any>>((reslove, reject) => {
+            requirejs([path],
+                function (result) {
+                    reslove(result);
+                },
+                function (err) {
+                    reject(err);
                 });
-            }
-
-            return source;
-        }
-        public static fileName(url, withExt): string {
-            /// <summary>获取 URL 链接中的文件名</summary>
-            /// <param name="url" type="String">URL 链接</param>
-            /// <param name="withExt" type="Boolean" canBeNull="true">
-            /// 表示返回的文件名是否包含扩展名，true表示包含，false表示不包含。默认值为true。
-            /// </param>
-            /// <returns>返回 URL 链接中的文件名</returns>
-            if (!url) throw e.argumentNull('url');
-            withExt = withExt || true;
-
-            url = url.replace('http://', '/');
-            var filename = url.replace(/^.*[\\\/]/, '');
-            if (withExt === true) {
-                var arr = filename.split('.');
-                filename = arr[0];
-            }
-
-            return filename;
-        }
-        public static log(msg, args: any[] = []) {
-            if (!window.console) return;
-
-            if (args == null) {
-                console.log(msg);
-                return;
-            }
-            var txt = this.format.apply(this, arguments);
-            console.log(txt);
-        }
-        static loadjs(...modules: string[]): JQueryPromise<any> {
-            var deferred = $.Deferred();
-            requirejs(modules, function() {
-                //deferred.resolve(arguments);
-                var args = [];
-                for (var i = 0; i < arguments.length; i++)
-                    args[i] = arguments[i];
-
-                deferred.resolve.apply(deferred, args);
-            });
-            return deferred;
-        }
+        });
     }
 
 

@@ -1,6 +1,5 @@
 {
     "files.exclude": {
-        "build": true,
         "node_modules": true,
         "LICENSE.txt": true,
         "README.txt": true,
@@ -9,4 +8,6 @@
         ".tscache": true,
         "**/.baseDir.*": true
     }
+,
+"typescript.check.workspaceVersion": false
 }

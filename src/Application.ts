@@ -1,77 +1,65 @@
-﻿namespace chitu {
+﻿
+namespace chitu {
 
-    export interface RouteData {
-        /** 页面的路径，即 js 文件 */
-        actionPath: string,
-        /** 视图的路径，即 html 文件 */
-        viewPath: string,
-        /** 路由参数值，可以通过它来获取 url 参数 */
-        values: any,
-        /** 页面名称 */
-        pageName: string,
-        /** 其它资源文件的路径 */
-        resource?: string[]
-    }
-
-    class UrlParser {
+    const DEFAULT_FILE_BASE_PATH = 'modules'
+    export class RouteData {
+        private _parameters: any = {};
         private path_string = '';
         private path_spliter_char = '/';
+        private path_contact_char = '/';
         private param_spliter = '?'
         private name_spliter_char = '.';
+        private _pathBase = '';
+        private _pageName;
 
-        private _actionPath = '';
-        private _viewPath = '';
-        private _cssPath = '';
-        private _parameters: any = {};
-        private _pageName = '';
-        private pathBase = '';
+        private _actionPath: string;
+        private _routeString: string;
+        private _loadCompleted: boolean;
 
-        private HASH_MINI_LENGTH = 2;
+        constructor(basePath: string, routeString: string, pathSpliterChar?: string) {
+            if (!basePath) throw Errors.argumentNull('basePath');
+            if (!routeString) throw Errors.argumentNull('routeString');
 
-        constructor(pathBase?: string) {
-            if (pathBase == null)
-                pathBase = 'modules/'
+            if (pathSpliterChar)
+                this.path_spliter_char = pathSpliterChar;
 
-            this.pathBase = pathBase;
+            this._loadCompleted = false;
+            this._routeString = routeString;
+            this._pathBase = basePath;
+            this.parseRouteString();
+
+            //this._resources = new Resources(this);
+            let routeData = this;
         }
 
-        public parseUrl(url: string): RouteData {
-            if (!url)
-                throw Errors.argumentNull('url');
-
-            let a = document.createElement('a');
-            a.href = url;
-
-            if (!a.hash || a.hash.length < this.HASH_MINI_LENGTH)
-                throw Errors.canntParseUrl(url);
-
-            let path: string;
+        public parseRouteString() {
+            let routeString: string = this.routeString;
+            let routePath: string;
             let search: string;
-            let param_spliter_index: number = a.hash.indexOf(this.param_spliter);
+            let param_spliter_index: number = routeString.indexOf(this.param_spliter);
             if (param_spliter_index > 0) {
-                search = a.hash.substr(param_spliter_index + 1);
-                path = a.hash.substring(1, param_spliter_index);
+                search = routeString.substr(param_spliter_index + 1);
+                routePath = routeString.substring(0, param_spliter_index);
             }
             else {
-                path = a.hash.substr(1);
+                routePath = routeString;
             }
 
-            if (!path)
-                throw Errors.canntParseUrl(url);
+            if (!routePath)
+                throw Errors.canntParseRouteString(routeString);
 
             if (search) {
                 this._parameters = this.pareeUrlQuery(search);
             }
 
-            let page_name = path.split(this.path_spliter_char).join(this.name_spliter_char);
-            var result = {
-                actionPath: this.pathBase + path,
-                viewPath: this.pathBase + path + '.html',
-                values: this._parameters,
-                pageName: page_name,
+            let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
+            if (path_parts.length < 1) {
+                throw Errors.canntParseRouteString(routeString);
             }
 
-            return result;
+            let file_path = path_parts.join(this.path_contact_char);
+            this._pageName = path_parts.join(this.name_spliter_char);
+            this._actionPath = (this.basePath ? combinePath(this.basePath, file_path) : file_path);
         }
 
         private pareeUrlQuery(query: string): Object {
@@ -86,36 +74,43 @@
 
             return urlParams;
         }
+
+        get basePath(): string {
+            return this._pathBase;
+        }
+
+        /** 路由参数值，可以通过它来获取 url 参数 */
+        get values(): any {
+            return this._parameters;
+        }
+
+        /** 页面名称 */
+        get pageName(): string {
+            return this._pageName;
+        }
+
+        /** 路由字符串 */
+        get routeString(): string {
+            return this._routeString;
+        }
+
+        /** 页面脚本的路径，即 js 文件 */
+        get actionPath(): string {
+            return this._actionPath;
+        }
+
+        get loadCompleted(): boolean {
+            return this._loadCompleted;
+        }
     }
 
+    interface MyLocation extends Location {
+        skipHashChanged: boolean
+    }
 
-
-    var PAGE_STACK_MAX_SIZE = 10;
+    var PAGE_STACK_MAX_SIZE = 20;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
-
-    export interface ApplicationConfig {
-        /**
-         * 获取页面容器，依据 routeData 获取页面容器
-         * param routeData 页面路由数据
-         * param previous 上一个页面容器，如果当前页面容器是第一个，则为空值 
-         */
-        container?: (routeData: RouteData, prevous: PageContainer) => PageContainer,
-        /**
-         * 获取页面打开时，滑动的方向
-         * param routeData 页面路由数据
-         */
-        openSwipe?: (routeData: RouteData) => SwipeDirection,
-        /**
-         * 获取页面关闭时，滑动的方向
-         * param routeData 页面路由数据
-         */
-        closeSwipe?: (route: RouteData) => SwipeDirection,
-        /**
-         * 页面的基本路径
-         */
-        pathBase?: string,
-    }
 
     export class Application {
 
@@ -124,60 +119,46 @@
          */
         pageCreated = Callbacks<Application, Page>();
 
-        private _config: ApplicationConfig;
+        protected pageType: PageConstructor = Page;
+        protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
+
         private _runned: boolean = false;
         private zindex: number;
-        private back_deferred: JQueryDeferred<any>;
-        private start_flag_hash: string;
-        private start_hash: string;
-        private container_stack = new Array<PageContainer>();
+        private page_stack = new Array<Page>();
+        private cachePages: { [name: string]: Page } = {};
 
         /**
-         * 解释 url，将 url 解释为 RouteData
-         * param url 要解释的 url
+         * 加载文件的基本路径
          */
-        parseUrl: (url: string) => RouteData;
+        fileBasePath: string = DEFAULT_FILE_BASE_PATH;
 
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
          */
         backFail = Callbacks<Application, {}>();
 
-        constructor(config?: ApplicationConfig) {
-
-            config = config || {};
-            this._config = $.extend({
-                openSwipe: (routeData: RouteData) => SwipeDirection.None,
-                closeSwipe: () => SwipeDirection.None,
-                container: $.proxy(function (routeData: RouteData, previous: PageContainer) {
-                    return PageContainerFactory.createInstance({ app: this.app, previous, routeData });
-                }, { app: this })
-
-            }, config);
-
-            let urlParser = new UrlParser(this._config.pathBase);
-            this.parseUrl = (url: string) => {
-                return urlParser.parseUrl(url);
-            }
-        }
-
-        private on_pageCreated(page: chitu.Page) {
-            return chitu.fireCallback(this.pageCreated, this, page);
+        constructor() {
         }
 
         /**
-         * 获取应用的设置
+         * 解释路由，将路由字符串解释为 RouteData 对象
+         * @param routeString 要解释的 路由字符串
          */
-        get config(): chitu.ApplicationConfig {
-            return this._config;
+        protected parseRouteString(routeString: string): RouteData {
+            let routeData = new RouteData(this.fileBasePath, routeString);
+            return routeData;
+        }
+
+        private on_pageCreated(page: Page) {
+            return fireCallback(this.pageCreated, this, page);
         }
 
         /**
          * 获取当前页面
          */
-        get currentPage(): chitu.Page {
-            if (this.container_stack.length > 0)
-                return this.container_stack[this.container_stack.length - 1].page;
+        get currentPage(): Page {
+            if (this.page_stack.length > 0)
+                return this.page_stack[this.page_stack.length - 1];
 
             return null;
         }
@@ -185,75 +166,61 @@
         /**
          * 获取当前应用中的所创建页面容器
          */
-        get pageContainers(): Array<PageContainer> {
-            return this.container_stack;
+        get pages(): Array<Page> {
+            return this.page_stack;
         }
 
-        private createPageContainer(routeData: RouteData): PageContainer {
-            var container = this.config.container(routeData, this.pageContainers[this.pageContainers.length - 1]);
+        protected createPage(routeData: RouteData): Page {
+            let previous_page = this.pages[this.pages.length - 1];
 
-            this.container_stack.push(container);
-            if (this.container_stack.length > PAGE_STACK_MAX_SIZE) {
-                var c = this.container_stack.shift();
-                c.close(SwipeDirection.None);
-            }
+            let element = this.createPageElement(routeData);
+            let displayer = new this.pageDisplayType(this);
 
-            return container;
+            console.assert(this.pageType != null);
+            let page = new this.pageType({
+                app: this,
+                previous: previous_page,
+                routeData: routeData,
+                displayer,
+                element
+            });
+
+            this.on_pageCreated(page);
+            return page;
         }
+
+        protected createPageElement(routeData: chitu.RouteData) {
+            let element: HTMLElement = document.createElement(Page.tagName);
+            document.body.appendChild(element);
+            return element;
+        }
+
         protected hashchange() {
-            if (window.location['skip'] == true) {
-                window.location['skip'] = false;
+            let location = window.location as MyLocation;
+            if (location.skipHashChanged == true) {
+                location.skipHashChanged = false;
                 return;
-            }
-
-            var back_deferred: JQueryDeferred<any>
-            if (this.back_deferred && this.back_deferred['processed'] == null) {
-                back_deferred = this.back_deferred;
-                back_deferred['processed'] = true;
             }
 
             var hash = window.location.hash;
-            if (!hash || hash == this.start_flag_hash) {
-                if (!hash)
-                    console.log('The url is not contains hash.url is ' + window.location.href);
-
-                if (hash == this.start_flag_hash) {
-                    window.history.pushState({}, '', this.start_hash);
-                    console.log('The hash is start url, the hash is ' + hash);
-                }
-
-                if (back_deferred)
-                    back_deferred.reject();
-
+            if (!hash) {
+                console.log('The url is not contains hash.url is ' + window.location.href);
                 return;
             }
 
-            if (!this.start_flag_hash) {
-                //TODO:生成随机字符串
-                this.start_flag_hash = '#AABBCCDDEEFF';
-                this.start_hash = hash;
-                window.history.replaceState({}, '', this.start_flag_hash);
-                window.history.pushState({}, '', hash);
-            }
+            var routeString: string;
+            if (location.hash.length > 1)
+                routeString = location.hash.substr(1);
 
-            var url = location.href;
-            var pageInfo = this.parseUrl(url);
-            var page = this.getPage(pageInfo.pageName);
-            var container: PageContainer = page != null ? page.container : null;
-            if (container != null && $.inArray(container, this.container_stack) == this.container_stack.length - 2) {
-                var c = this.container_stack.pop();
-                var swipe = this.config.closeSwipe(c.page.routeData);
-                if (c.previous != null) {
-                    c.previous.show(SwipeDirection.None);
-                }
-                c.close(swipe);
-            }
-            else {
-                this.showPage(url);
-            }
-
-            if (back_deferred)
-                back_deferred.resolve();
+            var routeData = this.parseRouteString(routeString);
+            var page = this.getPage(routeData.pageName);
+            let previousPageIndex = this.page_stack.length - 2;
+            // if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
+            //     this.closeCurrentPage();
+            // }
+            // else {
+            this.showPage(routeString);
+            // }
         }
 
         /**
@@ -264,8 +231,10 @@
 
             var app = this;
 
-            $.proxy(this.hashchange, this)();
-            $(window).bind('hashchange', $.proxy(this.hashchange, this));
+            this.hashchange();
+            window.addEventListener('hashchange', () => {
+                this.hashchange();
+            });
 
             this._runned = true;
         }
@@ -273,9 +242,9 @@
         /**
          * 通过页面的名称，获取页面
          */
-        public getPage(name: string): chitu.Page {
-            for (var i = this.container_stack.length - 1; i >= 0; i--) {
-                var page = this.container_stack[i].page; //.pages[name];
+        public getPage(name: string): Page {
+            for (var i = this.page_stack.length - 1; i >= 0; i--) {
+                var page = this.page_stack[i]; //.pages[name];
                 if (page != null && page.name == name)
                     return page;
             }
@@ -284,64 +253,101 @@
 
         /**
          * 显示页面
-         * param url 页面的路径
-         * param args 传递到页面的参数 
+         * @param url 页面的路径
+         * @param args 传递到页面的参数 
          */
-        public showPage<T extends Page>(url: string, args?: any): JQueryPromise<T> {
-            if (!url) throw Errors.argumentNull('url');
+        public showPage(routeString: string, args?: any): Page {
+            if (!routeString) throw Errors.argumentNull('routeString');
 
-            var routeData = this.parseUrl(url);
+            var routeData = this.parseRouteString(routeString);
             if (routeData == null) {
-                throw Errors.noneRouteMatched(url);
+                throw Errors.noneRouteMatched(routeString);
             }
 
-            routeData.values = $.extend(routeData.values, args || {});
+            Object.assign(routeData.values, args || {});
 
-            let result = $.Deferred<T>();
-            let container = this.createPageContainer(routeData);
-            container.pageCreated.add((sender, page: T) => {
-                this.on_pageCreated(page);
-                result.resolve(page);
-            });
-            let swipe = this.config.openSwipe(routeData);
-            container.show(swipe);
+            //let result = new Promise((resolve, reject) => {
+            let page = this.cachePages[routeData.pageName];
+            //==============================
+            if (page == null) {
+                page = this.createPage(routeData);
+                if (page.allowCache) {
+                    this.cachePages[routeData.pageName] = page;
+                }
+            }
 
-            return result;
+            if (page == this.currentPage) {
+                return page;
+            }
+
+            let previous = this.currentPage;
+            this.page_stack.push(page);
+            if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
+                let c = this.page_stack.shift();
+                if (!this.cachePages[routeData.pageName])
+                    c.close();
+            }
+
+            page.previous = previous;
+            page.show();
+
+            return page;
         }
 
-        protected createPageNode(): HTMLElement {
-            var element = document.createElement('div');
-            return element;
+        public setLocationHash(routeString: string) {
+            if (window.location.hash == '#' + routeString) {
+                return;
+            }
+
+            let location = window.location as MyLocation;
+            location.skipHashChanged = true;
+            location.hash = '#' + routeString;
+        }
+
+        private closeCurrentPage() {
+            if (this.page_stack.length <= 0)
+                return;
+
+            var page = this.page_stack.pop();
+            if (page.allowCache) {
+                page.hide();
+            }
+            else {
+                page.close();
+                if (this.cachePages[page.name])
+                    this.cachePages[page.name] = null;
+            }
+
+            if (this.currentPage != null)
+                this.setLocationHash(this.currentPage.routeData.routeString);
+        }
+
+        private clearPageStack() {
+            this.page_stack = [];
         }
 
         /**
          * 页面跳转
-         * param url 页面路径
-         * param args 传递到页面的参数
+         * @param url 页面路径
+         * @param args 传递到页面的参数
          */
-        public redirect<T extends Page>(url: string, args?: any): JQueryPromise<T> {
-            window.location['skip'] = true;
-            window.location.hash = url;
-            return this.showPage<T>(url, args);
+        public redirect(routeString: string, args?: any): Page {
+            let location = window.location as MyLocation;
+
+            let result = this.showPage(routeString, args);
+            this.setLocationHash(routeString);
+            return result;
         }
 
         /**
          * 页面的返回
          */
-        public back(args = undefined): JQueryPromise<any> {
-            this.back_deferred = $.Deferred();
-            if (window.history.length == 0) {
-                this.back_deferred.reject();
-                //================================
-                // 移除最后一个页面
-                this.container_stack.pop();
-                //================================
+        public back(args = undefined) {
+            this.closeCurrentPage();
+            // 如果页面没有了，就表示回退失败
+            if (this.page_stack.length == 0) {
                 fireCallback(this.backFail, this, {});
-                return this.back_deferred;
             }
-
-            window.history.back();
-            return this.back_deferred;
         }
     }
 } 
