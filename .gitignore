@@ -1,6 +1,6 @@
-/build
-/release
-/node_modules
+out
+dist
+node_modules
 /.git
-/.tscache
+.tscache
 .baseDir.*

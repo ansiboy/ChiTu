@@ -1,7 +1,7 @@
-﻿var js_output_file = 'release/chitu.js';
-var ts_output_file = 'release/chitu.d.ts';
-var build_dir = 'build';
-var release_dir = 'release';
+﻿var build_dir = 'out';
+var release_dir = 'dist';
+var js_output_file = `${release_dir}/chitu.js`;
+var ts_output_file = `${release_dir}/chitu.d.ts`;
 module.exports = function (grunt) {
     let chitu_js_banner =
         "(function(factory) { \n\
@@ -40,7 +40,7 @@ module.exports = function (grunt) {
             chitudts: {
                 options: {
                     stripBanners: true,
-                    footer: 'declare module "chitu" { \n\
+                    footer: 'declare module "maishu-chitu" { \n\
             export = chitu; \n\
         }\n'
                 },
