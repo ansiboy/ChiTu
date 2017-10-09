@@ -1,12 +1,12 @@
 {
     "compilerOptions": {
         "target": "es6",
-        "module": "amd",
+        "module": "none",
         "sourceMap": false,
         "declaration": true,
         // "declarationDir": "../build",
         "removeComments": true,
-        "outDir": "../build/es6",
+        "outDir": "../out/es6",
         "rootDir": "."
     }
 }
