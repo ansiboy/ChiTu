@@ -185,6 +185,15 @@ namespace chitu {
                 element
             });
 
+
+            let page_onclosed = (sender: chitu.Page) => {
+                // var index = this.page_stack.indexOf(page);
+                this.page_stack = this.page_stack.filter(o => o != sender);
+                page.closed.remove(page_onclosed);
+            }
+
+            page.closed.add(page_onclosed);
+
             this.on_pageCreated(page);
             return page;
         }
@@ -212,15 +221,15 @@ namespace chitu {
             if (location.hash.length > 1)
                 routeString = location.hash.substr(1);
 
-            var routeData = this.parseRouteString(routeString);
-            var page = this.getPage(routeData.pageName);
+            // var routeData = this.parseRouteString(routeString);
+            var page = this.getPageByRouteString(routeString);
             let previousPageIndex = this.page_stack.length - 2;
-            // if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
-            //     this.closeCurrentPage();
-            // }
-            // else {
-            this.showPage(routeString);
-            // }
+            if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
+                this.closeCurrentPage();
+            }
+            else {
+                this.showPage(routeString);
+            }
         }
 
         /**
@@ -246,6 +255,16 @@ namespace chitu {
             for (var i = this.page_stack.length - 1; i >= 0; i--) {
                 var page = this.page_stack[i]; //.pages[name];
                 if (page != null && page.name == name)
+                    return page;
+            }
+            return null;
+        }
+
+
+        private getPageByRouteString(routeString: string) {
+            for (var i = this.page_stack.length - 1; i >= 0; i--) {
+                var page = this.page_stack[i]; //.pages[name];
+                if (page != null && page.routeData.routeString == routeString)
                     return page;
             }
             return null;
