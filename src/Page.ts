@@ -1,15 +1,15 @@
 
 namespace chitu {
     export interface PageActionConstructor {
-        new (args: Page);
+        new(args: Page);
     }
 
     export interface PageConstructor {
-        new (args: PageParams): Page
+        new(args: PageParams): Page
     }
 
     export interface PageDisplayConstructor {
-        new (app: Application): PageDisplayer
+        new(app: Application): PageDisplayer
     }
 
     export interface PageDisplayer {
@@ -130,18 +130,18 @@ namespace chitu {
                 throw Errors.canntFindAction(routeData.pageName);
             }
 
+            let actionExecuteResult;
             if (typeof action == 'function') {
                 if (action['prototype'] != null)
-                    new action(this);
+                    actionExecuteResult = new action(this);
                 else
-                    action(this);
+                    actionExecuteResult = action(this);
             }
             else {
                 throw Errors.actionTypeError(routeData.pageName);
             }
-
-            let args = {};
-            this.on_load(args);
+            
+            this.on_load(actionExecuteResult);
         }
 
         reload() {
