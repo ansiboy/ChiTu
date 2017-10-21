@@ -1,15 +1,15 @@
 
 namespace chitu {
     export interface PageActionConstructor {
-        new (args: Page);
+        new(page: Page);
     }
 
     export interface PageConstructor {
-        new (args: PageParams): Page
+        new(args: PageParams): Page
     }
 
     export interface PageDisplayConstructor {
-        new (app: Application): PageDisplayer
+        new(app: Application): PageDisplayer
     }
 
     export interface PageDisplayer {
@@ -23,6 +23,7 @@ namespace chitu {
         element: HTMLElement,
         displayer: PageDisplayer,
         previous?: Page,
+        actionArguments: any
     }
 
     export class Page {
@@ -35,6 +36,7 @@ namespace chitu {
         private _routeData: RouteData;
         //private _name: string;
         private _displayer: PageDisplayer;
+        private _actionArguments: any;
 
         static tagName = 'div';
 
@@ -57,6 +59,7 @@ namespace chitu {
             this._app = params.app;
             this._routeData = params.routeData;
             this._displayer = params.displayer;
+            this._actionArguments = params.actionArguments;
             this.loadPageAction();
         }
         on_load(args: any) {
@@ -132,7 +135,7 @@ namespace chitu {
 
             if (typeof action == 'function') {
                 if (action['prototype'] != null)
-                    new action(this);
+                    new action(this, this._actionArguments);
                 else
                     action(this);
             }

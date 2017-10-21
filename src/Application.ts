@@ -170,7 +170,7 @@ namespace chitu {
             return this.page_stack;
         }
 
-        protected createPage(routeData: RouteData): Page {
+        protected createPage(routeData: RouteData, actionArguments: any): Page {
             let previous_page = this.pages[this.pages.length - 1];
 
             let element = this.createPageElement(routeData);
@@ -182,8 +182,9 @@ namespace chitu {
                 previous: previous_page,
                 routeData: routeData,
                 displayer,
-                element
-            });
+                element,
+                actionArguments
+            } as PageParams);
 
 
             let page_onclosed = (sender: chitu.Page) => {
@@ -289,7 +290,7 @@ namespace chitu {
             let page = this.cachePages[routeData.pageName];
             //==============================
             if (page == null) {
-                page = this.createPage(routeData);
+                page = this.createPage(routeData, args);
                 if (page.allowCache) {
                     this.cachePages[routeData.pageName] = page;
                 }
