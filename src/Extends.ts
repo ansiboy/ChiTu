@@ -22,10 +22,33 @@ namespace chitu {
         return new Callback<S, A>();
     }
 
-    // export function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A) {
-    //     callback.fire(sender, args);
-    // }
+    // 服务以及实体类模块 结束
+    //==========================================================
 
+    /** 实现数据的存储，以及数据修改的通知 */
+    export class ValueStore<T> {
+        private funcs = new Array<(args: T) => void>();
+        private _value: T;
 
-
+        constructor(value?: T) {
+            this._value = value;
+        }
+        add(func: (value: T) => any): (args: T) => any {
+            this.funcs.push(func);
+            return func;
+        }
+        remove(func: (value: T) => any) {
+            this.funcs = this.funcs.filter(o => o != func);
+        }
+        fire(value: T) {
+            this.funcs.forEach(o => o(value));
+        }
+        get value(): T {
+            return this._value;
+        }
+        set value(value: T) {
+            this._value = value;
+            this.fire(value);
+        }
+    }
 } 
