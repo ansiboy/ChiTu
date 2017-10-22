@@ -85,15 +85,29 @@ namespace chitu {
     }
 
     export abstract class Service {
-        static ajaxTimeout = 30;
+
+        private _page: Page
+
+        // static ajaxTimeout = 30;
 
         error = Callbacks<Service, Error>();
 
-        constructor(source: Page) {
+        static settings = {
+            ajaxTimeout: 30,
+            headers: {} as { [key: string]: string }
+        }
 
+        constructor(page: Page) {
+            this._page = page;
+        }
+
+        public get page(): Page {
+            return this._page;
         }
 
         ajax<T>(url: string, options: RequestInit): Promise<T> {
+
+            options.headers = Object.assign(Service.settings.headers || {}, options.headers || {});
 
             return new Promise<T>((reslove, reject) => {
                 let timeId: number;
@@ -106,7 +120,7 @@ namespace chitu {
                         this.error.fire(this, err);
                         clearTimeout(timeId);
 
-                    }, Service.ajaxTimeout * 1000)
+                    }, Service.settings.ajaxTimeout * 1000)
                 }
 
                 ajax<T>(url, options)
@@ -150,7 +164,6 @@ namespace chitu {
         get<T>(url: string, data?: any) {
 
             data = data || {};
-
 
             let urlParams = '';
             for (let key in data) {
