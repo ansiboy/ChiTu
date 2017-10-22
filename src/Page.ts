@@ -1,12 +1,6 @@
 
-namespace chitu {
-    export interface PageActionConstructor {
-        new(page: Page);
-    }
 
-    export interface PageConstructor {
-        new(args: PageParams): Page
-    }
+namespace chitu {
 
     export interface PageDisplayConstructor {
         new(app: Application): PageDisplayer
@@ -40,11 +34,14 @@ namespace chitu {
 
         static tagName = 'div';
 
-        allowCache = false;
+        error = Callbacks<Page, Error>();
 
-        load = Callbacks<this, any>();
+        // allowCache = false;
 
-        showing = Callbacks<this, {}>();
+        load = Callbacks<this, null>();
+        loadComplete = Callbacks<this, null>();
+
+        showing = Callbacks<this, null>();
         shown = Callbacks<this, {}>();
 
         hiding = Callbacks<this, {}>();
@@ -102,6 +99,14 @@ namespace chitu {
                 this.on_closed();
             });
         }
+
+        createService<T>(type: ServiceConstructor): Service {
+            let service = new type(this);
+            service.error.add((ender, error) => {
+                this.error.fire(this, error);
+            })
+            return service;
+        }
         get element(): HTMLElement {
             return this._element;
         }
@@ -135,9 +140,12 @@ namespace chitu {
 
             if (typeof action == 'function') {
                 if (action['prototype'] != null)
-                    new action(this, this._actionArguments);
-                else
-                    action(this);
+                    throw Errors.actionTypeError(routeData.pageName);
+
+                let actionResult = action(this) as Promise<any>;
+                if (actionResult.then != null && actionResult.catch != null) {
+                    actionResult.then(() => this.loadComplete.fire(this, null));
+                }
             }
             else {
                 throw Errors.actionTypeError(routeData.pageName);
@@ -152,20 +160,31 @@ namespace chitu {
         }
     }
 
-    export class PageDisplayerImplement implements PageDisplayer {
-        show(page: Page) {
-            page.element.style.display = 'block';
-            if (page.previous != null) {
-                page.previous.element.style.display = 'none';
-            }
-            return Promise.resolve();
+
+}
+
+
+interface PageActionConstructor {
+    new(page: chitu.Page);
+}
+
+interface PageConstructor {
+    new(args: chitu.PageParams): chitu.Page
+}
+
+class PageDisplayerImplement implements chitu.PageDisplayer {
+    show(page: chitu.Page) {
+        page.element.style.display = 'block';
+        if (page.previous != null) {
+            page.previous.element.style.display = 'none';
         }
-        hide(page: Page) {
-            page.element.style.display = 'none';
-            if (page.previous != null) {
-                page.previous.element.style.display = 'block';
-            }
-            return Promise.resolve();
+        return Promise.resolve();
+    }
+    hide(page: chitu.Page) {
+        page.element.style.display = 'none';
+        if (page.previous != null) {
+            page.previous.element.style.display = 'block';
         }
+        return Promise.resolve();
     }
 }

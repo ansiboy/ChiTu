@@ -291,9 +291,9 @@ namespace chitu {
             //==============================
             if (page == null) {
                 page = this.createPage(routeData, args);
-                if (page.allowCache) {
-                    this.cachePages[routeData.pageName] = page;
-                }
+                // if (page.allowCache) {
+                //     this.cachePages[routeData.pageName] = page;
+                // }
             }
 
             if (page == this.currentPage) {
@@ -329,14 +329,14 @@ namespace chitu {
                 return;
 
             var page = this.page_stack.pop();
-            if (page.allowCache) {
-                page.hide();
-            }
-            else {
-                page.close();
-                if (this.cachePages[page.name])
-                    this.cachePages[page.name] = null;
-            }
+            // if (page.allowCache) {
+            //     page.hide();
+            // }
+            // else {
+            page.close();
+            if (this.cachePages[page.name])
+                this.cachePages[page.name] = null;
+            // }
 
             if (this.currentPage != null)
                 this.setLocationHash(this.currentPage.routeData.routeString);
