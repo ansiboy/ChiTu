@@ -3,6 +3,9 @@
         "target": "es6",
         "module": "amd",
         "sourceMap": false,
-        "allowJs": true
+        "allowJs": true,
+        "strictNullChecks": true,
+        "strict": true,
+        "alwaysStrict": true
     }
 }
