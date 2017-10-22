@@ -135,7 +135,7 @@ namespace chitu {
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
          */
-        backFail = Callbacks<Application, {}>();
+        backFail = Callbacks<Application, null>();
 
         constructor() {
         }
@@ -150,7 +150,7 @@ namespace chitu {
         }
 
         private on_pageCreated(page: Page) {
-            return fireCallback(this.pageCreated, this, page);
+            return this.pageCreated.fire(this, page); //fireCallback(this.pageCreated, this, page);
         }
 
         /**
@@ -366,7 +366,8 @@ namespace chitu {
             this.closeCurrentPage();
             // 如果页面没有了，就表示回退失败
             if (this.page_stack.length == 0) {
-                fireCallback(this.backFail, this, {});
+                // fireCallback(this.backFail, this, {});
+                this.backFail.fire(this, null);
             }
         }
     }

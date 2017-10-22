@@ -42,13 +42,13 @@ namespace chitu {
         loadComplete = Callbacks<this, null>();
 
         showing = Callbacks<this, null>();
-        shown = Callbacks<this, {}>();
+        shown = Callbacks<this, null>();
 
-        hiding = Callbacks<this, {}>();
-        hidden = Callbacks<this, {}>();
+        hiding = Callbacks<this, null>();
+        hidden = Callbacks<this, null>();
 
-        closing = Callbacks<this, {}>();
-        closed = Callbacks<this, {}>();
+        closing = Callbacks<this, null>();
+        closed = Callbacks<this, null>();
 
         constructor(params: PageParams) {
             this._element = params.element;
@@ -59,26 +59,29 @@ namespace chitu {
             this._actionArguments = params.actionArguments;
             this.loadPageAction();
         }
-        on_load(args: any) {
-            return fireCallback(this.load, this, args);
+        private on_load() {
+            return this.load.fire(this, null);
         }
-        on_showing() {
-            return fireCallback(this.showing, this, {});
+        private on_loadComplete() {
+            return this.loadComplete.fire(this, null);
         }
-        on_shown() {
-            return fireCallback(this.shown, this, {});
+        private on_showing() {
+            return this.showing.fire(this, null);
         }
-        on_hiding() {
-            return fireCallback(this.hiding, this, {});
+        private on_shown() {
+            return this.shown.fire(this, null);
         }
-        on_hidden() {
-            return fireCallback(this.hidden, this, {});
+        private on_hiding() {
+            return this.hiding.fire(this, null);
         }
-        on_closing() {
-            return fireCallback(this.closing, this, {});
+        private on_hidden() {
+            return this.hidden.fire(this, null);
         }
-        on_closed() {
-            return fireCallback(this.closed, this, {});
+        private on_closing() {
+            return this.closing.fire(this, null);
+        }
+        private on_closed() {
+            return this.closed.fire(this, null);
         }
         show(): Promise<any> {
             this.on_showing();
@@ -144,15 +147,14 @@ namespace chitu {
 
                 let actionResult = action(this) as Promise<any>;
                 if (actionResult.then != null && actionResult.catch != null) {
-                    actionResult.then(() => this.loadComplete.fire(this, null));
+                    actionResult.then(() => this.on_loadComplete());
                 }
             }
             else {
                 throw Errors.actionTypeError(routeData.pageName);
             }
 
-            let args = {};
-            this.on_load(args);
+            this.on_load();
         }
 
         reload() {

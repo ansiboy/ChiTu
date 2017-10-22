@@ -22,9 +22,9 @@ namespace chitu {
         return new Callback<S, A>();
     }
 
-    export function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A) {
-        callback.fire(sender, args);
-    }
+    // export function fireCallback<S, A>(callback: Callback<S, A>, sender: S, args: A) {
+    //     callback.fire(sender, args);
+    // }
 
 
 
