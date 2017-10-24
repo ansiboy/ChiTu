@@ -103,8 +103,8 @@ namespace chitu {
             });
         }
 
-        createService<T>(type: ServiceConstructor): Service {
-            let service = new type(this);
+        createService<T extends Service>(type: ServiceConstructor<T>): T {
+            let service = new type();
             service.error.add((ender, error) => {
                 this.error.fire(this, error);
             })

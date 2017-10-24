@@ -80,15 +80,11 @@ async function ajax<T>(url: string, options: RequestInit): Promise<T> {
 }
 
 namespace chitu {
-    export interface ServiceConstructor {
-        new(source: Page): Service
+    export interface ServiceConstructor<T> {
+        new(): T
     }
 
     export abstract class Service {
-
-        private _page: Page
-
-        // static ajaxTimeout = 30;
 
         error = Callbacks<Service, Error>();
 
@@ -97,12 +93,7 @@ namespace chitu {
             headers: {} as { [key: string]: string }
         }
 
-        constructor(page: Page) {
-            this._page = page;
-        }
-
-        public get page(): Page {
-            return this._page;
+        constructor() {
         }
 
         ajax<T>(url: string, options: RequestInit): Promise<T> {
@@ -178,22 +169,22 @@ namespace chitu {
             }
             return this.ajax<T>(url, options);
         }
-        post<T>(url: string, data) {
-            return this.ajaxByForm(url, data, 'post');
+        post<T>(url: string, data?) {
+            return this.ajaxByForm<T>(url, data, 'post');
         }
-        put<T>(url: string, data) {
-            return this.ajaxByForm(url, data, 'put');
+        put<T>(url: string, data?) {
+            return this.ajaxByForm<T>(url, data, 'put');
         }
-        delete(url: string, data) {
-            return this.ajaxByForm(url, data, 'delete');
+        delete<T>(url: string, data?) {
+            return this.ajaxByForm<T>(url, data, 'delete');
         }
 
-        private ajaxByForm(url: string, data: Object, method: string) {
+        private ajaxByForm<T>(url: string, data: Object, method: string) {
             var form: FormData = new FormData();
             for (let key in data) {
                 form.append(key, data[key])
             }
-            return this.ajax(url, { body: form, method });
+            return this.ajax<T>(url, { body: form, method });
         }
         private ajaxByJSON<T>(url: string, data: Object, method: string) {
             let headers = {};
