@@ -1,5 +1,5 @@
 ﻿var build_dir = 'out';
-var release_dir = 'dist';
+var release_dir = 'out/dist';
 var js_output_file = `${release_dir}/chitu.js`;
 var ts_output_file = `${release_dir}/chitu.d.ts`;
 module.exports = function (grunt) {

@@ -64,7 +64,7 @@
             return new Error(msg);
         }
         public static actionTypeError(pageName: string): Error {
-            let msg = `The action in page '${pageName}' is expect as function or Class.`;
+            let msg = `The action in page '${pageName}' is expect as function.`;
             return new Error(msg);
         }
         public static canntFindAction(pageName) {

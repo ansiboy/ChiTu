@@ -1,12 +1,6 @@
 
-namespace chitu {
-    export interface PageActionConstructor {
-        new(args: Page);
-    }
 
-    export interface PageConstructor {
-        new(args: PageParams): Page
-    }
+namespace chitu {
 
     export interface PageDisplayConstructor {
         new(app: Application): PageDisplayer
@@ -23,6 +17,7 @@ namespace chitu {
         element: HTMLElement,
         displayer: PageDisplayer,
         previous?: Page,
+        actionArguments: any
     }
 
     export class Page {
@@ -35,21 +30,25 @@ namespace chitu {
         private _routeData: RouteData;
         //private _name: string;
         private _displayer: PageDisplayer;
+        private _actionArguments: any;
 
         static tagName = 'div';
 
-        allowCache = false;
+        error = Callbacks<Page, Error>();
 
-        load = Callbacks<this, any>();
+        // allowCache = false;
 
-        showing = Callbacks<this, {}>();
-        shown = Callbacks<this, {}>();
+        load = Callbacks<this, null>();
+        loadComplete = Callbacks<this, null>();
 
-        hiding = Callbacks<this, {}>();
-        hidden = Callbacks<this, {}>();
+        showing = Callbacks<this, null>();
+        shown = Callbacks<this, null>();
 
-        closing = Callbacks<this, {}>();
-        closed = Callbacks<this, {}>();
+        hiding = Callbacks<this, null>();
+        hidden = Callbacks<this, null>();
+
+        closing = Callbacks<this, null>();
+        closed = Callbacks<this, null>();
 
         constructor(params: PageParams) {
             this._element = params.element;
@@ -57,28 +56,32 @@ namespace chitu {
             this._app = params.app;
             this._routeData = params.routeData;
             this._displayer = params.displayer;
+            this._actionArguments = params.actionArguments;
             this.loadPageAction();
         }
-        on_load(args: any) {
-            return fireCallback(this.load, this, args);
+        private on_load() {
+            return this.load.fire(this, null);
         }
-        on_showing() {
-            return fireCallback(this.showing, this, {});
+        private on_loadComplete() {
+            return this.loadComplete.fire(this, null);
         }
-        on_shown() {
-            return fireCallback(this.shown, this, {});
+        private on_showing() {
+            return this.showing.fire(this, null);
         }
-        on_hiding() {
-            return fireCallback(this.hiding, this, {});
+        private on_shown() {
+            return this.shown.fire(this, null);
         }
-        on_hidden() {
-            return fireCallback(this.hidden, this, {});
+        private on_hiding() {
+            return this.hiding.fire(this, null);
         }
-        on_closing() {
-            return fireCallback(this.closing, this, {});
+        private on_hidden() {
+            return this.hidden.fire(this, null);
         }
-        on_closed() {
-            return fireCallback(this.closed, this, {});
+        private on_closing() {
+            return this.closing.fire(this, null);
+        }
+        private on_closed() {
+            return this.closed.fire(this, null);
         }
         show(): Promise<any> {
             this.on_showing();
@@ -98,6 +101,14 @@ namespace chitu {
                 this._element.remove();
                 this.on_closed();
             });
+        }
+
+        createService<T extends Service>(type: ServiceConstructor<T>): T {
+            let service = new type();
+            service.error.add((ender, error) => {
+                this.error.fire(this, error);
+            })
+            return service;
         }
         get element(): HTMLElement {
             return this._element;
@@ -133,15 +144,18 @@ namespace chitu {
             let actionExecuteResult;
             if (typeof action == 'function') {
                 if (action['prototype'] != null)
-                    actionExecuteResult = new action(this);
-                else
-                    actionExecuteResult = action(this);
+                    throw Errors.actionTypeError(routeData.pageName);
+
+                let actionResult = action(this) as Promise<any>;
+                if (actionResult.then != null && actionResult.catch != null) {
+                    actionResult.then(() => this.on_loadComplete());
+                }
             }
             else {
                 throw Errors.actionTypeError(routeData.pageName);
             }
             
-            this.on_load(actionExecuteResult);
+            this.on_load();
         }
 
         reload() {
@@ -149,20 +163,31 @@ namespace chitu {
         }
     }
 
-    export class PageDisplayerImplement implements PageDisplayer {
-        show(page: Page) {
-            page.element.style.display = 'block';
-            if (page.previous != null) {
-                page.previous.element.style.display = 'none';
-            }
-            return Promise.resolve();
+
+}
+
+
+interface PageActionConstructor {
+    new(page: chitu.Page);
+}
+
+interface PageConstructor {
+    new(args: chitu.PageParams): chitu.Page
+}
+
+class PageDisplayerImplement implements chitu.PageDisplayer {
+    show(page: chitu.Page) {
+        page.element.style.display = 'block';
+        if (page.previous != null) {
+            page.previous.element.style.display = 'none';
         }
-        hide(page: Page) {
-            page.element.style.display = 'none';
-            if (page.previous != null) {
-                page.previous.element.style.display = 'block';
-            }
-            return Promise.resolve();
+        return Promise.resolve();
+    }
+    hide(page: chitu.Page) {
+        page.element.style.display = 'none';
+        if (page.previous != null) {
+            page.previous.element.style.display = 'block';
         }
+        return Promise.resolve();
     }
 }

@@ -135,7 +135,7 @@ namespace chitu {
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
          */
-        backFail = Callbacks<Application, {}>();
+        backFail = Callbacks<Application, null>();
 
         constructor() {
         }
@@ -150,7 +150,7 @@ namespace chitu {
         }
 
         private on_pageCreated(page: Page) {
-            return fireCallback(this.pageCreated, this, page);
+            return this.pageCreated.fire(this, page); //fireCallback(this.pageCreated, this, page);
         }
 
         /**
@@ -170,7 +170,7 @@ namespace chitu {
             return this.page_stack;
         }
 
-        protected createPage(routeData: RouteData): Page {
+        protected createPage(routeData: RouteData, actionArguments: any): Page {
             let previous_page = this.pages[this.pages.length - 1];
 
             let element = this.createPageElement(routeData);
@@ -182,8 +182,9 @@ namespace chitu {
                 previous: previous_page,
                 routeData: routeData,
                 displayer,
-                element
-            });
+                element,
+                actionArguments
+            } as PageParams);
 
 
             let page_onclosed = (sender: chitu.Page) => {
@@ -289,10 +290,10 @@ namespace chitu {
             let page = this.cachePages[routeData.pageName];
             //==============================
             if (page == null) {
-                page = this.createPage(routeData);
-                if (page.allowCache) {
-                    this.cachePages[routeData.pageName] = page;
-                }
+                page = this.createPage(routeData, args);
+                // if (page.allowCache) {
+                //     this.cachePages[routeData.pageName] = page;
+                // }
             }
 
             if (page == this.currentPage) {
@@ -328,14 +329,14 @@ namespace chitu {
                 return;
 
             var page = this.page_stack.pop();
-            if (page.allowCache) {
-                page.hide();
-            }
-            else {
-                page.close();
-                if (this.cachePages[page.name])
-                    this.cachePages[page.name] = null;
-            }
+            // if (page.allowCache) {
+            //     page.hide();
+            // }
+            // else {
+            page.close();
+            if (this.cachePages[page.name])
+                this.cachePages[page.name] = null;
+            // }
 
             if (this.currentPage != null)
                 this.setLocationHash(this.currentPage.routeData.routeString);
@@ -365,7 +366,8 @@ namespace chitu {
             this.closeCurrentPage();
             // 如果页面没有了，就表示回退失败
             if (this.page_stack.length == 0) {
-                fireCallback(this.backFail, this, {});
+                // fireCallback(this.backFail, this, {});
+                this.backFail.fire(this, null);
             }
         }
     }
