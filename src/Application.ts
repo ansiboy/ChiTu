@@ -1,6 +1,16 @@
 ﻿
 namespace chitu {
 
+    export interface SiteMapNode {
+        pageName: string,
+        routeString: string,
+        children: this[]
+    }
+
+    export interface SiteMap<T extends SiteMapNode> {
+        root: T
+    }
+
     const DEFAULT_FILE_BASE_PATH = 'modules'
     export class RouteData {
         private _parameters: any = {};
@@ -112,6 +122,7 @@ namespace chitu {
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
+    type MySiteMapNode = SiteMapNode & { parent?: SiteMapNode, level?: number };
     export class Application {
 
         /**
@@ -125,7 +136,9 @@ namespace chitu {
         private _runned: boolean = false;
         private zindex: number;
         private page_stack = new Array<Page>();
-        private cachePages: { [name: string]: Page } = {};
+        // private cachePages: { [name: string]: Page } = {};
+
+        private _siteMap: SiteMap<MySiteMapNode>;
 
         /**
          * 加载文件的基本路径
@@ -137,7 +150,26 @@ namespace chitu {
          */
         backFail = Callbacks<Application, null>();
 
-        constructor() {
+        constructor(args?: { siteMap?: SiteMap<SiteMapNode> }) {
+            args = args || {} as any;
+            this._siteMap = args.siteMap;
+            if (this._siteMap) {
+                if (this._siteMap.root == null)
+                    throw Errors.siteMapRootCanntNull();
+
+                this._siteMap.root.level = 0;
+                this.setChildrenParent(this._siteMap.root);
+            }
+        }
+
+        private setChildrenParent(parent: MySiteMapNode) {
+            if (parent == null) throw Errors.argumentNull('parent');
+            let children = parent.children || [];
+            for (let i = 0; i < children.length; i++) {
+                children[i].parent = parent;
+                children[i].level = parent.level + 1;
+                this.setChildrenParent(children[i]);
+            }
         }
 
         /**
@@ -286,32 +318,45 @@ namespace chitu {
 
             Object.assign(routeData.values, args || {});
 
-            //let result = new Promise((resolve, reject) => {
-            let page = this.cachePages[routeData.pageName];
-            //==============================
-            if (page == null) {
-                page = this.createPage(routeData, args);
-                // if (page.allowCache) {
-                //     this.cachePages[routeData.pageName] = page;
-                // }
+            let page = this.createPage(routeData, args);
+            if (this.currentPage != null) {
+                let pageIsParenPage = false;
+                let newPageNode = this.findSiteMapNode(page.name);
+                let currentPageNode = this.findSiteMapNode(this.currentPage.name);
+
+                if (newPageNode.level < currentPageNode.level) {    //新页面是父页面
+                    this.closeCurrentPage();
+                }
             }
 
-            if (page == this.currentPage) {
-                return page;
-            }
 
+
+            this.pushPage(page);
+            page.show();
+
+            return page;
+        }
+
+
+        private pushPage(page: Page) {
             let previous = this.currentPage;
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
-                if (!this.cachePages[routeData.pageName])
-                    c.close();
             }
 
             page.previous = previous;
-            page.show();
+        }
 
-            return page;
+        private findSiteMapNode(pageName: string) {
+            let stack = new Array<MySiteMapNode>();
+            stack.push(this._siteMap.root);
+            while (stack.length > 0) {
+                let node = stack.pop();
+                if (node.pageName == pageName) {
+                    return node;
+                }
+            }
         }
 
         public setLocationHash(routeString: string) {
@@ -334,8 +379,8 @@ namespace chitu {
             // }
             // else {
             page.close();
-            if (this.cachePages[page.name])
-                this.cachePages[page.name] = null;
+            // if (this.cachePages[page.name])
+            //     this.cachePages[page.name] = null;
             // }
 
             if (this.currentPage != null)

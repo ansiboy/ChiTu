@@ -82,6 +82,10 @@
             let msg = `Rosource '${resourceName}' is exists in the resources of page '${pageName}'.`;
             return new Error(msg);
         }
+        public static siteMapRootCanntNull() {
+            let msg = `The site map root node can not be null.`;
+            return new Error(msg);
+        }
     }
 }
 

@@ -143,18 +143,18 @@ namespace chitu {
 
             let actionExecuteResult;
             if (typeof action == 'function') {
-                if (action['prototype'] != null)
-                    throw Errors.actionTypeError(routeData.pageName);
+                // if (action['prototype'] != null)
+                //     throw Errors.actionTypeError(routeData.pageName);
 
                 let actionResult = action(this) as Promise<any>;
-                if (actionResult.then != null && actionResult.catch != null) {
+                if (actionResult != null && actionResult.then != null && actionResult.catch != null) {
                     actionResult.then(() => this.on_loadComplete());
                 }
             }
             else {
                 throw Errors.actionTypeError(routeData.pageName);
             }
-            
+
             this.on_load();
         }
 
