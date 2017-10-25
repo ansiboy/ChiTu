@@ -5,6 +5,12 @@ var ts_output_file = `${release_dir}/chitu.d.ts`;
 module.exports = function (grunt) {
     let chitu_js_banner =
         "(function(factory) { \n\
+            if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') { \n\
+                // [1] CommonJS/Node.js \n\
+                var target = module['exports'] || exports; \n\
+                var chitu = factory(target, require);\n\
+                Object.assign(target,chitu);\n\
+            } else \n\
         if (typeof define === 'function' && define['amd']) { \n\
             define(factory);  \n\
         } else { \n\
@@ -23,9 +29,12 @@ module.exports = function (grunt) {
                 presets: ["es2015"]
             },
             dist: {
-                files: [
-                    { expand: true, cwd: build_dir + '/es6', src: ['*.js'], dest: build_dir + '/es5' }
-                ]
+                files: [{
+                    expand: true,
+                    cwd: build_dir + '/es6',
+                    src: ['*.js'],
+                    dest: build_dir + '/es5'
+                }]
             }
         },
         shell: {
@@ -75,9 +84,14 @@ module.exports = function (grunt) {
         //     ]
         // },
         test: { // Copy 到测试目录
-            files: [
-                { src: [js_output_file], dest: 'test/scripts/chitu.js' },
-                { src: [ts_output_file], dest: 'test/scripts/typings/chitu.d.ts' },
+            files: [{
+                    src: [js_output_file],
+                    dest: 'test/scripts/chitu.js'
+                },
+                {
+                    src: [ts_output_file],
+                    dest: 'test/scripts/typings/chitu.d.ts'
+                },
             ]
         }
     };
@@ -93,6 +107,6 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-ts');
-    grunt.registerTask('default', ['shell', 'babel', 'concat', 'copy']);//,, 'clean'  'concat', 'uglify',
+    grunt.registerTask('default', ['shell', 'babel', 'concat', 'copy']); //,, 'clean'  'concat', 'uglify',
 
 };
