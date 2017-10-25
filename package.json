@@ -1,6 +1,7 @@
 {
   "name": "maishu-chitu",
-  "version": "1.0.0",
+  "version": "1.3.0",
+  "author": "mai.shu",
   "devDependencies": {
     "babel-preset-es2015": "^6.18.0",
     "grunt": "^1.0.1",
@@ -11,5 +12,24 @@
     "grunt-contrib-uglify": "~1.0.1",
     "grunt-shell": "^2.1.0",
     "grunt-ts": "~5.5.1"
-  }
+  },
+  "description": "采用TypeScript编写的轻量级单页面类库，帮助开发人员编写易维护的大规模项目。采用面向对象，事件驱动的编程模式。",
+  "main": "chitu.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ansiboy/chitu.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ansiboy/chitu/issues"
+  },
+  "homepage": "https://github.com/ansiboy/chitu#readme"
 }

@@ -141,6 +141,7 @@ namespace chitu {
                 throw Errors.canntFindAction(routeData.pageName);
             }
 
+            let actionExecuteResult;
             if (typeof action == 'function') {
                 if (action['prototype'] != null)
                     throw Errors.actionTypeError(routeData.pageName);
@@ -153,7 +154,7 @@ namespace chitu {
             else {
                 throw Errors.actionTypeError(routeData.pageName);
             }
-
+            
             this.on_load();
         }
 
