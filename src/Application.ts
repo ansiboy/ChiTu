@@ -3,7 +3,7 @@ namespace chitu {
 
     export interface SiteMapNode {
         pageName: string,
-        routeString: string,
+        routeString: string | (() => string),
         children: this[]
     }
 
@@ -114,9 +114,9 @@ namespace chitu {
         }
     }
 
-    interface MyLocation extends Location {
-        skipHashChanged: boolean
-    }
+    // interface MyLocation extends Location {
+    //     skipHashChanged: boolean
+    // }
 
     var PAGE_STACK_MAX_SIZE = 20;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
@@ -238,11 +238,11 @@ namespace chitu {
         }
 
         protected hashchange() {
-            let location = window.location as MyLocation;
-            if (location.skipHashChanged == true) {
-                location.skipHashChanged = false;
-                return;
-            }
+            // let location = window.location as MyLocation;
+            // if (location.skipHashChanged == true) {
+            //     location.skipHashChanged = false;
+            //     return;
+            // }
 
             var hash = window.location.hash;
             if (!hash) {
@@ -274,7 +274,10 @@ namespace chitu {
             var app = this;
 
             this.hashchange();
-            window.addEventListener('hashchange', () => {
+            // window.addEventListener('hashchange', () => {
+            //     this.hashchange();
+            // });
+            window.addEventListener('popstate', () => {
                 this.hashchange();
             });
 
@@ -319,17 +322,15 @@ namespace chitu {
             Object.assign(routeData.values, args || {});
 
             let page = this.createPage(routeData, args);
-            if (this.currentPage != null) {
+            if (this.currentPage != null && this._siteMap != null) {
                 let pageIsParenPage = false;
                 let newPageNode = this.findSiteMapNode(page.name);
                 let currentPageNode = this.findSiteMapNode(this.currentPage.name);
 
-                if (newPageNode.level < currentPageNode.level) {    //新页面是父页面
+                if (newPageNode != null && currentPageNode != null && newPageNode.level < currentPageNode.level) {    //新页面是父页面
                     this.closeCurrentPage();
                 }
             }
-
-
 
             this.pushPage(page);
             page.show();
@@ -349,6 +350,9 @@ namespace chitu {
         }
 
         private findSiteMapNode(pageName: string) {
+            if (this._siteMap == null)
+                return;
+
             let stack = new Array<MySiteMapNode>();
             stack.push(this._siteMap.root);
             while (stack.length > 0) {
@@ -357,6 +361,8 @@ namespace chitu {
                     return node;
                 }
             }
+
+            return null;
         }
 
         public setLocationHash(routeString: string) {
@@ -364,12 +370,14 @@ namespace chitu {
                 return;
             }
 
-            let location = window.location as MyLocation;
-            location.skipHashChanged = true;
-            location.hash = '#' + routeString;
+            // let location = window.location as MyLocation;
+            // location.skipHashChanged = true;
+            // location.hash = '#' + routeString;
+
+            history.pushState(routeString, "", `#${routeString}`)
         }
 
-        private closeCurrentPage() {
+        public closeCurrentPage() {
             if (this.page_stack.length <= 0)
                 return;
 
@@ -397,23 +405,55 @@ namespace chitu {
          * @param args 传递到页面的参数
          */
         public redirect(routeString: string, args?: any): Page {
-            let location = window.location as MyLocation;
+            // let location = window.location as MyLocation;
 
             let result = this.showPage(routeString, args);
             this.setLocationHash(routeString);
+
             return result;
         }
 
+        public back() {
+            history.back();
+        }
         /**
          * 页面的返回
          */
-        public back(args = undefined) {
-            this.closeCurrentPage();
-            // 如果页面没有了，就表示回退失败
-            if (this.page_stack.length == 0) {
-                // fireCallback(this.backFail, this, {});
+        public _back(args = undefined) {
+            if (this.currentPage == null) {
                 this.backFail.fire(this, null);
+                return;
             }
+
+            let routeData = this.currentPage.routeData;
+            this.closeCurrentPage();
+
+            //================================
+            // 表示成功返回
+            if (this.page_stack.length > 0) {
+                return;
+            }
+            //================================
+
+            // 如果页面没有了，就表示回退失败
+            // if (this.page_stack.length == 0) {
+            if (this._siteMap == null) {
+                this.backFail.fire(this, null);
+                return;
+            }
+
+            let siteMapNode = this.findSiteMapNode(routeData.pageName);
+            if (siteMapNode != null && siteMapNode.parent != null) {
+                let p = siteMapNode.parent;
+                let routeString = typeof p.routeString == 'function' ? p.routeString() : p.routeString;
+                this.redirect(routeString);
+                return;
+            }
+            // }
+
+            // fireCallback(this.backFail, this, {});
+            this.backFail.fire(this, null);
+            // }
         }
     }
 } 
