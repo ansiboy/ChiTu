@@ -83,17 +83,17 @@ module.exports = function (grunt) {
         //         { src: [ts_output_file], dest: '../ChiTuStore/src/Scripts/typings/chitu.d.ts' },
         //     ]
         // },
-        test: { // Copy 到测试目录
-            files: [{
-                    src: [js_output_file],
-                    dest: 'test/scripts/chitu.js'
-                },
-                {
-                    src: [ts_output_file],
-                    dest: 'test/scripts/typings/chitu.d.ts'
-                },
-            ]
-        }
+        // test: { // Copy 到测试目录
+        //     files: [{
+        //             src: [js_output_file],
+        //             dest: 'test/scripts/chitu.js'
+        //         },
+        //         {
+        //             src: [ts_output_file],
+        //             dest: 'test/scripts/typings/chitu.d.ts'
+        //         },
+        //     ]
+        // }
     };
 
 
