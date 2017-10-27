@@ -90,15 +90,12 @@ namespace chitu {
 
         static settings = {
             ajaxTimeout: 30,
-            headers: {} as { [key: string]: string }
         }
 
         constructor() {
         }
 
         ajax<T>(url: string, options: RequestInit): Promise<T> {
-
-            options.headers = Object.assign(Service.settings.headers || {}, options.headers || {});
 
             return new Promise<T>((reslove, reject) => {
                 let timeId: number;
