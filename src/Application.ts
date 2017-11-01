@@ -314,6 +314,9 @@ namespace chitu {
         public showPage(routeString: string, args?: any): Page {
             if (!routeString) throw Errors.argumentNull('routeString');
 
+            if (this.currentPage != null && this.currentPage.routeData.routeString == routeString)
+                return;
+
             var routeData = this.parseRouteString(routeString);
             if (routeData == null) {
                 throw Errors.noneRouteMatched(routeString);
@@ -324,17 +327,20 @@ namespace chitu {
             let page = this.page_stack.filter(o => o.routeData.routeString == routeString)[0];
             if (!page) {
                 page = this.createPage(routeData, args);
-                if (this.currentPage != null && this._siteMap != null) {
-                    let pageIsParenPage = false;
-                    let newPageNode = this.findSiteMapNode(page.name);
-                    let currentPageNode = this.findSiteMapNode(this.currentPage.name);
+            }
 
-                    if (newPageNode != null && currentPageNode != null && newPageNode.level < currentPageNode.level) {    //新页面是父页面
-                        this.closeCurrentPage();
-                    }
-                }
+            // if (this.currentPage != null && this._siteMap != null) {
+            //     let pageIsParenPage = false;
+            //     let newPageNode = this.findSiteMapNode(page.name);
+            //     let currentPageNode = this.findSiteMapNode(this.currentPage.name);
+            //     if (newPageNode != null && currentPageNode != null && newPageNode.level < currentPageNode.level) {    //新页面是父页面
+            //         this.closeCurrentPage();
+            //     }
+            // }
 
-                this.pushPage(page);
+            this.pushPage(page);
+            if (this.page_stack.length >= 2 && routeString == this.page_stack[this.page_stack.length - 2].routeData.routeString) {
+                this.closeCurrentPage();
             }
 
             page.show();
@@ -347,7 +353,10 @@ namespace chitu {
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
-                c.close();
+
+                var otherReference = this.page_stack.indexOf(page);
+                if (otherReference < 0)     //  如果没有其它引用，就关掉
+                    c.close();
             }
 
             page.previous = previous;
