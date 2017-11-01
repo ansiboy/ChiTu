@@ -107,6 +107,6 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-ts');
-    grunt.registerTask('default', ['shell', 'babel', 'concat', 'copy']); //,, 'clean'  'concat', 'uglify',
+    grunt.registerTask('default', ['shell', 'babel', 'concat']); //, 'copy'
 
 };

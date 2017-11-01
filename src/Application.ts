@@ -118,7 +118,7 @@ namespace chitu {
     //     skipHashChanged: boolean
     // }
 
-    var PAGE_STACK_MAX_SIZE = 20;
+    var PAGE_STACK_MAX_SIZE = 50;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
@@ -321,20 +321,23 @@ namespace chitu {
 
             Object.assign(routeData.values, args || {});
 
-            let page = this.createPage(routeData, args);
-            if (this.currentPage != null && this._siteMap != null) {
-                let pageIsParenPage = false;
-                let newPageNode = this.findSiteMapNode(page.name);
-                let currentPageNode = this.findSiteMapNode(this.currentPage.name);
+            let page = this.page_stack.filter(o => o.routeData.routeString == routeString)[0];
+            if (!page) {
+                page = this.createPage(routeData, args);
+                if (this.currentPage != null && this._siteMap != null) {
+                    let pageIsParenPage = false;
+                    let newPageNode = this.findSiteMapNode(page.name);
+                    let currentPageNode = this.findSiteMapNode(this.currentPage.name);
 
-                if (newPageNode != null && currentPageNode != null && newPageNode.level < currentPageNode.level) {    //新页面是父页面
-                    this.closeCurrentPage();
+                    if (newPageNode != null && currentPageNode != null && newPageNode.level < currentPageNode.level) {    //新页面是父页面
+                        this.closeCurrentPage();
+                    }
                 }
+
+                this.pushPage(page);
             }
 
-            this.pushPage(page);
             page.show();
-
             return page;
         }
 
@@ -344,6 +347,7 @@ namespace chitu {
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
+                c.close();
             }
 
             page.previous = previous;
@@ -383,10 +387,10 @@ namespace chitu {
 
             var page = this.page_stack.pop();
             // if (page.allowCache) {
-            //     page.hide();
+            page.hide();
             // }
             // else {
-            page.close();
+            // page.close();
             // if (this.cachePages[page.name])
             //     this.cachePages[page.name] = null;
             // }
