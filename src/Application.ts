@@ -118,7 +118,8 @@ namespace chitu {
     //     skipHashChanged: boolean
     // }
 
-    var PAGE_STACK_MAX_SIZE = 50;
+    var PAGE_STACK_MAX_SIZE = 30;
+    var CACHE_PAGE_SIZE = 30;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
@@ -136,7 +137,7 @@ namespace chitu {
         private _runned: boolean = false;
         private zindex: number;
         private page_stack = new Array<Page>();
-        // private cachePages: { [name: string]: Page } = {};
+        private cachePages: { [name: string]: { page: Page, hitCount: number } } = {};
 
         private _siteMap: SiteMap<MySiteMapNode>;
 
@@ -203,6 +204,13 @@ namespace chitu {
         }
 
         protected createPage(routeData: RouteData, actionArguments: any): Page {
+
+            let data = this.cachePages[routeData.routeString];
+            if (data) {
+                data.hitCount = (data.hitCount || 0) + 1;
+                return data.page;
+            }
+
             let previous_page = this.pages[this.pages.length - 1];
 
             let element = this.createPageElement(routeData);
@@ -218,9 +226,27 @@ namespace chitu {
                 actionArguments
             } as PageParams);
 
+            this.cachePages[routeData.routeString] = { page, hitCount: 1 };
+            let keyes = Object.keys(this.cachePages);
+            if (keyes.length > CACHE_PAGE_SIZE) {
+                let key = keyes[0]
+                // 寻找点击最少的
+                for (let i = 1; i < keyes.length; i++) {
+                    let data0 = this.cachePages[key];
+                    let data1 = this.cachePages[keyes[i]];
+
+                    if (data1.hitCount < data0.hitCount) {
+                        key = keyes[i];
+                    }
+                }
+
+                this.cachePages[key].page.close();
+                delete this.cachePages[key];
+            }
+
+
 
             let page_onclosed = (sender: chitu.Page) => {
-                // var index = this.page_stack.indexOf(page);
                 this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
             }
@@ -324,10 +350,9 @@ namespace chitu {
 
             Object.assign(routeData.values, args || {});
 
-            let page = this.page_stack.filter(o => o.routeData.routeString == routeString)[0];
-            if (!page) {
-                page = this.createPage(routeData, args);
-            }
+            // let page = this.page_stack.filter(o => o.routeData.routeString == routeString)[0];
+            // if (!page) {
+            // }
 
             // if (this.currentPage != null && this._siteMap != null) {
             //     let pageIsParenPage = false;
@@ -338,11 +363,14 @@ namespace chitu {
             //     }
             // }
 
-            this.pushPage(page);
             if (this.page_stack.length >= 2 && routeString == this.page_stack[this.page_stack.length - 2].routeData.routeString) {
                 this.closeCurrentPage();
+                // this.currentPage.show();
+                return;
             }
 
+            let page = this.createPage(routeData, args);
+            this.pushPage(page);
             page.show();
             return page;
         }
@@ -354,9 +382,9 @@ namespace chitu {
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
 
-                var otherReference = this.page_stack.indexOf(page);
-                if (otherReference < 0)     //  如果没有其它引用，就关掉
-                    c.close();
+                // var otherReference = this.page_stack.indexOf(page);
+                // if (otherReference < 0)     //  如果没有其它引用，就关掉
+                //     c.close();
             }
 
             page.previous = previous;
@@ -396,6 +424,7 @@ namespace chitu {
 
             var page = this.page_stack.pop();
             // if (page.allowCache) {
+            page.previous = this.currentPage;
             page.hide();
             // }
             // else {
