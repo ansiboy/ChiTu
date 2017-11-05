@@ -35,11 +35,16 @@ namespace chitu {
 
         error = Callbacks<Page, Error>();
 
-
+        /** 脚本文件加载完成后引发 */
         load = Callbacks<this, null>();
+
+         /** 脚本执行完成后引发 */
         loadComplete = Callbacks<this, null>();
 
+        /** 页面显示时引发 */
         showing = Callbacks<this, null>();
+
+        /** 页面显示时完成后引发 */
         shown = Callbacks<this, null>();
 
         hiding = Callbacks<this, null>();
