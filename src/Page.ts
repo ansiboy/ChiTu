@@ -28,7 +28,6 @@ namespace chitu {
         private _previous: Page;
         private _app: Application;
         private _routeData: RouteData;
-        //private _name: string;
         private _displayer: PageDisplayer;
         private _actionArguments: any;
 
@@ -36,7 +35,6 @@ namespace chitu {
 
         error = Callbacks<Page, Error>();
 
-        // allowCache = false;
 
         load = Callbacks<this, null>();
         loadComplete = Callbacks<this, null>();
@@ -131,7 +129,16 @@ namespace chitu {
 
             let routeData = this._routeData;
             var url = routeData.actionPath;
-            let actionResult = await loadjs(url);
+
+            let actionResult;
+            try {
+                actionResult = await loadjs(url);
+            }
+            catch (err) {
+                this.error.fire(this, err);
+                throw err;
+            }
+
             if (!actionResult)
                 throw Errors.exportsCanntNull(routeData.pageName);
 
