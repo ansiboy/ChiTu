@@ -24,7 +24,6 @@ namespace chitu {
 
         private _actionPath: string;
         private _routeString: string;
-        private _loadCompleted: boolean;
 
         constructor(basePath: string, routeString: string, pathSpliterChar?: string) {
             if (!basePath) throw Errors.argumentNull('basePath');
@@ -33,7 +32,6 @@ namespace chitu {
             if (pathSpliterChar)
                 this.path_spliter_char = pathSpliterChar;
 
-            this._loadCompleted = false;
             this._routeString = routeString;
             this._pathBase = basePath;
             this.parseRouteString();
@@ -107,10 +105,6 @@ namespace chitu {
         /** 页面脚本的路径，即 js 文件 */
         get actionPath(): string {
             return this._actionPath;
-        }
-
-        get loadCompleted(): boolean {
-            return this._loadCompleted;
         }
     }
 
