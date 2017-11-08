@@ -48,7 +48,7 @@ async function ajax<T>(url: string, options: RequestInit): Promise<T> {
      */
     function travelJSON(result: any) {
         const datePattern = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-        if (typeof result === 'string' && value.match(this.datePattern)) {
+        if (typeof result === 'string' && result.match(this.datePattern)) {
             return new Date(result);
         }
         var stack = new Array();
@@ -159,7 +159,8 @@ namespace chitu {
             }
 
             console.assert(url.indexOf('?') < 0);
-            url = url + '?' + urlParams;
+            if (urlParams)
+                url = url + '?' + urlParams.substr(1);
 
             let options = {
                 method: 'get',
@@ -177,11 +178,14 @@ namespace chitu {
         }
 
         private ajaxByForm<T>(url: string, data: Object, method: string) {
-            var form: FormData = new FormData();
+            let headers = {};
+            headers['content-type'] = 'application/x-www-form-urlencoded';
+
+            let body = new URLSearchParams();
             for (let key in data) {
-                form.append(key, data[key])
+                body.append(key, data[key])
             }
-            return this.ajax<T>(url, { body: form, method });
+            return this.ajax<T>(url, { headers, body, method });
         }
         private ajaxByJSON<T>(url: string, data: Object, method: string) {
             let headers = {};
