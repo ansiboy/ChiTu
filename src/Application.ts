@@ -118,6 +118,8 @@ namespace chitu {
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
     type MySiteMapNode = SiteMapNode & { parent?: SiteMapNode, level?: number };
+
+
     export class Application {
 
         /**
@@ -145,6 +147,7 @@ namespace chitu {
          */
         backFail = Callbacks<Application, null>();
 
+        error = Callbacks<Application, Error>();
         constructor(args?: { siteMap?: SiteMap<SiteMapNode> }) {
             args = args || {} as any;
             this._siteMap = args.siteMap;
@@ -239,16 +242,21 @@ namespace chitu {
             }
 
 
-
+            page.error.add((sender, error) => this.on_pageError(this, error));
             let page_onclosed = (sender: chitu.Page) => {
                 this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
+                this.error.remove(this.on_pageError);
             }
 
             page.closed.add(page_onclosed);
 
             this.on_pageCreated(page);
             return page;
+        }
+
+        private on_pageError(app: Application, error: Error) {
+            app.error.fire(app, error);
         }
 
         protected createPageElement(routeData: chitu.RouteData) {
