@@ -91,6 +91,9 @@ namespace chitu {
         get values(): any {
             return this._parameters;
         }
+        set values(value: any) {
+            this._parameters = value;
+        }
 
         /** 页面名称 */
         get pageName(): string {
@@ -108,9 +111,6 @@ namespace chitu {
         }
     }
 
-    // interface MyLocation extends Location {
-    //     skipHashChanged: boolean
-    // }
 
     var PAGE_STACK_MAX_SIZE = 30;
     var CACHE_PAGE_SIZE = 30;
@@ -200,11 +200,12 @@ namespace chitu {
             return this.page_stack;
         }
 
-        protected createPage(routeData: RouteData, actionArguments: any): Page {
+        protected createPage(routeData: RouteData): Page {
 
             let data = this.cachePages[routeData.routeString];
             if (data) {
                 data.hitCount = (data.hitCount || 0) + 1;
+                data.page.routeData.values = routeData.values;
                 return data.page;
             }
 
@@ -219,8 +220,7 @@ namespace chitu {
                 previous: previous_page,
                 routeData: routeData,
                 displayer,
-                element,
-                actionArguments
+                element
             } as PageParams);
 
             this.cachePages[routeData.routeString] = { page, hitCount: 1 };
@@ -352,29 +352,26 @@ namespace chitu {
 
             Object.assign(routeData.values, args || {});
 
-            // let page = this.page_stack.filter(o => o.routeData.routeString == routeString)[0];
-            // if (!page) {
-            // }
-
-            // if (this.currentPage != null && this._siteMap != null) {
-            //     let pageIsParenPage = false;
-            //     let newPageNode = this.findSiteMapNode(page.name);
-            //     let currentPageNode = this.findSiteMapNode(this.currentPage.name);
-            //     if (newPageNode != null && currentPageNode != null && newPageNode.level < currentPageNode.level) {    //新页面是父页面
-            //         this.closeCurrentPage();
-            //     }
-            // }
+            let oldCurrentPage = this.currentPage;
 
             if (this.page_stack.length >= 2 && routeString == this.page_stack[this.page_stack.length - 2].routeData.routeString) {
                 this.closeCurrentPage();
-                // this.currentPage.show();
-                return;
+                // return;
+            }
+            else {
+                let page = this.createPage(routeData);
+                this.pushPage(page);
+                page.show();
+                console.assert(page == this.currentPage, "page is not current page");
             }
 
-            let page = this.createPage(routeData, args);
-            this.pushPage(page);
-            page.show();
-            return page;
+            if (oldCurrentPage)
+                oldCurrentPage.deactive.fire(oldCurrentPage, null);
+
+            console.assert(this.currentPage != null);
+            this.currentPage.active.fire(this.currentPage, null);
+
+            return this.currentPage;
         }
 
 
@@ -460,44 +457,45 @@ namespace chitu {
         public back() {
             history.back();
         }
-        /**
-         * 页面的返回
-         */
-        public _back(args = undefined) {
-            if (this.currentPage == null) {
-                this.backFail.fire(this, null);
-                return;
-            }
 
-            let routeData = this.currentPage.routeData;
-            this.closeCurrentPage();
+        // /**
+        //  * 页面的返回
+        //  */
+        // public _back(args = undefined) {
+        //     if (this.currentPage == null) {
+        //         this.backFail.fire(this, null);
+        //         return;
+        //     }
 
-            //================================
-            // 表示成功返回
-            if (this.page_stack.length > 0) {
-                return;
-            }
-            //================================
+        //     let routeData = this.currentPage.routeData;
+        //     this.closeCurrentPage();
 
-            // 如果页面没有了，就表示回退失败
-            // if (this.page_stack.length == 0) {
-            if (this._siteMap == null) {
-                this.backFail.fire(this, null);
-                return;
-            }
+        //     //================================
+        //     // 表示成功返回
+        //     if (this.page_stack.length > 0) {
+        //         return;
+        //     }
+        //     //================================
 
-            let siteMapNode = this.findSiteMapNode(routeData.pageName);
-            if (siteMapNode != null && siteMapNode.parent != null) {
-                let p = siteMapNode.parent;
-                let routeString = typeof p.routeString == 'function' ? p.routeString() : p.routeString;
-                this.redirect(routeString);
-                return;
-            }
-            // }
+        //     // 如果页面没有了，就表示回退失败
+        //     // if (this.page_stack.length == 0) {
+        //     if (this._siteMap == null) {
+        //         this.backFail.fire(this, null);
+        //         return;
+        //     }
 
-            // fireCallback(this.backFail, this, {});
-            this.backFail.fire(this, null);
-            // }
-        }
+        //     let siteMapNode = this.findSiteMapNode(routeData.pageName);
+        //     if (siteMapNode != null && siteMapNode.parent != null) {
+        //         let p = siteMapNode.parent;
+        //         let routeString = typeof p.routeString == 'function' ? p.routeString() : p.routeString;
+        //         this.redirect(routeString);
+        //         return;
+        //     }
+        //     // }
+
+        //     // fireCallback(this.backFail, this, {});
+        //     this.backFail.fire(this, null);
+        //     // }
+        // }
     }
 } 

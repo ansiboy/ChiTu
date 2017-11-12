@@ -16,8 +16,7 @@ namespace chitu {
         routeData: RouteData,
         element: HTMLElement,
         displayer: PageDisplayer,
-        previous?: Page,
-        actionArguments: any
+        previous?: Page
     }
 
     export class Page {
@@ -29,7 +28,6 @@ namespace chitu {
         private _app: Application;
         private _routeData: RouteData;
         private _displayer: PageDisplayer;
-        private _actionArguments: any;
 
         static tagName = 'div';
 
@@ -38,7 +36,7 @@ namespace chitu {
         /** 脚本文件加载完成后引发 */
         load = Callbacks<this, null>();
 
-         /** 脚本执行完成后引发 */
+        /** 脚本执行完成后引发 */
         loadComplete = Callbacks<this, null>();
 
         /** 页面显示时引发 */
@@ -53,13 +51,15 @@ namespace chitu {
         closing = Callbacks<this, null>();
         closed = Callbacks<this, null>();
 
+        active = Callbacks<this, null>();
+        deactive = Callbacks<this, null>();
+
         constructor(params: PageParams) {
             this._element = params.element;
             this._previous = params.previous;
             this._app = params.app;
             this._routeData = params.routeData;
             this._displayer = params.displayer;
-            this._actionArguments = params.actionArguments;
             this.loadPageAction();
         }
         private on_load() {

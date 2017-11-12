@@ -1,6 +1,7 @@
 ﻿
 namespace chitu {
 
+
     export class Callback<S, A> {
         private funcs = new Array<(ender: S, args: A) => void>();
 
@@ -16,7 +17,6 @@ namespace chitu {
             this.funcs.forEach(o => o(sender, args));
         }
     }
-
 
     export function Callbacks<S, A>(): Callback<S, A> {
         return new Callback<S, A>();

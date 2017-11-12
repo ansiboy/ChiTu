@@ -44,15 +44,18 @@ async function ajax<T>(url: string, options: RequestInit): Promise<T> {
 
     /**
      * 遍历 JSON 对象各个字段，将日期字符串转换为 Date 对象
-     * @param result yao转换的 JSON 对象
+     * @param obj yao转换的 JSON 对象
      */
-    function travelJSON(result: any) {
+    function travelJSON(obj: any) {
         const datePattern = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-        if (typeof result === 'string' && result.match(this.datePattern)) {
-            return new Date(result);
+        if (typeof obj === 'string' && obj.match(this.datePattern)) {
+            return new Date(obj);
+        }
+        else if (typeof obj === 'string') {
+            return obj;
         }
         var stack = new Array();
-        stack.push(result);
+        stack.push(obj);
         while (stack.length > 0) {
             var item = stack.pop();
             for (var key in item) {
@@ -75,7 +78,7 @@ async function ajax<T>(url: string, options: RequestInit): Promise<T> {
                 }
             }
         }
-        return result;
+        return obj;
     }
 }
 
@@ -178,7 +181,7 @@ namespace chitu {
         }
 
         private ajaxByForm<T>(url: string, data: Object, method: string) {
-            let headers = {};
+            let headers = {} as Headers;
             headers['content-type'] = 'application/x-www-form-urlencoded';
 
             let body = new URLSearchParams();
@@ -188,7 +191,7 @@ namespace chitu {
             return this.ajax<T>(url, { headers, body, method });
         }
         private ajaxByJSON<T>(url: string, data: Object, method: string) {
-            let headers = {};
+            let headers = {} as Headers;
             headers['content-type'] = 'application/json';
             let body: any;
             if (data)
