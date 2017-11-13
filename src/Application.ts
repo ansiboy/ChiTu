@@ -3,8 +3,7 @@ namespace chitu {
 
     export interface SiteMapNode {
         pageName: string,
-        routeString: string | (() => string),
-        children: this[]
+        children?: this[]
     }
 
     export interface SiteMap<T extends SiteMapNode> {
@@ -202,7 +201,7 @@ namespace chitu {
 
         protected createPage(routeData: RouteData): Page {
 
-            let data = this.cachePages[routeData.routeString];
+            let data = this.cachePages[routeData.pageName];
             if (data) {
                 data.hitCount = (data.hitCount || 0) + 1;
                 data.page.routeData.values = routeData.values;
@@ -223,7 +222,7 @@ namespace chitu {
                 element
             } as PageParams);
 
-            this.cachePages[routeData.routeString] = { page, hitCount: 1 };
+            this.cachePages[routeData.pageName] = { page, hitCount: 1 };
             let keyes = Object.keys(this.cachePages);
             if (keyes.length > CACHE_PAGE_SIZE) {
                 let key = keyes[0]
@@ -282,8 +281,8 @@ namespace chitu {
             if (location.hash.length > 1)
                 routeString = location.hash.substr(1);
 
-            // var routeData = this.parseRouteString(routeString);
-            var page = this.getPageByRouteString(routeString);
+            var routeData = this.parseRouteString(routeString);
+            var page = this.getPage(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
             if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
                 this.closeCurrentPage();
@@ -376,6 +375,14 @@ namespace chitu {
 
 
         private pushPage(page: Page) {
+            if (this.currentPage != null) {
+                let currentSiteNode = this.findSiteMapNode(this.currentPage.name);
+                let pageNode = this.findSiteMapNode(page.name);
+                if (currentSiteNode != null && pageNode != null && pageNode.level <= currentSiteNode.level) {
+                    this.page_stack = [];
+                }
+            }
+            
             let previous = this.currentPage;
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -400,6 +407,8 @@ namespace chitu {
                 if (node.pageName == pageName) {
                     return node;
                 }
+                let children = node.children || [];
+                children.forEach(c => stack.push(c));
             }
 
             return null;
