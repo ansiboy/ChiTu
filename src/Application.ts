@@ -121,6 +121,8 @@ namespace chitu {
 
     export class Application {
 
+        static skipStateName = 'skip';
+
         /**
          * 当页面创建后发生
          */
@@ -301,10 +303,10 @@ namespace chitu {
             var app = this;
 
             this.hashchange();
-            // window.addEventListener('hashchange', () => {
-            //     this.hashchange();
-            // });
-            window.addEventListener('popstate', () => {
+            window.addEventListener('popstate', (event) => {
+                if (event.state == Application.skipStateName)
+                    return;
+
                 this.hashchange();
             });
 
@@ -382,7 +384,7 @@ namespace chitu {
                     this.page_stack = [];
                 }
             }
-            
+
             let previous = this.currentPage;
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
@@ -418,12 +420,7 @@ namespace chitu {
             if (window.location.hash == '#' + routeString) {
                 return;
             }
-
-            // let location = window.location as MyLocation;
-            // location.skipHashChanged = true;
-            // location.hash = '#' + routeString;
-
-            history.pushState(routeString, "", `#${routeString}`)
+            history.pushState('chitu', "", `#${routeString}`)
         }
 
         public closeCurrentPage() {
