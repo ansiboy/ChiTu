@@ -286,12 +286,12 @@ namespace chitu {
             var routeData = this.parseRouteString(routeString);
             var page = this.getPage(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
-            if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
-                this.closeCurrentPage();
-            }
-            else {
-                this.showPage(routeString);
-            }
+            // if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
+            //     this.closeCurrentPage();
+            // }
+            // else {
+            this.showPage(routeString);
+            // }
         }
 
         /**
@@ -355,7 +355,9 @@ namespace chitu {
 
             let oldCurrentPage = this.currentPage;
 
-            if (this.page_stack.length >= 2 && routeString == this.page_stack[this.page_stack.length - 2].routeData.routeString) {
+            var page = this.getPage(routeData.pageName);
+            let previousPageIndex = this.page_stack.length - 2;
+            if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
                 this.closeCurrentPage();
                 // return;
             }
@@ -438,8 +440,8 @@ namespace chitu {
             //     this.cachePages[page.name] = null;
             // }
 
-            if (this.currentPage != null)
-                this.setLocationHash(this.currentPage.routeData.routeString);
+            // if (this.currentPage != null)
+            //     this.setLocationHash(this.currentPage.routeData.routeString);
         }
 
         private clearPageStack() {
