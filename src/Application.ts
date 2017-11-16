@@ -243,27 +243,25 @@ namespace chitu {
             }
 
 
-            page.error.add((sender, error) => this.on_pageError(this, error));
-            page.loadComplete.add((sender, args) => this.on_pageLoadComplete(page, page.routeData.values));
+            let page_onerror = (sender: Page, error: Error) => {
+                this.error.fire(this, error);
+            }
+            let page_onloadComplete = (sender, args) => {
+                this.cachePages[sender.name] = { page: sender, hitCount: 1 };
+            }
             let page_onclosed = (sender: chitu.Page) => {
                 this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
-                page.loadComplete.remove(this.on_pageLoadComplete);
-                this.error.remove(this.on_pageError);
+                page.loadComplete.remove(page_onloadComplete);
+                page.error.remove(page_onerror);
             }
 
+            page.error.add(page_onerror);
             page.closed.add(page_onclosed);
+            page.loadComplete.remove(page_onloadComplete);
 
             this.on_pageCreated(page);
             return page;
-        }
-
-        private on_pageError(app: Application, error: Error) {
-            app.error.fire(app, error);
-        }
-
-        private on_pageLoadComplete(sender: Page, args: any) {
-            this.cachePages[sender.name] = { page: sender, hitCount: 1 };
         }
 
         protected createPageElement(routeData: chitu.RouteData) {
