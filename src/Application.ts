@@ -258,7 +258,7 @@ namespace chitu {
 
             page.error.add(page_onerror);
             page.closed.add(page_onclosed);
-            page.loadComplete.remove(page_onloadComplete);
+            page.loadComplete.add(page_onloadComplete);
 
             this.on_pageCreated(page);
             return page;
