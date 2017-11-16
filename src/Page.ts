@@ -37,7 +37,7 @@ namespace chitu {
         load = Callbacks<this, null>();
 
         /** 脚本执行完成后引发 */
-        loadComplete = Callbacks<this, null>();
+        loadComplete = Callbacks<this, any>();
 
         /** 页面显示时引发 */
         showing = Callbacks<this, null>();
@@ -63,28 +63,28 @@ namespace chitu {
             this.loadPageAction();
         }
         private on_load() {
-            return this.load.fire(this, null);
+            return this.load.fire(this, this.routeData.values);
         }
         private on_loadComplete() {
-            return this.loadComplete.fire(this, null);
+            return this.loadComplete.fire(this, this.routeData.values);
         }
         private on_showing() {
-            return this.showing.fire(this, null);
+            return this.showing.fire(this, this.routeData.values);
         }
         private on_shown() {
-            return this.shown.fire(this, null);
+            return this.shown.fire(this, this.routeData.values);
         }
         private on_hiding() {
-            return this.hiding.fire(this, null);
+            return this.hiding.fire(this, this.routeData.values);
         }
         private on_hidden() {
-            return this.hidden.fire(this, null);
+            return this.hidden.fire(this, this.routeData.values);
         }
         private on_closing() {
-            return this.closing.fire(this, null);
+            return this.closing.fire(this, this.routeData.values);
         }
         private on_closed() {
-            return this.closed.fire(this, null);
+            return this.closed.fire(this, this.routeData.values);
         }
         show(): Promise<any> {
             this.on_showing();
