@@ -141,7 +141,7 @@ namespace chitu {
             }
             catch (err) {
                 this.error.fire(this, err);
-                throw err;
+                throw err; 
             }
 
             if (!actionResult)
@@ -161,6 +161,9 @@ namespace chitu {
                 let actionResult = action(this) as Promise<any>;
                 if (actionResult != null && actionResult.then != null && actionResult.catch != null) {
                     actionResult.then(() => this.on_loadComplete());
+                }
+                else {
+                    this.on_loadComplete();
                 }
             }
             else {
