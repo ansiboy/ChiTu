@@ -48,7 +48,7 @@ async function ajax<T>(url: string, options: RequestInit): Promise<T> {
      */
     function travelJSON(obj: any) {
         const datePattern = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
-        if (typeof obj === 'string' && obj.match(this.datePattern)) {
+        if (typeof obj === 'string' && obj.match(datePattern)) {
             return new Date(obj);
         }
         else if (typeof obj === 'string') {
