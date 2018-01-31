@@ -132,7 +132,7 @@ namespace chitu {
         }
 
 
-        getByJson<T>(url: string, data?: any) {
+        protected getByJson<T>(url: string, data?: any) {
 
             console.assert(url.indexOf('?') < 0);
 
@@ -142,17 +142,17 @@ namespace chitu {
 
             return this.ajaxByJSON<T>(url, null, 'get');
         }
-        postByJson<T>(url: string, data?: Object) {
+        protected postByJson<T>(url: string, data?: Object) {
             return this.ajaxByJSON<T>(url, data, 'post');
         }
-        deleteByJson<T>(url: string, data?: Object) {
+        protected deleteByJson<T>(url: string, data?: Object) {
             return this.ajaxByJSON<T>(url, data, 'delete');
         }
-        putByJson<T>(url: string, data?: Object) {
+        protected putByJson<T>(url: string, data?: Object) {
             return this.ajaxByJSON<T>(url, data, 'put');
         }
 
-        get<T>(url: string, data?: any) {
+        protected get<T>(url: string, data?: any) {
 
             data = data || {};
 
@@ -170,17 +170,17 @@ namespace chitu {
             }
             return this.ajax<T>(url, options);
         }
-        post<T>(url: string, data?) {
+        protected post<T>(url: string, data?) {
             return this.ajaxByForm<T>(url, data, 'post');
         }
-        put<T>(url: string, data?) {
+        protected put<T>(url: string, data?) {
             return this.ajaxByForm<T>(url, data, 'put');
         }
-        delete<T>(url: string, data?) {
+        protected delete<T>(url: string, data?) {
             return this.ajaxByForm<T>(url, data, 'delete');
         }
 
-        private ajaxByForm<T>(url: string, data: Object, method: string) {
+        protected ajaxByForm<T>(url: string, data: Object, method: string) {
             let headers = {} as Headers;
             headers['content-type'] = 'application/x-www-form-urlencoded';
 
@@ -190,7 +190,7 @@ namespace chitu {
             }
             return this.ajax<T>(url, { headers, body, method });
         }
-        private ajaxByJSON<T>(url: string, data: Object, method: string) {
+        protected ajaxByJSON<T>(url: string, data: Object, method: string) {
             let headers = {} as Headers;
             headers['content-type'] = 'application/json';
             let body: any;

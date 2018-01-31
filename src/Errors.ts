@@ -67,12 +67,13 @@ class Errors {
         let msg = `The action in page '${pageName}' is expect as function.`;
         return new Error(msg);
     }
-    public static canntFindAction(pageName) {
+    public static canntFindAction(pageName): Error {
         let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;
         return new Error(msg);
     }
-    public static exportsCanntNull(pageName: string) {
+    public static exportsCanntNull(pageName: string): Error {
         let msg = `Exports of page '${pageName}' is null.`;
+        return new Error(msg);
     }
     public static scrollerElementNotExists(): Error {
         let msg = "Scroller element is not exists.";

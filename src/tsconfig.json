@@ -6,7 +6,12 @@
         "declaration": true,
         // "declarationDir": "../build",
         "removeComments": true,
-        "outDir": "../out/es6",
-        "rootDir": "."
+        "outDir": "../out/es5",
+        "rootDir": ".",
+        "lib": [
+            "dom",
+            "scripthost",
+            "es2015"
+        ]
     }
 }

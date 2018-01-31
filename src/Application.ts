@@ -224,7 +224,7 @@ namespace chitu {
                 element
             } as PageParams);
 
-            this.cachePages[routeData.pageName] = { page, hitCount: 1 };
+            // this.cachePages[routeData.pageName] = { page, hitCount: 1 };
             let keyes = Object.keys(this.cachePages);
             if (keyes.length > CACHE_PAGE_SIZE) {
                 let key = keyes[0]
@@ -243,21 +243,25 @@ namespace chitu {
             }
 
 
-            page.error.add((sender, error) => this.on_pageError(this, error));
+            let page_onerror = (sender: Page, error: Error) => {
+                this.error.fire(this, error);
+            }
+            let page_onloadComplete = (sender, args) => {
+                this.cachePages[sender.name] = { page: sender, hitCount: 1 };
+            }
             let page_onclosed = (sender: chitu.Page) => {
                 this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
-                this.error.remove(this.on_pageError);
+                page.loadComplete.remove(page_onloadComplete);
+                page.error.remove(page_onerror);
             }
 
+            page.error.add(page_onerror);
             page.closed.add(page_onclosed);
+            page.loadComplete.add(page_onloadComplete);
 
             this.on_pageCreated(page);
             return page;
-        }
-
-        private on_pageError(app: Application, error: Error) {
-            app.error.fire(app, error);
         }
 
         protected createPageElement(routeData: chitu.RouteData) {
@@ -267,12 +271,6 @@ namespace chitu {
         }
 
         protected hashchange() {
-            // let location = window.location as MyLocation;
-            // if (location.skipHashChanged == true) {
-            //     location.skipHashChanged = false;
-            //     return;
-            // }
-
             var hash = window.location.hash;
             if (!hash) {
                 console.log('The url is not contains hash.url is ' + window.location.href);
@@ -286,12 +284,7 @@ namespace chitu {
             var routeData = this.parseRouteString(routeString);
             var page = this.getPage(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
-            // if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
-            //     this.closeCurrentPage();
-            // }
-            // else {
             this.showPage(routeString);
-            // }
         }
 
         /**
@@ -383,7 +376,7 @@ namespace chitu {
                 let currentSiteNode = this.findSiteMapNode(this.currentPage.name);
                 let pageNode = this.findSiteMapNode(page.name);
                 if (currentSiteNode != null && pageNode != null && pageNode.level <= currentSiteNode.level) {
-                    this.page_stack = [];
+                    this.clearPageStack();
                 }
             }
 
