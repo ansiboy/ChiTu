@@ -34,25 +34,25 @@ namespace chitu {
         error = Callbacks<Page, Error>();
 
         /** 脚本文件加载完成后引发 */
-        load = Callbacks<this, null>();
+        load = Callbacks<this, any>();
 
         /** 脚本执行完成后引发 */
         loadComplete = Callbacks<this, any>();
 
         /** 页面显示时引发 */
-        showing = Callbacks<this, null>();
+        showing = Callbacks<this, any>();
 
         /** 页面显示时完成后引发 */
-        shown = Callbacks<this, null>();
+        shown = Callbacks<this, any>();
 
-        hiding = Callbacks<this, null>();
-        hidden = Callbacks<this, null>();
+        hiding = Callbacks<this, any>();
+        hidden = Callbacks<this, any>();
 
-        closing = Callbacks<this, null>();
-        closed = Callbacks<this, null>();
+        closing = Callbacks<this, any>();
+        closed = Callbacks<this, any>();
 
-        active = Callbacks<this, null>();
-        deactive = Callbacks<this, null>();
+        active = Callbacks<this, any>();
+        deactive = Callbacks<this, any>();
 
         constructor(params: PageParams) {
             this._element = params.element;
@@ -141,7 +141,7 @@ namespace chitu {
             }
             catch (err) {
                 this.error.fire(this, err);
-                throw err; 
+                throw err;
             }
 
             if (!actionResult)

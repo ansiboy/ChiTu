@@ -365,7 +365,7 @@ namespace chitu {
                 oldCurrentPage.deactive.fire(oldCurrentPage, null);
 
             console.assert(this.currentPage != null);
-            this.currentPage.active.fire(this.currentPage, null);
+            this.currentPage.active.fire(this.currentPage, routeData.values);
 
             return this.currentPage;
         }
