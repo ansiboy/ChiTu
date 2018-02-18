@@ -1,25 +1,40 @@
 ﻿
 namespace chitu {
 
-
-    export class Callback<S, A> {
-        private funcs = new Array<(ender: S, args: A) => void>();
+    export class Callback {
+        private funcs = new Array<(...args: Array<any>) => void>();
 
         constructor() {
         }
-        add(func: (sender: S, args: A) => any) {
+
+        add(func: (...args: Array<any>) => any) {
             this.funcs.push(func);
         }
-        remove(func: (sender: S, args: A) => any) {
+        remove(func: (...args: Array<any>) => any) {
             this.funcs = this.funcs.filter(o => o != func);
         }
-        fire(sender: S, args: A) {
-            this.funcs.forEach(o => o(sender, args));
+        fire(...args: Array<any>) {
+            this.funcs.forEach(o => o(...args));
         }
     }
 
-    export function Callbacks<S, A>(): Callback<S, A> {
-        return new Callback<S, A>();
+    export interface Callback1<S, A> extends Callback {
+        add(func: (sender: S, arg: A) => any);
+        remove(func: (sender: S, arg: A) => any);
+        fire(sender: S, arg: A);
+    }
+
+    export interface Callback2<S, A, A1> extends Callback {
+        add(func: (sender: S, arg: A, arg1: A1) => any);
+        remove(func: (sender: S, arg: A, arg1: A1) => any);
+        fire(sender: S, arg: A, arg1: A1);
+    }
+
+    export function Callbacks<S, A>(): Callback1<S, A> {
+        return new Callback();
+    }
+    export function Callbacks1<S, A, A1>(): Callback2<S, A, A1> {
+        return new Callback();
     }
 
     // 服务以及实体类模块 结束

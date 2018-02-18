@@ -44,7 +44,7 @@ async function ajax<T>(url: string, options: RequestInit): Promise<T> {
 
     /**
      * 遍历 JSON 对象各个字段，将日期字符串转换为 Date 对象
-     * @param obj yao转换的 JSON 对象
+     * @param obj 要转换的 JSON 对象
      */
     function travelJSON(obj: any) {
         const datePattern = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;

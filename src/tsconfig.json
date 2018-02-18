@@ -6,7 +6,7 @@
         "declaration": true,
         // "declarationDir": "../build",
         "removeComments": true,
-        "outDir": "../out/es5",
+        "outDir": "../out/es6",
         "rootDir": ".",
         "lib": [
             "dom",

@@ -42,12 +42,12 @@ module.exports = function (grunt) {
                 src: [build_dir + '/**/*.d.ts'],
                 dest: ts_output_file
             },
-            chitujs_es5: {
+            chitujs_es6: {
                 options: {
                     banner: chitu_js_banner,
                     footer: chitu_js_footer,
                 },
-                src: [build_dir + '/es5/**/*.js'],
+                src: [build_dir + '/es6/**/*.js'],
                 dest: release_dir + '/chitu.js'
             }
         },

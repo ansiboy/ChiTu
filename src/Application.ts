@@ -148,7 +148,7 @@ namespace chitu {
          */
         backFail = Callbacks<Application, null>();
 
-        error = Callbacks<Application, Error>();
+        error = Callbacks1<Application, Error, Page>();
         constructor(args?: { siteMap?: SiteMap<SiteMapNode> }) {
             args = args || {} as any;
             this._siteMap = args.siteMap;
@@ -244,7 +244,7 @@ namespace chitu {
 
 
             let page_onerror = (sender: Page, error: Error) => {
-                this.error.fire(this, error);
+                this.error.fire(this, error, sender);
             }
             let page_onloadComplete = (sender, args) => {
                 this.cachePages[sender.name] = { page: sender, hitCount: 1 };
