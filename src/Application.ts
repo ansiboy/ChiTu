@@ -137,6 +137,7 @@ namespace chitu {
         private cachePages: { [name: string]: { page: Page, hitCount: number } } = {};
 
         private _siteMap: SiteMap<MySiteMapNode>;
+        private allowCachePage = true;
 
         /**
          * 加载文件的基本路径
@@ -149,7 +150,10 @@ namespace chitu {
         backFail = Callbacks<Application, null>();
 
         error = Callbacks1<Application, Error, Page>();
-        constructor(args?: { siteMap?: SiteMap<SiteMapNode> }) {
+        constructor(args?: {
+            siteMap?: SiteMap<SiteMapNode>,
+            allowCachePage?: boolean
+        }) {
             args = args || {} as any;
             this._siteMap = args.siteMap;
             if (this._siteMap) {
@@ -159,6 +163,9 @@ namespace chitu {
                 this._siteMap.root.level = 0;
                 this.setChildrenParent(this._siteMap.root);
             }
+
+            if (args.allowCachePage != null)
+                this.allowCachePage = args.allowCachePage;
         }
 
         private setChildrenParent(parent: MySiteMapNode) {
@@ -247,9 +254,11 @@ namespace chitu {
                 this.error.fire(this, error, sender);
             }
             let page_onloadComplete = (sender, args) => {
-                this.cachePages[sender.name] = { page: sender, hitCount: 1 };
+                if (this.allowCachePage)
+                    this.cachePages[sender.name] = { page: sender, hitCount: 1 };
             }
             let page_onclosed = (sender: chitu.Page) => {
+                delete this.cachePages[sender.name];
                 this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
                 page.loadComplete.remove(page_onloadComplete);
@@ -352,7 +361,6 @@ namespace chitu {
             let previousPageIndex = this.page_stack.length - 2;
             if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
                 this.closeCurrentPage();
-                // return;
             }
             else {
                 let page = this.createPage(routeData);
@@ -384,10 +392,6 @@ namespace chitu {
             this.page_stack.push(page);
             if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
                 let c = this.page_stack.shift();
-
-                // var otherReference = this.page_stack.indexOf(page);
-                // if (otherReference < 0)     //  如果没有其它引用，就关掉
-                //     c.close();
             }
 
             page.previous = previous;
@@ -423,21 +427,24 @@ namespace chitu {
                 return;
 
             var page = this.page_stack.pop();
-            // if (page.allowCache) {
-            page.previous = this.currentPage;
-            page.hide();
-            // }
-            // else {
-            // page.close();
-            // if (this.cachePages[page.name])
-            //     this.cachePages[page.name] = null;
-            // }
-
-            // if (this.currentPage != null)
-            //     this.setLocationHash(this.currentPage.routeData.routeString);
+            if (this.allowCachePage) {
+                page.previous = this.currentPage;
+                page.hide();
+            }
+            else {
+                page.close();
+            }
         }
 
         private clearPageStack() {
+            if (this.allowCachePage) {
+                this.page_stack.forEach(o => o.hide())
+            }
+            else {
+                this.page_stack.forEach(o => {
+                    o.close()
+                })
+            }
             this.page_stack = [];
         }
 
@@ -447,8 +454,6 @@ namespace chitu {
          * @param args 传递到页面的参数
          */
         public redirect(routeString: string, args?: any): Page {
-            // let location = window.location as MyLocation;
-
             let result = this.showPage(routeString, args);
             this.setLocationHash(routeString);
 
@@ -458,45 +463,5 @@ namespace chitu {
         public back() {
             history.back();
         }
-
-        // /**
-        //  * 页面的返回
-        //  */
-        // public _back(args = undefined) {
-        //     if (this.currentPage == null) {
-        //         this.backFail.fire(this, null);
-        //         return;
-        //     }
-
-        //     let routeData = this.currentPage.routeData;
-        //     this.closeCurrentPage();
-
-        //     //================================
-        //     // 表示成功返回
-        //     if (this.page_stack.length > 0) {
-        //         return;
-        //     }
-        //     //================================
-
-        //     // 如果页面没有了，就表示回退失败
-        //     // if (this.page_stack.length == 0) {
-        //     if (this._siteMap == null) {
-        //         this.backFail.fire(this, null);
-        //         return;
-        //     }
-
-        //     let siteMapNode = this.findSiteMapNode(routeData.pageName);
-        //     if (siteMapNode != null && siteMapNode.parent != null) {
-        //         let p = siteMapNode.parent;
-        //         let routeString = typeof p.routeString == 'function' ? p.routeString() : p.routeString;
-        //         this.redirect(routeString);
-        //         return;
-        //     }
-        //     // }
-
-        //     // fireCallback(this.backFail, this, {});
-        //     this.backFail.fire(this, null);
-        //     // }
-        // }
     }
 } 
