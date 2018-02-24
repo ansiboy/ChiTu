@@ -286,9 +286,13 @@ namespace chitu {
                 return;
             }
 
+            if (hash.startsWith('#!')) {
+                history.replaceState('chitu', "", `#${this.currentPage.routeData.routeString}`)
+                return;
+            }
+
             var routeString: string;
-            if (location.hash.length > 1)
-                routeString = location.hash.substr(1);
+            routeString = location.hash.substr(1);
 
             var routeData = this.parseRouteString(routeString);
             var page = this.getPage(routeData.pageName);
