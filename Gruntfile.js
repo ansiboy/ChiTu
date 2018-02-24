@@ -31,15 +31,44 @@ module.exports = function (grunt) {
                 }
             },
         },
+        babel: {
+            source: {
+                options: {
+                    sourceMap: false,
+                    presets: ["es2015"],
+                },
+                files: [{
+                    src: [`out/dist/chitu.js`],
+                    dest: `out/dist/chitu.es5.js`
+                }]
+            }
+        },
+        uglify: {
+            out: {
+                options: {
+                    mangle: false
+                },
+                files: [{
+                    src: `out/dist/chitu.es5.js`,
+                    dest: `out/dist/chitu.min.js`
+                }]
+            }
+        },
         concat: {
             chitudts: {
                 options: {
                     stripBanners: true,
-                    footer: 'declare module "maishu-chitu" { \n\
-            export = chitu; \n\
-        }\n'
+                    footer:
+                        `
+declare module "maishu-chitu" { \n\
+    export = chitu; \n\
+}\n
+declare module "chitu" { \n\
+    export = chitu; \n\
+}\n
+`
                 },
-                src: [build_dir + '/**/*.d.ts'],
+                src: [build_dir + '/es6/*.d.ts'],
                 dest: ts_output_file
             },
             chitujs_es6: {
@@ -78,11 +107,13 @@ module.exports = function (grunt) {
 
     grunt.initConfig(config);
 
+    grunt.loadNpmTasks('grunt-babel');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-shell');
-    grunt.registerTask('default', ['shell', 'concat']); //, 'copy'
+    grunt.registerTask('default', ['shell', 'concat', 'babel', 'uglify']); //, 'copy'
 
 };
