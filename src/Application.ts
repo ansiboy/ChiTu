@@ -9,8 +9,6 @@ namespace chitu {
 
     export interface SiteMap<T extends SiteMapNode> {
         root: T,
-        // pareseUrl: (url) => RouteData,
-        // createUrl: (pageName: string, routeValues: any) => string
     }
 
     function parseUrl(url: string): RouteData {
@@ -108,13 +106,8 @@ namespace chitu {
         private page_stack = new Array<Page>();
         private cachePages: { [name: string]: { page: Page, hitCount: number } } = {};
 
-        private _siteMap: SiteMap<MySiteMapNode>;
+        private _siteMap: SiteMap<SiteMapNode>;
         private allowCachePage = true;
-
-        // /**
-        //  * 加载文件的基本路径
-        //  */
-        // fileBasePath: string = DEFAULT_FILE_BASE_PATH;
 
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
@@ -132,7 +125,7 @@ namespace chitu {
                 if (this._siteMap.root == null)
                     throw Errors.siteMapRootCanntNull();
 
-                this._siteMap.root.level = 0;
+                (this._siteMap.root as MySiteMapNode).level = 0;
                 this.setChildrenParent(this._siteMap.root);
             }
 
@@ -192,6 +185,10 @@ namespace chitu {
          */
         get pages(): Array<Page> {
             return this.page_stack;
+        }
+
+        get siteMap(): SiteMap<SiteMapNode> {
+            return this._siteMap;
         }
 
         private createPage(routeData: RouteData): Page {
