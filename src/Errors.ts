@@ -1,5 +1,9 @@
 ﻿// namespace chitu {
 class Errors {
+    static pageNodeNotExists(pageName: string): Error {
+        let msg = `Page node named ${pageName} is not exists.`;
+        return new Error(msg);
+    }
     public static argumentNull(paramName: string): Error {
         var msg = `The argument "${paramName}" cannt be null.`;
         return new Error(msg);

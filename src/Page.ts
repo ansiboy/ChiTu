@@ -14,6 +14,7 @@ namespace chitu {
     export interface PageParams {
         app: Application,
         routeData: RouteData,
+        action: ((page: Page) => void) | string
         element: HTMLElement,
         displayer: PageDisplayer,
         previous?: Page
@@ -28,6 +29,7 @@ namespace chitu {
         private _app: Application;
         private _routeData: RouteData;
         private _displayer: PageDisplayer;
+        private _action: ((page: Page) => void) | string;
 
         static tagName = 'div';
 
@@ -60,6 +62,8 @@ namespace chitu {
             this._app = params.app;
             this._routeData = params.routeData;
             this._displayer = params.displayer;
+            this._action = params.action;
+
             this.loadPageAction();
         }
         private on_load() {
@@ -133,25 +137,37 @@ namespace chitu {
             console.assert(this._routeData != null);
 
             let routeData = this._routeData;
-            var url = routeData.actionPath;
+            // var url = routeData.actionPath;
 
-            let actionResult;
-            try {
-                actionResult = await loadjs(url);
+            let action;
+            if (typeof this._action == 'function') {
+                action = this._action;
             }
-            catch (err) {
-                this.error.fire(this, err);
-                throw err;
+            else {
+                let actionResult;
+                try {
+                    actionResult = await loadjs(this._action);
+                }
+                catch (err) {
+                    this.error.fire(this, err);
+                    throw err;
+                }
+
+                if (!actionResult)
+                    throw Errors.exportsCanntNull(routeData.pageName);
+
+                let actionName = 'default';
+                action = actionResult[actionName];
+                if (action == null) {
+                    throw Errors.canntFindAction(routeData.pageName);
+                }
             }
 
-            if (!actionResult)
-                throw Errors.exportsCanntNull(routeData.pageName);
 
-            let actionName = 'default';
-            let action = actionResult[actionName];
-            if (action == null) {
-                throw Errors.canntFindAction(routeData.pageName);
-            }
+
+
+
+
 
             let actionExecuteResult;
             if (typeof action == 'function') {

@@ -2,112 +2,84 @@
 namespace chitu {
 
     export interface SiteMapNode {
-        pageName: string,
-        children?: this[]
+        name: string,
+        action: ((page: Page) => void) | string,
+        children?: { [key: string]: SiteMapNode }
     }
 
     export interface SiteMap<T extends SiteMapNode> {
-        root: T
+        root: T,
+        // pareseUrl: (url) => RouteData,
+        // createUrl: (pageName: string, routeValues: any) => string
     }
 
-    const DEFAULT_FILE_BASE_PATH = 'modules'
-    export class RouteData {
-        private _parameters: any = {};
-        private path_string = '';
-        private path_spliter_char = '/';
-        private path_contact_char = '/';
-        private param_spliter = '?'
-        private name_spliter_char = '.';
-        private _pathBase = '';
-        private _pageName;
+    function parseUrl(url: string): RouteData {
+        let sharpIndex = url.indexOf('#');
+        if (sharpIndex < 0)
+            throw Errors.canntParseRouteString(url);
 
-        private _actionPath: string;
-        private _routeString: string;
+        let routeString = url.substr(sharpIndex + 1);
+        if (!routeString)
+            throw Errors.canntParseRouteString(url);
 
-        constructor(basePath: string, routeString: string, pathSpliterChar?: string) {
-            if (!basePath) throw Errors.argumentNull('basePath');
-            if (!routeString) throw Errors.argumentNull('routeString');
 
-            if (pathSpliterChar)
-                this.path_spliter_char = pathSpliterChar;
-
-            this._routeString = routeString;
-            this._pathBase = basePath;
-            this.parseRouteString();
-
-            //this._resources = new Resources(this);
-            let routeData = this;
+        /** 以 ! 开头在 hash 忽略掉 */
+        if (routeString.startsWith('!')) {
+            history.replaceState('chitu', "", `#${this.currentPage.routeData.url}`)
+            return;
         }
 
-        public parseRouteString() {
-            let routeString: string = this.routeString;
-            let routePath: string;
-            let search: string;
-            let param_spliter_index: number = routeString.indexOf(this.param_spliter);
-            if (param_spliter_index > 0) {
-                search = routeString.substr(param_spliter_index + 1);
-                routePath = routeString.substring(0, param_spliter_index);
-            }
-            else {
-                routePath = routeString;
-            }
-
-            if (!routePath)
-                throw Errors.canntParseRouteString(routeString);
-
-            if (search) {
-                this._parameters = this.pareeUrlQuery(search);
-            }
-
-            let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
-            if (path_parts.length < 1) {
-                throw Errors.canntParseRouteString(routeString);
-            }
-
-            let file_path = path_parts.join(this.path_contact_char);
-            this._pageName = path_parts.join(this.name_spliter_char);
-            this._actionPath = (this.basePath ? combinePath(this.basePath, file_path) : file_path);
+        let routePath: string;
+        let search: string;
+        let param_spliter_index: number = routeString.indexOf('?');
+        if (param_spliter_index > 0) {
+            search = routeString.substr(param_spliter_index + 1);
+            routePath = routeString.substring(0, param_spliter_index);
+        }
+        else {
+            routePath = routeString;
         }
 
-        private pareeUrlQuery(query: string): Object {
-            let match,
-                pl = /\+/g,  // Regex for replacing addition symbol with a space
-                search = /([^&=]+)=?([^&]*)/g,
-                decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
+        if (!routePath)
+            throw Errors.canntParseRouteString(routeString);
 
-            let urlParams = {};
-            while (match = search.exec(query))
-                urlParams[decode(match[1])] = decode(match[2]);
-
-            return urlParams;
+        let values = {};
+        if (search) {
+            values = this.pareeUrlQuery(search);
         }
 
-        get basePath(): string {
-            return this._pathBase;
+        let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
+        if (path_parts.length < 1) {
+            throw Errors.canntParseRouteString(routeString);
         }
 
-        /** 路由参数值，可以通过它来获取 url 参数 */
-        get values(): any {
-            return this._parameters;
-        }
-        set values(value: any) {
-            this._parameters = value;
+        let file_path = path_parts.join('/');
+        let pageName = path_parts.join('.');
+
+        return { url, pageName, values };
+    }
+
+    function createUrl(pageName: string, routeValues?: { [key: string]: string }) {
+        let path_parts = pageName.split('.');
+        let path = path_parts.join('/');
+        if (!routeValues)
+            return `#${path}`
+
+        let params = "";
+        for (let key in routeValues) {
+            params = params + `&${key}=${routeValues[key]}`;
         }
 
-        /** 页面名称 */
-        get pageName(): string {
-            return this._pageName;
-        }
+        if (params.length > 0)
+            params = params.substr(1);
 
-        /** 路由字符串 */
-        get routeString(): string {
-            return this._routeString;
-        }
+        return `#${path}?${params}`;
+    }
 
-        /** 页面脚本的路径，即 js 文件 */
-        get actionPath(): string {
-            return this._actionPath;
-        }
+    export interface RouteData {
+        pageName: string,
+        values: any,
+        url: string
     }
 
 
@@ -139,10 +111,10 @@ namespace chitu {
         private _siteMap: SiteMap<MySiteMapNode>;
         private allowCachePage = true;
 
-        /**
-         * 加载文件的基本路径
-         */
-        fileBasePath: string = DEFAULT_FILE_BASE_PATH;
+        // /**
+        //  * 加载文件的基本路径
+        //  */
+        // fileBasePath: string = DEFAULT_FILE_BASE_PATH;
 
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
@@ -151,7 +123,7 @@ namespace chitu {
 
         error = Callbacks1<Application, Error, Page>();
         constructor(args?: {
-            siteMap?: SiteMap<SiteMapNode>,
+            siteMap: SiteMap<SiteMapNode>,
             allowCachePage?: boolean
         }) {
             args = args || {} as any;
@@ -170,21 +142,35 @@ namespace chitu {
 
         private setChildrenParent(parent: MySiteMapNode) {
             if (parent == null) throw Errors.argumentNull('parent');
-            let children = parent.children || [];
-            for (let i = 0; i < children.length; i++) {
-                children[i].parent = parent;
-                children[i].level = parent.level + 1;
-                this.setChildrenParent(children[i]);
+            let children = parent.children || {};
+            // for (let i = 0; i < children.length; i++) {
+            //     children[i].parent = parent;
+            //     children[i].level = parent.level + 1;
+            //     this.setChildrenParent(children[i]);
+            // }
+            for (let key in children) {
+                (children[key] as MySiteMapNode).parent = parent;
+                (children[key] as MySiteMapNode).level = parent.level + 1;
+                this.setChildrenParent(children[key]);
             }
         }
 
         /**
          * 解释路由，将路由字符串解释为 RouteData 对象
-         * @param routeString 要解释的 路由字符串
+         * @param url 要解释的 路由字符串
          */
-        protected parseRouteString(routeString: string): RouteData {
-            let routeData = new RouteData(this.fileBasePath, routeString);
+        protected parseUrl(url: string): RouteData {
+            let routeData = parseUrl(url);
             return routeData;
+        }
+
+        /**
+         * 创建 url
+         * @param pageName 页面名称
+         * @param values 页面参数
+         */
+        protected createUrl(pageName: string, values: { [key: string]: string }) {
+            return createUrl(pageName, values);
         }
 
         private on_pageCreated(page: Page) {
@@ -208,7 +194,7 @@ namespace chitu {
             return this.page_stack;
         }
 
-        protected createPage(routeData: RouteData): Page {
+        private createPage(routeData: RouteData): Page {
 
             let data = this.cachePages[routeData.pageName];
             if (data) {
@@ -222,14 +208,20 @@ namespace chitu {
             let element = this.createPageElement(routeData);
             let displayer = new this.pageDisplayType(this);
 
+            let siteMapNode = this.findSiteMapNode(routeData.pageName);
+            if (siteMapNode == null)
+                throw Errors.pageNodeNotExists(routeData.pageName);
+
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
                 previous: previous_page,
                 routeData: routeData,
                 displayer,
-                element
-            } as PageParams);
+                element,
+                action: siteMapNode.action
+
+            });
 
             // this.cachePages[routeData.pageName] = { page, hitCount: 1 };
             let keyes = Object.keys(this.cachePages);
@@ -280,24 +272,19 @@ namespace chitu {
         }
 
         protected hashchange() {
-            var hash = window.location.hash;
-            if (!hash) {
-                console.log('The url is not contains hash.url is ' + window.location.href);
+
+
+            // var routeString: string;
+            // routeString = location.hash.substr(1);
+
+            var routeData = this.parseUrl(location.href); //this.parseUrl(routeString);
+            if (routeData == null) {
                 return;
             }
 
-            if (hash.startsWith('#!')) {
-                history.replaceState('chitu', "", `#${this.currentPage.routeData.routeString}`)
-                return;
-            }
-
-            var routeString: string;
-            routeString = location.hash.substr(1);
-
-            var routeData = this.parseRouteString(routeString);
             var page = this.getPage(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
-            this.showPage(routeString);
+            this.showPage(location.href);
         }
 
         /**
@@ -335,7 +322,7 @@ namespace chitu {
         private getPageByRouteString(routeString: string) {
             for (var i = this.page_stack.length - 1; i >= 0; i--) {
                 var page = this.page_stack[i]; //.pages[name];
-                if (page != null && page.routeData.routeString == routeString)
+                if (page != null && page.routeData.url == routeString)
                     return page;
             }
             return null;
@@ -346,21 +333,20 @@ namespace chitu {
          * @param url 页面的路径
          * @param args 传递到页面的参数 
          */
-        public showPage(routeString: string, args?: any): Page {
-            if (!routeString) throw Errors.argumentNull('routeString');
+        public showPage(url: string, args?: any): Page {
+            if (!url) throw Errors.argumentNull('url');
 
-            if (this.currentPage != null && this.currentPage.routeData.routeString == routeString)
-                return;
-
-            var routeData = this.parseRouteString(routeString);
+            var routeData = this.parseUrl(url);
             if (routeData == null) {
-                throw Errors.noneRouteMatched(routeString);
+                throw Errors.noneRouteMatched(url);
             }
 
             Object.assign(routeData.values, args || {});
 
-            let oldCurrentPage = this.currentPage;
+            if (this.currentPage != null && this.currentPage.name == routeData.pageName)
+                return;
 
+            let oldCurrentPage = this.currentPage;
             var page = this.getPage(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
             if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
@@ -409,11 +395,14 @@ namespace chitu {
             stack.push(this._siteMap.root);
             while (stack.length > 0) {
                 let node = stack.pop();
-                if (node.pageName == pageName) {
+                if (node.name == pageName) {
                     return node;
                 }
                 let children = node.children || [];
-                children.forEach(c => stack.push(c));
+                // children.forEach(c => stack.push(c));
+                for (let key in children) {
+                    stack.push(children[key]);
+                }
             }
 
             return null;
