@@ -68,7 +68,7 @@ index.js
 ```js
 requirejs.config({
     paths: {
-        chitu: '/js/chitu'
+        chitu: 'js/chitu'
     }
 })
 
