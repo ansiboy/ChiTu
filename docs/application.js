@@ -41,12 +41,18 @@ define(['chitu'], function (c) {
         static loadView(page) {
             page.element.className = 'container'
             page.element.innerHTML = `
-<div class="pull-right"></div>
-<div class="doc"></div>
+<div class="col-md-7 col-lg-8"></div>
+<div class="col-md-5 col-lg-4"></div>
 `
-            let mobile_element = page.element.querySelector('.pull-right')
-            let doc_element = page.element.querySelector('.doc')
+            let elements = page.element.querySelectorAll('div');
+            let mobile_container =elements[1]
+            let mobile_element = document.createElement('div')
+            mobile_container.appendChild(mobile_element)
+
+            let doc_element = elements[0]
             let url = `modules/${page.name}.md`
+
+
             fetch(url)
                 .then(res => {
                     return res.text();
@@ -55,7 +61,7 @@ define(['chitu'], function (c) {
                     var html_content = marked(text);
                     doc_element.innerHTML = html_content;
                     let title_element = doc_element.querySelector('h1')
-                    page.element.insertBefore(title_element, mobile_element)
+                    page.element.insertBefore(title_element, doc_element)
 
                     let modules = ['highlight', 'highlight_javascript', 'highlight_typescript'];
                     require(modules, function (hljs, n) {
