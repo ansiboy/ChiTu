@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "target": "es2017"
+    },
+    "typeAcquisition": {
+        "include": [
+            "js/require.d.ts",
+            "js/chitu.d.ts"
+        ]
+    }
+}

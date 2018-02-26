@@ -2,13 +2,13 @@
 namespace chitu {
 
     export interface SiteMapNode {
-        name: string,
+        name?: string,
         action: ((page: Page) => void) | string,
-        children?: { [key: string]: SiteMapNode }
+        children?: { [key: string]: SiteMapNode | ((page: Page) => void) | string }
     }
 
     export interface SiteMap<T extends SiteMapNode> {
-        root: T,
+        index: T | ((page: Page) => void) | string,
     }
 
     function parseUrl(url: string): RouteData {
@@ -121,30 +121,47 @@ namespace chitu {
         }) {
             args = args || {} as any;
             this._siteMap = args.siteMap;
-            if (this._siteMap) {
-                if (this._siteMap.root == null)
-                    throw Errors.siteMapRootCanntNull();
-
-                (this._siteMap.root as MySiteMapNode).level = 0;
-                this.setChildrenParent(this._siteMap.root);
+            if (!this._siteMap) {
+                throw new Error("site map can not null.");
             }
+
+            if (!this._siteMap.index)
+                throw Errors.siteMapRootCanntNull();
+
+            if (typeof this._siteMap.index != 'object') {
+                let action = this._siteMap.index;
+                this._siteMap.index = { name: 'index', action }
+            }
+
+            this._siteMap.index.name = this._siteMap.index.name || 'index';
+            (this._siteMap.index as MySiteMapNode).level = 0;
+
+            this.travalNode(this._siteMap.index);
 
             if (args.allowCachePage != null)
                 this.allowCachePage = args.allowCachePage;
         }
 
-        private setChildrenParent(parent: MySiteMapNode) {
-            if (parent == null) throw Errors.argumentNull('parent');
-            let children = parent.children || {};
-            // for (let i = 0; i < children.length; i++) {
-            //     children[i].parent = parent;
-            //     children[i].level = parent.level + 1;
-            //     this.setChildrenParent(children[i]);
-            // }
+        private travalNode(node: MySiteMapNode) {
+            if (node == null) throw Errors.argumentNull('parent');
+            let children = node.children || {};
+
             for (let key in children) {
-                (children[key] as MySiteMapNode).parent = parent;
-                (children[key] as MySiteMapNode).level = parent.level + 1;
-                this.setChildrenParent(children[key]);
+
+                let child_type = typeof children[key];
+                if (child_type == 'function' || child_type == 'string') {
+                    let action = children[key] as any;
+                    children[key] = {
+                        name: key,
+                        action
+                    }
+                }
+
+                let child = children[key] as MySiteMapNode;
+                child.name = child.name || key;
+                child.parent = node;
+                child.level = node.level + 1;
+                this.travalNode(children[key] as SiteMapNode);
             }
         }
 
@@ -389,7 +406,7 @@ namespace chitu {
                 return;
 
             let stack = new Array<MySiteMapNode>();
-            stack.push(this._siteMap.root);
+            stack.push(this._siteMap.index as SiteMapNode);
             while (stack.length > 0) {
                 let node = stack.pop();
                 if (node.name == pageName) {
