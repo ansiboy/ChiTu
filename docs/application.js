@@ -45,7 +45,7 @@ define(['chitu'], function (c) {
 <div class="col-md-5 col-lg-4"></div>
 `
             let elements = page.element.querySelectorAll('div');
-            let mobile_container =elements[1]
+            let mobile_container = elements[1]
             let mobile_element = document.createElement('div')
             mobile_container.appendChild(mobile_element)
 

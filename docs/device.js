@@ -1,6 +1,6 @@
 define(function () {
     /**
-     * @param {HTMLElement} page 
+     * @param {HTMLElement} element 
      */
     function main(element) {
         console.assert(location.hash.length > 1)
@@ -19,6 +19,14 @@ define(function () {
 <div class="home"></div>
 <div class="bottom-bar"></div>
         `
+        let width = element.parentElement.offsetWidth //window.innerWidth
+        let padding = 50
+        let inner_width = width - padding
+        const mobile_width = element.offsetWidth
+        if (inner_width <= mobile_width) {
+            let scale = new Number(inner_width / mobile_width).toFixed(2)
+            element.style.transform = `scale(${scale},${scale})`
+        }
     }
 
     return main
