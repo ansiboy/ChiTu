@@ -20,19 +20,19 @@ SiteMap 对象中的 SiteMapNode 的 action 字段，除了可以是函数，还
 }
 ```
 
-当 action 为字段串，对应的 JS 文件定义如下：
+当 action 为字段串，对应的 JS 文件定义如下：
 
 ```js
 define(["exports"], function (exports) {
     function action(page) {
-        // 在编写渲染页面的代码
+        // 编写渲染页面的代码
     }
 
     exports.default = action
 });
 ```
 
-注意到 ```exports.default = action``` ，必须将 action 方法导出到 default 字段。
+注意到 ```exports.default = action``` ，必须将 action 方法导出到 default 字段。
 
 ## index.html
 
