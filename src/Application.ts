@@ -11,10 +11,14 @@ namespace chitu {
         index: T | ((page: Page) => void) | string,
     }
 
+    const DefaultPageName = "index"
     function parseUrl(url: string): RouteData {
         let sharpIndex = url.indexOf('#');
-        if (sharpIndex < 0)
-            throw Errors.canntParseRouteString(url);
+        if (sharpIndex < 0) {
+            let pageName = DefaultPageName
+            return { url, pageName, values: {} };
+        }
+        // throw Errors.canntParseRouteString(url);
 
         let routeString = url.substr(sharpIndex + 1);
         if (!routeString)
@@ -130,10 +134,10 @@ namespace chitu {
 
             if (typeof this._siteMap.index != 'object') {
                 let action = this._siteMap.index;
-                this._siteMap.index = { name: 'index', action }
+                this._siteMap.index = { name: DefaultPageName, action }
             }
 
-            this._siteMap.index.name = this._siteMap.index.name || 'index';
+            this._siteMap.index.name = this._siteMap.index.name || DefaultPageName;
             (this._siteMap.index as MySiteMapNode).level = 0;
 
             this.travalNode(this._siteMap.index);
@@ -423,10 +427,11 @@ namespace chitu {
         }
 
         public setLocationHash(routeString: string) {
-            if (window.location.hash == '#' + routeString) {
+            routeString = routeString[0] == '#' ? routeString : '#' + routeString
+            if (window.location.hash == routeString) {
                 return;
             }
-            history.pushState('chitu', "", `#${routeString}`)
+            history.pushState('chitu', "", `${routeString}`)
         }
 
         public closeCurrentPage() {
