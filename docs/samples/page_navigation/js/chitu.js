@@ -290,10 +290,11 @@
             return null;
         }
         setLocationHash(routeString) {
-            if (window.location.hash == '#' + routeString) {
+            routeString = routeString[0] == '#' ? routeString : '#' + routeString
+            if (window.location.hash == routeString) {
                 return;
             }
-            history.pushState('chitu', "", `#${routeString}`);
+            history.pushState('chitu', "", `${routeString}`);
         }
         closeCurrentPage() {
             if (this.page_stack.length <= 0)
