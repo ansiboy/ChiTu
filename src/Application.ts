@@ -208,13 +208,13 @@ namespace chitu {
             return this._siteMap;
         }
 
-        private createPage(routeData: RouteData): Page {
+        private getPage(routeData: RouteData): { page: Page, isNew: boolean } {
 
             let data = this.cachePages[routeData.pageName];
             if (data) {
                 data.hitCount = (data.hitCount || 0) + 1;
                 data.page.routeData.values = routeData.values;
-                return data.page;
+                return { page: data.page, isNew: false };
             }
 
             let previous_page = this.pages[this.pages.length - 1];
@@ -276,7 +276,7 @@ namespace chitu {
             page.loadComplete.add(page_onloadComplete);
 
             this.on_pageCreated(page);
-            return page;
+            return { page, isNew: true };
         }
 
         protected createPageElement(routeData: chitu.RouteData) {
@@ -296,7 +296,7 @@ namespace chitu {
                 return;
             }
 
-            var page = this.getPage(routeData.pageName);
+            var page = this.findPageFromStack(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
             this.showPage(location.href);
         }
@@ -323,7 +323,7 @@ namespace chitu {
         /**
          * 通过页面的名称，获取页面
          */
-        public getPage(name: string): Page {
+        public findPageFromStack(name: string): Page {
             for (var i = this.page_stack.length - 1; i >= 0; i--) {
                 var page = this.page_stack[i]; //.pages[name];
                 if (page != null && page.name == name)
@@ -361,13 +361,16 @@ namespace chitu {
                 return;
 
             let oldCurrentPage = this.currentPage;
-            var page = this.getPage(routeData.pageName);
+            let page = this.findPageFromStack(routeData.pageName);
+            let isNewPage = false;
             let previousPageIndex = this.page_stack.length - 2;
             if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
                 this.closeCurrentPage();
             }
             else {
-                let page = this.createPage(routeData);
+                let obj = this.getPage(routeData);
+                page = obj.page;
+                isNewPage = obj.isNew;
                 this.pushPage(page);
                 page.show();
                 console.assert(page == this.currentPage, "page is not current page");
@@ -377,7 +380,16 @@ namespace chitu {
                 oldCurrentPage.deactive.fire(oldCurrentPage, null);
 
             console.assert(this.currentPage != null);
-            this.currentPage.active.fire(this.currentPage, routeData.values);
+            if (isNewPage) {
+                this.currentPage.active.fire(this.currentPage, routeData.values);
+            }
+            else {
+                let onload = (sender: Page, args: any) => {
+                    sender.active.fire(this.currentPage, routeData.values);
+                    sender.load.remove(onload);
+                }
+                this.currentPage.load.add(onload);
+            }
 
             return this.currentPage;
         }
