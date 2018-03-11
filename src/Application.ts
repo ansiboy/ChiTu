@@ -291,10 +291,6 @@ namespace chitu {
 
         protected hashchange() {
 
-
-            // var routeString: string;
-            // routeString = location.hash.substr(1);
-
             var routeData = this.parseUrl(location.href); //this.parseUrl(routeString);
             if (routeData == null) {
                 return;
@@ -385,14 +381,14 @@ namespace chitu {
 
             console.assert(this.currentPage != null);
             if (isNewPage) {
-                this.currentPage.active.fire(this.currentPage, routeData.values);
-            }
-            else {
                 let onload = (sender: Page, args: any) => {
                     sender.active.fire(this.currentPage, routeData.values);
                     sender.load.remove(onload);
                 }
                 this.currentPage.load.add(onload);
+            }
+            else {
+                this.currentPage.active.fire(this.currentPage, routeData.values);
             }
 
             return this.currentPage;
