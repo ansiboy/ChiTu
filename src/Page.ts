@@ -64,31 +64,31 @@ namespace chitu {
             this._displayer = params.displayer;
             this._action = params.action;
 
-            this.loadPageAction();
+            this.loadPageAction(this.name);
         }
         private on_load() {
-            return this.load.fire(this, this.routeData.values);
+            return this.load.fire(this, this._routeData.values);
         }
         private on_loadComplete() {
-            return this.loadComplete.fire(this, this.routeData.values);
+            return this.loadComplete.fire(this, this._routeData.values);
         }
         private on_showing() {
-            return this.showing.fire(this, this.routeData.values);
+            return this.showing.fire(this, this._routeData.values);
         }
         private on_shown() {
-            return this.shown.fire(this, this.routeData.values);
+            return this.shown.fire(this, this._routeData.values);
         }
         private on_hiding() {
-            return this.hiding.fire(this, this.routeData.values);
+            return this.hiding.fire(this, this._routeData.values);
         }
         private on_hidden() {
-            return this.hidden.fire(this, this.routeData.values);
+            return this.hidden.fire(this, this._routeData.values);
         }
         private on_closing() {
-            return this.closing.fire(this, this.routeData.values);
+            return this.closing.fire(this, this._routeData.values);
         }
         private on_closed() {
-            return this.closed.fire(this, this.routeData.values);
+            return this.closed.fire(this, this._routeData.values);
         }
         show(): Promise<any> {
             this.on_showing();
@@ -130,14 +130,11 @@ namespace chitu {
             return this._routeData;
         }
         get name(): string {
-            return this.routeData.pageName;
+            return this._routeData.pageName;
         }
 
-        private async loadPageAction() {
+        private async loadPageAction(pageName: string) {
             console.assert(this._routeData != null);
-
-            let routeData = this._routeData;
-            // var url = routeData.actionPath;
 
             let action;
             if (typeof this._action == 'function') {
@@ -154,26 +151,17 @@ namespace chitu {
                 }
 
                 if (!actionResult)
-                    throw Errors.exportsCanntNull(routeData.pageName);
+                    throw Errors.exportsCanntNull(pageName);
 
                 let actionName = 'default';
                 action = actionResult[actionName];
                 if (action == null) {
-                    throw Errors.canntFindAction(routeData.pageName);
+                    throw Errors.canntFindAction(pageName);
                 }
             }
 
-
-
-
-
-
-
             let actionExecuteResult;
             if (typeof action == 'function') {
-                // if (action['prototype'] != null)
-                //     throw Errors.actionTypeError(routeData.pageName);
-
                 let actionResult = action(this) as Promise<any>;
                 if (actionResult != null && actionResult.then != null && actionResult.catch != null) {
                     actionResult.then(() => this.on_loadComplete());
@@ -183,14 +171,14 @@ namespace chitu {
                 }
             }
             else {
-                throw Errors.actionTypeError(routeData.pageName);
+                throw Errors.actionTypeError(pageName);
             }
 
             this.on_load();
         }
 
         reload() {
-            return this.loadPageAction();
+            return this.loadPageAction(this.name);
         }
     }
 
