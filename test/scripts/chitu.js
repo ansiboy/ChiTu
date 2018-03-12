@@ -201,7 +201,8 @@
             return page;
         }
         setLocationHash(routeString) {
-            if (window.location.hash == '#' + routeString) {
+            routeString = routeString[0] == '#' ? routeString : '#' + routeString
+            if (window.location.hash == routeString) {
                 return;
             }
             let location = window.location;
