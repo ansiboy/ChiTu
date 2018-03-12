@@ -4,21 +4,12 @@
 
 ```mermaid
 graph TD
-    page_constructor[构造函数] --> load_action[加载 action]
-    load_action --> is_load_success{加载成功}
-    is_load_success --> |NO|throw_exception[抛出异常]
-    throw_exception --> finish
-    is_load_success --> |YES| on_load[load 事件]
-    on_load --> execute_action[调用 action]
-    execute_action --> load_complete
-    load_complete --> finish
+    show_event[show 事件] --> is_load{已加载}
+    show_event --> shown_event[shown 事件]
+    is_load --> |YES|active_event[active 事件]
+    is_load --> |NO|load_event[load 事件]
+    load_event --> active_event
+    load_event --> loadComplete_event[loadComplete 事件]
 end
 ```
 
-```mermaid
-sequenceDiagram
-    participant John
-    participant Alice
-    Alice->>John: Hello John, how are you?
-    John-->>Alice: Great!
-````
