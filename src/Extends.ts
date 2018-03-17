@@ -30,12 +30,14 @@ namespace chitu {
         fire(sender: S, arg: A, arg1: A1);
     }
 
-    export function Callbacks<S, A>(): Callback1<S, A> {
+    export function Callbacks<S, A, A1>(): Callback2<S, A, A1>
+    export function Callbacks<S, A>(): Callback1<S, A>
+    export function Callbacks(): Callback {
         return new Callback();
     }
-    export function Callbacks1<S, A, A1>(): Callback2<S, A, A1> {
-        return new Callback();
-    }
+    // export function Callbacks1<S, A, A1>(): Callback2<S, A, A1> {
+    //     return new Callback();
+    // }
 
     // 服务以及实体类模块 结束
     //==========================================================

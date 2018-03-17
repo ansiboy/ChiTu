@@ -53,7 +53,7 @@ namespace chitu {
         closing = Callbacks<this, any>();
         closed = Callbacks<this, any>();
 
-        active = Callbacks<this, any>();
+        active = Callbacks<this, any, RouteData>();
         deactive = Callbacks<this, any>();
 
         constructor(params: PageParams) {
@@ -89,6 +89,14 @@ namespace chitu {
         }
         private on_closed() {
             return this.closed.fire(this, this._routeData.values);
+        }
+        public on_active(args, preRouteData: RouteData) {
+            console.assert(args != null, 'args is null')
+            this._routeData.values = args;
+            this.active.fire(this, args, preRouteData);
+        }
+        public on_deactive() {
+            this.deactive.fire(this, this._routeData.values);
         }
         show(): Promise<any> {
             this.on_showing();
