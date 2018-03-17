@@ -14,7 +14,7 @@ namespace chitu {
     }
 
     const DefaultPageName = "index"
-    function parseUrl(url: string): RouteData {
+    function parseUrl(url: string): { pageName: string, values: PageDataType } {
         let sharpIndex = url.indexOf('#');
         if (sharpIndex < 0) {
             let pageName = DefaultPageName
@@ -80,11 +80,11 @@ namespace chitu {
         return `#${path}?${params}`;
     }
 
-    export interface RouteData {
-        pageName: string,
-        values: any,
-        // url: string
-    }
+    // export interface RouteData {
+    //     pageName: string,
+    //     values: any,
+    //     // url: string
+    // }
 
 
     var PAGE_STACK_MAX_SIZE = 30;
@@ -121,7 +121,7 @@ namespace chitu {
          */
         backFail = Callbacks<Application, null>();
 
-        error = Callbacks<Application, Error, Page>();
+        error = Callbacks<Application, AppError, Page>();
         constructor(args?: {
             siteMap: SiteMap<SiteMapNode>,
             allowCachePage?: boolean
@@ -184,7 +184,7 @@ namespace chitu {
          * 解释路由，将路由字符串解释为 RouteData 对象
          * @param url 要解释的 路由字符串
          */
-        protected parseUrl(url: string): RouteData {
+        protected parseUrl(url: string) {
             let routeData = parseUrl(url);
             return routeData;
         }
@@ -218,13 +218,13 @@ namespace chitu {
         get pages(): Array<Page> {
             return this.page_stack;
         }
-        
+
         private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {//routeData: RouteData
 
             let data = this.cachePages[pageName];
             if (data) {
                 data.hitCount = (data.hitCount || 0) + 1;
-                data.page.routeData.values = values || {};
+                data.page.data = values || {};
                 return { page: data.page, isNew: false };
             }
 
@@ -241,7 +241,9 @@ namespace chitu {
             let page = new this.pageType({
                 app: this,
                 previous: previous_page,
-                routeData: { pageName, values },
+                // routeData: { pageName, values },
+                name: pageName,
+                data: values,
                 displayer,
                 element,
                 action: siteMapNode.action
@@ -265,7 +267,7 @@ namespace chitu {
             }
 
 
-            let page_onerror = (sender: Page, error: Error) => {
+            let page_onerror = (sender: Page, error: AppError) => {
                 // this.error.fire(this, error, sender);
                 this.fireError(error, page)
             }
@@ -363,17 +365,17 @@ namespace chitu {
 
             let preRouteData = null;
             if (oldCurrentPage) {
-                preRouteData = oldCurrentPage.routeData
+                preRouteData = oldCurrentPage.data
                 oldCurrentPage.on_deactive()
             }
 
             console.assert(this.currentPage != null);
             if (isNewPage) {
-                this.currentPage.on_active(args, preRouteData);
+                this.currentPage.on_active(args);
             }
             else {
                 let onload = (sender: Page, args: any) => {
-                    sender.on_active(args, preRouteData);
+                    sender.on_active(args);
                     sender.load.remove(onload);
                 }
                 this.currentPage.load.add(onload);
@@ -472,8 +474,15 @@ namespace chitu {
             history.back();
         }
 
-        protected fireError(err: Error, page: Page) {
+        protected fireError(err: AppError, page: Page) {
             this.error.fire(this, err, page)
+
+            // 给 100 ms 让监听错误的代码去处理
+            setTimeout(() => {
+                if (!err.processed) {
+                    throw err
+                }
+            }, 100)
         }
     }
 } 
