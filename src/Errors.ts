@@ -91,6 +91,10 @@ class Errors {
         let msg = `The site map root node can not be null.`;
         return new Error(msg);
     }
+    public static duplicateSiteMapNode(name: string) {
+        let msg = `The site map node ${name} is exists.`
+        return new Error(name);
+    }
 }
 // }
 

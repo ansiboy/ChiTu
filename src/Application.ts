@@ -1,14 +1,16 @@
 ﻿
 namespace chitu {
 
+    export type ActionType = ((page: Page) => void) | string;
+    export type SiteMapChildren = { [key: string]: SiteMapNode | ((page: Page) => void) | string }
     export interface SiteMapNode {
         name?: string,
-        action: ((page: Page) => void) | string,
-        children?: { [key: string]: SiteMapNode | ((page: Page) => void) | string }
+        action: ActionType,
+        children?: SiteMapChildren
     }
 
     export interface SiteMap<T extends SiteMapNode> {
-        index: T | ((page: Page) => void) | string,
+        index: T | ActionType,
     }
 
     const DefaultPageName = "index"
@@ -110,8 +112,9 @@ namespace chitu {
         private page_stack = new Array<Page>();
         private cachePages: { [name: string]: { page: Page, hitCount: number } } = {};
 
-        private _siteMap: SiteMap<SiteMapNode>;
+        siteMap: SiteMap<SiteMapNode>;
         private allowCachePage = true;
+        private allNodes: { [key: string]: MySiteMapNode } = {};
 
         /**
          * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
@@ -124,48 +127,56 @@ namespace chitu {
             allowCachePage?: boolean
         }) {
             args = args || {} as any;
-            this._siteMap = args.siteMap;
-            if (!this._siteMap) {
+            this.siteMap = args.siteMap;
+
+            if (!this.siteMap) {
                 throw new Error("site map can not null.");
             }
 
-            if (!this._siteMap.index)
+            if (!this.siteMap.index)
                 throw Errors.siteMapRootCanntNull();
 
-            if (typeof this._siteMap.index != 'object') {
-                let action = this._siteMap.index;
-                this._siteMap.index = { name: DefaultPageName, action }
-            }
-
-            this._siteMap.index.name = this._siteMap.index.name || DefaultPageName;
-            (this._siteMap.index as MySiteMapNode).level = 0;
-
-            this.travalNode(this._siteMap.index);
+            let indexNode = this.translateSiteMapNode(args.siteMap.index)
+            this.travalNode(indexNode);
 
             if (args.allowCachePage != null)
                 this.allowCachePage = args.allowCachePage;
+        }
+
+        private translateSiteMapNode(source: SiteMapNode | ActionType): MySiteMapNode {
+            let action: ActionType, name: string, children: SiteMapChildren;
+            if (typeof source != 'object') {
+                action = source;
+                name = DefaultPageName;
+                children = {};
+            }
+            else {
+                name = source.name;
+                action = source.action;
+                children = source.children;
+            }
+
+            return {
+                name,
+                action,
+                level: 0,
+                children
+            };
         }
 
         private travalNode(node: MySiteMapNode) {
             if (node == null) throw Errors.argumentNull('parent');
             let children = node.children || {};
 
+            if (this.allNodes[node.name]) {
+                throw Errors.duplicateSiteMapNode(node.name);
+            }
+
+            this.allNodes[node.name] = node;
             for (let key in children) {
-
-                let child_type = typeof children[key];
-                if (child_type == 'function' || child_type == 'string') {
-                    let action = children[key] as any;
-                    children[key] = {
-                        name: key,
-                        action
-                    }
-                }
-
-                let child = children[key] as MySiteMapNode;
-                child.name = child.name || key;
-                child.parent = node;
-                child.level = node.level + 1;
-                this.travalNode(children[key] as SiteMapNode);
+                let child = this.translateSiteMapNode(children[key]);
+                children[key] = child;
+                this.travalNode(child);
             }
         }
 
@@ -208,9 +219,7 @@ namespace chitu {
             return this.page_stack;
         }
 
-        get siteMap(): SiteMap<SiteMapNode> {
-            return this._siteMap;
-        }
+
 
         private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {//routeData: RouteData
 
@@ -407,24 +416,7 @@ namespace chitu {
         }
 
         private findSiteMapNode(pageName: string) {
-            if (this._siteMap == null)
-                return;
-
-            let stack = new Array<MySiteMapNode>();
-            stack.push(this._siteMap.index as SiteMapNode);
-            while (stack.length > 0) {
-                let node = stack.pop();
-                if (node.name == pageName) {
-                    return node;
-                }
-                let children = node.children || [];
-                // children.forEach(c => stack.push(c));
-                for (let key in children) {
-                    stack.push(children[key]);
-                }
-            }
-
-            return null;
+            return this.allNodes[pageName];
         }
 
         public setLocationHash(url: string) {
