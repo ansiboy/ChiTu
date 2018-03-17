@@ -16,7 +16,7 @@ namespace chitu {
     export interface PageParams {
         app: Application,
         // routeData: RouteData,
-        action: ((page: Page) => void) | string
+        action: ActionType,
         element: HTMLElement,
         displayer: PageDisplayer,
         previous?: Page,
@@ -70,7 +70,8 @@ namespace chitu {
             this._displayer = params.displayer;
             this._action = params.action;
             this.data = params.data
-
+            this._name = params.name;
+            
             this.loadPageAction(this.name);
         }
         private on_load() {

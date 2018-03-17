@@ -4,7 +4,6 @@ namespace chitu {
     export type ActionType = ((page: Page) => void) | string;
     export type SiteMapChildren = { [key: string]: SiteMapNode | ((page: Page) => void) | string }
     export interface SiteMapNode {
-        name?: string,
         action: ActionType,
         children?: SiteMapChildren
     }
@@ -92,7 +91,7 @@ namespace chitu {
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
-    type MySiteMapNode = SiteMapNode & { parent?: SiteMapNode, level?: number };
+    type MySiteMapNode = SiteMapNode & { name: string, parent?: SiteMapNode, level?: number };
 
 
     export class Application {
@@ -136,24 +135,23 @@ namespace chitu {
             if (!this.siteMap.index)
                 throw Errors.siteMapRootCanntNull();
 
-            let indexNode = this.translateSiteMapNode(args.siteMap.index)
+            let indexNode = this.translateSiteMapNode(args.siteMap.index, DefaultPageName)
             this.travalNode(indexNode);
 
             if (args.allowCachePage != null)
                 this.allowCachePage = args.allowCachePage;
         }
 
-        private translateSiteMapNode(source: SiteMapNode | ActionType): MySiteMapNode {
-            let action: ActionType, name: string, children: SiteMapChildren;
-            if (typeof source != 'object') {
-                action = source;
-                name = DefaultPageName;
-                children = {};
-            }
-            else {
-                name = source.name;
+        private translateSiteMapNode(source: SiteMapNode | ActionType, name: string): MySiteMapNode {
+            let action: ActionType, children: SiteMapChildren;
+            //function string object
+            if (typeof source == 'object') {
                 action = source.action;
                 children = source.children;
+            }
+            else {
+                action = source;
+                children = {};
             }
 
             return {
@@ -174,7 +172,7 @@ namespace chitu {
 
             this.allNodes[node.name] = node;
             for (let key in children) {
-                let child = this.translateSiteMapNode(children[key]);
+                let child = this.translateSiteMapNode(children[key], key);
                 children[key] = child;
                 this.travalNode(child);
             }
@@ -234,19 +232,20 @@ namespace chitu {
             let displayer = new this.pageDisplayType(this);
 
             let siteMapNode = this.findSiteMapNode(pageName);
-            if (siteMapNode == null)
-                throw Errors.pageNodeNotExists(pageName);
+            let action = siteMapNode ?
+                siteMapNode.action :
+                (page: Page) => page.element.innerHTML = `page ${pageName} not found`;
+
 
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
                 previous: previous_page,
-                // routeData: { pageName, values },
                 name: pageName,
                 data: values,
                 displayer,
                 element,
-                action: siteMapNode.action
+                action,
             });
 
             let keyes = Object.keys(this.cachePages);
