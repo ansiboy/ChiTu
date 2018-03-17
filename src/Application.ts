@@ -121,7 +121,7 @@ namespace chitu {
          */
         backFail = Callbacks<Application, null>();
 
-        error = Callbacks1<Application, Error, Page>();
+        error = Callbacks<Application, Error, Page>();
         constructor(args?: {
             siteMap: SiteMap<SiteMapNode>,
             allowCachePage?: boolean
@@ -344,6 +344,7 @@ namespace chitu {
             if (this.currentPage != null && this.currentPage.name == pageName)
                 return;
 
+            args = args || {}
             let oldCurrentPage = this.currentPage;
             let page = this.findPageFromStack(pageName);
             let isNewPage = false;
@@ -360,16 +361,19 @@ namespace chitu {
                 console.assert(page == this.currentPage, "page is not current page");
             }
 
-            if (oldCurrentPage)
-                oldCurrentPage.deactive.fire(oldCurrentPage, null);
+            let preRouteData = null;
+            if (oldCurrentPage) {
+                preRouteData = oldCurrentPage.routeData
+                oldCurrentPage.on_deactive()
+            }
 
             console.assert(this.currentPage != null);
             if (isNewPage) {
-                this.currentPage.active.fire(this.currentPage, args);
+                this.currentPage.on_active(args, preRouteData);
             }
             else {
                 let onload = (sender: Page, args: any) => {
-                    sender.active.fire(this.currentPage, args);
+                    sender.on_active(args, preRouteData);
                     sender.load.remove(onload);
                 }
                 this.currentPage.load.add(onload);
