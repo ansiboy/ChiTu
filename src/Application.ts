@@ -218,9 +218,7 @@ namespace chitu {
         get pages(): Array<Page> {
             return this.page_stack;
         }
-
-
-
+        
         private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {//routeData: RouteData
 
             let data = this.cachePages[pageName];
@@ -268,7 +266,8 @@ namespace chitu {
 
 
             let page_onerror = (sender: Page, error: Error) => {
-                this.error.fire(this, error, sender);
+                // this.error.fire(this, error, sender);
+                this.fireError(error, page)
             }
             let page_onloadComplete = (sender, args) => {
                 if (this.allowCachePage)
@@ -467,6 +466,10 @@ namespace chitu {
 
         public back() {
             history.back();
+        }
+
+        protected fireError(err: Error, page: Page) {
+            this.error.fire(this, err, page)
         }
     }
 } 
