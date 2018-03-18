@@ -1,25 +1,3 @@
-# AJAX 调用 —— 数据的获取
-
-作为客户端，通过 AJAX 来调用服务端的提供的接口，基本上就每一个应用都要处理的事情，为了方便异常的处理， CHITU 封装了 AJAX 方法。
-
-**注意：**
-
-应当使用 Page 类的 createService 来创建 Service 对象，而不是使用 new 方法。这样可以使得 Page 能够捕获到 Service 的错误，方便统一处理错误。
-
-```js
-let service = page.createService(chitu.Service);
-```
-
-**最好不要这写，不要这么写**，除非你有充分的理由。 
-
-```js
-let service = new chitu.Service();
-```
-
-## 源码
-
-
-```js
 define(["exports"], function (exports) {
     /**
      * 
@@ -50,4 +28,4 @@ define(["exports"], function (exports) {
 
     exports.default = action
 });
-```
+

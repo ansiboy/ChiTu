@@ -12,13 +12,10 @@
         } 
     })(function() {var chitu;
 (function (chitu) {
-    const DefaultPageName = "index";
     function parseUrl(url) {
         let sharpIndex = url.indexOf('#');
-        if (sharpIndex < 0) {
-            let pageName = DefaultPageName;
-            return { pageName, values: {} };
-        }
+        if (sharpIndex < 0)
+            throw Errors.canntParseRouteString(url);
         let routeString = url.substr(sharpIndex + 1);
         if (!routeString)
             throw Errors.canntParseRouteString(url);
@@ -48,7 +45,7 @@
         }
         let file_path = path_parts.join('/');
         let pageName = path_parts.join('.');
-        return { pageName, values };
+        return { url, pageName, values };
     }
     function createUrl(pageName, routeValues) {
         let path_parts = pageName.split('.');
@@ -87,18 +84,17 @@
                 throw Errors.siteMapRootCanntNull();
             if (typeof this._siteMap.index != 'object') {
                 let action = this._siteMap.index;
-                this._siteMap.index = { name: DefaultPageName, action };
+                this._siteMap.index = { name: 'index', action };
             }
-            this._siteMap.index.name = this._siteMap.index.name || DefaultPageName;
             this._siteMap.index.level = 0;
-            this.travalNode(this._siteMap.index);
+            this.setChildrenParent(this._siteMap.index);
             if (args.allowCachePage != null)
                 this.allowCachePage = args.allowCachePage;
         }
-        travalNode(node) {
-            if (node == null)
+        setChildrenParent(parent) {
+            if (parent == null)
                 throw Errors.argumentNull('parent');
-            let children = node.children || {};
+            let children = parent.children || {};
             for (let key in children) {
                 let child_type = typeof children[key];
                 if (child_type == 'function' || child_type == 'string') {
@@ -108,11 +104,9 @@
                         action
                     };
                 }
-                let child = children[key];
-                child.name = child.name || key;
-                child.parent = node;
-                child.level = node.level + 1;
-                this.travalNode(children[key]);
+                children[key].parent = parent;
+                children[key].level = parent.level + 1;
+                this.setChildrenParent(children[key]);
             }
         }
         parseUrl(url) {
@@ -136,24 +130,24 @@
         get siteMap() {
             return this._siteMap;
         }
-        getPage(pageName, values) {
-            let data = this.cachePages[pageName];
+        createPage(routeData) {
+            let data = this.cachePages[routeData.pageName];
             if (data) {
                 data.hitCount = (data.hitCount || 0) + 1;
-                data.page.routeData.values = values || {};
-                return { page: data.page, isNew: false };
+                data.page.routeData.values = routeData.values;
+                return data.page;
             }
             let previous_page = this.pages[this.pages.length - 1];
-            let element = this.createPageElement(pageName);
+            let element = this.createPageElement(routeData);
             let displayer = new this.pageDisplayType(this);
-            let siteMapNode = this.findSiteMapNode(pageName);
+            let siteMapNode = this.findSiteMapNode(routeData.pageName);
             if (siteMapNode == null)
-                throw Errors.pageNodeNotExists(pageName);
+                throw Errors.pageNodeNotExists(routeData.pageName);
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
                 previous: previous_page,
-                routeData: { pageName, values },
+                routeData: routeData,
                 displayer,
                 element,
                 action: siteMapNode.action
@@ -189,9 +183,9 @@
             page.closed.add(page_onclosed);
             page.loadComplete.add(page_onloadComplete);
             this.on_pageCreated(page);
-            return { page, isNew: true };
+            return page;
         }
-        createPageElement(pageName) {
+        createPageElement(routeData) {
             let element = document.createElement(chitu.Page.tagName);
             document.body.appendChild(element);
             return element;
@@ -201,9 +195,9 @@
             if (routeData == null) {
                 return;
             }
-            var page = this.findPageFromStack(routeData.pageName);
+            var page = this.getPage(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
-            this.showPageByUrl(location.href);
+            this.showPage(location.href);
         }
         run() {
             if (this._runned)
@@ -217,7 +211,7 @@
             });
             this._runned = true;
         }
-        findPageFromStack(name) {
+        getPage(name) {
             for (var i = this.page_stack.length - 1; i >= 0; i--) {
                 var page = this.page_stack[i];
                 if (page != null && page.name == name)
@@ -225,42 +219,15 @@
             }
             return null;
         }
-        showPage(pageName, args) {
-            if (!pageName)
-                throw Errors.argumentNull('pageName');
-            if (this.currentPage != null && this.currentPage.name == pageName)
-                return;
-            let oldCurrentPage = this.currentPage;
-            let page = this.findPageFromStack(pageName);
-            let isNewPage = false;
-            let previousPageIndex = this.page_stack.length - 2;
-            if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
-                this.closeCurrentPage();
+        getPageByRouteString(routeString) {
+            for (var i = this.page_stack.length - 1; i >= 0; i--) {
+                var page = this.page_stack[i];
+                if (page != null && page.routeData.url == routeString)
+                    return page;
             }
-            else {
-                let obj = this.getPage(pageName, args);
-                page = obj.page;
-                isNewPage = obj.isNew;
-                this.pushPage(page);
-                page.show();
-                console.assert(page == this.currentPage, "page is not current page");
-            }
-            if (oldCurrentPage)
-                oldCurrentPage.deactive.fire(oldCurrentPage, null);
-            console.assert(this.currentPage != null);
-            if (isNewPage) {
-                this.currentPage.active.fire(this.currentPage, args);
-            }
-            else {
-                let onload = (sender, args) => {
-                    sender.active.fire(this.currentPage, args);
-                    sender.load.remove(onload);
-                };
-                this.currentPage.load.add(onload);
-            }
-            return this.currentPage;
+            return null;
         }
-        showPageByUrl(url, args) {
+        showPage(url, args) {
             if (!url)
                 throw Errors.argumentNull('url');
             var routeData = this.parseUrl(url);
@@ -268,7 +235,25 @@
                 throw Errors.noneRouteMatched(url);
             }
             Object.assign(routeData.values, args || {});
-            return this.showPage(routeData.pageName, routeData.values);
+            if (this.currentPage != null && this.currentPage.name == routeData.pageName)
+                return;
+            let oldCurrentPage = this.currentPage;
+            var page = this.getPage(routeData.pageName);
+            let previousPageIndex = this.page_stack.length - 2;
+            if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
+                this.closeCurrentPage();
+            }
+            else {
+                let page = this.createPage(routeData);
+                this.pushPage(page);
+                page.show();
+                console.assert(page == this.currentPage, "page is not current page");
+            }
+            if (oldCurrentPage)
+                oldCurrentPage.deactive.fire(oldCurrentPage, null);
+            console.assert(this.currentPage != null);
+            this.currentPage.active.fire(this.currentPage, routeData.values);
+            return this.currentPage;
         }
         pushPage(page) {
             if (this.currentPage != null) {
@@ -302,8 +287,12 @@
             }
             return null;
         }
-        setLocationHash(url) {
-            history.pushState('chitu', "", url);
+        setLocationHash(routeString) {
+            routeString = routeString[0] == '#' ? routeString : '#' + routeString
+            if (window.location.hash == routeString) {
+                return;
+            }
+            history.pushState('chitu', "", `${routeString}`);
         }
         closeCurrentPage() {
             if (this.page_stack.length <= 0)
@@ -328,10 +317,9 @@
             }
             this.page_stack = [];
         }
-        redirect(pageName, args) {
-            let result = this.showPage(pageName, args);
-            let url = this.createUrl(pageName, args);
-            this.setLocationHash(url);
+        redirect(routeString, args) {
+            let result = this.showPage(routeString, args);
+            this.setLocationHash(routeString);
             return result;
         }
         back() {
@@ -487,7 +475,6 @@ var chitu;
     chitu.ValueStore = ValueStore;
 })(chitu || (chitu = {}));
 
-
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -518,31 +505,31 @@ var chitu;
             this._routeData = params.routeData;
             this._displayer = params.displayer;
             this._action = params.action;
-            this.loadPageAction(this.name);
+            this.loadPageAction();
         }
         on_load() {
-            return this.load.fire(this, this._routeData.values);
+            return this.load.fire(this, this.routeData.values);
         }
         on_loadComplete() {
-            return this.loadComplete.fire(this, this._routeData.values);
+            return this.loadComplete.fire(this, this.routeData.values);
         }
         on_showing() {
-            return this.showing.fire(this, this._routeData.values);
+            return this.showing.fire(this, this.routeData.values);
         }
         on_shown() {
-            return this.shown.fire(this, this._routeData.values);
+            return this.shown.fire(this, this.routeData.values);
         }
         on_hiding() {
-            return this.hiding.fire(this, this._routeData.values);
+            return this.hiding.fire(this, this.routeData.values);
         }
         on_hidden() {
-            return this.hidden.fire(this, this._routeData.values);
+            return this.hidden.fire(this, this.routeData.values);
         }
         on_closing() {
-            return this.closing.fire(this, this._routeData.values);
+            return this.closing.fire(this, this.routeData.values);
         }
         on_closed() {
-            return this.closed.fire(this, this._routeData.values);
+            return this.closed.fire(this, this.routeData.values);
         }
         show() {
             this.on_showing();
@@ -583,11 +570,12 @@ var chitu;
             return this._routeData;
         }
         get name() {
-            return this._routeData.pageName;
+            return this.routeData.pageName;
         }
-        loadPageAction(pageName) {
+        loadPageAction() {
             return __awaiter(this, void 0, void 0, function* () {
                 console.assert(this._routeData != null);
+                let routeData = this._routeData;
                 let action;
                 if (typeof this._action == 'function') {
                     action = this._action;
@@ -602,11 +590,11 @@ var chitu;
                         throw err;
                     }
                     if (!actionResult)
-                        throw Errors.exportsCanntNull(pageName);
+                        throw Errors.exportsCanntNull(routeData.pageName);
                     let actionName = 'default';
                     action = actionResult[actionName];
                     if (action == null) {
-                        throw Errors.canntFindAction(pageName);
+                        throw Errors.canntFindAction(routeData.pageName);
                     }
                 }
                 let actionExecuteResult;
@@ -620,13 +608,13 @@ var chitu;
                     }
                 }
                 else {
-                    throw Errors.actionTypeError(pageName);
+                    throw Errors.actionTypeError(routeData.pageName);
                 }
                 this.on_load();
             });
         }
         reload() {
-            return this.loadPageAction(this.name);
+            return this.loadPageAction();
         }
     }
     Page.tagName = 'div';
@@ -690,33 +678,6 @@ function ajax(url, options) {
         return textObject;
     });
 }
-function callAjax(url, options, service, error) {
-    return new Promise((reslove, reject) => {
-        let timeId;
-        if (options.method == 'get') {
-            timeId = setTimeout(() => {
-                let err = new Error();
-                err.name = 'timeout';
-                err.message = '网络连接超时';
-                reject(err);
-                error.fire(service, err);
-                clearTimeout(timeId);
-            }, chitu.Service.settings.ajaxTimeout * 1000);
-        }
-        ajax(url, options)
-            .then(data => {
-            reslove(data);
-            if (timeId)
-                clearTimeout(timeId);
-        })
-            .catch(err => {
-            reject(err);
-            error.fire(service, err);
-            if (timeId)
-                clearTimeout(timeId);
-        });
-    });
-}
 var chitu;
 (function (chitu) {
     class Service {
@@ -724,24 +685,53 @@ var chitu;
             this.error = chitu.Callbacks();
         }
         ajax(url, options) {
-            options = options || {};
-            let data = options.data;
-            let method = options.method;
-            let headers = options.headers;
-            let body;
-            if (data != null) {
-                let is_json = (headers['content-type'] || '').indexOf('json');
-                if (is_json) {
-                    body = JSON.stringify(data);
+            return new Promise((reslove, reject) => {
+                let timeId;
+                if (options.method == 'get') {
+                    timeId = setTimeout(() => {
+                        let err = new Error();
+                        err.name = 'timeout';
+                        err.message = '网络连接超时';
+                        reject(err);
+                        this.error.fire(this, err);
+                        clearTimeout(timeId);
+                    }, Service.settings.ajaxTimeout * 1000);
                 }
-                else {
-                    body = new URLSearchParams();
-                    for (let key in data) {
-                        body.append(key, data[key]);
-                    }
-                }
+                ajax(url, options)
+                    .then(data => {
+                    reslove(data);
+                    if (timeId)
+                        clearTimeout(timeId);
+                })
+                    .catch(err => {
+                    reject(err);
+                    this.error.fire(this, err);
+                    if (timeId)
+                        clearTimeout(timeId);
+                });
+            });
+        }
+        ajaxByForm(url, data, method) {
+            let headers = {};
+            headers['content-type'] = 'application/x-www-form-urlencoded';
+            let body = new URLSearchParams();
+            for (let key in data) {
+                body.append(key, data[key]);
             }
-            return callAjax(url, { headers, body, method }, this, this.error);
+            return this.ajax(url, { headers, body, method });
+        }
+        ajaxByJSON(url, data, method) {
+            let headers = {};
+            headers['content-type'] = 'application/json';
+            let body;
+            if (data)
+                body = JSON.stringify(data);
+            let options = {
+                headers,
+                body,
+                method
+            };
+            return this.ajax(url, options);
         }
     }
     Service.settings = {

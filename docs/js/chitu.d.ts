@@ -1,6 +1,6 @@
 declare namespace chitu {
     interface SiteMapNode {
-        name: string;
+        name?: string;
         action: ((page: Page) => void) | string;
         children?: {
             [key: string]: SiteMapNode | ((page: Page) => void) | string;
@@ -12,7 +12,6 @@ declare namespace chitu {
     interface RouteData {
         pageName: string;
         values: any;
-        url: string;
     }
     class Application {
         static skipStateName: string;
@@ -31,7 +30,7 @@ declare namespace chitu {
             siteMap: SiteMap<SiteMapNode>;
             allowCachePage?: boolean;
         });
-        private setChildrenParent(parent);
+        private travalNode(node);
         protected parseUrl(url: string): RouteData;
         protected createUrl(pageName: string, values: {
             [key: string]: string;
@@ -40,19 +39,19 @@ declare namespace chitu {
         readonly currentPage: Page;
         readonly pages: Array<Page>;
         readonly siteMap: SiteMap<SiteMapNode>;
-        private createPage(routeData);
-        protected createPageElement(routeData: chitu.RouteData): HTMLElement;
+        private getPage(pageName, values?);
+        protected createPageElement(pageName: string): HTMLElement;
         protected hashchange(): void;
         run(): void;
-        getPage(name: string): Page;
-        private getPageByRouteString(routeString);
-        showPage(url: string, args?: any): Page;
+        findPageFromStack(name: string): Page;
+        showPage(pageName: string, args?: any): Page;
+        private showPageByUrl(url, args?);
         private pushPage(page);
         private findSiteMapNode(pageName);
-        setLocationHash(routeString: string): void;
+        setLocationHash(url: string): void;
         closeCurrentPage(): void;
         private clearPageStack();
-        redirect(routeString: string, args?: any): Page;
+        redirect(pageName: string, args?: any): Page;
         back(): void;
     }
 }
@@ -115,6 +114,7 @@ declare namespace chitu {
     }
 }
 
+
 declare namespace chitu {
     interface PageDisplayConstructor {
         new (app: Application): PageDisplayer;
@@ -169,7 +169,7 @@ declare namespace chitu {
         previous: Page;
         readonly routeData: RouteData;
         readonly name: string;
-        private loadPageAction();
+        private loadPageAction(pageName);
         reload(): Promise<void>;
     }
 }
@@ -188,18 +188,22 @@ interface ServiceError extends Error {
     method?: string;
 }
 declare function ajax<T>(url: string, options: RequestInit): Promise<T>;
+declare function callAjax<T>(url: string, options: RequestInit, service: chitu.Service, error: chitu.Callback1<chitu.Service, Error>): Promise<T>;
 declare namespace chitu {
     interface ServiceConstructor<T> {
         new (): T;
     }
-    abstract class Service {
+    class Service {
         error: Callback1<Service, Error>;
         static settings: {
             ajaxTimeout: number;
         };
-        ajax<T>(url: string, options: RequestInit): Promise<T>;
-        protected ajaxByForm<T>(url: string, data: Object, method?: string): Promise<T>;
-        protected ajaxByJSON<T>(url: string, data: Object, method?: string): Promise<T>;
+        ajax(url: string, options?: {
+            data?: Object;
+            headers?: Headers;
+            contentType?: string;
+            method?: string;
+        }): Promise<{}>;
     }
 }
 

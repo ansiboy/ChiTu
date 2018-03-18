@@ -32,7 +32,7 @@ define(["exports"], function (exports) {
 });
 ```
 
-注意到 ```exports.default = action``` ，必须将 action 方法导出到 default 字段。
+注意到 `exports.default = action` ，必须将 action 方法导出到 default 字段。
 
 ## index.html
 
