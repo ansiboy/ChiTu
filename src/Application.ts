@@ -13,22 +13,21 @@ namespace chitu {
     }
 
     const DefaultPageName = "index"
-    function parseUrl(url: string): { pageName: string, values: PageDataType } {
+    function parseUrl(app: Application, url: string): { pageName: string, values: PageDataType } {
         let sharpIndex = url.indexOf('#');
         if (sharpIndex < 0) {
             let pageName = DefaultPageName
             return { pageName, values: {} };
         }
-        // throw Errors.canntParseRouteString(url);
 
         let routeString = url.substr(sharpIndex + 1);
         if (!routeString)
             throw Errors.canntParseRouteString(url);
 
-
         /** 以 ! 开头在 hash 忽略掉 */
         if (routeString.startsWith('!')) {
-            history.replaceState('chitu', "", `#${this.currentPage.routeData.url}`)
+            let url = createUrl(app.currentPage.name, app.currentPage.data);
+            history.replaceState('chitu', "", url)
             return;
         }
 
@@ -78,13 +77,6 @@ namespace chitu {
 
         return `#${path}?${params}`;
     }
-
-    // export interface RouteData {
-    //     pageName: string,
-    //     values: any,
-    //     // url: string
-    // }
-
 
     var PAGE_STACK_MAX_SIZE = 30;
     var CACHE_PAGE_SIZE = 30;
@@ -183,7 +175,7 @@ namespace chitu {
          * @param url 要解释的 路由字符串
          */
         protected parseUrl(url: string) {
-            let routeData = parseUrl(url);
+            let routeData = parseUrl(this, url);
             return routeData;
         }
 
@@ -197,7 +189,7 @@ namespace chitu {
         }
 
         private on_pageCreated(page: Page) {
-            return this.pageCreated.fire(this, page); //fireCallback(this.pageCreated, this, page);
+            return this.pageCreated.fire(this, page);
         }
 
         /**
@@ -217,7 +209,7 @@ namespace chitu {
             return this.page_stack;
         }
 
-        private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {//routeData: RouteData
+        private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {
 
             let data = this.cachePages[pageName];
             if (data) {
@@ -265,9 +257,7 @@ namespace chitu {
                 delete this.cachePages[key];
             }
 
-
             let page_onerror = (sender: Page, error: AppError) => {
-                // this.error.fire(this, error, sender);
                 this.fireError(error, page)
             }
             let page_onloadComplete = (sender, args) => {
@@ -298,7 +288,7 @@ namespace chitu {
 
         protected hashchange() {
 
-            var routeData = this.parseUrl(location.href); //this.parseUrl(routeString);
+            var routeData = this.parseUrl(location.href);
             if (routeData == null) {
                 return;
             }
@@ -424,9 +414,6 @@ namespace chitu {
         }
 
         public setLocationHash(url: string) {
-            // if (window.location.hash == '#' + routeString) {
-            //     return;
-            // }
             history.pushState('chitu', "", url)
         }
 
