@@ -6,7 +6,7 @@
         "declaration": true,
         // "declarationDir": "../build",
         "removeComments": true,
-        "outDir": "../out/es6",
+        "outFile": "../out/es6/chitu.js",
         "rootDir": ".",
         "lib": [
             "dom",
