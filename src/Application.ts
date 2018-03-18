@@ -22,7 +22,7 @@
 
         let routeString = url.substr(sharpIndex + 1);
         if (!routeString)
-            throw Errors.canntParseRouteString(url);
+            app.throwError(Errors.canntParseRouteString(url));
 
         /** 以 ! 开头在 hash 忽略掉 */
         if (routeString.startsWith('!')) {
@@ -43,7 +43,7 @@
         }
 
         if (!routePath)
-            throw Errors.canntParseRouteString(routeString);
+            app.throwError(Errors.canntParseRouteString(routeString));
 
         let values = {};
         if (search) {
@@ -52,7 +52,7 @@
 
         let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
         if (path_parts.length < 1) {
-            throw Errors.canntParseRouteString(routeString);
+            app.throwError(Errors.canntParseRouteString(routeString));
         }
 
         let file_path = path_parts.join('/');
@@ -123,11 +123,11 @@
          */
         constructor(siteMap: SiteMap<SiteMapNode>, allowCachePage?: boolean) {
             if (!siteMap) {
-                throw new Error("site map can not null.");
+                this.throwError(Errors.argumentNull("siteMap"));
             }
 
             if (!this.siteMap.index)
-                throw Errors.siteMapRootCanntNull();
+                this.throwError(Errors.siteMapRootCanntNull());
 
             let indexNode = this.translateSiteMapNode(siteMap.index, DefaultPageName)
             this.travalNode(indexNode);
@@ -160,7 +160,7 @@
             let children = node.children || {};
 
             if (this.allNodes[node.name]) {
-                throw Errors.duplicateSiteMapNode(node.name);
+                this.throwError(Errors.duplicateSiteMapNode(node.name));
             }
 
             this.allNodes[node.name] = node;
@@ -380,11 +380,11 @@
          * @param args 传递到页面的参数 
          */
         private showPageByUrl(url: string, args?: any): Page {
-            if (!url) throw Errors.argumentNull('url');
+            if (!url) this.throwError(Errors.argumentNull('url'));
 
             var routeData = this.parseUrl(url);
             if (routeData == null) {
-                throw Errors.noneRouteMatched(url);
+                this.throwError(Errors.noneRouteMatched(url))
             }
 
             Object.assign(routeData.values, args || {});
@@ -472,7 +472,7 @@
          * @param err 错语
          * @param page 页面，与错误相对应的页面
          */
-        public throwError(err: Error, page: Page) {
+        public throwError(err: Error, page?: Page) {
             let e = err as AppError;
             this.error.fire(this, e, page)
             if (!e.processed) {
