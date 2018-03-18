@@ -126,7 +126,7 @@
                 this.throwError(Errors.argumentNull("siteMap"));
             }
 
-            if (!this.siteMap.index)
+            if (!siteMap.index)
                 this.throwError(Errors.siteMapRootCanntNull());
 
             let indexNode = this.translateSiteMapNode(siteMap.index, DefaultPageName)

@@ -1,22 +1,43 @@
 define(['chitu'], function (c) {
-    let siteMap = {
-        index: {
-            name: 'index',
-            action(page) {
-                Application.loadView(page)
-            },
-            children: {
-                quick_start: (page) => Application.loadView(page),
-                async_load: (page) => Application.loadView(page),
-                page_navigation: (page) => Application.loadView(page),
-                ajax_invoke: (page) => Application.loadView(page),
-                page_pass_parameter: (page) => Application.loadView(page)
+
+    function main() {
+
+
+        let pageNames = [
+            'quick_start', 'async_load', 'page_navigation',
+            'ajax_invoke', 'page_pass_parameter', 'error_handle',
+            'event_usage', 'page_render', 'page_event'
+        ]
+        let obj = {}
+        pageNames.forEach(o => obj[o] = (page) => Application.loadView(page))
+
+        let siteMap = {
+            index: {
+                name: 'index',
+                action(page) {
+                    Application.loadView(page)
+                },
+                children: obj
             }
         }
+
+        let app = new Application(siteMap);
+        return app;
     }
+
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+    }
+
     class Application extends chitu.Application {
-        constructor() {
-            super({ siteMap, allowCachePage: false });
+        constructor(siteMap) {
+            super(siteMap, false);
         }
 
         /**
@@ -66,9 +87,22 @@ define(['chitu'], function (c) {
                     let modules = ['highlight', 'highlight_javascript', 'highlight_typescript'];
                     require(modules, function (hljs, n) {
                         doc_element.querySelectorAll('code').forEach(block => {
-                            hljs.highlightBlock(block);
+                            let { className } = block
+                            if (className != 'mermaid') {
+                                hljs.highlightBlock(block);
+                            }
                         })
                     });
+
+                    doc_element.querySelectorAll('.mermaid').forEach(block => {
+                        block.id = 'xdfasf'
+                        let graphDefinition = block.innerText
+                        var insertSvg = function (svgCode, bindFunctions) {
+                            block.innerHTML = svgCode;
+                            block.children[0].style.height = '400px'
+                        };
+                        window.mermaid.mermaidAPI.render(block.id, graphDefinition, insertSvg)
+                    })
                 })
 
             if (page.name != 'index') {
@@ -80,8 +114,5 @@ define(['chitu'], function (c) {
         }
     }
 
-    let app = new Application();
-
-    return app;
-
+    return main()
 });

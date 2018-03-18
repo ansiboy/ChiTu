@@ -17,6 +17,10 @@ define(["exports", "application"],
             page.element.appendChild(input)
             input.value = '第一个页面'
 
+            let label = document.createElement('div')
+            page.element.appendChild(label)
+            label.innerHTML = '在文本框中输入要传递的参数'
+
             btn.onclick = function () {
                 app.redirect('#page2', { name: input.value })
             }
