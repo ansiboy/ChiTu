@@ -12,6 +12,7 @@ namespace chitu {
         index: T | ActionType,
     }
 
+    const EmtpyStateData = "";
     const DefaultPageName = "index"
     function parseUrl(app: Application, url: string): { pageName: string, values: PageDataType } {
         let sharpIndex = url.indexOf('#');
@@ -27,7 +28,7 @@ namespace chitu {
         /** 以 ! 开头在 hash 忽略掉 */
         if (routeString.startsWith('!')) {
             let url = createUrl(app.currentPage.name, app.currentPage.data);
-            history.replaceState('chitu', "", url)
+            history.replaceState(EmtpyStateData, "", url)
             return;
         }
 
@@ -414,7 +415,7 @@ namespace chitu {
         }
 
         public setLocationHash(url: string) {
-            history.pushState('chitu', "", url)
+            history.pushState(EmtpyStateData, "", url)
         }
 
         public closeCurrentPage() {
