@@ -4,7 +4,6 @@ namespace chitu {
     export type ActionType = ((page: Page) => void) | string;
     export type SiteMapChildren = { [key: string]: SiteMapNode | ((page: Page) => void) | string }
     export interface SiteMapNode {
-        name?: string,
         action: ActionType,
         children?: SiteMapChildren
     }
@@ -14,22 +13,21 @@ namespace chitu {
     }
 
     const DefaultPageName = "index"
-    function parseUrl(url: string): RouteData {
+    function parseUrl(app: Application, url: string): { pageName: string, values: PageDataType } {
         let sharpIndex = url.indexOf('#');
         if (sharpIndex < 0) {
             let pageName = DefaultPageName
             return { pageName, values: {} };
         }
-        // throw Errors.canntParseRouteString(url);
 
         let routeString = url.substr(sharpIndex + 1);
         if (!routeString)
             throw Errors.canntParseRouteString(url);
 
-
         /** 以 ! 开头在 hash 忽略掉 */
         if (routeString.startsWith('!')) {
-            history.replaceState('chitu', "", `#${this.currentPage.routeData.url}`)
+            let url = createUrl(app.currentPage.name, app.currentPage.data);
+            history.replaceState('chitu', "", url)
             return;
         }
 
@@ -80,19 +78,12 @@ namespace chitu {
         return `#${path}?${params}`;
     }
 
-    export interface RouteData {
-        pageName: string,
-        values: any,
-        // url: string
-    }
-
-
     var PAGE_STACK_MAX_SIZE = 30;
     var CACHE_PAGE_SIZE = 30;
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
-    type MySiteMapNode = SiteMapNode & { parent?: SiteMapNode, level?: number };
+    type MySiteMapNode = SiteMapNode & { name: string, parent?: SiteMapNode, level?: number };
 
 
     export class Application {
@@ -121,7 +112,7 @@ namespace chitu {
          */
         backFail = Callbacks<Application, null>();
 
-        error = Callbacks<Application, Error, Page>();
+        error = Callbacks<Application, AppError, Page>();
         constructor(args?: {
             siteMap: SiteMap<SiteMapNode>,
             allowCachePage?: boolean
@@ -136,24 +127,23 @@ namespace chitu {
             if (!this.siteMap.index)
                 throw Errors.siteMapRootCanntNull();
 
-            let indexNode = this.translateSiteMapNode(args.siteMap.index)
+            let indexNode = this.translateSiteMapNode(args.siteMap.index, DefaultPageName)
             this.travalNode(indexNode);
 
             if (args.allowCachePage != null)
                 this.allowCachePage = args.allowCachePage;
         }
 
-        private translateSiteMapNode(source: SiteMapNode | ActionType): MySiteMapNode {
-            let action: ActionType, name: string, children: SiteMapChildren;
-            if (typeof source != 'object') {
-                action = source;
-                name = DefaultPageName;
-                children = {};
-            }
-            else {
-                name = source.name;
+        private translateSiteMapNode(source: SiteMapNode | ActionType, name: string): MySiteMapNode {
+            let action: ActionType, children: SiteMapChildren;
+            //function string object
+            if (typeof source == 'object') {
                 action = source.action;
                 children = source.children;
+            }
+            else {
+                action = source;
+                children = {};
             }
 
             return {
@@ -174,7 +164,7 @@ namespace chitu {
 
             this.allNodes[node.name] = node;
             for (let key in children) {
-                let child = this.translateSiteMapNode(children[key]);
+                let child = this.translateSiteMapNode(children[key], key);
                 children[key] = child;
                 this.travalNode(child);
             }
@@ -184,8 +174,8 @@ namespace chitu {
          * 解释路由，将路由字符串解释为 RouteData 对象
          * @param url 要解释的 路由字符串
          */
-        protected parseUrl(url: string): RouteData {
-            let routeData = parseUrl(url);
+        protected parseUrl(url: string) {
+            let routeData = parseUrl(this, url);
             return routeData;
         }
 
@@ -199,7 +189,7 @@ namespace chitu {
         }
 
         private on_pageCreated(page: Page) {
-            return this.pageCreated.fire(this, page); //fireCallback(this.pageCreated, this, page);
+            return this.pageCreated.fire(this, page);
         }
 
         /**
@@ -218,13 +208,13 @@ namespace chitu {
         get pages(): Array<Page> {
             return this.page_stack;
         }
-        
-        private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {//routeData: RouteData
+
+        private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {
 
             let data = this.cachePages[pageName];
             if (data) {
                 data.hitCount = (data.hitCount || 0) + 1;
-                data.page.routeData.values = values || {};
+                data.page.data = values || {};
                 return { page: data.page, isNew: false };
             }
 
@@ -234,17 +224,20 @@ namespace chitu {
             let displayer = new this.pageDisplayType(this);
 
             let siteMapNode = this.findSiteMapNode(pageName);
-            if (siteMapNode == null)
-                throw Errors.pageNodeNotExists(pageName);
+            let action = siteMapNode ?
+                siteMapNode.action :
+                (page: Page) => page.element.innerHTML = `page ${pageName} not found`;
+
 
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
                 previous: previous_page,
-                routeData: { pageName, values },
+                name: pageName,
+                data: values,
                 displayer,
                 element,
-                action: siteMapNode.action
+                action,
             });
 
             let keyes = Object.keys(this.cachePages);
@@ -264,9 +257,7 @@ namespace chitu {
                 delete this.cachePages[key];
             }
 
-
-            let page_onerror = (sender: Page, error: Error) => {
-                // this.error.fire(this, error, sender);
+            let page_onerror = (sender: Page, error: AppError) => {
                 this.fireError(error, page)
             }
             let page_onloadComplete = (sender, args) => {
@@ -297,7 +288,7 @@ namespace chitu {
 
         protected hashchange() {
 
-            var routeData = this.parseUrl(location.href); //this.parseUrl(routeString);
+            var routeData = this.parseUrl(location.href);
             if (routeData == null) {
                 return;
             }
@@ -363,17 +354,17 @@ namespace chitu {
 
             let preRouteData = null;
             if (oldCurrentPage) {
-                preRouteData = oldCurrentPage.routeData
+                preRouteData = oldCurrentPage.data
                 oldCurrentPage.on_deactive()
             }
 
             console.assert(this.currentPage != null);
             if (isNewPage) {
-                this.currentPage.on_active(args, preRouteData);
+                this.currentPage.on_active(args);
             }
             else {
                 let onload = (sender: Page, args: any) => {
-                    sender.on_active(args, preRouteData);
+                    sender.on_active(args);
                     sender.load.remove(onload);
                 }
                 this.currentPage.load.add(onload);
@@ -423,9 +414,6 @@ namespace chitu {
         }
 
         public setLocationHash(url: string) {
-            // if (window.location.hash == '#' + routeString) {
-            //     return;
-            // }
             history.pushState('chitu', "", url)
         }
 
@@ -472,8 +460,15 @@ namespace chitu {
             history.back();
         }
 
-        protected fireError(err: Error, page: Page) {
+        protected fireError(err: AppError, page: Page) {
             this.error.fire(this, err, page)
+
+            // 给 100 ms 让监听错误的代码去处理
+            setTimeout(() => {
+                if (!err.processed) {
+                    throw err
+                }
+            }, 100)
         }
     }
 } 

@@ -98,3 +98,9 @@ class Errors {
 }
 // }
 
+namespace chitu {
+    export interface AppError extends Error {
+        processed: boolean
+    }
+}
+

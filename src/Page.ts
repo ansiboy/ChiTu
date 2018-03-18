@@ -2,6 +2,8 @@
 
 namespace chitu {
 
+    export type PageDataType = { [key: string]: any }
+
     export interface PageDisplayConstructor {
         new(app: Application): PageDisplayer
     }
@@ -13,11 +15,13 @@ namespace chitu {
 
     export interface PageParams {
         app: Application,
-        routeData: RouteData,
-        action: ((page: Page) => void) | string
+        // routeData: RouteData,
+        action: ActionType,
         element: HTMLElement,
         displayer: PageDisplayer,
-        previous?: Page
+        previous?: Page,
+        name: string,
+        data: PageDataType,
     }
 
     export class Page {
@@ -27,76 +31,80 @@ namespace chitu {
         private _element: HTMLElement;
         private _previous: Page;
         private _app: Application;
-        private _routeData: RouteData;
+        // private _routeData: RouteData;
         private _displayer: PageDisplayer;
         private _action: ((page: Page) => void) | string;
+        private _name: string
 
         static tagName = 'div';
 
         error = Callbacks<Page, Error>();
+        data: PageDataType = null
 
         /** 脚本文件加载完成后引发 */
-        load = Callbacks<this, any>();
+        load = Callbacks<this, PageDataType>();
 
         /** 脚本执行完成后引发 */
-        loadComplete = Callbacks<this, any>();
+        loadComplete = Callbacks<this, PageDataType>();
 
         /** 页面显示时引发 */
-        showing = Callbacks<this, any>();
+        showing = Callbacks<this, PageDataType>();
 
         /** 页面显示时完成后引发 */
-        shown = Callbacks<this, any>();
+        shown = Callbacks<this, PageDataType>();
 
-        hiding = Callbacks<this, any>();
-        hidden = Callbacks<this, any>();
+        hiding = Callbacks<this, PageDataType>();
+        hidden = Callbacks<this, PageDataType>();
 
-        closing = Callbacks<this, any>();
-        closed = Callbacks<this, any>();
+        closing = Callbacks<this, PageDataType>();
+        closed = Callbacks<this, PageDataType>();
 
-        active = Callbacks<this, any, RouteData>();
-        deactive = Callbacks<this, any>();
+        active = Callbacks<this, PageDataType>();
+        deactive = Callbacks<this, PageDataType>();
 
         constructor(params: PageParams) {
             this._element = params.element;
             this._previous = params.previous;
             this._app = params.app;
-            this._routeData = params.routeData;
+            // this._routeData = params.routeData;
             this._displayer = params.displayer;
             this._action = params.action;
-
+            this.data = params.data
+            this._name = params.name;
+            
             this.loadPageAction(this.name);
         }
         private on_load() {
-            return this.load.fire(this, this._routeData.values);
+            return this.load.fire(this, this.data);
         }
         private on_loadComplete() {
-            return this.loadComplete.fire(this, this._routeData.values);
+            return this.loadComplete.fire(this, this.data);
         }
         private on_showing() {
-            return this.showing.fire(this, this._routeData.values);
+            return this.showing.fire(this, this.data);
         }
         private on_shown() {
-            return this.shown.fire(this, this._routeData.values);
+            return this.shown.fire(this, this.data);
         }
         private on_hiding() {
-            return this.hiding.fire(this, this._routeData.values);
+            return this.hiding.fire(this, this.data);
         }
         private on_hidden() {
-            return this.hidden.fire(this, this._routeData.values);
+            return this.hidden.fire(this, this.data);
         }
         private on_closing() {
-            return this.closing.fire(this, this._routeData.values);
+            return this.closing.fire(this, this.data);
         }
         private on_closed() {
-            return this.closed.fire(this, this._routeData.values);
+            return this.closed.fire(this, this.data);
         }
-        public on_active(args, preRouteData: RouteData) {
+        public on_active(args: PageDataType) {
             console.assert(args != null, 'args is null')
-            this._routeData.values = args;
-            this.active.fire(this, args, preRouteData);
+            Object.assign(this.data, args);
+            this.active.fire(this, args);
         }
         public on_deactive() {
-            this.deactive.fire(this, this._routeData.values);
+            this.deactive.fire(this, this.data);
         }
         show(): Promise<any> {
             this.on_showing();
@@ -134,15 +142,12 @@ namespace chitu {
         set previous(value: Page) {
             this._previous = value;
         }
-        get routeData(): RouteData {
-            return this._routeData;
-        }
         get name(): string {
-            return this._routeData.pageName;
+            return this._name;
         }
 
         private async loadPageAction(pageName: string) {
-            console.assert(this._routeData != null);
+            // console.assert(this._routeData != null);
 
             let action;
             if (typeof this._action == 'function') {
