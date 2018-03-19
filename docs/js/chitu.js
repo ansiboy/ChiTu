@@ -1,16 +1,27 @@
+
+
+/*!
+ * CHITU v1.5.0
+ * https://github.com/ansiboy/ChiTu
+ *
+ * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
+ * Licensed under the MIT License.
+ *
+ */
+
 (function(factory) { 
-            if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') { 
-                // [1] CommonJS/Node.js 
-                var target = module['exports'] || exports; 
-                var chitu = factory(target, require);
-                Object.assign(target,chitu);
-            } else 
-        if (typeof define === 'function' && define['amd']) { 
-            define(factory);  
-        } else { 
-            factory(); 
-        } 
-    })(function() {var chitu;
+    if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') { 
+        // [1] CommonJS/Node.js 
+        var target = module['exports'] || exports;
+        var chitu = factory(target, require);
+        Object.assign(target,chitu);
+    } else if (typeof define === 'function' && define['amd']) {
+        define(factory); 
+    } else { 
+        factory();
+    } 
+})(function() {
+var chitu;
 (function (chitu) {
     const EmtpyStateData = "";
     const DefaultPageName = "index";
@@ -22,7 +33,7 @@
         }
         let routeString = url.substr(sharpIndex + 1);
         if (!routeString)
-            throw Errors.canntParseRouteString(url);
+            app.throwError(Errors.canntParseRouteString(url));
         if (routeString.startsWith('!')) {
             let url = createUrl(app.currentPage.name, app.currentPage.data);
             history.replaceState(EmtpyStateData, "", url);
@@ -39,14 +50,14 @@
             routePath = routeString;
         }
         if (!routePath)
-            throw Errors.canntParseRouteString(routeString);
+            app.throwError(Errors.canntParseRouteString(routeString));
         let values = {};
         if (search) {
             values = this.pareeUrlQuery(search);
         }
         let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
         if (path_parts.length < 1) {
-            throw Errors.canntParseRouteString(routeString);
+            app.throwError(Errors.canntParseRouteString(routeString));
         }
         let file_path = path_parts.join('/');
         let pageName = path_parts.join('.');
@@ -81,24 +92,29 @@
             this.allNodes = {};
             this.error = chitu.Callbacks();
             if (!siteMap) {
-                throw new Error("site map can not null.");
+                this.throwError(Errors.argumentNull("siteMap"));
             }
             if (!siteMap.index)
-                throw Errors.siteMapRootCanntNull();
+                this.throwError(Errors.siteMapRootCanntNull());
             let indexNode = this.translateSiteMapNode(siteMap.index, DefaultPageName);
-            this.travalNode(indexNode);
+            this.travalNode(indexNode)
             if (allowCachePage != null)
                 this.allowCachePage = allowCachePage;
         }
         translateSiteMapNode(source, name) {
             let action, children;
+            let source_children;
             if (typeof source == 'object') {
                 action = source.action;
-                children = source.children;
+                source_children = source.children;
             }
             else {
                 action = source;
-                children = {};
+                source_children = {};
+            }
+            children = {};
+            for (let key in source_children) {
+                children[key] = this.translateSiteMapNode(source_children[key], key);
             }
             return {
                 name,
@@ -112,13 +128,11 @@
                 throw Errors.argumentNull('parent');
             let children = node.children || {};
             if (this.allNodes[node.name]) {
-                throw Errors.duplicateSiteMapNode(node.name);
+                this.throwError(Errors.duplicateSiteMapNode(node.name));
             }
             this.allNodes[node.name] = node;
             for (let key in children) {
-                let child = this.translateSiteMapNode(children[key], key);
-                children[key] = child;
-                this.travalNode(child);
+                this.travalNode(children[key]);
             }
         }
         parseUrl(url) {
@@ -266,10 +280,10 @@
         }
         showPageByUrl(url, args) {
             if (!url)
-                throw Errors.argumentNull('url');
+                this.throwError(Errors.argumentNull('url'));
             var routeData = this.parseUrl(url);
             if (routeData == null) {
-                throw Errors.noneRouteMatched(url);
+                this.throwError(Errors.noneRouteMatched(url));
             }
             Object.assign(routeData.values, args || {});
             return this.showPage(routeData.pageName, routeData.values);
@@ -338,7 +352,6 @@
     Application.skipStateName = 'skip';
     chitu.Application = Application;
 })(chitu || (chitu = {}));
-
 class Errors {
     static pageNodeNotExists(pageName) {
         let msg = `Page node named ${pageName} is not exists.`;
@@ -436,7 +449,6 @@ class Errors {
         return new Error(name);
     }
 }
-
 var chitu;
 (function (chitu) {
     class Callback {
@@ -483,7 +495,6 @@ var chitu;
     }
     chitu.ValueStore = ValueStore;
 })(chitu || (chitu = {}));
-
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -648,15 +659,6 @@ class PageDisplayerImplement {
         return Promise.resolve();
     }
 }
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 function ajax(url, options) {
     return __awaiter(this, void 0, void 0, function* () {
         let response = yield fetch(url, options);
@@ -749,7 +751,6 @@ var chitu;
     };
     chitu.Service = Service;
 })(chitu || (chitu = {}));
-
 function combinePath(path1, path2) {
     if (!path1)
         throw Errors.argumentNull('path1');
@@ -769,6 +770,349 @@ function loadjs(path) {
         });
     });
 }
+var chitu;
+(function (chitu) {
+    var mobile;
+    (function (mobile) {
+        let isCordovaApp = location.protocol === 'file:';
+        class Page extends chitu.Page {
+            constructor(params) {
+                super(params);
+                this.displayStatic = false;
+                this.allowSwipeBackGestrue = false;
+            }
+        }
+        Page.className = "mobile-page";
+        mobile.Page = Page;
+        class Application extends chitu.Application {
+            constructor(args) {
+                super(args);
+                this.pageShown = chitu.Callbacks();
+                this.pageType = Page;
+                if (isiOS)
+                    this.pageDisplayType = PageDisplayImplement;
+                else
+                    this.pageDisplayType = LowMachinePageDisplayImplement;
+                this.pageCreated.add((sender, page) => {
+                    this.pageShown.fire(this, { page });
+                    return page;
+                });
+            }
+        }
+        mobile.Application = Application;
+        var touch_move_time = 0;
+        window.addEventListener('touchmove', function (e) {
+            touch_move_time = Date.now();
+        });
+        var isiOS = (navigator.userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/) || []).filter(o => o).length > 0;
+        function calculateAngle(x, y) {
+            let d = Math.atan(Math.abs(y / x)) / 3.14159265 * 180;
+            return d;
+        }
+        class PageDisplayImplement {
+            constructor(app) {
+                this.animationTime = 400;
+                this.app = app;
+                this.windowWidth = window.innerWidth;
+                this.previousPageStartX = 0 - this.windowWidth / 3;
+            }
+            enableGesture(page) {
+                let startY, currentY;
+                let startX, currentX;
+                let moved = false;
+                let SIDE_WIDTH = 20;
+                let enable = false;
+                let horizontal_swipe_angle = 35;
+                let vertical_pull_angle = 65;
+                let colse_position = window.innerWidth / 2;
+                let previousPageStartX = 0 - window.innerWidth / 3;
+                page.element.addEventListener('touchstart', function (event) {
+                    startY = event.touches[0].pageY;
+                    startX = event.touches[0].pageX;
+                    enable = startX <= SIDE_WIDTH;
+                });
+                page.element.addEventListener('touchmove', (event) => {
+                    currentX = event.targetTouches[0].pageX;
+                    currentY = event.targetTouches[0].pageY;
+                    if (isiOS && currentX < 0 || !enable) {
+                        return;
+                    }
+                    let deltaX = currentX - startX;
+                    let angle = calculateAngle(deltaX, currentY - startY);
+                    if (angle < horizontal_swipe_angle && deltaX > 0) {
+                        page.element.style.transform = `translate(${deltaX}px, 0px)`;
+                        page.element.style.transition = '0s';
+                        if (page.previous != null) {
+                            page.previous.element.style.transform = `translate(${previousPageStartX + deltaX / 3}px, 0px)`;
+                            page.previous.element.style.transition = '0s';
+                            page.previous.element.style.display = 'block';
+                        }
+                        disableNativeScroll(page.element);
+                        moved = true;
+                        event.preventDefault();
+                        console.log('preventDefault gestured');
+                    }
+                });
+                let end = (event) => {
+                    if (!moved)
+                        return;
+                    let deltaX = currentX - startX;
+                    if (deltaX > colse_position) {
+                        console.assert(this.app != null);
+                        this.app.back();
+                    }
+                    else {
+                        page.element.style.transform = `translate(0px, 0px)`;
+                        page.element.style.transition = '0.4s';
+                        if (page.previous) {
+                            page.previous.element.style.transform = `translate(${previousPageStartX}px,0px)`;
+                            page.previous.element.style.transition = `0.4s`;
+                            window.setTimeout(function () {
+                                page.previous.element.style.display = 'none';
+                                page.previous.element.style.removeProperty('transform');
+                                page.previous.element.style.removeProperty('transition');
+                                page.element.style.removeProperty('transform');
+                                page.element.style.removeProperty('transition');
+                            }, 400);
+                        }
+                    }
+                    moved = false;
+                };
+                page.element.addEventListener('touchcancel', (event) => end(event));
+                page.element.addEventListener('touchend', (event) => end(event));
+                function disableNativeScroll(element) {
+                    element.style.overflowY = 'hidden';
+                }
+                function enableNativeScroll(element) {
+                    element.style.overflowY = 'scroll';
+                }
+            }
+            show(page) {
+                if (!page.gestured) {
+                    page.gestured = true;
+                    if (page.allowSwipeBackGestrue)
+                        this.enableGesture(page);
+                }
+                let maxZIndex = 1;
+                let pageElements = document.getElementsByClassName(Page.className);
+                for (let i = 0; i < pageElements.length; i++) {
+                    let zIndex = new Number(pageElements.item(i).style.zIndex || '0').valueOf();
+                    if (zIndex > maxZIndex) {
+                        maxZIndex = zIndex;
+                    }
+                }
+                page.element.style.zIndex = `${maxZIndex + 1}`;
+                page.element.style.display = 'block';
+                if (page.displayStatic) {
+                    if (page.previous) {
+                        page.previous.element.style.display = 'none';
+                    }
+                    return Promise.resolve();
+                }
+                page.element.style.transform = `translate(100%,0px)`;
+                if (page.previous) {
+                    page.previous.element.style.transform = `translate(0px,0px)`;
+                    page.previous.element.style.transition = `${this.animationTime / 1000}s`;
+                }
+                return new Promise(reslove => {
+                    let delay = 100;
+                    window.setTimeout(() => {
+                        page.element.style.transform = `translate(0px,0px)`;
+                        page.element.style.transition = `${this.animationTime / 1000}s`;
+                        if (page.previous) {
+                            page.previous.element.style.transform = `translate(${this.previousPageStartX}px,0px)`;
+                            page.previous.element.style.transition = `${(this.animationTime + 200) / 1000}s`;
+                        }
+                    }, delay);
+                    window.setTimeout(reslove, delay + this.animationTime);
+                }).then(() => {
+                    page.element.style.removeProperty('transform');
+                    page.element.style.removeProperty('transition');
+                    if (page.previous) {
+                        page.previous.element.style.display = 'none';
+                        page.previous.element.style.removeProperty('transform');
+                        page.previous.element.style.removeProperty('transition');
+                    }
+                });
+            }
+            hide(page) {
+                return new Promise(reslove => {
+                    let now = Date.now();
+                    if (!isCordovaApp && isiOS && now - touch_move_time < 500 || page.displayStatic) {
+                        page.element.style.display = 'none';
+                        if (page.previous) {
+                            page.previous.element.style.display = 'block';
+                            page.previous.element.style.transition = `0s`;
+                            page.previous.element.style.transform = 'translate(0,0)';
+                        }
+                        reslove();
+                        return;
+                    }
+                    page.element.style.transition = `${this.animationTime / 1000}s`;
+                    page.element.style.transform = `translate(100%,0px)`;
+                    if (page.previous) {
+                        page.previous.element.style.display = 'block';
+                        let delay = 0;
+                        if (!page.previous.element.style.transform) {
+                            page.previous.element.style.transform = `translate(${this.previousPageStartX}px, 0px)`;
+                            delay = 50;
+                        }
+                        window.setTimeout(() => {
+                            page.previous.element.style.transform = `translate(0px, 0px)`;
+                            page.previous.element.style.transition = `${(this.animationTime - delay) / 1000}s`;
+                        }, delay);
+                    }
+                    window.setTimeout(() => {
+                        page.element.style.display = 'none';
+                        page.element.style.removeProperty('transform');
+                        page.element.style.removeProperty('transition');
+                        if (page.previous) {
+                            page.previous.element.style.removeProperty('transform');
+                            page.previous.element.style.removeProperty('transition');
+                        }
+                        reslove();
+                    }, 500);
+                });
+            }
+        }
+        class LowMachinePageDisplayImplement {
+            constructor(app) {
+                this.app = app;
+                this.windowWidth = window.innerWidth;
+            }
+            enableGesture(page) {
+                let startY, currentY;
+                let startX, currentX;
+                let moved = false;
+                let SIDE_WIDTH = 20;
+                let enable = false;
+                let horizontal_swipe_angle = 35;
+                let vertical_pull_angle = 65;
+                let colse_position = window.innerWidth / 2;
+                let previousPageStartX = 0 - window.innerWidth / 3;
+                page.element.addEventListener('touchstart', function (event) {
+                    startY = event.touches[0].pageY;
+                    startX = event.touches[0].pageX;
+                    enable = startX <= SIDE_WIDTH;
+                    if (page.previous) {
+                        page.previous.element.style.display = 'block';
+                    }
+                });
+                page.element.addEventListener('touchmove', (event) => {
+                    currentX = event.targetTouches[0].pageX;
+                    currentY = event.targetTouches[0].pageY;
+                    if (isiOS && currentX < 0 || !enable) {
+                        return;
+                    }
+                    let deltaX = currentX - startX;
+                    let angle = calculateAngle(deltaX, currentY - startY);
+                    if (angle < horizontal_swipe_angle && deltaX > 0) {
+                        page.element.style.transform = `translate(${deltaX}px, 0px)`;
+                        page.element.style.transition = '0s';
+                        disableNativeScroll(page.element);
+                        moved = true;
+                        event.preventDefault();
+                        console.log('preventDefault gestured');
+                    }
+                });
+                let end = (event) => {
+                    if (!moved)
+                        return;
+                    let deltaX = currentX - startX;
+                    if (deltaX > colse_position) {
+                        console.assert(this.app != null);
+                        this.app.back();
+                    }
+                    else {
+                        page.element.style.transform = `translate(0px, 0px)`;
+                        page.element.style.transition = '0.4s';
+                        setTimeout(() => {
+                            if (page.previous) {
+                                page.previous.element.style.display = 'none';
+                            }
+                        }, 500);
+                    }
+                    setTimeout(() => {
+                        page.element.style.removeProperty('transform');
+                        page.element.style.removeProperty('transition');
+                    }, 500);
+                    moved = false;
+                };
+                page.element.addEventListener('touchcancel', (event) => end(event));
+                page.element.addEventListener('touchend', (event) => end(event));
+                function disableNativeScroll(element) {
+                    element.style.overflowY = 'hidden';
+                }
+                function enableNativeScroll(element) {
+                    element.style.overflowY = 'scroll';
+                }
+            }
+            show(page) {
+                if (!page.gestured) {
+                    page.gestured = true;
+                    if (page.allowSwipeBackGestrue)
+                        this.enableGesture(page);
+                }
+                let maxZIndex = 1;
+                let pageElements = document.getElementsByClassName('page');
+                for (let i = 0; i < pageElements.length; i++) {
+                    let zIndex = new Number(pageElements.item(i).style.zIndex || '0').valueOf();
+                    if (zIndex > maxZIndex) {
+                        maxZIndex = zIndex;
+                    }
+                }
+                page.element.style.zIndex = `${maxZIndex + 1}`;
+                page.element.style.display = 'block';
+                if (page.displayStatic) {
+                    if (page.previous) {
+                        page.previous.element.style.display = 'none';
+                    }
+                    return Promise.resolve();
+                }
+                page.element.style.transform = `translate(100%,0px)`;
+                return new Promise(reslove => {
+                    const playTime = 500;
+                    let delay = 50;
+                    window.setTimeout(() => {
+                        page.element.style.transform = `translate(0px,0px)`;
+                        page.element.style.transition = `${playTime / 1000}s`;
+                    }, delay);
+                    window.setTimeout(reslove, delay + playTime);
+                }).then(() => {
+                    page.element.style.removeProperty('transform');
+                    page.element.style.removeProperty('transition');
+                    if (page.previous) {
+                        page.previous.element.style.display = 'none';
+                    }
+                });
+            }
+            hide(page) {
+                if (isiOS && Date.now() - touch_move_time < 500 || page.displayStatic) {
+                    page.element.style.display = 'none';
+                    if (page.previous) {
+                        page.previous.element.style.display = 'block';
+                        page.previous.element.style.removeProperty('transform');
+                        page.previous.element.style.removeProperty('transition');
+                    }
+                    return Promise.resolve();
+                }
+                page.element.style.transform = `translate(100%,0px)`;
+                page.element.style.transition = '0.4s';
+                if (page.previous) {
+                    page.previous.element.style.display = 'block';
+                }
+                return new Promise(reslove => {
+                    window.setTimeout(function () {
+                        page.element.style.display = 'none';
+                        page.element.style.removeProperty('transform');
+                        page.element.style.removeProperty('transition');
+                        reslove();
+                    }, 500);
+                });
+            }
+        }
+    })(mobile = chitu.mobile || (chitu.mobile = {}));
+})(chitu || (chitu = {}));
 
 window['chitu'] = window['chitu'] || chitu 
                             

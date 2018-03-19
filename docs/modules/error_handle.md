@@ -18,7 +18,7 @@ public throwError(err: Error, page?: Page) {
 
 ```js
 app.error.add(function(sender, error){
-    // 在这理可以根据不同的错误，进行不同的处理
+    // 在这理可以根据不同的错误，进行不同的处理
 })
 ```
 

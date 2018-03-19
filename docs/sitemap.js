@@ -76,8 +76,19 @@ define([
         }
     }
 
+    assignDefaultAction(sitemap.index)
     return sitemap
 });
+
+/**
+ * @param {chitu.SiteMapNode} node 
+ */
+function assignDefaultAction(node) {
+    node.action = node.action || loadView
+    for (let key in node.children || {}) {
+        assignDefaultAction(node.children[key])
+    }
+}
 
 /**
  * @param {chitu.Page} page 
