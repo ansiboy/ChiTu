@@ -1,4 +1,4 @@
-define(['chitu'], function (c) {
+define(['chitu', 'sitemap'], function (c, siteMap) {
 
     function main() {
 
@@ -11,15 +11,15 @@ define(['chitu'], function (c) {
         let obj = {}
         pageNames.forEach(o => obj[o] = (page) => Application.loadView(page))
 
-        let siteMap = {
-            index: {
-                name: 'index',
-                action(page) {
-                    Application.loadView(page)
-                },
-                children: obj
-            }
-        }
+        // let siteMap = {
+        //     index: {
+        //         name: 'index',
+        //         action(page) {
+        //             Application.loadView(page)
+        //         },
+        //         children: obj
+        //     }
+        // }
 
         let app = new Application(siteMap);
         return app;

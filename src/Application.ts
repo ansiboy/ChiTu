@@ -106,7 +106,7 @@
         private page_stack = new Array<Page>();
         private cachePages: { [name: string]: { page: Page, hitCount: number } } = {};
 
-        siteMap: SiteMap<SiteMapNode>;
+        // siteMap: SiteMap<SiteMapNode>;
         private allowCachePage = true;
         private allNodes: { [key: string]: MySiteMapNode } = {};
 
@@ -130,7 +130,7 @@
                 this.throwError(Errors.siteMapRootCanntNull());
 
             let indexNode = this.translateSiteMapNode(siteMap.index, DefaultPageName)
-            this.travalNode(indexNode);
+            // this.travalNode(indexNode);
 
             if (allowCachePage != null)
                 this.allowCachePage = allowCachePage;
@@ -138,13 +138,19 @@
 
         private translateSiteMapNode(source: SiteMapNode | ActionType, name: string): MySiteMapNode {
             let action: ActionType, children: SiteMapChildren;
+            let source_children: SiteMapChildren
             if (typeof source == 'object') {
                 action = source.action;
-                children = source.children;
+                source_children = source.children;
             }
             else {
                 action = source;
-                children = {};
+                source_children = {};
+            }
+
+            children = {}
+            for (let key in source_children) {
+                children[key] = this.translateSiteMapNode(source_children[key], key)
             }
 
             return {
@@ -155,21 +161,21 @@
             };
         }
 
-        private travalNode(node: MySiteMapNode) {
-            if (node == null) throw Errors.argumentNull('parent');
-            let children = node.children || {};
+        // private travalNode(node: MySiteMapNode) {
+        //     if (node == null) throw Errors.argumentNull('parent');
+        //     let children = node.children || {};
 
-            if (this.allNodes[node.name]) {
-                this.throwError(Errors.duplicateSiteMapNode(node.name));
-            }
+        //     if (this.allNodes[node.name]) {
+        //         this.throwError(Errors.duplicateSiteMapNode(node.name));
+        //     }
 
-            this.allNodes[node.name] = node;
-            for (let key in children) {
-                let child = this.translateSiteMapNode(children[key], key);
-                children[key] = child;
-                this.travalNode(child);
-            }
-        }
+        //     this.allNodes[node.name] = node;
+        //     for (let key in children) {
+        //         let child = this.translateSiteMapNode(children[key], key);
+        //         children[key] = child;
+        //         this.travalNode(child);
+        //     }
+        // }
 
         /**
          * 解释路由，将路由字符串解释为 RouteData 对象
