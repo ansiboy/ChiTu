@@ -15,7 +15,6 @@ namespace chitu {
 
     export interface PageParams {
         app: Application,
-        // routeData: RouteData,
         action: ActionType,
         element: HTMLElement,
         displayer: PageDisplayer,
@@ -24,6 +23,9 @@ namespace chitu {
         data: PageDataType,
     }
 
+    /**
+     * 页面，用把 HTML Element 包装起来。
+     */
     export class Page {
         private animationTime: number = 300;
         private num: Number;
@@ -38,7 +40,7 @@ namespace chitu {
 
         static tagName = 'div';
 
-        error = Callbacks<Page, Error>();
+        // error = Callbacks<Page, Error>();
         data: PageDataType = null
 
         /** 脚本文件加载完成后引发 */
@@ -71,7 +73,7 @@ namespace chitu {
             this._action = params.action;
             this.data = params.data
             this._name = params.name;
-            
+
             this.loadPageAction(this.name);
         }
         private on_load() {
@@ -126,13 +128,21 @@ namespace chitu {
             });
         }
 
+        /**
+         * 创建服务
+         * @param type 服务类型
+         */
         createService<T extends Service>(type: ServiceConstructor<T>): T {
             let service = new type();
             service.error.add((ender, error) => {
-                this.error.fire(this, error);
+                this._app.throwError(error, this)
             })
             return service;
         }
+
+        /**
+         * 元素，与页面相对应的元素
+         */
         get element(): HTMLElement {
             return this._element;
         }
@@ -142,13 +152,15 @@ namespace chitu {
         set previous(value: Page) {
             this._previous = value;
         }
+
+        /**
+         * 名称
+         */
         get name(): string {
             return this._name;
         }
 
         private async loadPageAction(pageName: string) {
-            // console.assert(this._routeData != null);
-
             let action;
             if (typeof this._action == 'function') {
                 action = this._action;
@@ -159,17 +171,16 @@ namespace chitu {
                     actionResult = await loadjs(this._action);
                 }
                 catch (err) {
-                    this.error.fire(this, err);
-                    throw err;
+                    this._app.throwError(err, this)
                 }
 
                 if (!actionResult)
-                    throw Errors.exportsCanntNull(pageName);
+                    this._app.throwError(Errors.exportsCanntNull(pageName), this);
 
                 let actionName = 'default';
                 action = actionResult[actionName];
                 if (action == null) {
-                    throw Errors.canntFindAction(pageName);
+                    this._app.throwError(Errors.canntFindAction(pageName), this);
                 }
             }
 
@@ -184,7 +195,7 @@ namespace chitu {
                 }
             }
             else {
-                throw Errors.actionTypeError(pageName);
+                this._app.throwError(Errors.actionTypeError(pageName), this);
             }
 
             this.on_load();

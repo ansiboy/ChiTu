@@ -1,5 +1,4 @@
-﻿
-namespace chitu {
+﻿namespace chitu {
 
     export type ActionType = ((page: Page) => void) | string;
     export type SiteMapChildren = { [key: string]: SiteMapNode | ((page: Page) => void) | string }
@@ -23,7 +22,7 @@ namespace chitu {
 
         let routeString = url.substr(sharpIndex + 1);
         if (!routeString)
-            throw Errors.canntParseRouteString(url);
+            app.throwError(Errors.canntParseRouteString(url));
 
         /** 以 ! 开头在 hash 忽略掉 */
         if (routeString.startsWith('!')) {
@@ -44,7 +43,7 @@ namespace chitu {
         }
 
         if (!routePath)
-            throw Errors.canntParseRouteString(routeString);
+            app.throwError(Errors.canntParseRouteString(routeString));
 
         let values = {};
         if (search) {
@@ -53,7 +52,7 @@ namespace chitu {
 
         let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
         if (path_parts.length < 1) {
-            throw Errors.canntParseRouteString(routeString);
+            app.throwError(Errors.canntParseRouteString(routeString));
         }
 
         let file_path = path_parts.join('/');
@@ -87,6 +86,9 @@ namespace chitu {
     type MySiteMapNode = SiteMapNode & { name: string, parent?: SiteMapNode, level?: number };
 
 
+    /**
+     * 应用，用于管理各个页面
+     */
     export class Application {
 
         static skipStateName = 'skip';
@@ -108,36 +110,34 @@ namespace chitu {
         private allowCachePage = true;
         private allNodes: { [key: string]: MySiteMapNode } = {};
 
-        /**
-         * 调用 back 方法返回上一页面，如果返回上一页面不成功，则引发此事件
+
+        /** 
+         * 错误事件 
          */
-        backFail = Callbacks<Application, null>();
-
         error = Callbacks<Application, AppError, Page>();
-        constructor(args?: {
-            siteMap: SiteMap<SiteMapNode>,
-            allowCachePage?: boolean
-        }) {
-            args = args || {} as any;
-            this.siteMap = args.siteMap;
 
-            if (!this.siteMap) {
-                throw new Error("site map can not null.");
+        /**
+         * 构造函数
+         * @param siteMap 地图，描述站点各个页面结点
+         * @param allowCachePage 是允许缓存页面，默认 true
+         */
+        constructor(siteMap: SiteMap<SiteMapNode>, allowCachePage?: boolean) {
+            if (!siteMap) {
+                this.throwError(Errors.argumentNull("siteMap"));
             }
 
-            if (!this.siteMap.index)
-                throw Errors.siteMapRootCanntNull();
+            if (!siteMap.index)
+                this.throwError(Errors.siteMapRootCanntNull());
 
-            let indexNode = this.translateSiteMapNode(args.siteMap.index, DefaultPageName)
+            let indexNode = this.translateSiteMapNode(siteMap.index, DefaultPageName)
             this.travalNode(indexNode);
 
-            if (args.allowCachePage != null)
-                this.allowCachePage = args.allowCachePage;
+            if (allowCachePage != null)
+                this.allowCachePage = allowCachePage;
         }
 
         private translateSiteMapNode(source: SiteMapNode | ActionType, name: string): MySiteMapNode {
             let action: ActionType, children: SiteMapChildren;
-            //function string object
             if (typeof source == 'object') {
                 action = source.action;
                 children = source.children;
@@ -160,7 +160,7 @@ namespace chitu {
             let children = node.children || {};
 
             if (this.allNodes[node.name]) {
-                throw Errors.duplicateSiteMapNode(node.name);
+                this.throwError(Errors.duplicateSiteMapNode(node.name));
             }
 
             this.allNodes[node.name] = node;
@@ -258,9 +258,6 @@ namespace chitu {
                 delete this.cachePages[key];
             }
 
-            let page_onerror = (sender: Page, error: AppError) => {
-                this.fireError(error, page)
-            }
             let page_onloadComplete = (sender, args) => {
                 if (this.allowCachePage)
                     this.cachePages[sender.name] = { page: sender, hitCount: 1 };
@@ -270,10 +267,8 @@ namespace chitu {
                 this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
                 page.loadComplete.remove(page_onloadComplete);
-                page.error.remove(page_onerror);
             }
 
-            page.error.add(page_onerror);
             page.closed.add(page_onclosed);
             page.loadComplete.add(page_onloadComplete);
 
@@ -330,6 +325,11 @@ namespace chitu {
             return null;
         }
 
+        /**
+         * 显示页面
+         * @param pageName 要显示页面的名称
+         * @param args 页面参数
+         */
         public showPage(pageName: string, args?: any) {
             if (!pageName) throw Errors.argumentNull('pageName');
 
@@ -380,11 +380,11 @@ namespace chitu {
          * @param args 传递到页面的参数 
          */
         private showPageByUrl(url: string, args?: any): Page {
-            if (!url) throw Errors.argumentNull('url');
+            if (!url) this.throwError(Errors.argumentNull('url'));
 
             var routeData = this.parseUrl(url);
             if (routeData == null) {
-                throw Errors.noneRouteMatched(url);
+                this.throwError(Errors.noneRouteMatched(url))
             }
 
             Object.assign(routeData.values, args || {});
@@ -418,6 +418,9 @@ namespace chitu {
             history.pushState(EmtpyStateData, "", url)
         }
 
+        /**
+         * 关闭当前页面
+         */
         public closeCurrentPage() {
             if (this.page_stack.length <= 0)
                 return;
@@ -457,19 +460,24 @@ namespace chitu {
             return result;
         }
 
+        /**
+         * 返回上一个页面
+         */
         public back() {
             history.back();
         }
 
-        protected fireError(err: AppError, page: Page) {
-            this.error.fire(this, err, page)
-
-            // 给 100 ms 让监听错误的代码去处理
-            setTimeout(() => {
-                if (!err.processed) {
-                    throw err
-                }
-            }, 100)
+        /**
+         * 抛出错误
+         * @param err 错语
+         * @param page 页面，与错误相对应的页面
+         */
+        public throwError(err: Error, page?: Page) {
+            let e = err as AppError;
+            this.error.fire(this, e, page)
+            if (!e.processed) {
+                throw e
+            }
         }
     }
 } 

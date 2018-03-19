@@ -10,6 +10,5 @@ graph TD
     is_load --> |NO|load_event[load 事件]
     load_event --> active_event
     load_event --> loadComplete_event[loadComplete 事件]
-end
 ```
 

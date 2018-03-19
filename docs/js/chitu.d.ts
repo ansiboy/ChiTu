@@ -1,17 +1,14 @@
 declare namespace chitu {
+    type ActionType = ((page: Page) => void) | string;
+    type SiteMapChildren = {
+        [key: string]: SiteMapNode | ((page: Page) => void) | string;
+    };
     interface SiteMapNode {
-        name?: string;
-        action: ((page: Page) => void) | string;
-        children?: {
-            [key: string]: SiteMapNode | ((page: Page) => void) | string;
-        };
+        action: ActionType;
+        children?: SiteMapChildren;
     }
     interface SiteMap<T extends SiteMapNode> {
-        index: T | ((page: Page) => void) | string;
-    }
-    interface RouteData {
-        pageName: string;
-        values: any;
+        index: T | ActionType;
     }
     class Application {
         static skipStateName: string;
@@ -22,23 +19,23 @@ declare namespace chitu {
         private zindex;
         private page_stack;
         private cachePages;
-        private _siteMap;
+        siteMap: SiteMap<SiteMapNode>;
         private allowCachePage;
-        backFail: Callback1<Application, null>;
-        error: Callback2<Application, Error, Page>;
-        constructor(args?: {
-            siteMap: SiteMap<SiteMapNode>;
-            allowCachePage?: boolean;
-        });
+        private allNodes;
+        error: Callback2<Application, AppError, Page>;
+        constructor(siteMap: SiteMap<SiteMapNode>, allowCachePage?: boolean);
+        private translateSiteMapNode(source, name);
         private travalNode(node);
-        protected parseUrl(url: string): RouteData;
+        protected parseUrl(url: string): {
+            pageName: string;
+            values: PageDataType;
+        };
         protected createUrl(pageName: string, values: {
             [key: string]: string;
         }): string;
         private on_pageCreated(page);
         readonly currentPage: Page;
         readonly pages: Array<Page>;
-        readonly siteMap: SiteMap<SiteMapNode>;
         private getPage(pageName, values?);
         protected createPageElement(pageName: string): HTMLElement;
         protected hashchange(): void;
@@ -53,6 +50,7 @@ declare namespace chitu {
         private clearPageStack();
         redirect(pageName: string, args?: any): Page;
         back(): void;
+        throwError(err: Error, page: Page): void;
     }
 }
 
@@ -80,6 +78,12 @@ declare class Errors {
     static scrollerElementNotExists(): Error;
     static resourceExists(resourceName: string, pageName: string): Error;
     static siteMapRootCanntNull(): Error;
+    static duplicateSiteMapNode(name: string): Error;
+}
+declare namespace chitu {
+    interface AppError extends Error {
+        processed: boolean;
+    }
 }
 
 declare namespace chitu {
@@ -100,8 +104,8 @@ declare namespace chitu {
         remove(func: (sender: S, arg: A, arg1: A1) => any): any;
         fire(sender: S, arg: A, arg1: A1): any;
     }
+    function Callbacks<S, A, A1>(): Callback2<S, A, A1>;
     function Callbacks<S, A>(): Callback1<S, A>;
-    function Callbacks1<S, A, A1>(): Callback2<S, A, A1>;
     type ValueChangedCallback<T> = (args: T, sender: any) => void;
     class ValueStore<T> {
         private items;
@@ -114,8 +118,10 @@ declare namespace chitu {
     }
 }
 
-
 declare namespace chitu {
+    type PageDataType = {
+        [key: string]: any;
+    };
     interface PageDisplayConstructor {
         new (app: Application): PageDisplayer;
     }
@@ -125,11 +131,12 @@ declare namespace chitu {
     }
     interface PageParams {
         app: Application;
-        routeData: RouteData;
-        action: ((page: Page) => void) | string;
+        action: ActionType;
         element: HTMLElement;
         displayer: PageDisplayer;
         previous?: Page;
+        name: string;
+        data: PageDataType;
     }
     class Page {
         private animationTime;
@@ -137,21 +144,21 @@ declare namespace chitu {
         private _element;
         private _previous;
         private _app;
-        private _routeData;
         private _displayer;
         private _action;
+        private _name;
         static tagName: string;
-        error: Callback1<Page, Error>;
-        load: Callback1<this, any>;
-        loadComplete: Callback1<this, any>;
-        showing: Callback1<this, any>;
-        shown: Callback1<this, any>;
-        hiding: Callback1<this, any>;
-        hidden: Callback1<this, any>;
-        closing: Callback1<this, any>;
-        closed: Callback1<this, any>;
-        active: Callback1<this, any>;
-        deactive: Callback1<this, any>;
+        data: PageDataType;
+        load: Callback1<this, PageDataType>;
+        loadComplete: Callback1<this, PageDataType>;
+        showing: Callback1<this, PageDataType>;
+        shown: Callback1<this, PageDataType>;
+        hiding: Callback1<this, PageDataType>;
+        hidden: Callback1<this, PageDataType>;
+        closing: Callback1<this, PageDataType>;
+        closed: Callback1<this, PageDataType>;
+        active: Callback1<this, PageDataType>;
+        deactive: Callback1<this, PageDataType>;
         constructor(params: PageParams);
         private on_load();
         private on_loadComplete();
@@ -161,13 +168,14 @@ declare namespace chitu {
         private on_hidden();
         private on_closing();
         private on_closed();
+        on_active(args: PageDataType): void;
+        on_deactive(): void;
         show(): Promise<any>;
         hide(): Promise<any>;
         close(): Promise<any>;
         createService<T extends Service>(type: ServiceConstructor<T>): T;
         readonly element: HTMLElement;
         previous: Page;
-        readonly routeData: RouteData;
         readonly name: string;
         private loadPageAction(pageName);
         reload(): Promise<void>;
