@@ -2,21 +2,37 @@
 var release_dir = 'out/dist';
 var js_output_file = `${release_dir}/chitu.js`;
 var ts_output_file = `${release_dir}/chitu.d.ts`;
+
+
 module.exports = function (grunt) {
-    let chitu_js_banner =
-        "(function(factory) { \n\
-            if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') { \n\
-                // [1] CommonJS/Node.js \n\
-                var target = module['exports'] || exports; \n\
-                var chitu = factory(target, require);\n\
-                Object.assign(target,chitu);\n\
-            } else \n\
-        if (typeof define === 'function' && define['amd']) { \n\
-            define(factory);  \n\
-        } else { \n\
-            factory(); \n\
-        } \n\
-    })(function() {";
+    let pkg = grunt.file.readJSON('package.json');
+
+    let license = `
+/*!
+ * CHITU v${pkg.version}
+ * https://github.com/ansiboy/ChiTu
+ *
+ * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
+ * Licensed under the MIT License.
+ *
+ */
+`
+
+    let chitu_js_banner = `
+${license}
+(function(factory) { 
+    if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') { 
+        // [1] CommonJS/Node.js 
+        var target = module['exports'] || exports;
+        var chitu = factory(target, require);
+        Object.assign(target,chitu);
+    } else if (typeof define === 'function' && define['amd']) {
+        define(factory); 
+    } else { 
+        factory();
+    } 
+})(function() {
+`;
     let chitu_js_footer =
         '\n\window[\'chitu\'] = window[\'chitu\'] || chitu \n\
                             \n return chitu;\n\
@@ -76,7 +92,7 @@ declare module "chitu" { \n\
                     banner: chitu_js_banner,
                     footer: chitu_js_footer,
                 },
-                src: [build_dir + '/es6/**/*.js'],
+                src: [build_dir + '/es6/chitu.js'],
                 dest: release_dir + '/chitu.js'
             }
         },

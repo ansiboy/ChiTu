@@ -20,6 +20,26 @@ ChiTu 框架采用面向对象，事件驱件的编程模式，各个模块间�
 
 Chitu 可以很方便和其它第三方框架配合使用，例如：REACT, VUE
 
+## 如何使用
+
+**常规引用**
+
+```html
+<script type="text/javascript" src="js/chitu.js"></script>
+```
+
+**使用 requirejs 加载**
+
+```js
+requirejs(['js/chitu.js'])
+```
+
+## 下载
+
+<!-- 
+## 案例 TODO
+-->
+
 ## 项目生成
 
 本项目是使用 Grunt 来生成项目，所以需要安装 Grunt 。
