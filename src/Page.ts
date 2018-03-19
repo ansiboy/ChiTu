@@ -1,5 +1,3 @@
-
-
 namespace chitu {
 
     export type PageDataType = { [key: string]: any }
