@@ -1,4 +1,4 @@
-# 错误处理
+# 错误处理
 
 CHTTU 提供了一个统一错误处理的机制，通过监听 Application 对象的 error 事件可以捕获取 Page 和 Service 对象产生的错误。当 Page 或 Service 对象工作时出现了错语，会调用 Application 对象的 throwError 方法，将错误抛出。
 
@@ -14,7 +14,7 @@ public throwError(err: Error, page?: Page) {
 }
 ```
 
-使用
+使用
 
 ```js
 app.error.add(function(sender, error){

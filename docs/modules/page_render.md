@@ -15,9 +15,9 @@
     name = product
     data = { id: 123 }
     `
-* 根据解释得到的 name ，检索 siteMap 中匹配的节点，提取节点中 action
-* 创建 HTML 元素，Application 对象调用 createElement 方法，创建 HTML 元素
-* 创建 Page 对象，并且把 name，data，action，html 元素传递给 Page 对象。
-* 呈现页面。Page 对象调用 action 方法来呈现页面。如果 action 是字符串而不是函数，通过字符串加载 js 脚本，获取 action 函数。
+* 根据解释得到的 name ，检索 siteMap 中匹配的节点，提取节点中 action
+* 创建 HTML 元素，Application 对象调用 createElement 方法，创建 HTML 元素
+* 创建 Page 对象，并且把 name，data，action，html 元素传递给 Page 对象。
+* 呈现页面。Page 对象调用 action 方法来呈现页面。如果 action 是字符串而不是函数，通过字符串加载 js 脚本，获取 action 函数。
 
-以上就是页面的呈现流程
+以上就是页面的呈现流程
