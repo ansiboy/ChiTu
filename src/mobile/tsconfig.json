@@ -6,7 +6,8 @@
         "declaration": true,
         // "declarationDir": "../build",
         "removeComments": true,
-        "outFile": "../out/es6/chitu.js",
+        // "outDir": "../out/es6",
+        "outFile": "../../out/chitu.mobile.js",
         "rootDir": ".",
         "lib": [
             "dom",
@@ -14,7 +15,9 @@
             "es2015"
         ]
     },
-    "exclude": [
-        "mobile.ts"
+    "include": [
+        "../*.ts",
+        "../scripts/typings/require.d.ts",
+        "*.ts",
     ]
 }
