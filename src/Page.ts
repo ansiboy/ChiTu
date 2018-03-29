@@ -130,7 +130,8 @@ namespace chitu {
          * 创建服务
          * @param type 服务类型
          */
-        createService<T extends Service>(type: ServiceConstructor<T>): T {
+        createService<T extends Service>(type?: ServiceConstructor<T>): T {
+            type = type || chitu.Service as any
             let service = new type();
             service.error.add((ender, error) => {
                 this._app.throwError(error, this)
@@ -166,7 +167,7 @@ namespace chitu {
             else {
                 let actionResult;
                 try {
-                    actionResult = await loadjs(this._action);
+                    actionResult = await this._app.loadjs(this._action);
                 }
                 catch (err) {
                     this._app.throwError(err, this)
