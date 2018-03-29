@@ -10,20 +10,7 @@
         return path1 + path2;
     }
 
-    export function loadjs(path): Promise<any> {
-        // if (modules.length == 0)
-        //     return Promise.resolve([]);
 
-        return new Promise<Array<any>>((reslove, reject) => {
-            requirejs([path],
-                function (result) {
-                    reslove(result);
-                },
-                function (err) {
-                    reject(err);
-                });
-        });
-    }
 
 
 }
