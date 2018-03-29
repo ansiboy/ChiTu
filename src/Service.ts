@@ -91,11 +91,11 @@ namespace chitu {
             options = options || {} as any
             let data = options.data;
             let method = options.method;
-            let headers = options.headers;
+            let headers = options.headers || [];
             let body: any
 
             if (data != null) {
-                let is_json = ((headers['content-type'] || '') as string).indexOf('json');
+                let is_json = ((headers['content-type'] || '') as string).indexOf('json') >= 0;
                 if (is_json) {
                     body = JSON.stringify(data);
                 }
