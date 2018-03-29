@@ -1,26 +1,42 @@
+
+
+/*!
+ * CHITU v1.5.0
+ * https://github.com/ansiboy/ChiTu
+ *
+ * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
+ * Licensed under the MIT License.
+ *
+ */
+
 (function(factory) { 
-            if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') { 
-                // [1] CommonJS/Node.js 
-                var target = module['exports'] || exports; 
-                var chitu = factory(target, require);
-                Object.assign(target,chitu);
-            } else 
-        if (typeof define === 'function' && define['amd']) { 
-            define(factory);  
-        } else { 
-            factory(); 
-        } 
-    })(function() {var chitu;
+    if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') { 
+        // [1] CommonJS/Node.js 
+        var target = module['exports'] || exports;
+        var chitu = factory(target, require);
+        Object.assign(target,chitu);
+    } else if (typeof define === 'function' && define['amd']) {
+        define(factory); 
+    } else { 
+        factory();
+    } 
+})(function() {
+var chitu;
 (function (chitu) {
-    function parseUrl(url) {
+    const EmtpyStateData = "";
+    const DefaultPageName = "index";
+    function parseUrl(app, url) {
         let sharpIndex = url.indexOf('#');
-        if (sharpIndex < 0)
-            throw Errors.canntParseRouteString(url);
+        if (sharpIndex < 0) {
+            let pageName = DefaultPageName;
+            return { pageName, values: {} };
+        }
         let routeString = url.substr(sharpIndex + 1);
         if (!routeString)
-            throw Errors.canntParseRouteString(url);
+            app.throwError(Errors.canntParseRouteString(url));
         if (routeString.startsWith('!')) {
-            history.replaceState('chitu', "", `#${this.currentPage.routeData.url}`);
+            let url = createUrl(app.currentPage.name, app.currentPage.data);
+            history.replaceState(EmtpyStateData, "", url);
             return;
         }
         let routePath;
@@ -34,18 +50,18 @@
             routePath = routeString;
         }
         if (!routePath)
-            throw Errors.canntParseRouteString(routeString);
+            app.throwError(Errors.canntParseRouteString(routeString));
         let values = {};
         if (search) {
             values = this.pareeUrlQuery(search);
         }
         let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
         if (path_parts.length < 1) {
-            throw Errors.canntParseRouteString(routeString);
+            app.throwError(Errors.canntParseRouteString(routeString));
         }
         let file_path = path_parts.join('/');
         let pageName = path_parts.join('.');
-        return { url, pageName, values };
+        return { pageName, values };
     }
     function createUrl(pageName, routeValues) {
         let path_parts = pageName.split('.');
@@ -65,7 +81,7 @@
     var ACTION_LOCATION_FORMATER = '{controller}/{action}';
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
     class Application {
-        constructor(args) {
+        constructor(siteMap, allowCachePage) {
             this.pageCreated = chitu.Callbacks();
             this.pageType = chitu.Page;
             this.pageDisplayType = PageDisplayerImplement;
@@ -73,44 +89,54 @@
             this.page_stack = new Array();
             this.cachePages = {};
             this.allowCachePage = true;
-            this.backFail = chitu.Callbacks();
-            this.error = chitu.Callbacks1();
-            args = args || {};
-            this._siteMap = args.siteMap;
-            if (!this._siteMap) {
-                throw new Error("site map can not null.");
+            this.allNodes = {};
+            this.error = chitu.Callbacks();
+            if (!siteMap) {
+                this.throwError(Errors.argumentNull("siteMap"));
             }
-            if (!this._siteMap.index)
-                throw Errors.siteMapRootCanntNull();
-            if (typeof this._siteMap.index != 'object') {
-                let action = this._siteMap.index;
-                this._siteMap.index = { name: 'index', action };
-            }
-            this._siteMap.index.level = 0;
-            this.setChildrenParent(this._siteMap.index);
-            if (args.allowCachePage != null)
-                this.allowCachePage = args.allowCachePage;
+            if (!siteMap.index)
+                this.throwError(Errors.siteMapRootCanntNull());
+            let indexNode = this.translateSiteMapNode(siteMap.index, DefaultPageName);
+            this.travalNode(indexNode);
+            if (allowCachePage != null)
+                this.allowCachePage = allowCachePage;
         }
-        setChildrenParent(parent) {
-            if (parent == null)
+        translateSiteMapNode(source, name) {
+            let action, children;
+            let source_children;
+            if (typeof source == 'object') {
+                action = source.action;
+                source_children = source.children;
+            }
+            else {
+                action = source;
+                source_children = {};
+            }
+            children = {};
+            for (let key in source_children) {
+                children[key] = this.translateSiteMapNode(source_children[key], key);
+            }
+            return {
+                name,
+                action,
+                level: 0,
+                children
+            };
+        }
+        travalNode(node) {
+            if (node == null)
                 throw Errors.argumentNull('parent');
-            let children = parent.children || {};
+            let children = node.children || {};
+            if (this.allNodes[node.name]) {
+                this.throwError(Errors.duplicateSiteMapNode(node.name));
+            }
+            this.allNodes[node.name] = node;
             for (let key in children) {
-                let child_type = typeof children[key];
-                if (child_type == 'function' || child_type == 'string') {
-                    let action = children[key];
-                    children[key] = {
-                        name: key,
-                        action
-                    };
-                }
-                children[key].parent = parent;
-                children[key].level = parent.level + 1;
-                this.setChildrenParent(children[key]);
+                this.travalNode(children[key]);
             }
         }
         parseUrl(url) {
-            let routeData = parseUrl(url);
+            let routeData = parseUrl(this, url);
             return routeData;
         }
         createUrl(pageName, values) {
@@ -127,30 +153,29 @@
         get pages() {
             return this.page_stack;
         }
-        get siteMap() {
-            return this._siteMap;
-        }
-        createPage(routeData) {
-            let data = this.cachePages[routeData.pageName];
+        getPage(pageName, values) {
+            let data = this.cachePages[pageName];
             if (data) {
                 data.hitCount = (data.hitCount || 0) + 1;
-                data.page.routeData.values = routeData.values;
-                return data.page;
+                data.page.data = values || {};
+                return { page: data.page, isNew: false };
             }
             let previous_page = this.pages[this.pages.length - 1];
-            let element = this.createPageElement(routeData);
+            let element = this.createPageElement(pageName);
             let displayer = new this.pageDisplayType(this);
-            let siteMapNode = this.findSiteMapNode(routeData.pageName);
-            if (siteMapNode == null)
-                throw Errors.pageNodeNotExists(routeData.pageName);
+            let siteMapNode = this.findSiteMapNode(pageName);
+            let action = siteMapNode ?
+                siteMapNode.action :
+                (page) => page.element.innerHTML = `page ${pageName} not found`;
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
                 previous: previous_page,
-                routeData: routeData,
+                name: pageName,
+                data: values,
                 displayer,
                 element,
-                action: siteMapNode.action
+                action,
             });
             let keyes = Object.keys(this.cachePages);
             if (keyes.length > CACHE_PAGE_SIZE) {
@@ -165,9 +190,6 @@
                 this.cachePages[key].page.close();
                 delete this.cachePages[key];
             }
-            let page_onerror = (sender, error) => {
-                this.error.fire(this, error, sender);
-            };
             let page_onloadComplete = (sender, args) => {
                 if (this.allowCachePage)
                     this.cachePages[sender.name] = { page: sender, hitCount: 1 };
@@ -177,15 +199,13 @@
                 this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
                 page.loadComplete.remove(page_onloadComplete);
-                page.error.remove(page_onerror);
             };
-            page.error.add(page_onerror);
             page.closed.add(page_onclosed);
             page.loadComplete.add(page_onloadComplete);
             this.on_pageCreated(page);
-            return page;
+            return { page, isNew: true };
         }
-        createPageElement(routeData) {
+        createPageElement(pageName) {
             let element = document.createElement(chitu.Page.tagName);
             document.body.appendChild(element);
             return element;
@@ -195,9 +215,9 @@
             if (routeData == null) {
                 return;
             }
-            var page = this.getPage(routeData.pageName);
+            var page = this.findPageFromStack(routeData.pageName);
             let previousPageIndex = this.page_stack.length - 2;
-            this.showPage(location.href);
+            this.showPageByUrl(location.href);
         }
         run() {
             if (this._runned)
@@ -211,7 +231,7 @@
             });
             this._runned = true;
         }
-        getPage(name) {
+        findPageFromStack(name) {
             for (var i = this.page_stack.length - 1; i >= 0; i--) {
                 var page = this.page_stack[i];
                 if (page != null && page.name == name)
@@ -219,41 +239,54 @@
             }
             return null;
         }
-        getPageByRouteString(routeString) {
-            for (var i = this.page_stack.length - 1; i >= 0; i--) {
-                var page = this.page_stack[i];
-                if (page != null && page.routeData.url == routeString)
-                    return page;
-            }
-            return null;
-        }
-        showPage(url, args) {
-            if (!url)
-                throw Errors.argumentNull('url');
-            var routeData = this.parseUrl(url);
-            if (routeData == null) {
-                throw Errors.noneRouteMatched(url);
-            }
-            Object.assign(routeData.values, args || {});
-            if (this.currentPage != null && this.currentPage.name == routeData.pageName)
+        showPage(pageName, args) {
+            if (!pageName)
+                throw Errors.argumentNull('pageName');
+            if (this.currentPage != null && this.currentPage.name == pageName)
                 return;
+            args = args || {};
             let oldCurrentPage = this.currentPage;
-            var page = this.getPage(routeData.pageName);
+            let page = this.findPageFromStack(pageName);
+            let isNewPage = false;
             let previousPageIndex = this.page_stack.length - 2;
             if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
                 this.closeCurrentPage();
             }
             else {
-                let page = this.createPage(routeData);
+                let obj = this.getPage(pageName, args);
+                page = obj.page;
+                isNewPage = obj.isNew;
                 this.pushPage(page);
                 page.show();
                 console.assert(page == this.currentPage, "page is not current page");
             }
-            if (oldCurrentPage)
-                oldCurrentPage.deactive.fire(oldCurrentPage, null);
+            let preRouteData = null;
+            if (oldCurrentPage) {
+                preRouteData = oldCurrentPage.data;
+                oldCurrentPage.on_deactive();
+            }
             console.assert(this.currentPage != null);
-            this.currentPage.active.fire(this.currentPage, routeData.values);
+            if (isNewPage) {
+                this.currentPage.on_active(args);
+            }
+            else {
+                let onload = (sender, args) => {
+                    sender.on_active(args);
+                    sender.load.remove(onload);
+                };
+                this.currentPage.load.add(onload);
+            }
             return this.currentPage;
+        }
+        showPageByUrl(url, args) {
+            if (!url)
+                this.throwError(Errors.argumentNull('url'));
+            var routeData = this.parseUrl(url);
+            if (routeData == null) {
+                this.throwError(Errors.noneRouteMatched(url));
+            }
+            Object.assign(routeData.values, args || {});
+            return this.showPage(routeData.pageName, routeData.values);
         }
         pushPage(page) {
             if (this.currentPage != null) {
@@ -271,28 +304,10 @@
             page.previous = previous;
         }
         findSiteMapNode(pageName) {
-            if (this._siteMap == null)
-                return;
-            let stack = new Array();
-            stack.push(this._siteMap.index);
-            while (stack.length > 0) {
-                let node = stack.pop();
-                if (node.name == pageName) {
-                    return node;
-                }
-                let children = node.children || [];
-                for (let key in children) {
-                    stack.push(children[key]);
-                }
-            }
-            return null;
+            return this.allNodes[pageName];
         }
-        setLocationHash(routeString) {
-            routeString = routeString[0] == '#' ? routeString : '#' + routeString
-            if (window.location.hash == routeString) {
-                return;
-            }
-            history.pushState('chitu', "", `${routeString}`);
+        setLocationHash(url) {
+            history.pushState(EmtpyStateData, "", url);
         }
         closeCurrentPage() {
             if (this.page_stack.length <= 0)
@@ -317,19 +332,32 @@
             }
             this.page_stack = [];
         }
-        redirect(routeString, args) {
-            let result = this.showPage(routeString, args);
-            this.setLocationHash(routeString);
+        redirect(pageName, args) {
+            let result = this.showPage(pageName, args);
+            let url = this.createUrl(pageName, args);
+            this.setLocationHash(url);
             return result;
         }
         back() {
             history.back();
         }
+        throwError(err, page) {
+            let e = err;
+            this.error.fire(this, e, page);
+        }
+        loadjs(path) {
+            return new Promise((reslove, reject) => {
+                requirejs([path], function (result) {
+                    reslove(result);
+                }, function (err) {
+                    reject(err);
+                });
+            });
+        }
     }
     Application.skipStateName = 'skip';
     chitu.Application = Application;
 })(chitu || (chitu = {}));
-
 class Errors {
     static pageNodeNotExists(pageName) {
         let msg = `Page node named ${pageName} is not exists.`;
@@ -422,8 +450,11 @@ class Errors {
         let msg = `The site map root node can not be null.`;
         return new Error(msg);
     }
+    static duplicateSiteMapNode(name) {
+        let msg = `The site map node ${name} is exists.`;
+        return new Error(name);
+    }
 }
-
 var chitu;
 (function (chitu) {
     class Callback {
@@ -437,7 +468,14 @@ var chitu;
             this.funcs = this.funcs.filter(o => o != func);
         }
         fire(...args) {
-            this.funcs.forEach(o => o(...args));
+            this.funcs.forEach(func => {
+                try {
+                    func(...args);
+                }
+                catch (err) {
+                    throw err;
+                }
+            });
         }
     }
     chitu.Callback = Callback;
@@ -445,10 +483,6 @@ var chitu;
         return new Callback();
     }
     chitu.Callbacks = Callbacks;
-    function Callbacks1() {
-        return new Callback();
-    }
-    chitu.Callbacks1 = Callbacks1;
     class ValueStore {
         constructor(value) {
             this.items = new Array();
@@ -474,7 +508,6 @@ var chitu;
     }
     chitu.ValueStore = ValueStore;
 })(chitu || (chitu = {}));
-
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -488,7 +521,7 @@ var chitu;
     class Page {
         constructor(params) {
             this.animationTime = 300;
-            this.error = chitu.Callbacks();
+            this.data = null;
             this.load = chitu.Callbacks();
             this.loadComplete = chitu.Callbacks();
             this.showing = chitu.Callbacks();
@@ -502,34 +535,43 @@ var chitu;
             this._element = params.element;
             this._previous = params.previous;
             this._app = params.app;
-            this._routeData = params.routeData;
             this._displayer = params.displayer;
             this._action = params.action;
-            this.loadPageAction();
+            this.data = params.data;
+            this._name = params.name;
+            this.loadPageAction(this.name);
         }
         on_load() {
-            return this.load.fire(this, this.routeData.values);
+            return this.load.fire(this, this.data);
         }
         on_loadComplete() {
-            return this.loadComplete.fire(this, this.routeData.values);
+            return this.loadComplete.fire(this, this.data);
         }
         on_showing() {
-            return this.showing.fire(this, this.routeData.values);
+            return this.showing.fire(this, this.data);
         }
         on_shown() {
-            return this.shown.fire(this, this.routeData.values);
+            return this.shown.fire(this, this.data);
         }
         on_hiding() {
-            return this.hiding.fire(this, this.routeData.values);
+            return this.hiding.fire(this, this.data);
         }
         on_hidden() {
-            return this.hidden.fire(this, this.routeData.values);
+            return this.hidden.fire(this, this.data);
         }
         on_closing() {
-            return this.closing.fire(this, this.routeData.values);
+            return this.closing.fire(this, this.data);
         }
         on_closed() {
-            return this.closed.fire(this, this.routeData.values);
+            return this.closed.fire(this, this.data);
+        }
+        on_active(args) {
+            console.assert(args != null, 'args is null');
+            Object.assign(this.data, args);
+            this.active.fire(this, args);
+        }
+        on_deactive() {
+            this.deactive.fire(this, this.data);
         }
         show() {
             this.on_showing();
@@ -551,9 +593,10 @@ var chitu;
             });
         }
         createService(type) {
+            type = type || chitu.Service;
             let service = new type();
             service.error.add((ender, error) => {
-                this.error.fire(this, error);
+                this._app.throwError(error, this);
             });
             return service;
         }
@@ -566,16 +609,11 @@ var chitu;
         set previous(value) {
             this._previous = value;
         }
-        get routeData() {
-            return this._routeData;
-        }
         get name() {
-            return this.routeData.pageName;
+            return this._name;
         }
-        loadPageAction() {
+        loadPageAction(pageName) {
             return __awaiter(this, void 0, void 0, function* () {
-                console.assert(this._routeData != null);
-                let routeData = this._routeData;
                 let action;
                 if (typeof this._action == 'function') {
                     action = this._action;
@@ -583,18 +621,17 @@ var chitu;
                 else {
                     let actionResult;
                     try {
-                        actionResult = yield loadjs(this._action);
+                        actionResult = yield this._app.loadjs(this._action);
                     }
                     catch (err) {
-                        this.error.fire(this, err);
-                        throw err;
+                        this._app.throwError(err, this);
                     }
                     if (!actionResult)
-                        throw Errors.exportsCanntNull(routeData.pageName);
+                        this._app.throwError(Errors.exportsCanntNull(pageName), this);
                     let actionName = 'default';
                     action = actionResult[actionName];
                     if (action == null) {
-                        throw Errors.canntFindAction(routeData.pageName);
+                        this._app.throwError(Errors.canntFindAction(pageName), this);
                     }
                 }
                 let actionExecuteResult;
@@ -608,13 +645,13 @@ var chitu;
                     }
                 }
                 else {
-                    throw Errors.actionTypeError(routeData.pageName);
+                    this._app.throwError(Errors.actionTypeError(pageName), this);
                 }
                 this.on_load();
             });
         }
         reload() {
-            return this.loadPageAction();
+            return this.loadPageAction(this.name);
         }
     }
     Page.tagName = 'div';
@@ -636,15 +673,6 @@ class PageDisplayerImplement {
         return Promise.resolve();
     }
 }
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 function ajax(url, options) {
     return __awaiter(this, void 0, void 0, function* () {
         let response = yield fetch(url, options);
@@ -678,6 +706,33 @@ function ajax(url, options) {
         return textObject;
     });
 }
+function callAjax(url, options, service, error) {
+    return new Promise((reslove, reject) => {
+        let timeId;
+        if (options.method == 'get') {
+            timeId = setTimeout(() => {
+                let err = new Error();
+                err.name = 'timeout';
+                err.message = '网络连接超时';
+                reject(err);
+                error.fire(service, err);
+                clearTimeout(timeId);
+            }, chitu.Service.settings.ajaxTimeout * 1000);
+        }
+        ajax(url, options)
+            .then(data => {
+            reslove(data);
+            if (timeId)
+                clearTimeout(timeId);
+        })
+            .catch(err => {
+            reject(err);
+            error.fire(service, err);
+            if (timeId)
+                clearTimeout(timeId);
+        });
+    });
+}
 var chitu;
 (function (chitu) {
     class Service {
@@ -685,53 +740,24 @@ var chitu;
             this.error = chitu.Callbacks();
         }
         ajax(url, options) {
-            return new Promise((reslove, reject) => {
-                let timeId;
-                if (options.method == 'get') {
-                    timeId = setTimeout(() => {
-                        let err = new Error();
-                        err.name = 'timeout';
-                        err.message = '网络连接超时';
-                        reject(err);
-                        this.error.fire(this, err);
-                        clearTimeout(timeId);
-                    }, Service.settings.ajaxTimeout * 1000);
-                }
-                ajax(url, options)
-                    .then(data => {
-                    reslove(data);
-                    if (timeId)
-                        clearTimeout(timeId);
-                })
-                    .catch(err => {
-                    reject(err);
-                    this.error.fire(this, err);
-                    if (timeId)
-                        clearTimeout(timeId);
-                });
-            });
-        }
-        ajaxByForm(url, data, method) {
-            let headers = {};
-            headers['content-type'] = 'application/x-www-form-urlencoded';
-            let body = new URLSearchParams();
-            for (let key in data) {
-                body.append(key, data[key]);
-            }
-            return this.ajax(url, { headers, body, method });
-        }
-        ajaxByJSON(url, data, method) {
-            let headers = {};
-            headers['content-type'] = 'application/json';
+            options = options || {};
+            let data = options.data;
+            let method = options.method;
+            let headers = options.headers || [];
             let body;
-            if (data)
-                body = JSON.stringify(data);
-            let options = {
-                headers,
-                body,
-                method
-            };
-            return this.ajax(url, options);
+            if (data != null) {
+                let is_json = (headers['content-type'] || '').indexOf('json') >= 0;
+                if (is_json) {
+                    body = JSON.stringify(data);
+                }
+                else {
+                    body = new URLSearchParams();
+                    for (let key in data) {
+                        body.append(key, data[key]);
+                    }
+                }
+            }
+            return callAjax(url, { headers, body, method }, this, this.error);
         }
     }
     Service.settings = {
@@ -739,26 +765,362 @@ var chitu;
     };
     chitu.Service = Service;
 })(chitu || (chitu = {}));
-
-function combinePath(path1, path2) {
-    if (!path1)
-        throw Errors.argumentNull('path1');
-    if (!path2)
-        throw Errors.argumentNull('path2');
-    path1 = path1.trim();
-    if (!path1.endsWith('/'))
-        path1 = path1 + '/';
-    return path1 + path2;
-}
-function loadjs(path) {
-    return new Promise((reslove, reject) => {
-        requirejs([path], function (result) {
-            reslove(result);
-        }, function (err) {
-            reject(err);
+var chitu;
+(function (chitu) {
+    function combinePath(path1, path2) {
+        if (!path1)
+            throw Errors.argumentNull('path1');
+        if (!path2)
+            throw Errors.argumentNull('path2');
+        path1 = path1.trim();
+        if (!path1.endsWith('/'))
+            path1 = path1 + '/';
+        return path1 + path2;
+    }
+})(chitu || (chitu = {}));
+var chitu;
+(function (chitu) {
+    var mobile;
+    (function (mobile) {
+        let isCordovaApp = location.protocol === 'file:';
+        class Page extends chitu.Page {
+            constructor(params) {
+                super(params);
+                this.displayStatic = false;
+                this.allowSwipeBackGestrue = false;
+            }
+        }
+        Page.className = "mobile-page";
+        mobile.Page = Page;
+        class Application extends chitu.Application {
+            constructor(siteMap, allowCachePage) {
+                super(siteMap, allowCachePage);
+                this.pageShown = chitu.Callbacks();
+                this.pageType = Page;
+                if (isiOS)
+                    this.pageDisplayType = PageDisplayImplement;
+                else
+                    this.pageDisplayType = LowMachinePageDisplayImplement;
+                this.pageCreated.add((sender, page) => {
+                    this.pageShown.fire(this, { page });
+                    return page;
+                });
+            }
+        }
+        mobile.Application = Application;
+        var touch_move_time = 0;
+        window.addEventListener('touchmove', function (e) {
+            touch_move_time = Date.now();
         });
-    });
-}
+        var isiOS = (navigator.userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/) || []).filter(o => o).length > 0;
+        function calculateAngle(x, y) {
+            let d = Math.atan(Math.abs(y / x)) / 3.14159265 * 180;
+            return d;
+        }
+        class PageDisplayImplement {
+            constructor(app) {
+                this.animationTime = 400;
+                this.app = app;
+                this.windowWidth = window.innerWidth;
+                this.previousPageStartX = 0 - this.windowWidth / 3;
+            }
+            enableGesture(page) {
+                let startY, currentY;
+                let startX, currentX;
+                let moved = false;
+                let SIDE_WIDTH = 20;
+                let enable = false;
+                let horizontal_swipe_angle = 35;
+                let vertical_pull_angle = 65;
+                let colse_position = window.innerWidth / 2;
+                let previousPageStartX = 0 - window.innerWidth / 3;
+                page.element.addEventListener('touchstart', function (event) {
+                    startY = event.touches[0].pageY;
+                    startX = event.touches[0].pageX;
+                    enable = startX <= SIDE_WIDTH;
+                });
+                page.element.addEventListener('touchmove', (event) => {
+                    currentX = event.targetTouches[0].pageX;
+                    currentY = event.targetTouches[0].pageY;
+                    if (isiOS && currentX < 0 || !enable) {
+                        return;
+                    }
+                    let deltaX = currentX - startX;
+                    let angle = calculateAngle(deltaX, currentY - startY);
+                    if (angle < horizontal_swipe_angle && deltaX > 0) {
+                        page.element.style.transform = `translate(${deltaX}px, 0px)`;
+                        page.element.style.transition = '0s';
+                        if (page.previous != null) {
+                            page.previous.element.style.transform = `translate(${previousPageStartX + deltaX / 3}px, 0px)`;
+                            page.previous.element.style.transition = '0s';
+                            page.previous.element.style.display = 'block';
+                        }
+                        disableNativeScroll(page.element);
+                        moved = true;
+                        event.preventDefault();
+                        console.log('preventDefault gestured');
+                    }
+                });
+                let end = (event) => {
+                    if (!moved)
+                        return;
+                    let deltaX = currentX - startX;
+                    if (deltaX > colse_position) {
+                        console.assert(this.app != null);
+                        this.app.back();
+                    }
+                    else {
+                        page.element.style.transform = `translate(0px, 0px)`;
+                        page.element.style.transition = '0.4s';
+                        if (page.previous) {
+                            page.previous.element.style.transform = `translate(${previousPageStartX}px,0px)`;
+                            page.previous.element.style.transition = `0.4s`;
+                            window.setTimeout(function () {
+                                page.previous.element.style.display = 'none';
+                                page.previous.element.style.removeProperty('transform');
+                                page.previous.element.style.removeProperty('transition');
+                                page.element.style.removeProperty('transform');
+                                page.element.style.removeProperty('transition');
+                            }, 400);
+                        }
+                    }
+                    moved = false;
+                };
+                page.element.addEventListener('touchcancel', (event) => end(event));
+                page.element.addEventListener('touchend', (event) => end(event));
+                function disableNativeScroll(element) {
+                    element.style.overflowY = 'hidden';
+                }
+                function enableNativeScroll(element) {
+                    element.style.overflowY = 'scroll';
+                }
+            }
+            show(page) {
+                if (!page.gestured) {
+                    page.gestured = true;
+                    if (page.allowSwipeBackGestrue)
+                        this.enableGesture(page);
+                }
+                let maxZIndex = 1;
+                let pageElements = document.getElementsByClassName(Page.className);
+                for (let i = 0; i < pageElements.length; i++) {
+                    let zIndex = new Number(pageElements.item(i).style.zIndex || '0').valueOf();
+                    if (zIndex > maxZIndex) {
+                        maxZIndex = zIndex;
+                    }
+                }
+                page.element.style.zIndex = `${maxZIndex + 1}`;
+                page.element.style.display = 'block';
+                if (page.displayStatic) {
+                    if (page.previous) {
+                        page.previous.element.style.display = 'none';
+                    }
+                    return Promise.resolve();
+                }
+                page.element.style.transform = `translate(100%,0px)`;
+                if (page.previous) {
+                    page.previous.element.style.transform = `translate(0px,0px)`;
+                    page.previous.element.style.transition = `${this.animationTime / 1000}s`;
+                }
+                return new Promise(reslove => {
+                    let delay = 100;
+                    window.setTimeout(() => {
+                        page.element.style.transform = `translate(0px,0px)`;
+                        page.element.style.transition = `${this.animationTime / 1000}s`;
+                        if (page.previous) {
+                            page.previous.element.style.transform = `translate(${this.previousPageStartX}px,0px)`;
+                            page.previous.element.style.transition = `${(this.animationTime + 200) / 1000}s`;
+                        }
+                    }, delay);
+                    window.setTimeout(reslove, delay + this.animationTime);
+                }).then(() => {
+                    page.element.style.removeProperty('transform');
+                    page.element.style.removeProperty('transition');
+                    if (page.previous) {
+                        page.previous.element.style.display = 'none';
+                        page.previous.element.style.removeProperty('transform');
+                        page.previous.element.style.removeProperty('transition');
+                    }
+                });
+            }
+            hide(page) {
+                return new Promise(reslove => {
+                    let now = Date.now();
+                    if (!isCordovaApp && isiOS && now - touch_move_time < 500 || page.displayStatic) {
+                        page.element.style.display = 'none';
+                        if (page.previous) {
+                            page.previous.element.style.display = 'block';
+                            page.previous.element.style.transition = `0s`;
+                            page.previous.element.style.transform = 'translate(0,0)';
+                        }
+                        reslove();
+                        return;
+                    }
+                    page.element.style.transition = `${this.animationTime / 1000}s`;
+                    page.element.style.transform = `translate(100%,0px)`;
+                    if (page.previous) {
+                        page.previous.element.style.display = 'block';
+                        let delay = 0;
+                        if (!page.previous.element.style.transform) {
+                            page.previous.element.style.transform = `translate(${this.previousPageStartX}px, 0px)`;
+                            delay = 50;
+                        }
+                        window.setTimeout(() => {
+                            page.previous.element.style.transform = `translate(0px, 0px)`;
+                            page.previous.element.style.transition = `${(this.animationTime - delay) / 1000}s`;
+                        }, delay);
+                    }
+                    window.setTimeout(() => {
+                        page.element.style.display = 'none';
+                        page.element.style.removeProperty('transform');
+                        page.element.style.removeProperty('transition');
+                        if (page.previous) {
+                            page.previous.element.style.removeProperty('transform');
+                            page.previous.element.style.removeProperty('transition');
+                        }
+                        reslove();
+                    }, 500);
+                });
+            }
+        }
+        class LowMachinePageDisplayImplement {
+            constructor(app) {
+                this.app = app;
+                this.windowWidth = window.innerWidth;
+            }
+            enableGesture(page) {
+                let startY, currentY;
+                let startX, currentX;
+                let moved = false;
+                let SIDE_WIDTH = 20;
+                let enable = false;
+                let horizontal_swipe_angle = 35;
+                let vertical_pull_angle = 65;
+                let colse_position = window.innerWidth / 2;
+                let previousPageStartX = 0 - window.innerWidth / 3;
+                page.element.addEventListener('touchstart', function (event) {
+                    startY = event.touches[0].pageY;
+                    startX = event.touches[0].pageX;
+                    enable = startX <= SIDE_WIDTH;
+                    if (page.previous) {
+                        page.previous.element.style.display = 'block';
+                    }
+                });
+                page.element.addEventListener('touchmove', (event) => {
+                    currentX = event.targetTouches[0].pageX;
+                    currentY = event.targetTouches[0].pageY;
+                    if (isiOS && currentX < 0 || !enable) {
+                        return;
+                    }
+                    let deltaX = currentX - startX;
+                    let angle = calculateAngle(deltaX, currentY - startY);
+                    if (angle < horizontal_swipe_angle && deltaX > 0) {
+                        page.element.style.transform = `translate(${deltaX}px, 0px)`;
+                        page.element.style.transition = '0s';
+                        disableNativeScroll(page.element);
+                        moved = true;
+                        event.preventDefault();
+                        console.log('preventDefault gestured');
+                    }
+                });
+                let end = (event) => {
+                    if (!moved)
+                        return;
+                    let deltaX = currentX - startX;
+                    if (deltaX > colse_position) {
+                        console.assert(this.app != null);
+                        this.app.back();
+                    }
+                    else {
+                        page.element.style.transform = `translate(0px, 0px)`;
+                        page.element.style.transition = '0.4s';
+                        setTimeout(() => {
+                            if (page.previous) {
+                                page.previous.element.style.display = 'none';
+                            }
+                        }, 500);
+                    }
+                    setTimeout(() => {
+                        page.element.style.removeProperty('transform');
+                        page.element.style.removeProperty('transition');
+                    }, 500);
+                    moved = false;
+                };
+                page.element.addEventListener('touchcancel', (event) => end(event));
+                page.element.addEventListener('touchend', (event) => end(event));
+                function disableNativeScroll(element) {
+                    element.style.overflowY = 'hidden';
+                }
+                function enableNativeScroll(element) {
+                    element.style.overflowY = 'scroll';
+                }
+            }
+            show(page) {
+                if (!page.gestured) {
+                    page.gestured = true;
+                    if (page.allowSwipeBackGestrue)
+                        this.enableGesture(page);
+                }
+                let maxZIndex = 1;
+                let pageElements = document.getElementsByClassName('page');
+                for (let i = 0; i < pageElements.length; i++) {
+                    let zIndex = new Number(pageElements.item(i).style.zIndex || '0').valueOf();
+                    if (zIndex > maxZIndex) {
+                        maxZIndex = zIndex;
+                    }
+                }
+                page.element.style.zIndex = `${maxZIndex + 1}`;
+                page.element.style.display = 'block';
+                if (page.displayStatic) {
+                    if (page.previous) {
+                        page.previous.element.style.display = 'none';
+                    }
+                    return Promise.resolve();
+                }
+                page.element.style.transform = `translate(100%,0px)`;
+                return new Promise(reslove => {
+                    const playTime = 500;
+                    let delay = 50;
+                    window.setTimeout(() => {
+                        page.element.style.transform = `translate(0px,0px)`;
+                        page.element.style.transition = `${playTime / 1000}s`;
+                    }, delay);
+                    window.setTimeout(reslove, delay + playTime);
+                }).then(() => {
+                    page.element.style.removeProperty('transform');
+                    page.element.style.removeProperty('transition');
+                    if (page.previous) {
+                        page.previous.element.style.display = 'none';
+                    }
+                });
+            }
+            hide(page) {
+                if (isiOS && Date.now() - touch_move_time < 500 || page.displayStatic) {
+                    page.element.style.display = 'none';
+                    if (page.previous) {
+                        page.previous.element.style.display = 'block';
+                        page.previous.element.style.removeProperty('transform');
+                        page.previous.element.style.removeProperty('transition');
+                    }
+                    return Promise.resolve();
+                }
+                page.element.style.transform = `translate(100%,0px)`;
+                page.element.style.transition = '0.4s';
+                if (page.previous) {
+                    page.previous.element.style.display = 'block';
+                }
+                return new Promise(reslove => {
+                    window.setTimeout(function () {
+                        page.element.style.display = 'none';
+                        page.element.style.removeProperty('transform');
+                        page.element.style.removeProperty('transition');
+                        reslove();
+                    }, 500);
+                });
+            }
+        }
+    })(mobile = chitu.mobile || (chitu.mobile = {}));
+})(chitu || (chitu = {}));
 
 window['chitu'] = window['chitu'] || chitu 
                             

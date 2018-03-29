@@ -1,3 +1,47 @@
+# AJAX 调用 —— 以表单格式提交数据
+
+
+## 源码
+
+### index.html 文件
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css" rel="stylesheet"/>
+    <title>CHITU</title>
+</head>
+
+<body>
+    <script src="js/require.js" data-main="index"></script>
+
+</body>
+
+</html>
+```
+
+### index.js 文件
+
+```js
+requirejs.config({
+    paths: {
+        chitu: 'js/chitu'
+    }
+})
+
+requirejs(['application'], function (app) {
+    app.run()
+})
+```
+
+### application.js 文件
+
+```js
 define(['chitu'], function (c) {
     let siteMap = {
         /**
@@ -46,3 +90,4 @@ define(['chitu'], function (c) {
     })
     return app
 })
+```

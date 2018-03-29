@@ -3,6 +3,7 @@ define([
 ], function (require) {
     'use strict';
 
+
     let sitemap = {
         index: {
             action(page) {
@@ -79,6 +80,8 @@ define([
     assignDefaultAction(sitemap.index)
     return sitemap
 });
+
+var hideMobilePages = ['index', 'page_render'];
 
 /**
  * @param {chitu.SiteMapNode} node 
@@ -160,7 +163,7 @@ function loadView(page) {
             })
         })
 
-    if (page.name != 'index') {
+    if (hideMobilePages.indexOf(page.name) < 0) {
         require(['device'], function (func) {
             func(mobile_element)
         })

@@ -1,5 +1,6 @@
 define(['chitu', 'sitemap'], function (c, siteMap) {
 
+
     function main() {
 
 
@@ -10,17 +11,6 @@ define(['chitu', 'sitemap'], function (c, siteMap) {
         ]
         let obj = {}
         pageNames.forEach(o => obj[o] = (page) => Application.loadView(page))
-
-        // let siteMap = {
-        //     index: {
-        //         name: 'index',
-        //         action(page) {
-        //             Application.loadView(page)
-        //         },
-        //         children: obj
-        //     }
-        // }
-
         let app = new Application(siteMap);
         return app;
     }
@@ -104,13 +94,6 @@ define(['chitu', 'sitemap'], function (c, siteMap) {
                         window.mermaid.mermaidAPI.render(block.id, graphDefinition, insertSvg)
                     })
                 })
-
-            if (page.name != 'index') {
-                require(['device'], function (func) {
-                    func(mobile_element)
-                })
-            }
-
         }
     }
 
