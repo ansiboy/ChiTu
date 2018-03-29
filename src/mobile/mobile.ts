@@ -1,7 +1,7 @@
 
 
 namespace chitu.mobile {
-     let isCordovaApp = location.protocol === 'file:';
+    let isCordovaApp = location.protocol === 'file:';
 
     export class Page extends chitu.Page {
 
@@ -21,8 +21,8 @@ namespace chitu.mobile {
     export class Application extends chitu.Application {
         public pageShown = chitu.Callbacks<Application, { page: chitu.Page }>()
 
-        constructor(args?: { siteMap: chitu.SiteMap<chitu.SiteMapNode>, allowCachePage?: boolean }) {
-            super(args);
+        constructor(siteMap: chitu.SiteMap<chitu.SiteMapNode>, allowCachePage?: boolean) {
+            super(siteMap, allowCachePage);
 
             this.pageType = Page;
 
