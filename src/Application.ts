@@ -480,9 +480,25 @@
         public throwError(err: Error, page?: Page) {
             let e = err as AppError;
             this.error.fire(this, e, page)
-            if (!e.processed) {
-                throw e
-            }
+            // if (!e.processed) {
+            //     throw e
+            // }
+        }
+
+        /**
+         * 使用 requirejs 加载 JS
+         * @param path JS 路径
+         */
+        public loadjs(path): Promise<any> {
+            return new Promise<Array<any>>((reslove, reject) => {
+                requirejs([path],
+                    function (result) {
+                        reslove(result);
+                    },
+                    function (err) {
+                        reject(err);
+                    });
+            });
         }
     }
 } 
