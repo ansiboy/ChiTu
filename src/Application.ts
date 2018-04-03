@@ -49,7 +49,7 @@
 
         let values = {};
         if (search) {
-            values = this.pareeUrlQuery(search);
+            values = pareeUrlQuery(search);
         }
 
         let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
@@ -63,21 +63,56 @@
         return { pageName, values };
     }
 
-    function createUrl(pageName: string, routeValues?: { [key: string]: string }) {
+    function pareeUrlQuery(query: string): Object {
+        let match,
+            pl = /\+/g,  // Regex for replacing addition symbol with a space
+            search = /([^&=]+)=?([^&]*)/g,
+            decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
+
+        let urlParams = {};
+        while (match = search.exec(query))
+            urlParams[decode(match[1])] = decode(match[2]);
+
+        return urlParams;
+    }
+
+
+    function createUrl(pageName: string, params?: { [key: string]: string }) {
         let path_parts = pageName.split('.');
         let path = path_parts.join('/');
-        if (!routeValues)
-            return `#${path}`
+        if (!params)
+            return `#${path}`;
 
-        let params = "";
-        for (let key in routeValues) {
-            params = params + `&${key}=${routeValues[key]}`;
+        //==============================================
+        // 移除 function, null 字段
+        let stack = [];
+        stack.push(params);
+        while (stack.length > 0) {
+            let obj = stack.pop();
+            for (let key in obj) {
+                let type = typeof (obj[key]);
+                if (type == 'function' || obj[key] == null) {
+                    delete obj[key];
+                    continue;
+                }
+                else if (type == 'object') {
+                    for (let key1 in obj[key])
+                        if (typeof obj[key][key1] == 'object')
+                            stack.push(obj[key][key1])
+                }
+            }
+        }
+        //==============================================
+
+        let paramsText = "";
+        for (let key in params) {
+            paramsText = paramsText + `&${key}=${params[key]}`;
         }
 
-        if (params.length > 0)
-            params = params.substr(1);
+        if (paramsText.length > 0)
+            paramsText = paramsText.substr(1);
 
-        return `#${path}?${params}`;
+        return `#${path}?${paramsText}`;
     }
 
     var PAGE_STACK_MAX_SIZE = 30;
@@ -171,7 +206,7 @@
             this.allNodes[node.name] = node;
             for (let key in children) {
                 // let child = this.translateSiteMapNode(children[key], key);
-                // children[key] = child;
+                children[key].level = node.level + 1;
                 this.travalNode(children[key]);
             }
         }
