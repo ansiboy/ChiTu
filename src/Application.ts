@@ -1,21 +1,24 @@
 ﻿namespace chitu {
 
     export type ActionType = ((page: Page) => void) | string;
-    export type SiteMapChildren<T extends SiteMapNode> = { [key: string]: T | ((page: Page) => void) | string }
+    export type SiteMapChildren<T extends SiteMapNode> = { [key: string]: T }
     export interface SiteMapNode {
         action: ActionType,
-        children?: SiteMapChildren<this>
+        children?: SiteMapChildren<this>,
+        name?: string,
+        parent?: this,
+        level?: number,
     }
 
-    type MySiteMapNode = SiteMapNode & { children: { [key: string]: MySiteMapNode }, name: string, parent?: SiteMapNode, level?: number };
+    // type AppSiteMapNode = SiteMapNode & { children: { [key: string]: AppSiteMapNode }, name: string, parent?: SiteMapNode, level?: number };
 
     export interface SiteMap<T extends SiteMapNode> {
-        index: T | ActionType,
+        index: T,
     }
 
     const EmtpyStateData = "";
     const DefaultPageName = "index"
-    function parseUrl(app: Application, url: string): { pageName: string, values: PageDataType } {
+    function parseUrl(app: Application, url: string): { pageName: string, values: PageData } {
         let sharpIndex = url.indexOf('#');
         if (sharpIndex < 0) {
             let pageName = DefaultPageName
@@ -142,7 +145,7 @@
 
         // siteMap: SiteMap<SiteMapNode>;
         private allowCachePage = true;
-        private allNodes: { [key: string]: MySiteMapNode } = {};
+        private allNodes: { [key: string]: SiteMapNode } = {};
 
 
         /** 
@@ -163,51 +166,53 @@
             if (!siteMap.index)
                 this.throwError(Errors.siteMapRootCanntNull());
 
-            let indexNode = this.translateSiteMapNode(siteMap.index, DefaultPageName)
-            this.travalNode(indexNode);
+            // let indexNode = this.translateSiteMapNode(siteMap.index, DefaultPageName)
+            this.travalNode(siteMap.index, DefaultPageName);
 
             if (allowCachePage != null)
                 this.allowCachePage = allowCachePage;
         }
 
-        private translateSiteMapNode(source: SiteMapNode | ActionType, name: string): MySiteMapNode {
-            let action: ActionType, children: { [key: string]: MySiteMapNode };
-            let source_children: SiteMapChildren<SiteMapNode>
-            if (typeof source == 'object') {
-                action = source.action;
-                source_children = source.children;
-            }
-            else {
-                action = source;
-                source_children = {};
-            }
+        // private translateSiteMapNode(source: SiteMapNode, name: string): SiteMapNode {
+        //     let action: ActionType, children: { [key: string]: SiteMapNode };
+        //     let source_children: SiteMapChildren<SiteMapNode>
+        //     if (typeof source == 'object') {
+        //         action = source.action;
+        //         source_children = source.children;
+        //     }
+        //     else {
+        //         action = source;
+        //         source_children = {};
+        //     }
 
-            children = {}
-            for (let key in source_children) {
-                children[key] = this.translateSiteMapNode(source_children[key], key)
-            }
+        //     children = {}
+        //     for (let key in source_children) {
+        //         children[key] = this.translateSiteMapNode(source_children[key], key)
+        //     }
 
-            return {
-                name,
-                action,
-                level: 0,
-                children
-            };
-        }
+        //     return {
+        //         name,
+        //         action,
+        //         level: 0,
+        //         children
+        //     };
+        // }
 
-        private travalNode(node: MySiteMapNode) {
+        private travalNode(node: SiteMapNode, name: string) {
             if (node == null) throw Errors.argumentNull('parent');
-            let children = node.children || {};
+            let children = node.children = node.children || {};
+            node.name = name;
 
             if (this.allNodes[node.name]) {
-                this.throwError(Errors.duplicateSiteMapNode(node.name));
+                throw Errors.duplicateSiteMapNode(node.name);
             }
 
             this.allNodes[node.name] = node;
             for (let key in children) {
                 // let child = this.translateSiteMapNode(children[key], key);
                 children[key].level = node.level + 1;
-                this.travalNode(children[key]);
+                children[key].parent = node;
+                this.travalNode(children[key], key);
             }
         }
 
@@ -367,10 +372,13 @@
 
         /**
          * 显示页面
-         * @param pageName 要显示页面的名称
+         * @param node 要显示页面的节点
          * @param args 页面参数
          */
-        public showPage(pageName: string, args?: any) {
+        public showPage(node: SiteMapNode, args?: any) {
+            if (!node) throw Errors.argumentNull('node');
+
+            let pageName = node.name;
             if (!pageName) throw Errors.argumentNull('pageName');
 
             if (this.currentPage != null && this.currentPage.name == pageName)
@@ -388,8 +396,8 @@
                 let obj = this.getPage(pageName, args);
                 page = obj.page;
                 isNewPage = obj.isNew;
-                this.pushPage(page);
                 page.show();
+                this.pushPage(page);
                 console.assert(page == this.currentPage, "page is not current page");
             }
 
@@ -420,7 +428,7 @@
          * @param args 传递到页面的参数 
          */
         private showPageByUrl(url: string, args?: any): Page {
-            if (!url) this.throwError(Errors.argumentNull('url'));
+            if (!url) throw Errors.argumentNull('url');
 
             var routeData = this.parseUrl(url);
             if (routeData == null) {
@@ -428,8 +436,9 @@
             }
 
             Object.assign(routeData.values, args || {});
-
-            return this.showPage(routeData.pageName, routeData.values);
+            let node = this.allNodes[routeData.pageName];
+            if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
+            return this.showPage(node, routeData.values);
         }
 
         private pushPage(page: Page) {
@@ -489,12 +498,14 @@
 
         /**
          * 页面跳转
-         * @param url 页面路径
+         * @param node 页面节点
          * @param args 传递到页面的参数
          */
-        public redirect(pageName: string, args?: any): Page {
-            let result = this.showPage(pageName, args);
-            let url = this.createUrl(pageName, args);
+        public redirect(node: SiteMapNode, args?: any): Page {
+            if (!node) throw Errors.argumentNull("node");
+
+            let result = this.showPage(node, args);
+            let url = this.createUrl(node.name, args);
             this.setLocationHash(url);
 
             return result;
@@ -534,6 +545,10 @@
                         reject(err);
                     });
             });
+        }
+
+        public get pageNodes() {
+            return this.allNodes;
         }
     }
 } 

@@ -1,6 +1,6 @@
 namespace chitu {
 
-    export type PageDataType = { [key: string]: any }
+    export type PageData = { [key: string]: any }
 
     export interface PageDisplayConstructor {
         new(app: Application): PageDisplayer
@@ -18,7 +18,7 @@ namespace chitu {
         displayer: PageDisplayer,
         previous?: Page,
         name: string,
-        data: PageDataType,
+        data: PageData,
     }
 
     /**
@@ -39,28 +39,28 @@ namespace chitu {
         static tagName = 'div';
 
         // error = Callbacks<Page, Error>();
-        data: PageDataType = null
+        data: PageData = null
 
         /** 脚本文件加载完成后引发 */
-        load = Callbacks<this, PageDataType>();
+        load = Callbacks<this, PageData>();
 
         /** 脚本执行完成后引发 */
-        loadComplete = Callbacks<this, PageDataType>();
+        loadComplete = Callbacks<this, PageData>();
 
         /** 页面显示时引发 */
-        showing = Callbacks<this, PageDataType>();
+        showing = Callbacks<this, PageData>();
 
         /** 页面显示时完成后引发 */
-        shown = Callbacks<this, PageDataType>();
+        shown = Callbacks<this, PageData>();
 
-        hiding = Callbacks<this, PageDataType>();
-        hidden = Callbacks<this, PageDataType>();
+        hiding = Callbacks<this, PageData>();
+        hidden = Callbacks<this, PageData>();
 
-        closing = Callbacks<this, PageDataType>();
-        closed = Callbacks<this, PageDataType>();
+        closing = Callbacks<this, PageData>();
+        closed = Callbacks<this, PageData>();
 
-        active = Callbacks<this, PageDataType>();
-        deactive = Callbacks<this, PageDataType>();
+        active = Callbacks<this, PageData>();
+        deactive = Callbacks<this, PageData>();
 
         constructor(params: PageParams) {
             this._element = params.element;
@@ -98,7 +98,7 @@ namespace chitu {
         private on_closed() {
             return this.closed.fire(this, this.data);
         }
-        public on_active(args: PageDataType) {
+        public on_active(args: PageData) {
             console.assert(args != null, 'args is null')
             Object.assign(this.data, args);
             this.active.fire(this, args);
