@@ -3,7 +3,7 @@ namespace chitu {
     export type PageData = { [key: string]: any }
 
     export interface PageDisplayConstructor {
-        new(app: Application): PageDisplayer
+        new(app: Application<any>): PageDisplayer
     }
 
     export interface PageDisplayer {
@@ -12,7 +12,7 @@ namespace chitu {
     }
 
     export interface PageParams {
-        app: Application,
+        app: Application<any>,
         action: ActionType,
         element: HTMLElement,
         displayer: PageDisplayer,
@@ -30,7 +30,7 @@ namespace chitu {
 
         private _element: HTMLElement;
         private _previous: Page;
-        private _app: Application;
+        private _app: Application<any>;
         // private _routeData: RouteData;
         private _displayer: PageDisplayer;
         private _action: ((page: Page) => void) | string;
@@ -71,8 +71,9 @@ namespace chitu {
             this._action = params.action;
             this.data = params.data
             this._name = params.name;
-
-            this.loadPageAction(this.name);
+            setTimeout(() => {
+                this.loadPageAction();
+            });
         }
         private on_load() {
             return this.load.fire(this, this.data);
@@ -134,7 +135,7 @@ namespace chitu {
             type = type || chitu.Service as any
             let service = new type();
             service.error.add((ender, error) => {
-                this._app.throwError(error, this)
+                this._app.error.fire(this._app, error, this)
             })
             return service;
         }
@@ -159,30 +160,28 @@ namespace chitu {
             return this._name;
         }
 
-        private async loadPageAction(pageName: string) {
+        private async loadPageAction() {
+            let pageName: string = this.name;
             let action;
             if (typeof this._action == 'function') {
                 action = this._action;
             }
             else {
                 let actionResult;
-                try {
-                    actionResult = await this._app.loadjs(this._action);
-                }
-                catch (err) {
-                    this._app.throwError(err, this)
-                }
+                actionResult = await this._app.loadjs(this._action);
+
 
                 if (!actionResult)
-                    this._app.throwError(Errors.exportsCanntNull(pageName), this);
+                    throw Errors.exportsCanntNull(pageName);
 
                 let actionName = 'default';
                 action = actionResult[actionName];
                 if (action == null) {
-                    this._app.throwError(Errors.canntFindAction(pageName), this);
+                    throw Errors.canntFindAction(pageName);
                 }
             }
 
+            this.on_load();
             let actionExecuteResult;
             if (typeof action == 'function') {
                 let actionResult = action(this) as Promise<any>;
@@ -194,14 +193,14 @@ namespace chitu {
                 }
             }
             else {
-                this._app.throwError(Errors.actionTypeError(pageName), this);
+                throw Errors.actionTypeError(pageName);
             }
 
-            this.on_load();
+
         }
 
         reload() {
-            return this.loadPageAction(this.name);
+            return this.loadPageAction();
         }
     }
 

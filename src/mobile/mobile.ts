@@ -7,7 +7,7 @@ namespace chitu.mobile {
 
         public displayStatic: boolean = false;
         public allowSwipeBackGestrue = false;
-        public app: Application;
+        public app: Application<any>;
 
         static className = "mobile-page";
 
@@ -18,11 +18,11 @@ namespace chitu.mobile {
     }
 
 
-    export class Application extends chitu.Application {
-        public pageShown = chitu.Callbacks<Application, { page: chitu.Page }>()
+    export class Application<T extends SiteMapNode> extends chitu.Application<T> {
+        public pageShown = chitu.Callbacks<this, { page: chitu.Page }>()
 
-        constructor(siteMap: chitu.SiteMap<chitu.SiteMapNode>, allowCachePage?: boolean) {
-            super(siteMap, allowCachePage);
+        constructor(siteMap: chitu.SiteMap<T>, allowCachePage?: boolean) {
+            super(siteMap);
 
             this.pageType = Page;
 
@@ -54,12 +54,12 @@ namespace chitu.mobile {
     }
 
     class PageDisplayImplement implements chitu.PageDisplayer {
-        private app: chitu.Application;
+        private app: chitu.Application<any>;
         private windowWidth: number;
         private previousPageStartX: number;
         private animationTime = 400;
 
-        constructor(app: chitu.Application) {
+        constructor(app: chitu.Application<any>) {
             this.app = app;
             this.windowWidth = window.innerWidth;
             this.previousPageStartX = 0 - this.windowWidth / 3;
@@ -113,7 +113,7 @@ namespace chitu.mobile {
             })
 
 
-            let end = (event: TouchEvent) => {
+            let end = (event: Event) => {
                 if (!moved)
                     return;
 
@@ -269,10 +269,10 @@ namespace chitu.mobile {
     }
 
     class LowMachinePageDisplayImplement implements chitu.PageDisplayer {
-        private app: chitu.Application;
+        private app: chitu.Application<any>;
         private windowWidth: number;
 
-        constructor(app: chitu.Application) {
+        constructor(app: chitu.Application<any>) {
             this.app = app;
             this.windowWidth = window.innerWidth;
         }
@@ -322,7 +322,7 @@ namespace chitu.mobile {
             })
 
 
-            let end = (event: TouchEvent) => {
+            let end = (event: Event) => {
                 if (!moved)
                     return;
 
