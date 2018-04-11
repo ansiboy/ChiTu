@@ -4,17 +4,11 @@
     export type SiteMapChildren<T extends SiteMapNode> = { [key: string]: T }
     export interface SiteMapNode {
         action: ActionType,
-        // children?: SiteMapChildren<this>,
         name?: string,
         cache?: boolean,
-        // parent?: this,
-        // level?: number,
     }
 
-    // type AppSiteMapNode = SiteMapNode & { children: { [key: string]: AppSiteMapNode }, name: string, parent?: SiteMapNode, level?: number };
-
     export interface SiteMap<T extends SiteMapNode> {
-        // index: T,
         nodes: { [key: string]: T }
     }
 
@@ -130,7 +124,7 @@
      */
     export class Application<T extends SiteMapNode> {
 
-        static skipStateName = 'skip';
+        private static skipStateName = 'skip';
 
         /**
          * 当页面创建后发生
@@ -141,11 +135,7 @@
         protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
 
         private _runned: boolean = false;
-        // private page_stack = new Array<Page>();
         private cachePages: { [name: string]: Page } = {};
-
-        // siteMap: SiteMap<SiteMapNode>;
-        // private allowCachePage = true;
         private allNodes: { [key: string]: T } = {};
         private _currentPage: Page;
 
@@ -369,18 +359,6 @@
             this._runned = true;
         }
 
-        // /**
-        //  * 通过页面的名称，获取页面
-        //  */
-        // public findPageFromStack(name: string): Page {
-        //     for (var i = this.page_stack.length - 1; i >= 0; i--) {
-        //         var page = this.page_stack[i]; //.pages[name];
-        //         if (page != null && page.name == name)
-        //             return page;
-        //     }
-        //     return null;
-        // }
-
         /**
          * 显示页面
          * @param node 要显示页面的节点
@@ -397,20 +375,13 @@
 
             args = args || {}
             let oldCurrentPage = this.currentPage;
-            // let page = this.findPageFromStack(pageName);
             let isNewPage = false;
-            // let previousPageIndex = this.page_stack.length - 2;
-            // if (page != null && this.page_stack.indexOf(page) == previousPageIndex) {
-            //     this.closeCurrentPage();
-            // }
-            // else {
             let obj = this.getPage(pageName, args);
             let page = obj.page;
             isNewPage = obj.isNew;
             page.show();
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
-            // }
 
             let preRouteData = null;
             if (oldCurrentPage) {
@@ -453,19 +424,8 @@
         }
 
         private pushPage(page: Page) {
-            // if (this.currentPage != null) {
-            //     let currentSiteNode = this.findSiteMapNode(this.currentPage.name);
-            //     let pageNode = this.findSiteMapNode(page.name);
-            //     if (currentSiteNode != null && pageNode != null) {//&& pageNode.level <= currentSiteNode.level
-            //         this.clearPageStack();
-            //     }
-            // }
 
             let previous = this.currentPage;
-            // this.page_stack.push(page);
-            // if (this.page_stack.length > PAGE_STACK_MAX_SIZE) {
-            //     let c = this.page_stack.shift();
-            // }
             this._currentPage = page;
 
             page.previous = previous;
@@ -478,35 +438,6 @@
         public setLocationHash(url: string) {
             history.pushState(EmtpyStateData, "", url)
         }
-
-        // /**
-        //  * 关闭当前页面
-        //  */
-        // public closeCurrentPage() {
-        //     if (this.page_stack.length <= 0)
-        //         return;
-
-        //     var page = this.page_stack.pop();
-        //     if (this.allowCachePage) {
-        //         page.previous = this.currentPage;
-        //         page.hide();
-        //     }
-        //     else {
-        //         page.close();
-        //     }
-        // }
-
-        // private clearPageStack() {
-        //     if (this.allowCachePage) {
-        //         this.page_stack.forEach(o => o.hide())
-        //     }
-        //     else {
-        //         this.page_stack.forEach(o => {
-        //             o.close()
-        //         })
-        //     }
-        //     this.page_stack = [];
-        // }
 
         /**
          * 页面跳转
@@ -529,19 +460,6 @@
         public back() {
             history.back();
         }
-
-        // /**
-        //  * 抛出错误
-        //  * @param err 错语
-        //  * @param page 页面，与错误相对应的页面
-        //  */
-        // public throwError(err: Error, page?: Page) {
-        //     let e = err as AppError;
-        //     this.error.fire(this, e, page)
-        //     // if (!e.processed) {
-        //     //     throw e
-        //     // }
-        // }
 
         /**
          * 使用 requirejs 加载 JS

@@ -66,7 +66,6 @@ namespace chitu {
             this._element = params.element;
             this._previous = params.previous;
             this._app = params.app;
-            // this._routeData = params.routeData;
             this._displayer = params.displayer;
             this._action = params.action;
             this.data = params.data
