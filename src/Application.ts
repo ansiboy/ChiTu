@@ -137,7 +137,8 @@
         private _runned: boolean = false;
         private cachePages: { [name: string]: Page } = {};
         private allNodes: { [key: string]: T } = {};
-        private _currentPage: Page;
+        // private _currentPage: Page;
+        private page_stack = new Array<Page>();
 
         /** 
          * 错误事件 
@@ -231,11 +232,10 @@
          * 获取当前页面
          */
         get currentPage(): Page {
-            // if (this.page_stack.length > 0)
-            //     return this.page_stack[this.page_stack.length - 1];
+            if (this.page_stack.length > 0)
+                return this.page_stack[this.page_stack.length - 1];
 
-            // return null;
-            return this._currentPage;
+            return null;
         }
 
         // /**
@@ -305,6 +305,7 @@
             }
             let page_onclosed = (sender: chitu.Page) => {
                 delete this.cachePages[sender.name];
+                this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
                 page.loadComplete.remove(page_onloadComplete);
             }
@@ -424,10 +425,8 @@
         }
 
         private pushPage(page: Page) {
-
             let previous = this.currentPage;
-            this._currentPage = page;
-
+            this.page_stack.push(page);
             page.previous = previous;
         }
 
@@ -437,6 +436,23 @@
 
         public setLocationHash(url: string) {
             history.pushState(EmtpyStateData, "", url)
+        }
+
+        /**
+        * 关闭当前页面
+        */
+        public closeCurrentPage() {
+            if (this.page_stack.length <= 0)
+                return;
+
+            var page = this.page_stack.pop();
+            if (this.allowCache(page.name)) {
+                page.previous = this.currentPage;
+                page.hide();
+            }
+            else {
+                page.close();
+            }
         }
 
         /**
