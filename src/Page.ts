@@ -7,8 +7,8 @@ namespace chitu {
     }
 
     export interface PageDisplayer {
-        show(page: Page): Promise<any>;
-        hide(page: Page): Promise<any>;
+        show(page: Page, previous: chitu.Page): Promise<any>;
+        hide(page: Page, previous: chitu.Page): Promise<any>;
     }
 
     export interface PageParams {
@@ -16,7 +16,7 @@ namespace chitu {
         action: ActionType,
         element: HTMLElement,
         displayer: PageDisplayer,
-        previous?: Page,
+        // previous?: Page,
         name: string,
         data: PageData,
     }
@@ -29,7 +29,7 @@ namespace chitu {
         private num: Number;
 
         private _element: HTMLElement;
-        private _previous: Page;
+        // private _previous: Page;
         private _app: Application<any>;
         // private _routeData: RouteData;
         private _displayer: PageDisplayer;
@@ -64,7 +64,7 @@ namespace chitu {
 
         constructor(params: PageParams) {
             this._element = params.element;
-            this._previous = params.previous;
+            // this._previous = params.previous;
             this._app = params.app;
             this._displayer = params.displayer;
             this._action = params.action;
@@ -106,24 +106,25 @@ namespace chitu {
         public on_deactive() {
             this.deactive.fire(this, this.data);
         }
-        show(): Promise<any> {
+        show(previous: chitu.Page): Promise<any> {
             this.on_showing();
-            return this._displayer.show(this).then(o => {
+            return this._displayer.show(this, previous).then(o => {
                 this.on_shown();
             });
         }
-        hide(): Promise<any> {
+        hide(previous: chitu.Page): Promise<any> {
             this.on_hiding();
-            return this._displayer.hide(this).then(o => {
+            return this._displayer.hide(this, previous).then(o => {
                 this.on_hidden();
             });
         }
         close(): Promise<any> {
-            return this.hide().then(() => {
+            return new Promise((resolve, reject) => {
                 this.on_closing();
                 this._element.remove();
                 this.on_closed();
-            });
+                resolve();
+            })
         }
 
         /**
@@ -145,12 +146,12 @@ namespace chitu {
         get element(): HTMLElement {
             return this._element;
         }
-        get previous(): Page {
-            return this._previous;
-        }
-        set previous(value: Page) {
-            this._previous = value;
-        }
+        // get previous(): Page {
+        //     return this._previous;
+        // }
+        // set previous(value: Page) {
+        //     this._previous = value;
+        // }
 
         /**
          * 名称
@@ -216,17 +217,17 @@ interface PageConstructor {
 }
 
 class PageDisplayerImplement implements chitu.PageDisplayer {
-    show(page: chitu.Page) {
+    show(page: chitu.Page, previous: chitu.Page) {
         page.element.style.display = 'block';
-        if (page.previous != null) {
-            page.previous.element.style.display = 'none';
+        if (previous != null) {
+            previous.element.style.display = 'none';
         }
         return Promise.resolve();
     }
-    hide(page: chitu.Page) {
+    hide(page: chitu.Page, previous: chitu.Page) {
         page.element.style.display = 'none';
-        if (page.previous != null) {
-            page.previous.element.style.display = 'block';
+        if (previous != null) {
+            previous.element.style.display = 'block';
         }
         return Promise.resolve();
     }

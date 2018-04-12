@@ -252,8 +252,6 @@
 
             let cachePage = this.cachePages[pageName];
             if (cachePage != null && allowCache) {
-                // cachePage.hitCount = (cachePage.hitCount || 0) + 1;
-                // cachePage.page.data = values || {};
                 return { page: cachePage, isNew: false };
             }
 
@@ -275,7 +273,7 @@
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
-                previous: previous_page,
+                // previous: previous_page,
                 name: pageName,
                 data: values,
                 displayer,
@@ -380,7 +378,7 @@
             let obj = this.getPage(pageName, args);
             let page = obj.page;
             isNewPage = obj.isNew;
-            page.show();
+            page.show(oldCurrentPage);
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
 
@@ -427,7 +425,7 @@
         private pushPage(page: Page) {
             let previous = this.currentPage;
             this.page_stack.push(page);
-            page.previous = previous;
+            // page.previous = previous;
         }
 
         private findSiteMapNode(pageName: string) {
@@ -447,8 +445,8 @@
 
             var page = this.page_stack.pop();
             if (this.allowCache(page.name)) {
-                page.previous = this.currentPage;
-                page.hide();
+                // page.previous = this.currentPage;
+                page.hide(this.currentPage);
             }
             else {
                 page.close();
