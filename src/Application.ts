@@ -193,14 +193,14 @@
             return null;
         }
 
-        private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {
+        private getPage(pageName: string, values?: any): Page {
 
             let allowCache = this.allowCache(pageName);
             console.assert(allowCache != null);
 
             let cachePage = this.cachePages[pageName];
             if (cachePage != null && allowCache) {
-                return { page: cachePage, isNew: false };
+                return cachePage;
             }
 
             if (cachePage != null)
@@ -243,7 +243,7 @@
             page.loadComplete.add(page_onloadComplete);
 
             this.on_pageCreated(page);
-            return { page, isNew: true };
+            return page;
         }
 
         private allowCache(pageName: string): boolean {
@@ -304,30 +304,10 @@
             args = args || {}
             let oldCurrentPage = this.currentPage;
             let isNewPage = false;
-            let obj = this.getPage(pageName, args);
-            let page = obj.page;
-            isNewPage = obj.isNew;
-            page.show(oldCurrentPage);
+            let page = this.getPage(pageName, args);
+            page.show();
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
-
-            let preRouteData = null;
-            if (oldCurrentPage) {
-                preRouteData = oldCurrentPage.data
-                oldCurrentPage.on_deactive()
-            }
-
-            console.assert(this.currentPage != null);
-            if (isNewPage) {
-                this.currentPage.on_active(args);
-            }
-            else {
-                let onload = (sender: Page, args: any) => {
-                    sender.on_active(args);
-                    sender.load.remove(onload);
-                }
-                this.currentPage.load.add(onload);
-            }
 
             return this.currentPage;
         }
@@ -377,6 +357,9 @@
             }
             else {
                 page.close();
+            }
+            if (this.currentPage) {
+                this.currentPage.show();
             }
         }
 

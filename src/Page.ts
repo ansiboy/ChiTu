@@ -59,8 +59,8 @@ namespace chitu {
         closing = Callbacks<this, PageData>();
         closed = Callbacks<this, PageData>();
 
-        active = Callbacks<this, PageData>();
-        deactive = Callbacks<this, PageData>();
+        // active = Callbacks<this, PageData>();
+        // deactive = Callbacks<this, PageData>();
 
         constructor(params: PageParams) {
             this._element = params.element;
@@ -98,16 +98,12 @@ namespace chitu {
         private on_closed() {
             return this.closed.fire(this, this.data);
         }
-        public on_active(args: PageData) {
-            console.assert(args != null, 'args is null')
-            Object.assign(this.data, args);
-            this.active.fire(this, args);
-        }
-        public on_deactive() {
-            this.deactive.fire(this, this.data);
-        }
-        show(currentPage: chitu.Page): Promise<any> {
+        show(): Promise<any> {
             this.on_showing();
+            let currentPage = this._app.currentPage;
+            if(this == currentPage){
+                currentPage = null;
+            }
             return this._displayer.show(this, currentPage).then(o => {
                 this.on_shown();
             });
