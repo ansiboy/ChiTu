@@ -1,8 +1,6 @@
 ﻿var build_dir = 'out';
 var release_dir = 'out/dist';
 var js_output_file = `${release_dir}/chitu.js`;
-// var ts_output_file = `${release_dir}/chitu.d.ts`;
-
 
 module.exports = function (grunt) {
     let pkg = grunt.file.readJSON('package.json');
@@ -45,12 +43,6 @@ ${license}
                 options: {
                     failOnError: false
                 }
-            },
-            mobile: {
-                command: 'tsc -p ./src/mobile',
-                options: {
-                    failOnError: false
-                }
             }
         },
         babel: {
@@ -62,9 +54,6 @@ ${license}
                 files: [{
                     src: [`out/es6/chitu.js`],
                     dest: `out/dist/chitu.es5.js`
-                }, {
-                    src: [`out/es6/chitu.mobile.js`],
-                    dest: `out/dist/chitu.mobile.es5.js`
                 }]
             }
         },
@@ -76,9 +65,6 @@ ${license}
                 files: [{
                     src: `out/dist/chitu.es5.js`,
                     dest: `out/dist/chitu.min.js`
-                }, {
-                    src: `out/dist/chitu.mobile.es5.js`,
-                    dest: `out/dist/chitu.mobile.min.js`
                 }]
             }
         },
@@ -106,30 +92,6 @@ declare module "chitu" { \n\
                 },
                 src: [build_dir + '/es6/chitu.js'],
                 dest: release_dir + '/chitu.js'
-            },
-            mobilets: {
-                options: {
-                    stripBanners: true,
-                    footer:
-                        `
-declare module "chitu" { \n\
-    export = chitu; \n\
-}\n
-declare module "chitu.mobile" { \n\
-    export = chitu.mobile; \n\
-}\n
-`
-                },
-                src: [build_dir + '/es6/chitu.mobile.d.ts'],
-                dest: `${release_dir}/chitu.mobile.d.ts`
-            },
-            mobilejs_es6: {
-                options: {
-                    banner: chitu_js_banner.replace('CHITU', 'CHITU.MOBILE'),
-                    footer: chitu_js_footer,
-                },
-                src: [build_dir + '/es6/chitu.mobile.js'],
-                dest: release_dir + '/chitu.mobile.js'
             }
         },
         clean: [build_dir + '/**/*.d.ts', build_dir + '/**/*.js'],
