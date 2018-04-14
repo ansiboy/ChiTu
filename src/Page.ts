@@ -7,8 +7,8 @@ namespace chitu {
     }
 
     export interface PageDisplayer {
-        show(page: Page, previous: chitu.Page): Promise<any>;
-        hide(page: Page, previous: chitu.Page): Promise<any>;
+        show(targetPage: Page, currentPage: chitu.Page): Promise<any>;
+        hide(targetPage: Page, currentPage: chitu.Page): Promise<any>;
     }
 
     export interface PageParams {
@@ -106,15 +106,15 @@ namespace chitu {
         public on_deactive() {
             this.deactive.fire(this, this.data);
         }
-        show(previous: chitu.Page): Promise<any> {
+        show(currentPage: chitu.Page): Promise<any> {
             this.on_showing();
-            return this._displayer.show(this, previous).then(o => {
+            return this._displayer.show(this, currentPage).then(o => {
                 this.on_shown();
             });
         }
-        hide(previous: chitu.Page): Promise<any> {
+        hide(currentPage: chitu.Page): Promise<any> {
             this.on_hiding();
-            return this._displayer.hide(this, previous).then(o => {
+            return this._displayer.hide(this, currentPage).then(o => {
                 this.on_hidden();
             });
         }
