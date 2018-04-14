@@ -159,52 +159,7 @@
             for (let key in this.allNodes) {
                 this.allNodes[key].name = key;
             }
-            // if (allowCachePage != null)
-            //     this.allowCachePage = allowCachePage;
         }
-
-        // private translateSiteMapNode(source: SiteMapNode, name: string): SiteMapNode {
-        //     let action: ActionType, children: { [key: string]: SiteMapNode };
-        //     let source_children: SiteMapChildren<SiteMapNode>
-        //     if (typeof source == 'object') {
-        //         action = source.action;
-        //         source_children = source.children;
-        //     }
-        //     else {
-        //         action = source;
-        //         source_children = {};
-        //     }
-
-        //     children = {}
-        //     for (let key in source_children) {
-        //         children[key] = this.translateSiteMapNode(source_children[key], key)
-        //     }
-
-        //     return {
-        //         name,
-        //         action,
-        //         level: 0,
-        //         children
-        //     };
-        // }
-
-        // private travalNode(node: T, name: string) {
-        //     if (node == null) throw Errors.argumentNull('parent');
-        //     let children = node.children = node.children || {};
-        //     node.name = name;
-
-        //     if (this.allNodes[node.name]) {
-        //         throw Errors.duplicateSiteMapNode(node.name);
-        //     }
-
-        //     this.allNodes[node.name] = node;
-        //     for (let key in children) {
-        //         // let child = this.translateSiteMapNode(children[key], key);
-        //         children[key].level = node.level + 1;
-        //         children[key].parent = node;
-        //         this.travalNode(children[key], key);
-        //     }
-        // }
 
         /**
          * 解释路由，将路由字符串解释为 RouteData 对象
@@ -237,13 +192,6 @@
 
             return null;
         }
-
-        // /**
-        //  * 获取当前应用中的所创建页面容器
-        //  */
-        // get pages(): Array<Page> {
-        //     return this.page_stack;
-        // }
 
         private getPage(pageName: string, values?: any): { page: Page, isNew: boolean } {
 
@@ -281,23 +229,6 @@
                 action,
             });
 
-            // let keyes = Object.keys(this.cachePages);
-            // if (keyes.length > CACHE_PAGE_SIZE) {
-            //     let key = keyes[0]
-            //     // 寻找点击最少的
-            //     for (let i = 1; i < keyes.length; i++) {
-            //         let data0 = this.cachePages[key];
-            //         let data1 = this.cachePages[keyes[i]];
-
-            //         if (data1.hitCount < data0.hitCount) {
-            //             key = keyes[i];
-            //         }
-            //     }
-
-            //     this.cachePages[key].page.close();
-            //     delete this.cachePages[key];
-            // }
-
             let page_onloadComplete = (sender: Page, args) => {
                 this.cachePages[sender.name] = sender;
             }
@@ -334,8 +265,6 @@
                 return;
             }
 
-            // var page = this.findPageFromStack(routeData.pageName);
-            // let previousPageIndex = this.page_stack.length - 2;
             this.showPageByUrl(location.href);
         }
 
@@ -425,7 +354,6 @@
         private pushPage(page: Page) {
             let previous = this.currentPage;
             this.page_stack.push(page);
-            // page.previous = previous;
         }
 
         private findSiteMapNode(pageName: string) {
@@ -437,15 +365,14 @@
         }
 
         /**
-        * 关闭当前页面
-        */
+         * 关闭当前页面
+         */
         public closeCurrentPage() {
             if (this.page_stack.length <= 0)
                 return;
 
             var page = this.page_stack.pop();
             if (this.allowCache(page.name)) {
-                // page.previous = this.currentPage;
                 page.hide(this.currentPage);
             }
             else {
