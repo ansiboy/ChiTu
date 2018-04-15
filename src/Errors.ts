@@ -4,6 +4,10 @@ class Errors {
         let msg = `Page node named ${pageName} is not exists.`;
         return new Error(msg);
     }
+    static actionCanntNull(pageName:string){
+        let msg = `Action of '${pageName}' can not be null.`;
+        return new Error(msg);
+    }
     public static argumentNull(paramName: string): Error {
         var msg = `The argument "${paramName}" cannt be null.`;
         return new Error(msg);
@@ -17,10 +21,6 @@ class Errors {
         return new Error(msg);
     }
     public static paramError(msg: string): Error {
-        return new Error(msg);
-    }
-    public static viewNodeNotExists(name): Error {
-        var msg = `The view node "${name}" is not exists.`;//Utility.format('', name);
         return new Error(msg);
     }
     public static pathPairRequireView(index): Error {

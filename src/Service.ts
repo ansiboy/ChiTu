@@ -79,6 +79,8 @@ namespace chitu {
         new(): T
     }
 
+    export type AjaxOptions = { data?: Object, headers?: Headers, method?: string };
+
     export class Service {
 
         error = Callbacks<Service, Error>();
@@ -87,7 +89,7 @@ namespace chitu {
             ajaxTimeout: 30,
         }
 
-        ajax(url: string, options?: { data?: Object, headers?: Headers, contentType?: string, method?: string }) {
+        ajax<T>(url: string, options?: AjaxOptions) {
             options = options || {} as any
             let data = options.data;
             let method = options.method;
@@ -107,7 +109,7 @@ namespace chitu {
                 }
             }
 
-            return callAjax(url, { headers, body, method }, this, this.error);
+            return callAjax<T>(url, { headers, body, method }, this, this.error);
         }
 
     }

@@ -3,7 +3,7 @@ namespace chitu {
     export type PageData = { [key: string]: any }
 
     export interface PageDisplayConstructor {
-        new(app: Application<any>): PageDisplayer
+        new(app: Application): PageDisplayer
     }
 
     export interface PageDisplayer {
@@ -12,7 +12,7 @@ namespace chitu {
     }
 
     export interface PageParams {
-        app: Application<any>,
+        app: Application,
         action: ActionType,
         element: HTMLElement,
         displayer: PageDisplayer,
@@ -29,16 +29,13 @@ namespace chitu {
         private num: Number;
 
         private _element: HTMLElement;
-        // private _previous: Page;
-        private _app: Application<any>;
-        // private _routeData: RouteData;
+        private _app: Application;
         private _displayer: PageDisplayer;
         private _action: ((page: Page) => void) | string;
         private _name: string
 
         static tagName = 'div';
 
-        // error = Callbacks<Page, Error>();
         data: PageData = null
 
         /** 脚本文件加载完成后引发 */
@@ -59,12 +56,8 @@ namespace chitu {
         closing = Callbacks<this, PageData>();
         closed = Callbacks<this, PageData>();
 
-        // active = Callbacks<this, PageData>();
-        // deactive = Callbacks<this, PageData>();
-
         constructor(params: PageParams) {
             this._element = params.element;
-            // this._previous = params.previous;
             this._app = params.app;
             this._displayer = params.displayer;
             this._action = params.action;
@@ -142,12 +135,6 @@ namespace chitu {
         get element(): HTMLElement {
             return this._element;
         }
-        // get previous(): Page {
-        //     return this._previous;
-        // }
-        // set previous(value: Page) {
-        //     this._previous = value;
-        // }
 
         /**
          * 名称

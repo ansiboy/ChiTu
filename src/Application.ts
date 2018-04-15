@@ -14,7 +14,7 @@
 
     const EmtpyStateData = "";
     const DefaultPageName = "index"
-    function parseUrl(app: Application<any>, url: string): { pageName: string, values: PageData } {
+    function parseUrl(app: Application, url: string): { pageName: string, values: PageData } {
         let sharpIndex = url.indexOf('#');
         if (sharpIndex < 0) {
             let pageName = DefaultPageName
@@ -122,7 +122,7 @@
     /**
      * 应用，用于管理各个页面
      */
-    export class Application<T extends SiteMapNode> {
+    export class Application {
 
         private static skipStateName = 'skip';
 
@@ -135,10 +135,12 @@
         protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
 
         private _runned: boolean = false;
+
         private cachePages: { [name: string]: Page } = {};
-        private allNodes: { [key: string]: T } = {};
-        // private _currentPage: Page;
+        // private allNodes: { [key: string]: SiteMapNode } = {};
         private page_stack = new Array<Page>();
+
+        siteMap: chitu.SiteMap<SiteMapNode>;
 
         /** 
          * 错误事件 
@@ -150,14 +152,14 @@
          * @param siteMap 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(siteMap: SiteMap<T>) {
+        constructor(siteMap: SiteMap<SiteMapNode>) {
             if (!siteMap) {
                 throw Errors.argumentNull("siteMap");
             }
 
-            this.allNodes = siteMap.nodes || {};
-            for (let key in this.allNodes) {
-                this.allNodes[key].name = key;
+            this.siteMap = siteMap;
+            for (let key in siteMap.nodes) {
+                siteMap.nodes[key].name = key;
             }
         }
 
@@ -165,7 +167,7 @@
          * 解释路由，将路由字符串解释为 RouteData 对象
          * @param url 要解释的 路由字符串
          */
-        protected parseUrl(url: string) {
+        parseUrl(url: string) {
             let routeData = parseUrl(this, url);
             return routeData;
         }
@@ -175,7 +177,7 @@
          * @param pageName 页面名称
          * @param values 页面参数
          */
-        protected createUrl(pageName: string, values: { [key: string]: string }) {
+        createUrl(pageName: string, values?: { [key: string]: string }) {
             return createUrl(pageName, values);
         }
 
@@ -195,39 +197,21 @@
 
         private getPage(pageName: string, values?: any): Page {
 
+            values = values || {};
+
             let allowCache = this.allowCache(pageName);
             console.assert(allowCache != null);
 
             let cachePage = this.cachePages[pageName];
             if (cachePage != null && allowCache) {
+                cachePage.data = values;
                 return cachePage;
             }
 
             if (cachePage != null)
                 cachePage.close();
 
-
-            let previous_page = this.currentPage; //this.pages[this.pages.length - 1];
-
-            let element = this.createPageElement(pageName);
-            let displayer = new this.pageDisplayType(this);
-
-            let siteMapNode = this.findSiteMapNode(pageName);
-            let action = siteMapNode ?
-                siteMapNode.action :
-                (page: Page) => page.element.innerHTML = `page ${pageName} not found`;
-
-
-            console.assert(this.pageType != null);
-            let page = new this.pageType({
-                app: this,
-                // previous: previous_page,
-                name: pageName,
-                data: values,
-                displayer,
-                element,
-                action,
-            });
+            let page = this.createPage(pageName, values);
 
             let page_onloadComplete = (sender: Page, args) => {
                 this.cachePages[sender.name] = sender;
@@ -246,8 +230,32 @@
             return page;
         }
 
+        protected createPage(pageName: string, values: any): Page {
+            let element = this.createPageElement(pageName);
+            let displayer = new this.pageDisplayType(this);
+
+            let siteMapNode = this.findSiteMapNode(pageName);
+            if (siteMapNode == null)
+                throw Errors.pageNodeNotExists(pageName);
+
+            if (siteMapNode.action == null)
+                throw Errors.actionCanntNull(pageName);
+
+            console.assert(this.pageType != null);
+            let page = new this.pageType({
+                app: this,
+                name: pageName,
+                data: values,
+                displayer,
+                element,
+                action: siteMapNode.action,
+            });
+
+            return page;
+        }
+
         private allowCache(pageName: string): boolean {
-            let node = this.allNodes[pageName];
+            let node = this.siteMap.nodes[pageName];
             console.assert(node != null);
             return node.cache || false;
         }
@@ -326,7 +334,7 @@
             }
 
             Object.assign(routeData.values, args || {});
-            let node = this.allNodes[routeData.pageName];
+            let node = this.siteMap.nodes[routeData.pageName];
             if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
             return this.showPage(node, routeData.values);
         }
@@ -337,7 +345,7 @@
         }
 
         private findSiteMapNode(pageName: string) {
-            return this.allNodes[pageName];
+            return this.siteMap.nodes[pageName];
         }
 
         public setLocationHash(url: string) {
@@ -399,10 +407,6 @@
                         reject(err);
                     });
             });
-        }
-
-        public get pageNodes() {
-            return this.allNodes;
         }
     }
 } 
