@@ -160,16 +160,18 @@
             this.allNodes = siteMap.nodes || {};
             for (let key in this.allNodes) {
                 this.allNodes[key].name = key;
-                let action = this.allNodes[key].action
-                if (typeof action == 'string') {
-                    this.allNodes[key].action = this.wrapAction(action);
-                }
+                let action = this.allNodes[key].action;
+                if (action == null)
+                    throw Errors.actionCanntNull(key);
+
+                this.allNodes[key].action = this.wrapAction(action);
             }
         }
 
         private wrapAction(action: string | Action): (page: Page) => void {
-            let result: Action;
+            console.assert(action != null, 'action is null');
 
+            let result: Action;
             if (typeof action == 'string') {
                 let url = action;
                 result = async function (page: Page) {
@@ -194,20 +196,7 @@
                 }
             }
 
-
             return result;
-            // return async function (page: Page) {
-            //     let actionExports = await this.loadjs(url);
-            //     if (!actionExports)
-            //         throw Errors.exportsCanntNull(url);
-
-            //     let actionName = 'default';
-            //     let _action = actionExports[actionName];
-            //     if (_action == null) {
-            //         throw Errors.canntFindAction(page.name);
-            //     }
-            //     return _action(page);
-            // }
         }
 
         /**
@@ -242,8 +231,10 @@
             return null;
         }
 
-        private getPage(pageName: string, values?: any): Page {
+        private getPage(node: SiteMapNode, values?: any): Page {
+            console.assert(node != null);
 
+            let pageName = node.name;
             let allowCache = this.allowCache(pageName);
             console.assert(allowCache != null);
 
@@ -261,11 +252,9 @@
             let element = this.createPageElement(pageName);
             let displayer = new this.pageDisplayType(this);
 
-            let siteMapNode = this.findSiteMapNode(pageName);
-            let action = siteMapNode ?
-                siteMapNode.action :
-                (page: Page) => page.element.innerHTML = `page ${pageName} not found`;
-
+            let action = node.action;
+            if (!action)
+                throw Errors.actionCanntNull(pageName);
 
             console.assert(this.pageType != null);
             let page = new this.pageType({
@@ -353,7 +342,7 @@
             args = args || {}
             let oldCurrentPage = this.currentPage;
             let isNewPage = false;
-            let page = this.getPage(pageName, args);
+            let page = this.getPage(node, args);
             page.show();
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
