@@ -95,6 +95,10 @@ class Errors {
         let msg = `The site map node ${name} is exists.`
         return new Error(name);
     }
+    public static actionCanntNull(pageName:string){
+        let msg = `Action of page ${pageName} is null.`;
+        return new Error(pageName);
+    }
 }
 // }
 
