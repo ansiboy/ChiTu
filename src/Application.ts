@@ -1,9 +1,9 @@
 ﻿namespace chitu {
 
-    export type ActionType = ((page: Page) => void) | string;
+    export type Action = ((page: Page) => void);
     export type SiteMapChildren<T extends SiteMapNode> = { [key: string]: T }
     export interface SiteMapNode {
-        action: ActionType,
+        action: Action | string,
         name?: string,
         cache?: boolean,
     }
@@ -131,6 +131,8 @@
          */
         pageCreated = Callbacks<this, Page>();
 
+        pageLoad = Callbacks<this, Page, any>();
+
         protected pageType: PageConstructor = Page;
         protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
 
@@ -158,7 +160,54 @@
             this.allNodes = siteMap.nodes || {};
             for (let key in this.allNodes) {
                 this.allNodes[key].name = key;
+                let action = this.allNodes[key].action
+                if (typeof action == 'string') {
+                    this.allNodes[key].action = this.wrapAction(action);
+                }
             }
+        }
+
+        private wrapAction(action: string | Action): (page: Page) => void {
+            let result: Action;
+
+            if (typeof action == 'string') {
+                let url = action;
+                result = async function (page: Page) {
+                    let actionExports = await this.loadjs(url);
+                    if (!actionExports)
+                        throw Errors.exportsCanntNull(url);
+
+                    let actionName = 'default';
+                    let _action = actionExports[actionName];
+                    if (_action == null) {
+                        throw Errors.canntFindAction(page.name);
+                    }
+
+                    page.on_load();
+                    return _action(page);
+                }
+            }
+            else {
+                result = function (page: Page) {
+                    page.on_load();
+                    return action(page);
+                }
+            }
+
+
+            return result;
+            // return async function (page: Page) {
+            //     let actionExports = await this.loadjs(url);
+            //     if (!actionExports)
+            //         throw Errors.exportsCanntNull(url);
+
+            //     let actionName = 'default';
+            //     let _action = actionExports[actionName];
+            //     if (_action == null) {
+            //         throw Errors.canntFindAction(page.name);
+            //     }
+            //     return _action(page);
+            // }
         }
 
         /**
@@ -226,7 +275,7 @@
                 data: values,
                 displayer,
                 element,
-                action,
+                action: action as Action,
             });
 
             let page_onloadComplete = (sender: Page, args) => {
