@@ -1,4 +1,6 @@
-﻿namespace chitu {
+﻿/// <reference path="PageMaster"/>
+
+namespace chitu {
 
     export type Action = ((page: Page) => void);
     export type SiteMapChildren<T extends SiteMapNode> = { [key: string]: T }
@@ -113,35 +115,12 @@
     var VIEW_LOCATION_FORMATER = '{controller}/{action}';
 
     /**
-     * 应用，用于管理各个页面
+     * 应用，处理页面 URL 和 Page 之间的关联
      */
-    export class Application {
+    export class Application extends PageMaster {
 
-        allNodes: { [key: string]: SiteMapNode; };
         private static skipStateName = 'skip';
-
-        /**
-         * 当页面创建后发生
-         */
-        pageCreated = Callbacks<this, Page>();
-
-        pageLoad = Callbacks<this, Page, any>();
-
-        protected pageType: PageConstructor = Page;
-        protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
-
         private _runned: boolean = false;
-
-        private cachePages: { [name: string]: Page } = {};
-        // private allNodes: { [key: string]: SiteMapNode } = {};
-        private page_stack = new Array<Page>();
-
-        siteMap: chitu.SiteMap<SiteMapNode>;
-
-        /** 
-         * 错误事件 
-         */
-        error = Callbacks<this, Error, Page>();
 
         /**
          * 构造函数
@@ -149,51 +128,7 @@
          * @param allowCachePage 是允许缓存页面，默认 true
          */
         constructor(siteMap: SiteMap<SiteMapNode>) {
-            if (!siteMap) {
-                throw Errors.argumentNull("siteMap");
-            }
-
-            this.allNodes = siteMap.nodes || {};
-            for (let key in this.allNodes) {
-                this.allNodes[key].name = key;
-                let action = this.allNodes[key].action;
-                if (action == null)
-                    throw Errors.actionCanntNull(key);
-
-                this.allNodes[key].action = this.wrapAction(action);
-            }
-        }
-
-        private wrapAction(action: string | Action): (page: Page) => void {
-            console.assert(action != null, 'action is null');
-
-            let result: Action;
-            if (typeof action == 'string') {
-                let url = action;
-                result = async function (page: Page) {
-                    let actionExports = await this.loadjs(url);
-                    if (!actionExports)
-                        throw Errors.exportsCanntNull(url);
-
-                    let actionName = 'default';
-                    let _action = actionExports[actionName];
-                    if (_action == null) {
-                        throw Errors.canntFindAction(page.name);
-                    }
-
-                    page.on_load();
-                    return _action(page);
-                }
-            }
-            else {
-                result = function (page: Page) {
-                    page.on_load();
-                    return action(page);
-                }
-
-            }
-
-            return result;
+            super(siteMap, document.body);
         }
 
         /**
@@ -212,98 +147,6 @@
          */
         createUrl(pageName: string, values?: { [key: string]: string }) {
             return createUrl(pageName, values);
-        }
-
-        private on_pageCreated(page: Page) {
-            return this.pageCreated.fire(this, page);
-        }
-
-        /**
-         * 获取当前页面
-         */
-        get currentPage(): Page {
-            if (this.page_stack.length > 0)
-                return this.page_stack[this.page_stack.length - 1];
-
-            return null;
-        }
-
-        private getPage(node: SiteMapNode, values?: any): Page {
-            console.assert(node != null);
-
-            values = values || {};
-
-            let pageName = node.name;
-            let allowCache = this.allowCache(pageName);
-            console.assert(allowCache != null);
-
-            let cachePage = this.cachePages[pageName];
-            if (cachePage != null && allowCache) {
-                cachePage.data = values;
-                return cachePage;
-            }
-
-            if (cachePage != null)
-                cachePage.close();
-
-            let page = this.createPage(pageName, values);
-
-            let page_onloadComplete = (sender: Page, args) => {
-                this.cachePages[sender.name] = sender;
-            }
-            let page_onclosed = (sender: chitu.Page) => {
-                delete this.cachePages[sender.name];
-                this.page_stack = this.page_stack.filter(o => o != sender);
-                page.closed.remove(page_onclosed);
-                page.loadComplete.remove(page_onloadComplete);
-            }
-
-            page.closed.add(page_onclosed);
-            page.loadComplete.add(page_onloadComplete);
-
-            this.on_pageCreated(page);
-            return page;
-        }
-
-        protected createPage(pageName: string, values: any): Page {
-            let element = this.createPageElement(pageName);
-            let displayer = new this.pageDisplayType(this);
-
-            let siteMapNode = this.findSiteMapNode(pageName);
-            if (siteMapNode == null)
-                throw Errors.pageNodeNotExists(pageName);
-
-            let action = siteMapNode.action;
-            if (action == null)
-                throw Errors.actionCanntNull(pageName);
-
-            if (typeof action == 'string') {
-                action = this.wrapAction(action);
-            }
-
-            console.assert(this.pageType != null);
-            let page = new this.pageType({
-                app: this,
-                name: pageName,
-                data: values,
-                displayer,
-                element,
-                action,
-            });
-
-            return page;
-        }
-
-        private allowCache(pageName: string): boolean {
-            let node = this.siteMap.nodes[pageName];
-            console.assert(node != null);
-            return node.cache || false;
-        }
-
-        protected createPageElement(pageName: string) {
-            let element: HTMLElement = document.createElement(Page.tagName);
-            document.body.appendChild(element);
-            return element;
         }
 
         protected hashchange() {
@@ -337,31 +180,6 @@
 
         /**
          * 显示页面
-         * @param node 要显示页面的节点
-         * @param args 页面参数
-         */
-        public showPage(node: SiteMapNode, args?: any) {
-            if (!node) throw Errors.argumentNull('node');
-
-            let pageName = node.name;
-            if (!pageName) throw Errors.argumentNull('pageName');
-
-            if (this.currentPage != null && this.currentPage.name == pageName)
-                return;
-
-            args = args || {}
-            let oldCurrentPage = this.currentPage;
-            let isNewPage = false;
-            let page = this.getPage(node, args);
-            page.show();
-            this.pushPage(page);
-            console.assert(page == this.currentPage, "page is not current page");
-
-            return this.currentPage;
-        }
-
-        /**
-         * 显示页面
          * @param url 页面的路径
          * @param args 传递到页面的参数 
          */
@@ -379,37 +197,10 @@
             return this.showPage(node, routeData.values);
         }
 
-        private pushPage(page: Page) {
-            let previous = this.currentPage;
-            this.page_stack.push(page);
-        }
-
-        private findSiteMapNode(pageName: string) {
-            return this.siteMap.nodes[pageName];
-        }
-
         public setLocationHash(url: string) {
             history.pushState(EmtpyStateData, "", url)
         }
 
-        /**
-         * 关闭当前页面
-         */
-        public closeCurrentPage() {
-            if (this.page_stack.length <= 0)
-                return;
-
-            var page = this.page_stack.pop();
-            if (this.allowCache(page.name)) {
-                page.hide(this.currentPage);
-            }
-            else {
-                page.close();
-            }
-            if (this.currentPage) {
-                this.currentPage.show();
-            }
-        }
 
         /**
          * 页面跳转
@@ -431,22 +222,6 @@
          */
         public back() {
             history.back();
-        }
-
-        /**
-         * 使用 requirejs 加载 JS
-         * @param path JS 路径
-         */
-        public loadjs(path): Promise<any> {
-            return new Promise<Array<any>>((reslove, reject) => {
-                requirejs([path],
-                    function (result) {
-                        reslove(result);
-                    },
-                    function (err) {
-                        reject(err);
-                    });
-            });
         }
     }
 } 

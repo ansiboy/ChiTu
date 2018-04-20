@@ -69,4 +69,20 @@ namespace chitu {
             this.fire(value);
         }
     }
+
+    /**
+     * 使用 requirejs 加载 JS
+     * @param path JS 路径
+     */
+    export function loadjs(path): Promise<any> {
+        return new Promise<Array<any>>((reslove, reject) => {
+            requirejs([path],
+                function (result) {
+                    reslove(result);
+                },
+                function (err) {
+                    reject(err);
+                });
+        });
+    }
 } 

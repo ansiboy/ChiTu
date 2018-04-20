@@ -3,7 +3,7 @@ namespace chitu {
     export type PageData = { [key: string]: any }
 
     export interface PageDisplayConstructor {
-        new(app: Application): PageDisplayer
+        new(app: PageMaster): PageDisplayer
     }
 
     export interface PageDisplayer {
@@ -12,7 +12,7 @@ namespace chitu {
     }
 
     export interface PageParams {
-        app: Application,
+        app: PageMaster,
         action: Action,
         element: HTMLElement,
         displayer: PageDisplayer,
@@ -29,7 +29,7 @@ namespace chitu {
         private num: Number;
 
         private _element: HTMLElement;
-        private _app: Application;
+        private _app: PageMaster;
         private _displayer: PageDisplayer;
         private _action: Action;
         private _name: string
