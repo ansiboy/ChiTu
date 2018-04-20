@@ -13,7 +13,7 @@ namespace chitu {
 
     export interface PageParams {
         app: Application,
-        action: ActionType,
+        action: Action,
         element: HTMLElement,
         displayer: PageDisplayer,
         // previous?: Page,
@@ -31,7 +31,7 @@ namespace chitu {
         private _element: HTMLElement;
         private _app: Application;
         private _displayer: PageDisplayer;
-        private _action: ((page: Page) => void) | string;
+        private _action: Action;
         private _name: string
 
         static tagName = 'div';
@@ -69,7 +69,7 @@ namespace chitu {
                 this.loadPageAction();
             });
         }
-        private on_load() {
+        on_load() {
             return this.load.fire(this, this.data);
         }
         private on_loadComplete() {
@@ -148,45 +148,39 @@ namespace chitu {
         private async loadPageAction() {
             let pageName: string = this.name;
             let action;
-            if (typeof this._action == 'function') {
-                action = this._action;
-            }
-            else {
-                let actionResult;
-                try {
-                    actionResult = await this._app.loadjs(this._action);
-                }
-                catch (err) {
-                    this._app.error.fire(this._app, err, this);
-                    throw err;
-                }
 
-                if (!actionResult)
-                    throw Errors.exportsCanntNull(pageName);
+            // if (typeof this._action == 'function') {
+            action = this._action;
+            // }
+            // else {
+            //     let actionResult;
+            //     actionResult = await this._app.loadjs(this._action);
 
-                let actionName = 'default';
-                action = actionResult[actionName];
-                if (action == null) {
-                    throw Errors.canntFindAction(pageName);
-                }
-            }
 
-            this.on_load();
+            //     if (!actionResult)
+            //         throw Errors.exportsCanntNull(pageName);
+
+            //     let actionName = 'default';
+            //     action = actionResult[actionName];
+            //     if (action == null) {
+            //         throw Errors.canntFindAction(pageName);
+            //     }
+            // }
+
+            // this.on_load();
             let actionExecuteResult;
-            if (typeof action == 'function') {
-                let actionResult = action(this) as Promise<any>;
-                if (actionResult != null && actionResult.then != null && actionResult.catch != null) {
-                    actionResult.then(() => this.on_loadComplete());
-                }
-                else {
-                    this.on_loadComplete();
-                }
-            }
-            else {
+            if (typeof action != 'function') {
                 throw Errors.actionTypeError(pageName);
             }
 
-
+            let actionResult = await action(this) as Promise<any>;
+            // if (actionResult != null && actionResult.then != null && actionResult.catch != null) {
+            //     actionResult.then(() => this.on_loadComplete());
+            // }
+            // else {
+            //     this.on_loadComplete();
+            // }
+            this.on_loadComplete();
         }
 
         reload() {

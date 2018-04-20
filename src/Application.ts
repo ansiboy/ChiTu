@@ -1,9 +1,9 @@
 ﻿namespace chitu {
 
-    export type ActionType = ((page: Page) => void) | string;
+    export type Action = ((page: Page) => void);
     export type SiteMapChildren<T extends SiteMapNode> = { [key: string]: T }
     export interface SiteMapNode {
-        action: ActionType,
+        action: Action | string,
         name?: string,
         cache?: boolean,
     }
@@ -51,7 +51,7 @@
             values = pareeUrlQuery(search);
         }
 
-        let pageName = routePath; 
+        let pageName = routePath;
         return { pageName, values };
     }
 
@@ -117,12 +117,15 @@
      */
     export class Application {
 
+        allNodes: { [key: string]: SiteMapNode; };
         private static skipStateName = 'skip';
 
         /**
          * 当页面创建后发生
          */
         pageCreated = Callbacks<this, Page>();
+
+        pageLoad = Callbacks<this, Page, any>();
 
         protected pageType: PageConstructor = Page;
         protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
@@ -150,10 +153,47 @@
                 throw Errors.argumentNull("siteMap");
             }
 
-            this.siteMap = siteMap;
-            for (let key in siteMap.nodes) {
-                siteMap.nodes[key].name = key;
+            this.allNodes = siteMap.nodes || {};
+            for (let key in this.allNodes) {
+                this.allNodes[key].name = key;
+                let action = this.allNodes[key].action;
+                if (action == null)
+                    throw Errors.actionCanntNull(key);
+
+                this.allNodes[key].action = this.wrapAction(action);
             }
+        }
+
+        private wrapAction(action: string | Action): (page: Page) => void {
+            console.assert(action != null, 'action is null');
+
+            let result: Action;
+            if (typeof action == 'string') {
+                let url = action;
+                result = async function (page: Page) {
+                    let actionExports = await this.loadjs(url);
+                    if (!actionExports)
+                        throw Errors.exportsCanntNull(url);
+
+                    let actionName = 'default';
+                    let _action = actionExports[actionName];
+                    if (_action == null) {
+                        throw Errors.canntFindAction(page.name);
+                    }
+
+                    page.on_load();
+                    return _action(page);
+                }
+            }
+            else {
+                result = function (page: Page) {
+                    page.on_load();
+                    return action(page);
+                }
+
+            }
+
+            return result;
         }
 
         /**
@@ -188,10 +228,12 @@
             return null;
         }
 
-        private getPage(pageName: string, values?: any): Page {
+        private getPage(node: SiteMapNode, values?: any): Page {
+            console.assert(node != null);
 
             values = values || {};
 
+            let pageName = node.name;
             let allowCache = this.allowCache(pageName);
             console.assert(allowCache != null);
 
@@ -231,8 +273,13 @@
             if (siteMapNode == null)
                 throw Errors.pageNodeNotExists(pageName);
 
-            if (siteMapNode.action == null)
+            let action = siteMapNode.action;
+            if (action == null)
                 throw Errors.actionCanntNull(pageName);
+
+            if (typeof action == 'string') {
+                action = this.wrapAction(action);
+            }
 
             console.assert(this.pageType != null);
             let page = new this.pageType({
@@ -241,7 +288,7 @@
                 data: values,
                 displayer,
                 element,
-                action: siteMapNode.action,
+                action,
             });
 
             return page;
@@ -305,7 +352,7 @@
             args = args || {}
             let oldCurrentPage = this.currentPage;
             let isNewPage = false;
-            let page = this.getPage(pageName, args);
+            let page = this.getPage(node, args);
             page.show();
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
