@@ -63,6 +63,8 @@ namespace chitu {
             this._action = params.action;
             this.data = params.data
             this._name = params.name;
+
+            // 确保异步调用
             setTimeout(() => {
                 this.loadPageAction();
             });
@@ -94,7 +96,7 @@ namespace chitu {
         show(): Promise<any> {
             this.on_showing();
             let currentPage = this._app.currentPage;
-            if(this == currentPage){
+            if (this == currentPage) {
                 currentPage = null;
             }
             return this._displayer.show(this, currentPage).then(o => {
@@ -151,8 +153,13 @@ namespace chitu {
             }
             else {
                 let actionResult;
-                actionResult = await this._app.loadjs(this._action);
-
+                try {
+                    actionResult = await this._app.loadjs(this._action);
+                }
+                catch (err) {
+                    this._app.error.fire(this._app, err, this);
+                    throw err;
+                }
 
                 if (!actionResult)
                     throw Errors.exportsCanntNull(pageName);

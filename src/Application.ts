@@ -51,14 +51,7 @@
             values = pareeUrlQuery(search);
         }
 
-        let path_parts = routePath.split(this.path_spliter_char).map(o => o.trim()).filter(o => o != '');
-        if (path_parts.length < 1) {
-            throw Errors.canntParseRouteString(routeString);
-        }
-
-        let file_path = path_parts.join('/');
-        let pageName = path_parts.join('.');
-
+        let pageName = routePath; 
         return { pageName, values };
     }
 
