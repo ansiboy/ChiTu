@@ -3,14 +3,18 @@
 namespace chitu {
 
     export type Action = ((page: Page) => void);
-    export type SiteMapChildren<T extends SiteMapNode> = { [key: string]: T }
-    export interface SiteMapNode {
+    export type SiteMapChildren<T extends PageNode> = { [key: string]: T }
+    
+    /**
+     * 页面结点
+     */
+    export interface PageNode {
         action: Action | string,
         name?: string,
         cache?: boolean,
     }
 
-    export interface SiteMap<T extends SiteMapNode> {
+    export interface SiteMap<T extends PageNode> {
         nodes: { [key: string]: T }
     }
 
@@ -127,7 +131,7 @@ namespace chitu {
          * @param siteMap 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(siteMap: SiteMap<SiteMapNode>) {
+        constructor(siteMap: SiteMap<PageNode>) {
             super(siteMap, document.body);
         }
 
@@ -207,7 +211,7 @@ namespace chitu {
          * @param node 页面节点
          * @param args 传递到页面的参数
          */
-        public redirect(node: SiteMapNode, args?: any): Page {
+        public redirect(node: PageNode, args?: any): Page {
             if (!node) throw Errors.argumentNull("node");
 
             let result = this.showPage(node, args);
