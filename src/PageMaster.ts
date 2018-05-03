@@ -47,6 +47,7 @@ namespace chitu {
                 siteMap.nodes[key].action = this.wrapAction(action);
             }
 
+            this.siteMap = siteMap;
             this.container = container;
         }
 
