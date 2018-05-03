@@ -3,14 +3,18 @@
 namespace chitu {
 
     export type Action = ((page: Page) => void);
-    export type SiteMapChildren<T extends SiteMapNode> = { [key: string]: T }
-    export interface SiteMapNode {
+    export type SiteMapChildren<T extends PageNode> = { [key: string]: T }
+
+    /**
+     * 页面结点
+     */
+    export interface PageNode {
         action: Action | string,
         name?: string,
         cache?: boolean,
     }
 
-    export interface SiteMap<T extends SiteMapNode> {
+    export interface SiteMap<T extends PageNode> {
         nodes: { [key: string]: T }
     }
 
@@ -78,25 +82,33 @@ namespace chitu {
             return `#${path}`;
 
         //==============================================
-        // 移除 function, null 字段
-        let stack = [];
-        stack.push(params);
-        while (stack.length > 0) {
-            let obj = stack.pop();
-            for (let key in obj) {
-                let type = typeof (obj[key]);
-                if (type == 'function' || obj[key] == null) {
-                    delete obj[key];
-                    continue;
-                }
-                else if (type == 'object') {
-                    for (let key1 in obj[key])
-                        if (typeof obj[key][key1] == 'object')
-                            stack.push(obj[key][key1])
-                }
+        // 移除 function, null, object 字段
+        // let stack = [];
+        // stack.push(params);
+        // while (stack.length > 0) {
+        //     let obj = stack.pop();
+        //     for (let key in obj) {
+        //         let type = typeof (obj[key]);
+        //         if (type == 'function' || obj[key] == null) {
+        //             delete obj[key];
+        //             continue;
+        //         }
+        //         else if (type == 'object') {
+        //             for (let key1 in obj[key])
+        //                 if (typeof obj[key][key1] == 'object')
+        //                     stack.push(obj[key][key1])
+        //         }
+        //     }
+        // }
+        //==============================================
+        for (let key in params) {
+            let value = params[key];
+            let type = typeof params[key];
+            if (type == 'function' || type == 'object' || value == null) {
+                delete params[key];
+                continue;
             }
         }
-        //==============================================
 
         let paramsText = "";
         for (let key in params) {
@@ -127,7 +139,7 @@ namespace chitu {
          * @param siteMap 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(siteMap: SiteMap<SiteMapNode>) {
+        constructor(siteMap: SiteMap<PageNode>) {
             super(siteMap, document.body);
         }
 
@@ -183,7 +195,7 @@ namespace chitu {
          * @param url 页面的路径
          * @param args 传递到页面的参数 
          */
-        private showPageByUrl(url: string, args?: any): Page {
+        private showPageByUrl(url: string): Page {
             if (!url) throw Errors.argumentNull('url');
 
             var routeData = this.parseUrl(url);
@@ -191,23 +203,21 @@ namespace chitu {
                 throw Errors.noneRouteMatched(url);
             }
 
-            Object.assign(routeData.values, args || {});
             let node = this.siteMap.nodes[routeData.pageName];
             if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
             return this.showPage(node, routeData.values);
         }
 
         public setLocationHash(url: string) {
-            history.pushState(EmtpyStateData, "", url)
+            history.pushState(Application.skipStateName, "", url)
         }
-
 
         /**
          * 页面跳转
          * @param node 页面节点
          * @param args 传递到页面的参数
          */
-        public redirect(node: SiteMapNode, args?: any): Page {
+        public redirect(node: PageNode, args?: any): Page {
             if (!node) throw Errors.argumentNull("node");
 
             let result = this.showPage(node, args);

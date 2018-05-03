@@ -19,7 +19,7 @@ namespace chitu {
         private page_stack = new Array<Page>();
         private container: HTMLElement;
 
-        siteMap: chitu.SiteMap<SiteMapNode>;
+        siteMap: chitu.SiteMap<PageNode>;
 
         /** 
          * 错误事件 
@@ -31,7 +31,7 @@ namespace chitu {
          * @param siteMap 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(siteMap: SiteMap<SiteMapNode>, container: HTMLElement) {
+        constructor(siteMap: SiteMap<PageNode>, container: HTMLElement) {
             if (!siteMap)
                 throw Errors.argumentNull("siteMap");
 
@@ -97,7 +97,7 @@ namespace chitu {
             return null;
         }
 
-        private getPage(node: SiteMapNode, values?: any): Page {
+        private getPage(node: PageNode, values?: any): Page {
             console.assert(node != null);
 
             values = values || {};
@@ -180,7 +180,7 @@ namespace chitu {
          * @param node 要显示页面的节点
          * @param args 页面参数
          */
-        public showPage(node: SiteMapNode, args?: any) {
+        public showPage(node: PageNode, args?: any) {
             if (!node) throw Errors.argumentNull('node');
 
             let pageName = node.name;
@@ -228,6 +228,19 @@ namespace chitu {
             }
         }
 
+        /**
+         * 添加或更新页面结点
+         * @param name 页面结点名称
+         * @param action 页面执行
+         */
+        public setPageNode(name: string, action: string | Action): PageNode {
+            let node: PageNode = {
+                name,
+                action: this.wrapAction(action)
+            }
+            this.siteMap[name] = node;
+            return node;
+        }
 
     }
 }
