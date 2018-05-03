@@ -82,25 +82,33 @@ namespace chitu {
             return `#${path}`;
 
         //==============================================
-        // 移除 function, null 字段
-        let stack = [];
-        stack.push(params);
-        while (stack.length > 0) {
-            let obj = stack.pop();
-            for (let key in obj) {
-                let type = typeof (obj[key]);
-                if (type == 'function' || obj[key] == null) {
-                    delete obj[key];
-                    continue;
-                }
-                else if (type == 'object') {
-                    for (let key1 in obj[key])
-                        if (typeof obj[key][key1] == 'object')
-                            stack.push(obj[key][key1])
-                }
+        // 移除 function, null, object 字段
+        // let stack = [];
+        // stack.push(params);
+        // while (stack.length > 0) {
+        //     let obj = stack.pop();
+        //     for (let key in obj) {
+        //         let type = typeof (obj[key]);
+        //         if (type == 'function' || obj[key] == null) {
+        //             delete obj[key];
+        //             continue;
+        //         }
+        //         else if (type == 'object') {
+        //             for (let key1 in obj[key])
+        //                 if (typeof obj[key][key1] == 'object')
+        //                     stack.push(obj[key][key1])
+        //         }
+        //     }
+        // }
+        //==============================================
+        for (let key in params) {
+            let value = params[key];
+            let type = typeof params[key];
+            if (type == 'function' || type == 'object' || value == null) {
+                delete params[key];
+                continue;
             }
         }
-        //==============================================
 
         let paramsText = "";
         for (let key in params) {
