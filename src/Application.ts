@@ -4,7 +4,7 @@ namespace chitu {
 
     export type Action = ((page: Page) => void);
     export type SiteMapChildren<T extends PageNode> = { [key: string]: T }
-    
+
     /**
      * 页面结点
      */
@@ -187,7 +187,7 @@ namespace chitu {
          * @param url 页面的路径
          * @param args 传递到页面的参数 
          */
-        private showPageByUrl(url: string, args?: any): Page {
+        private showPageByUrl(url: string): Page {
             if (!url) throw Errors.argumentNull('url');
 
             var routeData = this.parseUrl(url);
@@ -195,16 +195,14 @@ namespace chitu {
                 throw Errors.noneRouteMatched(url);
             }
 
-            Object.assign(routeData.values, args || {});
             let node = this.siteMap.nodes[routeData.pageName];
             if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
             return this.showPage(node, routeData.values);
         }
 
         public setLocationHash(url: string) {
-            history.pushState(EmtpyStateData, "", url)
+            history.pushState(Application.skipStateName, "", url)
         }
-
 
         /**
          * 页面跳转
