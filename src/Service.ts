@@ -109,7 +109,7 @@ namespace chitu {
                 }
             }
 
-            return callAjax<T>(url, { headers, body, method }, this, this.error);
+            return callAjax<T>(url, { headers: headers as any, body, method }, this, this.error);
         }
 
     }

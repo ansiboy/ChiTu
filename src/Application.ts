@@ -83,42 +83,17 @@ namespace chitu {
 
         //==============================================
         // 移除 function, null, object 字段
-        // let stack = [];
-        // stack.push(params);
-        // while (stack.length > 0) {
-        //     let obj = stack.pop();
-        //     for (let key in obj) {
-        //         let type = typeof (obj[key]);
-        //         if (type == 'function' || obj[key] == null) {
-        //             delete obj[key];
-        //             continue;
-        //         }
-        //         else if (type == 'object') {
-        //             for (let key1 in obj[key])
-        //                 if (typeof obj[key][key1] == 'object')
-        //                     stack.push(obj[key][key1])
-        //         }
-        //     }
-        // }
-        //==============================================
+        let paramsText = '';
         for (let key in params) {
             let value = params[key];
             let type = typeof params[key];
             if (type == 'function' || type == 'object' || value == null) {
-                delete params[key];
                 continue;
             }
+            paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
         }
-
-        let paramsText = "";
-        for (let key in params) {
-            paramsText = paramsText + `&${key}=${params[key]}`;
-        }
-
-        if (paramsText.length > 0)
-            paramsText = paramsText.substr(1);
-
-        return `#${path}?${paramsText}`;
+        //==============================================
+        return `#${path}${paramsText}`;
     }
 
     var PAGE_STACK_MAX_SIZE = 30;
@@ -140,7 +115,7 @@ namespace chitu {
          * @param allowCachePage 是允许缓存页面，默认 true
          */
         constructor(siteMap: SiteMap<PageNode>) {
-            super(siteMap, document.body);
+            super(siteMap.nodes, document.body);
         }
 
         /**
@@ -203,13 +178,13 @@ namespace chitu {
                 throw Errors.noneRouteMatched(url);
             }
 
-            let node = this.siteMap.nodes[routeData.pageName];
+            let node = this.nodes[routeData.pageName];
             if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
             return this.showPage(node, routeData.values);
         }
 
         public setLocationHash(url: string) {
-            history.pushState(Application.skipStateName, "", url)
+            history.pushState(EmtpyStateData, "", url)
         }
 
         /**
@@ -217,10 +192,12 @@ namespace chitu {
          * @param node 页面节点
          * @param args 传递到页面的参数
          */
-        public redirect(node: PageNode, args?: any): Page {
+        public redirect(node: PageNode, args?: any): Page;
+        public redirect(node: PageNode, focusNotCache?: boolean, args?: any)
+        public redirect(node: PageNode, focusNotCache?: any, args?: any): Page {
             if (!node) throw Errors.argumentNull("node");
 
-            let result = this.showPage(node, args);
+            let result = this.showPage(node, focusNotCache, args);
             let url = this.createUrl(node.name, args);
             this.setLocationHash(url);
 

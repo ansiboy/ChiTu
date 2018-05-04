@@ -19,7 +19,7 @@ namespace chitu {
         private page_stack = new Array<Page>();
         private container: HTMLElement;
 
-        siteMap: chitu.SiteMap<PageNode>;
+        nodes: { [key: string]: PageNode };
 
         /** 
          * 错误事件 
@@ -31,23 +31,23 @@ namespace chitu {
          * @param siteMap 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(siteMap: SiteMap<PageNode>, container: HTMLElement) {
-            if (!siteMap)
-                throw Errors.argumentNull("siteMap");
+        constructor(nodes: { [key: string]: PageNode }, container: HTMLElement) {
+            if (!nodes)
+                throw Errors.argumentNull("nodes");
 
             if (!container)
                 throw Errors.argumentNull("container");
 
-            for (let key in siteMap.nodes) {
-                siteMap.nodes[key].name = key;
-                let action = siteMap.nodes[key].action;
+            for (let key in nodes) {
+                nodes[key].name = key;
+                let action = nodes[key].action;
                 if (action == null)
                     throw Errors.actionCanntNull(key);
 
-                siteMap.nodes[key].action = this.wrapAction(action);
+                nodes[key].action = this.wrapAction(action);
             }
 
-            this.siteMap = siteMap;
+            this.nodes = nodes;
             this.container = container;
         }
 
@@ -97,18 +97,17 @@ namespace chitu {
             return null;
         }
 
-        private getPage(node: PageNode, values?: any): Page {
+        private getPage(node: PageNode, allowCache: boolean, values?: any): Page {
             console.assert(node != null);
 
             values = values || {};
 
             let pageName = node.name;
-            let allowCache = this.allowCache(pageName);
-            console.assert(allowCache != null);
+
 
             let cachePage = this.cachePages[pageName];
             if (cachePage != null && allowCache) {
-                cachePage.data = values;
+                cachePage.data = Object.assign(cachePage.data || {}, values);
                 return cachePage;
             }
 
@@ -164,7 +163,7 @@ namespace chitu {
         }
 
         private allowCache(pageName: string): boolean {
-            let node = this.siteMap.nodes[pageName];
+            let node = this.nodes[pageName];
             console.assert(node != null);
             return node.cache || false;
         }
@@ -180,7 +179,10 @@ namespace chitu {
          * @param node 要显示页面的节点
          * @param args 页面参数
          */
-        public showPage(node: PageNode, args?: any) {
+
+        public showPage(node: PageNode, args?: any)
+        public showPage(node: PageNode, focusNotCache?: boolean, args?: any)
+        public showPage(node: PageNode, focusNotCache?: any, args?: any) {
             if (!node) throw Errors.argumentNull('node');
 
             let pageName = node.name;
@@ -189,10 +191,21 @@ namespace chitu {
             if (this.currentPage != null && this.currentPage.name == pageName)
                 return;
 
+
+            if (typeof (focusNotCache) == 'object') {
+                args = focusNotCache;
+                focusNotCache = false;
+            }
+
+            let allowCache = focusNotCache == true ? false : this.allowCache(pageName);
+            console.assert(allowCache != null);
+
             args = args || {}
             let oldCurrentPage = this.currentPage;
             let isNewPage = false;
-            let page = this.getPage(node, args);
+
+
+            let page = this.getPage(node, allowCache, args);
             page.show();
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
@@ -206,7 +219,7 @@ namespace chitu {
         }
 
         private findSiteMapNode(pageName: string) {
-            return this.siteMap.nodes[pageName];
+            return this.nodes[pageName];
         }
 
         /**
@@ -238,7 +251,7 @@ namespace chitu {
                 name,
                 action: this.wrapAction(action)
             }
-            this.siteMap[name] = node;
+            this.nodes[name] = node;
             return node;
         }
 
