@@ -179,7 +179,7 @@ namespace chitu {
         /**
          * 显示页面
          * @param node 要显示页面的节点
-         * @param allowCache 页面是否从缓存读取
+         * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 true
          * @param args 页面参数
          */
         public showPage(node: PageNode, args?: any)
@@ -213,7 +213,7 @@ namespace chitu {
             this.page_stack.push(page);
         }
 
-        private findSiteMapNode(pageName: string) {
+        protected findSiteMapNode(pageName: string) {
             let node = this.nodes[pageName];
             if (node == null && this.siteMap.pageNameParse != null)
                 node = this.siteMap.pageNameParse(pageName);

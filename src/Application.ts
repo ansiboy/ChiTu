@@ -101,6 +101,7 @@ namespace chitu {
     export class Application extends PageMaster {
 
         private _runned: boolean = false;
+        private closeCurrentOnBack: boolean;
         // private pageStack = new Array<string>();
 
         /**
@@ -157,7 +158,6 @@ namespace chitu {
         /**
          * 显示页面
          * @param url 页面的路径
-         * @param args 传递到页面的参数 
          */
         private showPageByUrl(url: string): Page {
             if (!url) throw Errors.argumentNull('url');
@@ -169,11 +169,17 @@ namespace chitu {
 
             let isBack = this.pageStack.length >= 2 && routeData.pageName == this.pageStack[this.pageStack.length - 2].name;
             if (isBack) {
-                this.closeCurrentPage();
+                if (this.closeCurrentOnBack)
+                    this.closeCurrentPage();
+                else {
+                    var page = this.pageStack.pop();
+                    page.hide(this.currentPage);
+                }
+
                 return this.currentPage;
             }
 
-            let node = this.nodes[routeData.pageName];
+            let node = this.findSiteMapNode(routeData.pageName); //this.nodes[routeData.pageName];
             if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
             return this.showPage(node, routeData.values);
         }
@@ -201,8 +207,10 @@ namespace chitu {
 
         /**
          * 返回上一个页面
+         * @param closeCurrentPage 返回上一个页面时，是否关闭当前页面，true 关闭当前页，false 隐藏当前页。默认为 true。
          */
-        public back() {
+        public back(closeCurrentPage?: boolean) {
+            this.closeCurrentOnBack = closeCurrentPage == null ? true : closeCurrentPage;
             history.back();
         }
     }
