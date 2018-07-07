@@ -74,7 +74,6 @@ namespace chitu {
         return urlParams;
     }
 
-
     function createUrl(pageName: string, params?: { [key: string]: string }) {
         let path_parts = pageName.split('.');
         let path = path_parts.join('/');
@@ -96,18 +95,13 @@ namespace chitu {
         return `#${path}${paramsText}`;
     }
 
-    var PAGE_STACK_MAX_SIZE = 30;
-    var CACHE_PAGE_SIZE = 30;
-    var ACTION_LOCATION_FORMATER = '{controller}/{action}';
-    var VIEW_LOCATION_FORMATER = '{controller}/{action}';
-
     /**
      * 应用，处理页面 URL 和 Page 之间的关联
      */
     export class Application extends PageMaster {
 
-        private static skipStateName = 'skip';
         private _runned: boolean = false;
+        // private pageStack = new Array<string>();
 
         /**
          * 构造函数
@@ -152,13 +146,8 @@ namespace chitu {
         public run() {
             if (this._runned) return;
 
-            var app = this;
-
             this.hashchange();
-            window.addEventListener('popstate', (event) => {
-                if (event.state == Application.skipStateName)
-                    return;
-
+            window.addEventListener('popstate', () => {
                 this.hashchange();
             });
 
@@ -178,6 +167,12 @@ namespace chitu {
                 throw Errors.noneRouteMatched(url);
             }
 
+            let isBack = this.pageStack.length >= 2 && routeData.pageName == this.pageStack[this.pageStack.length - 2].name;
+            if (isBack) {
+                this.closeCurrentPage();
+                return this.currentPage;
+            }
+
             let node = this.nodes[routeData.pageName];
             if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
             return this.showPage(node, routeData.values);
@@ -193,11 +188,11 @@ namespace chitu {
          * @param args 传递到页面的参数
          */
         public redirect(node: PageNode, args?: any): Page;
-        public redirect(node: PageNode, focusNotCache?: boolean, args?: any)
-        public redirect(node: PageNode, focusNotCache?: any, args?: any): Page {
+        public redirect(node: PageNode, fromCache?: boolean, args?: any)
+        public redirect(node: PageNode, fromCache?: any, args?: any): Page {
             if (!node) throw Errors.argumentNull("node");
 
-            let result = this.showPage(node, focusNotCache, args);
+            let result = this.showPage(node, fromCache, args);
             let url = this.createUrl(node.name, args);
             this.setLocationHash(url);
 

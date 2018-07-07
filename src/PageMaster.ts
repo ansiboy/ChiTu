@@ -162,11 +162,11 @@ namespace chitu {
             return page;
         }
 
-        private allowCache(pageName: string): boolean {
-            let node = this.nodes[pageName];
-            console.assert(node != null);
-            return node.cache || false;
-        }
+        // private allowCache(pageName: string): boolean {
+        //     let node = this.nodes[pageName];
+        //     console.assert(node != null);
+        //     return node.cache || false;
+        // }
 
         protected createPageElement(pageName: string) {
             let element: HTMLElement = document.createElement(Page.tagName);
@@ -177,12 +177,12 @@ namespace chitu {
         /**
          * 显示页面
          * @param node 要显示页面的节点
+         * @param allowCache 页面是否从缓存读取
          * @param args 页面参数
          */
-
         public showPage(node: PageNode, args?: any)
-        public showPage(node: PageNode, focusNotCache?: boolean, args?: any)
-        public showPage(node: PageNode, focusNotCache?: any, args?: any) {
+        public showPage(node: PageNode, fromCache?: boolean, args?: any)
+        public showPage(node: PageNode, fromCache?: any, args?: any) {
             if (!node) throw Errors.argumentNull('node');
 
             let pageName = node.name;
@@ -192,20 +192,14 @@ namespace chitu {
                 return;
 
 
-            if (typeof (focusNotCache) == 'object') {
-                args = focusNotCache;
-                focusNotCache = false;
+            if (typeof (fromCache) == 'object') {
+                args = fromCache;
+                fromCache = true;
             }
 
-            let allowCache = focusNotCache == true ? false : this.allowCache(pageName);
-            console.assert(allowCache != null);
-
+            fromCache = fromCache == null ? true : fromCache;
             args = args || {}
-            let oldCurrentPage = this.currentPage;
-            let isNewPage = false;
-
-
-            let page = this.getPage(node, allowCache, args);
+            let page = this.getPage(node, fromCache, args);
             page.show();
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
@@ -214,7 +208,6 @@ namespace chitu {
         }
 
         private pushPage(page: Page) {
-            let previous = this.currentPage;
             this.page_stack.push(page);
         }
 
@@ -230,15 +223,19 @@ namespace chitu {
                 return;
 
             var page = this.page_stack.pop();
-            if (this.allowCache(page.name)) {
-                page.hide(this.currentPage);
-            }
-            else {
-                page.close();
-            }
+            // if (this.allowCache(page.name)) {
+            //     page.hide(this.currentPage);
+            // }
+            // else {
+            page.close();
+            // }
             if (this.currentPage) {
                 this.currentPage.show();
             }
+        }
+
+        protected get pageStack() {
+            return this.page_stack;
         }
 
         /**
