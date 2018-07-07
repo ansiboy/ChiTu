@@ -25,29 +25,31 @@ namespace chitu {
          * 错误事件 
          */
         error = Callbacks<this, Error, Page>();
+        siteMap: SiteMap;
 
         /**
          * 构造函数
          * @param siteMap 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(nodes: { [key: string]: PageNode }, container: HTMLElement) {
-            if (!nodes)
-                throw Errors.argumentNull("nodes");
+        constructor(siteMap: SiteMap, container: HTMLElement) {
+            if (!siteMap)
+                throw Errors.argumentNull("siteMap");
 
+            this.nodes = siteMap.nodes;
+            this.siteMap = siteMap;
             if (!container)
                 throw Errors.argumentNull("container");
 
-            for (let key in nodes) {
-                nodes[key].name = key;
-                let action = nodes[key].action;
+            for (let key in this.nodes) {
+                this.nodes[key].name = key;
+                let action = this.nodes[key].action;
                 if (action == null)
                     throw Errors.actionCanntNull(key);
 
-                nodes[key].action = this.wrapAction(action);
+                this.nodes[key].action = this.wrapAction(action);
             }
 
-            this.nodes = nodes;
             this.container = container;
         }
 
@@ -212,7 +214,11 @@ namespace chitu {
         }
 
         private findSiteMapNode(pageName: string) {
-            return this.nodes[pageName];
+            let node = this.nodes[pageName];
+            if (node == null && this.siteMap.pageNameParse != null)
+                node = this.siteMap.pageNameParse(pageName);
+
+            return node;
         }
 
         /**

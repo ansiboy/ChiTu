@@ -11,11 +11,11 @@ namespace chitu {
     export interface PageNode {
         action: Action | string,
         name?: string,
-        cache?: boolean,
     }
 
-    export interface SiteMap<T extends PageNode> {
-        nodes: { [key: string]: T }
+    export interface SiteMap {
+        nodes: { [key: string]: PageNode },
+        pageNameParse?: (pageName: string) => PageNode
     }
 
     const EmtpyStateData = "";
@@ -108,8 +108,8 @@ namespace chitu {
          * @param siteMap 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(siteMap: SiteMap<PageNode>) {
-            super(siteMap.nodes, document.body);
+        constructor(siteMap: SiteMap) {
+            super(siteMap, document.body);
         }
 
         /**
