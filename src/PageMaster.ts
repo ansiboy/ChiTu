@@ -180,16 +180,16 @@ namespace chitu {
          * @param args 页面参数
          */
 
-        public showPage(node: PageNode, args?: any)
-        public showPage(node: PageNode, focusNotCache?: boolean, args?: any)
-        public showPage(node: PageNode, focusNotCache?: any, args?: any) {
+        public showPage(node: PageNode, args?: any): Page
+        public showPage(node: PageNode, focusNotCache?: boolean, args?: any): Page
+        public showPage(node: PageNode, focusNotCache?: any, args?: any): Page {
             if (!node) throw Errors.argumentNull('node');
 
             let pageName = node.name;
             if (!pageName) throw Errors.argumentNull('pageName');
 
             if (this.currentPage != null && this.currentPage.name == pageName)
-                return;
+                return this.currentPage;
 
 
             if (typeof (focusNotCache) == 'object') {

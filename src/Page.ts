@@ -149,42 +149,22 @@ namespace chitu {
             let pageName: string = this.name;
             let action;
 
-            // if (typeof this._action == 'function') {
             action = this._action;
-            // }
-            // else {
-            //     let actionResult;
-            //     actionResult = await this._app.loadjs(this._action);
-
-
-            //     if (!actionResult)
-            //         throw Errors.exportsCanntNull(pageName);
-
-            //     let actionName = 'default';
-            //     action = actionResult[actionName];
-            //     if (action == null) {
-            //         throw Errors.canntFindAction(pageName);
-            //     }
-            // }
-
-            // this.on_load();
             let actionExecuteResult;
             if (typeof action != 'function') {
                 throw Errors.actionTypeError(pageName);
             }
 
             let actionResult = await action(this) as Promise<any>;
-            // if (actionResult != null && actionResult.then != null && actionResult.catch != null) {
-            //     actionResult.then(() => this.on_loadComplete());
-            // }
-            // else {
-            //     this.on_loadComplete();
-            // }
             this.on_loadComplete();
         }
 
         reload() {
             return this.loadPageAction();
+        }
+
+        get app() {
+            return this._app;
         }
     }
 
