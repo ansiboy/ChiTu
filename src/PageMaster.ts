@@ -176,16 +176,24 @@ namespace chitu {
             return element;
         }
 
+        public showPage(node: PageNode, args?: any): Page
+        public showPage(node: PageNode, fromCache?: boolean, args?: any): Page
+        public showPage(pageName: string, args?: any): Page
+        public showPage(pageName: string, fromCache?: boolean, args?: any): Page
         /**
          * 显示页面
          * @param node 要显示页面的节点
          * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 true
          * @param args 页面参数
          */
-        public showPage(node: PageNode, args?: any)
-        public showPage(node: PageNode, fromCache?: boolean, args?: any)
-        public showPage(node: PageNode, fromCache?: any, args?: any) {
+        public showPage(node: PageNode | string, fromCache?: any, args?: any): Page {
             if (!node) throw Errors.argumentNull('node');
+            if (typeof node == 'string') {
+                let pageName = node;
+                node = this.findSiteMapNode(pageName);
+                if (node == null)
+                    throw Errors.pageNodeNotExists(pageName)
+            }
 
             let pageName = node.name;
             if (!pageName) throw Errors.argumentNull('pageName');

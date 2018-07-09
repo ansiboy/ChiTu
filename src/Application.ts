@@ -188,22 +188,35 @@ namespace chitu {
             history.pushState(EmtpyStateData, "", url)
         }
 
+        public redirect(node: PageNode, args?: any): Page
+        public redirect(node: PageNode, fromCache?: boolean, args?: any): Page
+        public redirect(pageName: string, args?: any): Page
+        public redirect(pageName: string, fromCache?: boolean, args?: any): Page
         /**
          * 页面跳转
          * @param node 页面节点
+         * @param fromCache 是否从缓存读取
          * @param args 传递到页面的参数
          */
-        public redirect(node: PageNode, args?: any): Page;
-        public redirect(node: PageNode, fromCache?: boolean, args?: any)
-        public redirect(node: PageNode, fromCache?: any, args?: any): Page {
+        public redirect(node: PageNode | string, fromCache?: any, args?: any): Page {
             if (!node) throw Errors.argumentNull("node");
+            if (typeof node == 'string') {
+                let pageName = node;
+                node = this.findSiteMapNode(pageName);
+                if (node == null)
+                    throw Errors.pageNodeNotExists(pageName);
+            }
 
             let result = this.showPage(node, fromCache, args);
+            if (typeof (fromCache) == 'object') {
+                args = fromCache;
+            }
             let url = this.createUrl(node.name, args);
             this.setLocationHash(url);
 
             return result;
         }
+
 
         /**
          * 返回上一个页面

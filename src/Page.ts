@@ -110,12 +110,10 @@ namespace chitu {
             });
         }
         close(): Promise<any> {
-            return new Promise((resolve, reject) => {
-                this.on_closing();
-                this._element.remove();
-                this.on_closed();
-                resolve();
-            })
+            this.on_closing();
+            this._element.remove();
+            this.on_closed();
+            return Promise.resolve();
         }
 
         /**
