@@ -131,15 +131,15 @@ namespace chitu {
             return createUrl(pageName, values);
         }
 
-        protected hashchange() {
+        // protected hashchange() {
 
-            var routeData = this.parseUrl(location.href);
-            if (routeData == null) {
-                return;
-            }
+        //     var routeData = this.parseUrl(location.href);
+        //     if (routeData == null) {
+        //         return;
+        //     }
 
-            this.showPageByUrl(location.href);
-        }
+        //     this.showPageByUrl(location.href);
+        // }
 
         /**
          * 运行当前应用
@@ -147,9 +147,9 @@ namespace chitu {
         public run() {
             if (this._runned) return;
 
-            this.hashchange();
+            this.showPageByUrl(location.href);
             window.addEventListener('popstate', () => {
-                this.hashchange();
+                this.showPageByUrl(location.href);
             });
 
             this._runned = true;
