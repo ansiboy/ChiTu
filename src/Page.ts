@@ -1,6 +1,6 @@
 namespace chitu {
 
-    export type PageData = { [key: string]: any }
+    export type PageData = { [key: string]: string | Function }
 
     export interface PageDisplayConstructor {
         new(app: PageMaster): PageDisplayer
