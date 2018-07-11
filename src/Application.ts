@@ -4,7 +4,6 @@ namespace chitu {
 
     export type Action = ((page: Page) => void);
     export type SiteMapChildren<T extends PageNode> = { [key: string]: T }
-
     /**
      * 页面结点
      */
@@ -61,20 +60,20 @@ namespace chitu {
         return { pageName, values };
     }
 
-    function pareeUrlQuery(query: string): Object {
+    function pareeUrlQuery(query: string): PageData {
         let match,
             pl = /\+/g,  // Regex for replacing addition symbol with a space
             search = /([^&=]+)=?([^&]*)/g,
             decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
 
-        let urlParams = {};
+        let urlParams: { [key: string]: string } = {};
         while (match = search.exec(query))
             urlParams[decode(match[1])] = decode(match[2]);
 
         return urlParams;
     }
 
-    function createUrl(pageName: string, params?: { [key: string]: string }) {
+    function createUrl(pageName: string, params?: PageData) {
         let path_parts = pageName.split('.');
         let path = path_parts.join('/');
         if (!params)
@@ -86,7 +85,7 @@ namespace chitu {
         for (let key in params) {
             let value = params[key];
             let type = typeof params[key];
-            if (type == 'function' || type == 'object' || value == null) {
+            if (type != 'string' || value == null) {
                 continue;
             }
             paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
@@ -127,7 +126,7 @@ namespace chitu {
          * @param pageName 页面名称
          * @param values 页面参数
          */
-        createUrl(pageName: string, values?: { [key: string]: string }) {
+        createUrl(pageName: string, values?: PageData) {
             return createUrl(pageName, values);
         }
 
@@ -184,21 +183,21 @@ namespace chitu {
             return this.showPage(node, routeData.values);
         }
 
-        public setLocationHash(url: string) {
+        private setLocationHash(url: string) {
             history.pushState(EmtpyStateData, "", url)
         }
 
-        public redirect(node: PageNode, args?: any): Page
-        public redirect(node: PageNode, fromCache?: boolean, args?: any): Page
-        public redirect(pageName: string, args?: any): Page
-        public redirect(pageName: string, fromCache?: boolean, args?: any): Page
+        public redirect(node: PageNode, args?: PageData): Page
+        public redirect(node: PageNode, fromCache?: boolean, args?: PageData): Page
+        public redirect(pageName: string, args?: PageData): Page
+        public redirect(pageName: string, fromCache?: boolean, args?: PageData): Page
         /**
          * 页面跳转
          * @param node 页面节点
          * @param fromCache 是否从缓存读取
          * @param args 传递到页面的参数
          */
-        public redirect(node: PageNode | string, fromCache?: any, args?: any): Page {
+        public redirect(node: PageNode | string, fromCache?: any, args?: { [key: string]: (string | Function) }): Page {
             if (!node) throw Errors.argumentNull("node");
             if (typeof node == 'string') {
                 let pageName = node;
@@ -222,9 +221,20 @@ namespace chitu {
          * 返回上一个页面
          * @param closeCurrentPage 返回上一个页面时，是否关闭当前页面，true 关闭当前页，false 隐藏当前页。默认为 true。
          */
-        public back(closeCurrentPage?: boolean) {
-            this.closeCurrentOnBack = closeCurrentPage == null ? true : closeCurrentPage;
+        public back()
+        public back(closeCurrentPage: boolean)
+        public back(data: PageData)
+        public back(closeCurrentPage?: boolean, data?: PageData)
+        public back(closeCurrentPage?: any, data?: PageData) {
+            const closeCurrentPageDefault = true
+            if (typeof closeCurrentPage == 'object') {
+                data = closeCurrentPage;
+                closeCurrentPage = null;
+            }
+            this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
             history.back();
         }
+        
     }
+    
 } 
