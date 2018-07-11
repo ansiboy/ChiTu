@@ -101,6 +101,7 @@ namespace chitu {
 
         private _runned: boolean = false;
         private closeCurrentOnBack: boolean;
+        private tempPageData: PageData;
         // private pageStack = new Array<string>();
 
         /**
@@ -232,9 +233,10 @@ namespace chitu {
                 closeCurrentPage = null;
             }
             this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
+            this.tempPageData = data;
             history.back();
         }
-        
+
     }
-    
+
 } 
