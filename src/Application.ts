@@ -9,11 +9,11 @@ namespace chitu {
      */
     export interface PageNode {
         action: Action | string,
-        name?: string,
+        name: string,
     }
 
     export interface SiteMap {
-        nodes: { [key: string]: PageNode },
+        actions: { [key: string]: Action | string },
         pageNameParse?: (pageName: string) => PageNode
     }
 
@@ -147,9 +147,9 @@ namespace chitu {
         public run() {
             if (this._runned) return;
 
-            this.showPageByUrl(location.href);
+            this.showPageByUrl(location.href, false);
             window.addEventListener('popstate', () => {
-                this.showPageByUrl(location.href);
+                this.showPageByUrl(location.href, true);
             });
 
             this._runned = true;
@@ -159,7 +159,7 @@ namespace chitu {
          * 显示页面
          * @param url 页面的路径
          */
-        private showPageByUrl(url: string): Page {
+        private showPageByUrl(url: string, fromCache: boolean): Page {
             if (!url) throw Errors.argumentNull('url');
 
             var routeData = this.parseUrl(url);
@@ -167,21 +167,21 @@ namespace chitu {
                 throw Errors.noneRouteMatched(url);
             }
 
-            let isBack = this.pageStack.length >= 2 && routeData.pageName == this.pageStack[this.pageStack.length - 2].name;
-            if (isBack) {
-                if (this.closeCurrentOnBack)
-                    this.closeCurrentPage();
-                else {
-                    var page = this.pageStack.pop();
-                    page.hide(this.currentPage);
-                }
-
+            if (this.closeCurrentOnBack == true) {
+                this.closeCurrentOnBack = null;
+                this.closeCurrentPage();
+                return this.currentPage;
+            }
+            else if (this.closeCurrentOnBack == false) {
+                this.closeCurrentOnBack = null;
+                var page = this.pageStack.pop();
+                page.hide(this.currentPage);
                 return this.currentPage;
             }
 
             let node = this.findSiteMapNode(routeData.pageName); //this.nodes[routeData.pageName];
             if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
-            return this.showPage(node, routeData.values);
+            return this.showPage(node, fromCache, routeData.values);
         }
 
         private setLocationHash(url: string) {
@@ -198,7 +198,7 @@ namespace chitu {
          * @param fromCache 是否从缓存读取
          * @param args 传递到页面的参数
          */
-        public redirect(node: PageNode | string, fromCache?: any, args?: { [key: string]: (string | Function) }): Page {
+        public redirect(node: PageNode | string, fromCache?: any, args?: PageData): Page {
             if (!node) throw Errors.argumentNull("node");
             if (typeof node == 'string') {
                 let pageName = node;
