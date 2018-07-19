@@ -14,12 +14,9 @@ namespace chitu {
         protected pageType: PageConstructor = Page;
         protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
 
-
         private cachePages: { [name: string]: Page } = {};
         private page_stack = new Array<Page>();
         private container: HTMLElement;
-
-        nodes: { [key: string]: PageNode };
 
         /** 
          * 错误事件 
@@ -36,24 +33,15 @@ namespace chitu {
             if (!siteMap)
                 throw Errors.argumentNull("siteMap");
 
-            this.nodes = siteMap.nodes;
+            // this.nodes = siteMap.nodes;
             this.siteMap = siteMap;
             if (!container)
                 throw Errors.argumentNull("container");
 
-            for (let key in this.nodes) {
-                this.nodes[key].name = key;
-                let action = this.nodes[key].action;
-                if (action == null)
-                    throw Errors.actionCanntNull(key);
-
-                this.nodes[key].action = this.wrapAction(action);
-            }
-
             this.container = container;
         }
 
-        private wrapAction(action: string | Action): (page: Page) => void {
+        private wrapAction(action: string | Action): Action {
             console.assert(action != null, 'action is null');
 
             let result: Action;
@@ -164,12 +152,6 @@ namespace chitu {
             return page;
         }
 
-        // private allowCache(pageName: string): boolean {
-        //     let node = this.nodes[pageName];
-        //     console.assert(node != null);
-        //     return node.cache || false;
-        // }
-
         protected createPageElement(pageName: string) {
             let element: HTMLElement = document.createElement(Page.tagName);
             this.container.appendChild(element);
@@ -204,10 +186,11 @@ namespace chitu {
 
             if (typeof (fromCache) == 'object') {
                 args = fromCache;
-                fromCache = true;
+                fromCache = null;
             }
 
-            fromCache = fromCache == null ? true : fromCache;
+            const fromCacheDefault = false;
+            fromCache = fromCache == null ? fromCacheDefault : fromCache;
             args = args || {}
             let page = this.getPage(node, fromCache, args);
             page.show();
@@ -221,10 +204,18 @@ namespace chitu {
             this.page_stack.push(page);
         }
 
-        protected findSiteMapNode(pageName: string) {
-            let node = this.nodes[pageName];
-            if (node == null && this.siteMap.pageNameParse != null)
+        protected findSiteMapNode(pageName: string): PageNode {
+            let node: PageNode;
+            let action = this.siteMap.actions[pageName];
+            if (action != null) {
+                action = this.wrapAction(action);
+                node = { action, name: pageName }
+            }
+
+            if (node == null && this.siteMap.pageNameParse != null) {
                 node = this.siteMap.pageNameParse(pageName);
+                node.action = this.wrapAction(action);
+            }
 
             return node;
         }
@@ -252,19 +243,19 @@ namespace chitu {
             return this.page_stack;
         }
 
-        /**
-         * 添加或更新页面结点
-         * @param name 页面结点名称
-         * @param action 页面执行
-         */
-        public setPageNode(name: string, action: string | Action): PageNode {
-            let node: PageNode = {
-                name,
-                action: this.wrapAction(action)
-            }
-            this.nodes[name] = node;
-            return node;
-        }
+        // /**
+        //  * 添加或更新页面结点
+        //  * @param name 页面结点名称
+        //  * @param action 页面执行
+        //  */
+        // public setPageNode(name: string, action: string | Action): PageNode {
+        //     let node: PageNode = {
+        //         name,
+        //         action: this.wrapAction(action)
+        //     }
+        //     this.nodes[name] = node;
+        //     return node;
+        // }
 
     }
 }
