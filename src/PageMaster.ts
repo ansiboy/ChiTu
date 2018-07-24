@@ -33,7 +33,6 @@ namespace chitu {
             if (!siteMap)
                 throw Errors.argumentNull("siteMap");
 
-            // this.nodes = siteMap.nodes;
             this.siteMap = siteMap;
             if (!container)
                 throw Errors.argumentNull("container");
@@ -91,10 +90,7 @@ namespace chitu {
             console.assert(node != null);
 
             values = values || {};
-
             let pageName = node.name;
-
-
             let cachePage = this.cachePages[pageName];
             if (cachePage != null && allowCache) {
                 cachePage.data = Object.assign(cachePage.data || {}, values);
@@ -228,12 +224,7 @@ namespace chitu {
                 return;
 
             var page = this.page_stack.pop();
-            // if (this.allowCache(page.name)) {
-            //     page.hide(this.currentPage);
-            // }
-            // else {
             page.close();
-            // }
             if (this.currentPage) {
                 this.currentPage.show();
             }
@@ -242,20 +233,5 @@ namespace chitu {
         protected get pageStack() {
             return this.page_stack;
         }
-
-        // /**
-        //  * 添加或更新页面结点
-        //  * @param name 页面结点名称
-        //  * @param action 页面执行
-        //  */
-        // public setPageNode(name: string, action: string | Action): PageNode {
-        //     let node: PageNode = {
-        //         name,
-        //         action: this.wrapAction(action)
-        //     }
-        //     this.nodes[name] = node;
-        //     return node;
-        // }
-
     }
 }
