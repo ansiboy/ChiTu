@@ -16,7 +16,6 @@ namespace chitu {
         action: Action,
         element: HTMLElement,
         displayer: PageDisplayer,
-        // previous?: Page,
         name: string,
         data: PageData,
     }
