@@ -1,4 +1,4 @@
-﻿/// <reference path="PageMaster"/>
+﻿/// <reference path="PageMaster.ts"/>
 
 namespace chitu {
 
@@ -102,7 +102,6 @@ namespace chitu {
         private _runned: boolean = false;
         private closeCurrentOnBack: boolean;
         private tempPageData: PageData;
-        // private pageStack = new Array<string>();
 
         /**
          * 构造函数
@@ -131,16 +130,6 @@ namespace chitu {
             return createUrl(pageName, values);
         }
 
-        // protected hashchange() {
-
-        //     var routeData = this.parseUrl(location.href);
-        //     if (routeData == null) {
-        //         return;
-        //     }
-
-        //     this.showPageByUrl(location.href);
-        // }
-
         /**
          * 运行当前应用
          */
@@ -167,21 +156,32 @@ namespace chitu {
                 throw Errors.noneRouteMatched(url);
             }
 
+            let result: Page;
             if (this.closeCurrentOnBack == true) {
                 this.closeCurrentOnBack = null;
                 this.closeCurrentPage();
-                return this.currentPage;
+                result = this.currentPage;
             }
             else if (this.closeCurrentOnBack == false) {
                 this.closeCurrentOnBack = null;
                 var page = this.pageStack.pop();
                 page.hide(this.currentPage);
-                return this.currentPage;
+                result = this.currentPage;
+            }
+            else {
+                let node = this.findSiteMapNode(routeData.pageName);
+                if (node == null)
+                    throw Errors.pageNodeNotExists(routeData.pageName);
+
+                result = this.showPage(node, fromCache, routeData.values);
             }
 
-            let node = this.findSiteMapNode(routeData.pageName); //this.nodes[routeData.pageName];
-            if (node == null) throw Errors.pageNodeNotExists(routeData.pageName);
-            return this.showPage(node, fromCache, routeData.values);
+            if (this.tempPageData) {
+                result.data = this.tempPageData;
+                this.tempPageData = null;
+            }
+
+            return result;
         }
 
         private setLocationHash(url: string) {
