@@ -12,7 +12,8 @@
             "dom",
             "scripthost",
             "es2015"
-        ]
+        ],
+        "strict": true
     },
     "exclude": [
         "mobile/*.ts"

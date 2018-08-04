@@ -19,7 +19,7 @@ namespace chitu {
 
     const EmtpyStateData = "";
     const DefaultPageName = "index"
-    function parseUrl(app: Application, url: string): { pageName: string, values: PageData } {
+    function parseUrl(app: Application, url: string): { pageName: string, values: PageData } | null {
         let sharpIndex = url.indexOf('#');
         if (sharpIndex < 0) {
             let pageName = DefaultPageName
@@ -32,13 +32,14 @@ namespace chitu {
 
         /** 以 ! 开头在 hash 忽略掉 */
         if (routeString.startsWith('!')) {
-            let url = createUrl(app.currentPage.name, app.currentPage.data);
-            history.replaceState(EmtpyStateData, "", url)
-            return;
+            // let url = createUrl(app.currentPage.name, app.currentPage.data);
+            // history.replaceState(EmtpyStateData, "", url)
+            // return null;
+            throw Errors.canntParseRouteString(routeString);
         }
 
         let routePath: string;
-        let search: string;
+        let search: string | null = null;
         let param_spliter_index: number = routeString.indexOf('?');
         if (param_spliter_index > 0) {
             search = routeString.substr(param_spliter_index + 1);
@@ -64,7 +65,7 @@ namespace chitu {
         let match,
             pl = /\+/g,  // Regex for replacing addition symbol with a space
             search = /([^&=]+)=?([^&]*)/g,
-            decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
+            decode = function(s: string) { return decodeURIComponent(s.replace(pl, " ")); };
 
         let urlParams: { [key: string]: string } = {};
         while (match = search.exec(query))
@@ -100,8 +101,8 @@ namespace chitu {
     export class Application extends PageMaster {
 
         private _runned: boolean = false;
-        private closeCurrentOnBack: boolean;
-        private tempPageData: PageData;
+        private closeCurrentOnBack: boolean | null = null;
+        private tempPageData: PageData | undefined = undefined;
 
         /**
          * 构造函数
@@ -156,32 +157,49 @@ namespace chitu {
                 throw Errors.noneRouteMatched(url);
             }
 
-            let result: Page;
+            let tempPageData = this.fetchTemplatePageData();
+
+            let result: Page | null = null;
+            //==========================================
+            // closeCurrentOnBack != null 表示返回操作
             if (this.closeCurrentOnBack == true) {
                 this.closeCurrentOnBack = null;
-                this.closeCurrentPage();
+                if (tempPageData == null)
+                    this.closeCurrentPage()
+                else
+                    this.closeCurrentPage(tempPageData);
+
                 result = this.currentPage;
             }
             else if (this.closeCurrentOnBack == false) {
                 this.closeCurrentOnBack = null;
                 var page = this.pageStack.pop();
+                if (page == null)
+                    throw new Error('page is null');
+
                 page.hide(this.currentPage);
                 result = this.currentPage;
             }
-            else {
-                let node = this.findSiteMapNode(routeData.pageName);
-                if (node == null)
-                    throw Errors.pageNodeNotExists(routeData.pageName);
+            //==========================================
 
-                result = this.showPage(node, fromCache, routeData.values);
+            if (result == null) {
+                let args = routeData.values || {};
+                if (tempPageData) {
+                    args = Object.assign(args, tempPageData);
+                }
+                result = this.showPage(routeData.pageName, fromCache, args);
             }
-
-            if (this.tempPageData) {
-                result.data = this.tempPageData;
-                this.tempPageData = null;
-            }
-
+            // }
             return result;
+        }
+
+        private fetchTemplatePageData() {
+            if (this.tempPageData == null) {
+                return null;
+            }
+            let data = this.tempPageData;
+            this.tempPageData = undefined;
+            return data;
         }
 
         private setLocationHash(url: string) {
@@ -202,9 +220,11 @@ namespace chitu {
             if (!node) throw Errors.argumentNull("node");
             if (typeof node == 'string') {
                 let pageName = node;
-                node = this.findSiteMapNode(pageName);
-                if (node == null)
+                let findNode = this.findSiteMapNode(pageName);
+                if (findNode == null)
                     throw Errors.pageNodeNotExists(pageName);
+
+                node = findNode
             }
 
             let result = this.showPage(node, fromCache, args);
@@ -222,16 +242,17 @@ namespace chitu {
          * 返回上一个页面
          * @param closeCurrentPage 返回上一个页面时，是否关闭当前页面，true 关闭当前页，false 隐藏当前页。默认为 true。
          */
-        public back()
-        public back(closeCurrentPage: boolean)
-        public back(data: PageData)
-        public back(closeCurrentPage?: boolean, data?: PageData)
-        public back(closeCurrentPage?: any, data?: PageData) {
+        public back(): void
+        public back(closeCurrentPage: boolean): void
+        public back(data: PageData): void
+        public back(closeCurrentPage?: boolean, data?: PageData): void
+        public back(closeCurrentPage?: any, data?: PageData): void {
             const closeCurrentPageDefault = true
             if (typeof closeCurrentPage == 'object') {
                 data = closeCurrentPage;
                 closeCurrentPage = null;
             }
+
             this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
             this.tempPageData = data;
             history.back();

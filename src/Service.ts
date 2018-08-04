@@ -79,7 +79,7 @@ namespace chitu {
         new(): T
     }
 
-    export type AjaxOptions = { data?: Object, headers?: { [key: string]: string }, method?: string };
+    export type AjaxOptions = { data?: any, headers?: { [key: string]: string }, method?: string };
 
     export class Service {
 
@@ -90,7 +90,10 @@ namespace chitu {
         }
 
         ajax<T>(url: string, options?: AjaxOptions) {
-            options = options || {} as any
+            // options = options || {} as any
+            if (options === undefined)
+                options = {}
+
             let data = options.data;
             let method = options.method;
             let headers = options.headers || {};

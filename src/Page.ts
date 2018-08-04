@@ -7,8 +7,8 @@ namespace chitu {
     }
 
     export interface PageDisplayer {
-        show(targetPage: Page, currentPage: chitu.Page): Promise<any>;
-        hide(targetPage: Page, currentPage: chitu.Page): Promise<any>;
+        show(targetPage: Page, currentPage: chitu.Page | null): Promise<any>;
+        hide(targetPage: Page, currentPage: chitu.Page | null): Promise<any>;
     }
 
     export interface PageParams {
@@ -24,8 +24,6 @@ namespace chitu {
      * 页面，用把 HTML Element 包装起来。
      */
     export class Page {
-        private animationTime: number = 300;
-        private num: Number;
 
         private _element: HTMLElement;
         private _app: PageMaster;
@@ -35,13 +33,10 @@ namespace chitu {
 
         static tagName = 'div';
 
-        data: PageData = null
-
-        /** 脚本文件加载完成后引发 */
-        load = Callbacks<this, PageData>();
+        data: PageData = {}
 
         /** 脚本执行完成后引发 */
-        loadComplete = Callbacks<this, PageData>();
+        load = Callbacks<this, PageData>();
 
         /** 页面显示时引发 */
         showing = Callbacks<this, PageData>();
@@ -65,15 +60,15 @@ namespace chitu {
 
             // 确保异步调用
             setTimeout(() => {
-                this.loadPageAction();
+                this.executePageAction();
             });
         }
         on_load() {
             return this.load.fire(this, this.data);
         }
-        private on_loadComplete() {
-            return this.loadComplete.fire(this, this.data);
-        }
+        // private on_loadComplete() {
+        //     return this.loadComplete.fire(this, this.data);
+        // }
         private on_showing() {
             return this.showing.fire(this, this.data);
         }
@@ -102,7 +97,7 @@ namespace chitu {
                 this.on_shown();
             });
         }
-        hide(currentPage: chitu.Page): Promise<any> {
+        hide(currentPage: chitu.Page | null): Promise<any> {
             this.on_hiding();
             return this._displayer.hide(this, currentPage).then(o => {
                 this.on_hidden();
@@ -120,7 +115,7 @@ namespace chitu {
          * @param type 服务类型
          */
         createService<T extends Service>(type?: ServiceConstructor<T>): T {
-            type = type || chitu.Service as any
+            type = type || chitu.Service as any as ServiceConstructor<T>
             let service = new type();
             service.error.add((ender, error) => {
                 this._app.error.fire(this._app, error, this)
@@ -142,9 +137,9 @@ namespace chitu {
             return this._name;
         }
 
-        private async loadPageAction() {
+        private async executePageAction() {
             let pageName: string = this.name;
-            let action;
+            let action: Function;
 
             action = this._action;
             let actionExecuteResult;
@@ -152,26 +147,28 @@ namespace chitu {
                 throw Errors.actionTypeError(pageName);
             }
 
-            let actionResult = await action(this) as Promise<any>;
-            this.on_loadComplete();
+            let actionResult = action(this) as Promise<any>;
+            if (actionResult != null && actionResult.then != null) {
+                actionResult.then(() => {
+                    this.on_load();
+                    // this.on_loadComplete();
+                })
+            }
+            else {
+                this.on_load();
+            }
         }
 
         reload() {
-            return this.loadPageAction();
+            return this.executePageAction();
         }
 
         get app() {
             return this._app;
         }
     }
-
-
 }
 
-
-interface PageActionConstructor {
-    new(page: chitu.Page);
-}
 
 interface PageConstructor {
     new(args: chitu.PageParams): chitu.Page

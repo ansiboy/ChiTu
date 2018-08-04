@@ -37,6 +37,7 @@ namespace chitu {
             if (!container)
                 throw Errors.argumentNull("container");
 
+            this.siteMap.actions = this.siteMap.actions || {};
             this.container = container;
         }
 
@@ -57,15 +58,16 @@ namespace chitu {
                         throw Errors.canntFindAction(page.name);
                     }
 
-                    page.on_load();
-                    return _action(page);
+                    let result = _action(page);
+                    return result;
                 }
             }
             else {
-                result = function (page: Page) {
-                    page.on_load();
-                    return action(page);
-                }
+                // result = function (page: Page) {
+                //     let result = action(page);
+                //     return result;
+                // }
+                result = action;
 
             }
 
@@ -79,7 +81,7 @@ namespace chitu {
         /**
          * 获取当前页面
          */
-        get currentPage(): Page {
+        get currentPage(): Page | null {
             if (this.page_stack.length > 0)
                 return this.page_stack[this.page_stack.length - 1];
 
@@ -102,18 +104,18 @@ namespace chitu {
 
             let page = this.createPage(pageName, values);
 
-            let page_onloadComplete = (sender: Page, args) => {
+            let page_onloadComplete = (sender: Page, args: PageData) => {
                 this.cachePages[sender.name] = sender;
             }
             let page_onclosed = (sender: chitu.Page) => {
                 delete this.cachePages[sender.name];
                 this.page_stack = this.page_stack.filter(o => o != sender);
                 page.closed.remove(page_onclosed);
-                page.loadComplete.remove(page_onloadComplete);
+                page.load.remove(page_onloadComplete);
             }
 
             page.closed.add(page_onclosed);
-            page.loadComplete.add(page_onloadComplete);
+            page.load.add(page_onloadComplete);
 
             this.on_pageCreated(page);
             return page;
@@ -164,7 +166,7 @@ namespace chitu {
          * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 true
          * @param args 页面参数
          */
-        public showPage(node: PageNode | string, fromCache?: any, args?: any): Page {
+        public showPage(node: PageNode | string | null, fromCache?: any, args?: any): Page | null {
             if (!node) throw Errors.argumentNull('node');
             if (typeof node == 'string') {
                 let pageName = node;
@@ -200,8 +202,8 @@ namespace chitu {
             this.page_stack.push(page);
         }
 
-        protected findSiteMapNode(pageName: string): PageNode {
-            let node: PageNode;
+        protected findSiteMapNode(pageName: string): PageNode | null {
+            let node: PageNode | null = null;
             let action = this.siteMap.actions[pageName];
             if (action != null) {
                 action = this.wrapAction(action);
@@ -210,7 +212,8 @@ namespace chitu {
 
             if (node == null && this.siteMap.pageNameParse != null) {
                 node = this.siteMap.pageNameParse(pageName);
-                node.action = this.wrapAction(action);
+                console.assert(node.action != null);
+                node.action = this.wrapAction(node.action);
             }
 
             return node;
@@ -218,14 +221,19 @@ namespace chitu {
 
         /**
          * 关闭当前页面
+         * @param passData 传递到前一个页面的数据
          */
-        public closeCurrentPage() {
-            if (this.page_stack.length <= 0)
+        public closeCurrentPage(passData?: PageData) {
+            var page = this.page_stack.pop();
+            if (page == null)
                 return;
 
-            var page = this.page_stack.pop();
             page.close();
             if (this.currentPage) {
+                if (passData) {
+                    console.assert(this.currentPage.data != null);
+                    this.currentPage.data = Object.assign(this.currentPage.data, passData);
+                }
                 this.currentPage.show();
             }
         }
