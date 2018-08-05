@@ -65,7 +65,7 @@ namespace chitu {
         let match,
             pl = /\+/g,  // Regex for replacing addition symbol with a space
             search = /([^&=]+)=?([^&]*)/g,
-            decode = function(s: string) { return decodeURIComponent(s.replace(pl, " ")); };
+            decode = function (s: string) { return decodeURIComponent(s.replace(pl, " ")); };
 
         let urlParams: { [key: string]: string } = {};
         while (match = search.exec(query))
@@ -139,7 +139,15 @@ namespace chitu {
 
             this.showPageByUrl(location.href, false);
             window.addEventListener('popstate', () => {
-                this.showPageByUrl(location.href, true);
+
+                let url = location.href;
+                let sharpIndex = url.indexOf('#');
+                let routeString = url.substr(sharpIndex + 1);
+                /** 以 ! 开头在 hash 忽略掉 */
+                if (sharpIndex < 0 || routeString.startsWith('!')) {
+                    return
+                }
+                this.showPageByUrl(url, true);
             });
 
             this._runned = true;
