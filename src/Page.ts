@@ -66,9 +66,6 @@ namespace chitu {
         on_load() {
             return this.load.fire(this, this.data);
         }
-        // private on_loadComplete() {
-        //     return this.loadComplete.fire(this, this.data);
-        // }
         private on_showing() {
             return this.showing.fire(this, this.data);
         }

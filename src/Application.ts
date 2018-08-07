@@ -8,12 +8,12 @@ namespace chitu {
      * 页面结点
      */
     export interface PageNode {
-        action: Action | string,
+        action: Action,
         name: string,
     }
 
-    export interface SiteMap {
-        actions: { [key: string]: Action | string },
+    export interface PageNodeParser {
+        actions?: { [key: string]: Action },
         pageNameParse?: (pageName: string) => PageNode
     }
 
@@ -106,11 +106,11 @@ namespace chitu {
 
         /**
          * 构造函数
-         * @param siteMap 地图，描述站点各个页面结点
+         * @param parser 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(siteMap: SiteMap) {
-            super(siteMap, document.body);
+        constructor(args?: { parser?: PageNodeParser, container?: HTMLElement }) {
+            super((args || {}).container || document.body, (args || {}).parser);//? parser : Application.defaultPageNodeParser()
         }
 
         /**
@@ -197,7 +197,6 @@ namespace chitu {
                 }
                 result = this.showPage(routeData.pageName, fromCache, args);
             }
-            // }
             return result;
         }
 
