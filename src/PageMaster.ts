@@ -151,31 +151,34 @@ namespace chitu {
             return element;
         }
 
-        public showPage(node: PageNode, args?: any): Page
-        public showPage(node: PageNode, fromCache?: boolean, args?: any): Page
-        public showPage(pageName: string, args?: any): Page
-        public showPage(pageName: string, fromCache?: boolean, args?: any): Page
         /**
          * 显示页面
-         * @param node 要显示页面的节点
+         * @param pageName 要显示页面的节点
+         * @param args 页面参数
+         */
+        public showPage(pageName: string, args?: any): Page
+        /**
+         * 显示页面
+         * @param pageName 要显示页面的节点
          * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 true
          * @param args 页面参数
          */
-        public showPage(node: PageNode | string | null, fromCache?: any, args?: any): Page | null {
-            if (!node) throw Errors.argumentNull('node');
-            if (typeof node == 'string') {
-                let pageName = node;
-                node = this.findSiteMapNode(pageName);
-                if (node == null)
-                    throw Errors.pageNodeNotExists(pageName)
-            }
-
-            let pageName = node.name;
+        public showPage(pageName: string, fromCache?: boolean, args?: any): Page
+        /**
+         * 显示页面
+         * @param pageName 要显示页面的节点
+         * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 false
+         * @param args 页面参数
+         */
+        public showPage(pageName: string | null, fromCache?: any, args?: any): Page | null {
             if (!pageName) throw Errors.argumentNull('pageName');
+
+            let node = this.findSiteMapNode(pageName);
+            if (node == null)
+                throw Errors.pageNodeNotExists(pageName)
 
             if (this.currentPage != null && this.currentPage.name == pageName)
                 return this.currentPage;
-
 
             if (typeof (fromCache) == 'object') {
                 args = fromCache;
@@ -222,7 +225,7 @@ namespace chitu {
          * 关闭当前页面
          * @param passData 传递到前一个页面的数据
          */
-        public closeCurrentPage(passData?: PageData) {
+        public closeCurrentPage<T>(passData?: Pick<T, StringPropertyNames<T>>) {
             var page = this.page_stack.pop();
             if (page == null)
                 return;
