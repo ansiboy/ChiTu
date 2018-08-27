@@ -17,61 +17,60 @@ namespace chitu {
         private cachePages: { [name: string]: Page } = {};
         private page_stack = new Array<Page>();
         private container: HTMLElement;
+        private nodes: { [name: string]: PageNode } = {}
 
         /** 
          * 错误事件 
          */
         error = Callbacks<this, Error, Page>();
-        siteMap: SiteMap;
+        parser: PageNodeParser;
 
         /**
          * 构造函数
-         * @param siteMap 地图，描述站点各个页面结点
+         * @param parser 地图，描述站点各个页面结点
          * @param allowCachePage 是允许缓存页面，默认 true
          */
-        constructor(siteMap: SiteMap, container: HTMLElement) {
-            if (!siteMap)
-                throw Errors.argumentNull("siteMap");
-
-            this.siteMap = siteMap;
+        constructor(container: HTMLElement, parser?: PageNodeParser) {
+            this.parser = parser || PageMaster.defaultPageNodeParser();
             if (!container)
                 throw Errors.argumentNull("container");
 
-            this.siteMap.actions = this.siteMap.actions || {};
+            this.parser.actions = this.parser.actions || {};
             this.container = container;
         }
 
-        private wrapAction(action: string | Action): Action {
-            console.assert(action != null, 'action is null');
-
-            let result: Action;
-            if (typeof action == 'string') {
-                let url = action;
-                result = async (page: Page) => {
-                    let actionExports = await chitu.loadjs(url);
-                    if (!actionExports)
-                        throw Errors.exportsCanntNull(url);
-
-                    let actionName = 'default';
-                    let _action = actionExports[actionName];
-                    if (_action == null) {
-                        throw Errors.canntFindAction(page.name);
+        static defaultPageNodeParser() {
+            let nodes: { [key: string]: chitu.PageNode } = {}
+            let p: PageNodeParser = {
+                actions: {},
+                pageNameParse: (pageName) => {
+                    let node = nodes[pageName];
+                    if (node == null) {
+                        let path = `modules_${pageName}`.split('_').join('/');
+                        node = { action: this.createDefaultAction(path), name: pageName };
+                        nodes[pageName] = node;
                     }
-
-                    let result = _action(page);
-                    return result;
+                    return node;
                 }
             }
-            else {
-                // result = function (page: Page) {
-                //     let result = action(page);
-                //     return result;
-                // }
-                result = action;
+            return p
+        }
 
+        static createDefaultAction(url: string): Action {
+            return async (page: Page) => {
+                let actionExports = await chitu.loadjs(url);
+                if (!actionExports)
+                    throw Errors.exportsCanntNull(url);
+
+                let actionName = 'default';
+                let _action = actionExports[actionName];
+                if (_action == null) {
+                    throw Errors.canntFindAction(page.name);
+                }
+
+                let result = this.isClass(_action) ? new _action(page) : _action(page);
+                return result;
             }
-
-            return result;
         }
 
         private on_pageCreated(page: Page) {
@@ -133,10 +132,6 @@ namespace chitu {
             if (action == null)
                 throw Errors.actionCanntNull(pageName);
 
-            if (typeof action == 'string') {
-                action = this.wrapAction(action);
-            }
-
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
@@ -156,31 +151,34 @@ namespace chitu {
             return element;
         }
 
-        public showPage(node: PageNode, args?: any): Page
-        public showPage(node: PageNode, fromCache?: boolean, args?: any): Page
-        public showPage(pageName: string, args?: any): Page
-        public showPage(pageName: string, fromCache?: boolean, args?: any): Page
         /**
          * 显示页面
-         * @param node 要显示页面的节点
+         * @param pageName 要显示页面的节点
+         * @param args 页面参数
+         */
+        public showPage(pageName: string, args?: any): Page
+        /**
+         * 显示页面
+         * @param pageName 要显示页面的节点
          * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 true
          * @param args 页面参数
          */
-        public showPage(node: PageNode | string | null, fromCache?: any, args?: any): Page | null {
-            if (!node) throw Errors.argumentNull('node');
-            if (typeof node == 'string') {
-                let pageName = node;
-                node = this.findSiteMapNode(pageName);
-                if (node == null)
-                    throw Errors.pageNodeNotExists(pageName)
-            }
-
-            let pageName = node.name;
+        public showPage(pageName: string, fromCache?: boolean, args?: any): Page
+        /**
+         * 显示页面
+         * @param pageName 要显示页面的节点
+         * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 false
+         * @param args 页面参数
+         */
+        public showPage(pageName: string | null, fromCache?: any, args?: any): Page | null {
             if (!pageName) throw Errors.argumentNull('pageName');
+
+            let node = this.findSiteMapNode(pageName);
+            if (node == null)
+                throw Errors.pageNodeNotExists(pageName)
 
             if (this.currentPage != null && this.currentPage.name == pageName)
                 return this.currentPage;
-
 
             if (typeof (fromCache) == 'object') {
                 args = fromCache;
@@ -203,18 +201,22 @@ namespace chitu {
         }
 
         protected findSiteMapNode(pageName: string): PageNode | null {
+            if (this.nodes[pageName])
+                return this.nodes[pageName]
+
             let node: PageNode | null = null;
-            let action = this.siteMap.actions[pageName];
+            let action = this.parser.actions ? this.parser.actions[pageName] : null;
             if (action != null) {
-                action = this.wrapAction(action);
                 node = { action, name: pageName }
             }
 
-            if (node == null && this.siteMap.pageNameParse != null) {
-                node = this.siteMap.pageNameParse(pageName);
+            if (node == null && this.parser.pageNameParse != null) {
+                node = this.parser.pageNameParse(pageName);
                 console.assert(node.action != null);
-                node.action = this.wrapAction(node.action);
             }
+
+            if (node != null)
+                this.nodes[pageName] = node
 
             return node;
         }
@@ -223,7 +225,7 @@ namespace chitu {
          * 关闭当前页面
          * @param passData 传递到前一个页面的数据
          */
-        public closeCurrentPage(passData?: PageData) {
+        public closeCurrentPage<T>(passData?: Pick<T, StringPropertyNames<T>>) {
             var page = this.page_stack.pop();
             if (page == null)
                 return;
@@ -241,5 +243,22 @@ namespace chitu {
         protected get pageStack() {
             return this.page_stack;
         }
+
+        static isClass = (function () {
+            var toString = Function.prototype.toString;
+
+            function fnBody(fn: Function) {
+                return toString.call(fn).replace(/^[^{]*{\s*/, '').replace(/\s*}[^}]*$/, '');
+            }
+
+            function isClass(fn: Function) {
+                return (typeof fn === 'function' &&
+                    (/^class(\s|\{\}$)/.test(toString.call(fn)) ||
+                        (/^.*classCallCheck\(/.test(fnBody(fn)))) // babel.js
+                );
+            }
+
+            return isClass
+        })()
     }
 }

@@ -1,6 +1,6 @@
 namespace chitu {
 
-    export type PageData = { [key: string]: string | Function }
+    export type PageData = { [key: string]: string }
 
     export interface PageDisplayConstructor {
         new(app: PageMaster): PageDisplayer
@@ -66,9 +66,6 @@ namespace chitu {
         on_load() {
             return this.load.fire(this, this.data);
         }
-        // private on_loadComplete() {
-        //     return this.loadComplete.fire(this, this.data);
-        // }
         private on_showing() {
             return this.showing.fire(this, this.data);
         }
