@@ -1,7 +1,7 @@
 ﻿/// <reference path="PageMaster.ts"/>
 
 namespace chitu {
-
+    export type StringPropertyNames<T> = { [K in keyof T]: T[K] extends string ? K : never }[keyof T];
     export type Action = ((page: Page) => void);
     export type SiteMapChildren<T extends PageNode> = { [key: string]: T }
     /**
@@ -52,7 +52,7 @@ namespace chitu {
         if (!routePath)
             throw Errors.canntParseRouteString(routeString);
 
-        let values = {};
+        let values: { [key: string]: string } = {};
         if (search) {
             values = pareeUrlQuery(search);
         }
@@ -61,7 +61,7 @@ namespace chitu {
         return { pageName, values };
     }
 
-    function pareeUrlQuery(query: string): PageData {
+    function pareeUrlQuery(query: string): { [key: string]: string } {
         let match,
             pl = /\+/g,  // Regex for replacing addition symbol with a space
             search = /([^&=]+)=?([^&]*)/g,
@@ -74,7 +74,7 @@ namespace chitu {
         return urlParams;
     }
 
-    function createUrl(pageName: string, params?: PageData) {
+    function createUrl<T>(pageName: string, params?: T) {
         let path_parts = pageName.split('.');
         let path = path_parts.join('/');
         if (!params)
@@ -110,7 +110,7 @@ namespace chitu {
          * @param allowCachePage 是允许缓存页面，默认 true
          */
         constructor(args?: { parser?: PageNodeParser, container?: HTMLElement }) {
-            super((args || {}).container || document.body, (args || {}).parser);//? parser : Application.defaultPageNodeParser()
+            super((args || {}).container || document.body, (args || {}).parser);
         }
 
         /**
@@ -127,7 +127,7 @@ namespace chitu {
          * @param pageName 页面名称
          * @param values 页面参数
          */
-        createUrl(pageName: string, values?: PageData) {
+        createUrl<T>(pageName: string, values?: T) {
             return createUrl(pageName, values);
         }
 
@@ -213,37 +213,24 @@ namespace chitu {
             history.pushState(EmtpyStateData, "", url)
         }
 
-        public redirect(node: PageNode, args?: PageData): Page
-        public redirect(node: PageNode, fromCache?: boolean, args?: PageData): Page
-        public redirect(pageName: string, args?: PageData): Page
-        public redirect(pageName: string, fromCache?: boolean, args?: PageData): Page
+        public redirect<T extends { [k in keyof T]: string }>(pageName: string, args?: T): Page
+        public redirect<T extends { [k in keyof T]: string }>(pageName: string, fromCache?: boolean, args?: T): Page
         /**
          * 页面跳转
          * @param node 页面节点
-         * @param fromCache 是否从缓存读取
+         * @param fromCache 是否从缓存读取，默认为 false
          * @param args 传递到页面的参数
          */
-        public redirect(node: PageNode | string, fromCache?: any, args?: PageData): Page {
-            if (!node) throw Errors.argumentNull("node");
-            if (typeof node == 'string') {
-                let pageName = node;
-                let findNode = this.findSiteMapNode(pageName);
-                if (findNode == null)
-                    throw Errors.pageNodeNotExists(pageName);
-
-                node = findNode
-            }
-
-            let result = this.showPage(node, fromCache, args);
+        public redirect<T>(pageName: string, fromCache?: any, args?: Pick<T, StringPropertyNames<T>>): Page {
+            let result = this.showPage(pageName, fromCache, args);
             if (typeof (fromCache) == 'object') {
                 args = fromCache;
             }
-            let url = this.createUrl(node.name, args);
+            let url = this.createUrl(pageName, args);
             this.setLocationHash(url);
 
             return result;
         }
-
 
         /**
          * 返回上一个页面
@@ -251,9 +238,9 @@ namespace chitu {
          */
         public back(): void
         public back(closeCurrentPage: boolean): void
-        public back(data: PageData): void
-        public back(closeCurrentPage?: boolean, data?: PageData): void
-        public back(closeCurrentPage?: any, data?: PageData): void {
+        public back(data: any): void
+        public back<T>(closeCurrentPage?: boolean, data?: Pick<T, StringPropertyNames<T>>): void
+        public back<T>(closeCurrentPage?: any, data?: Pick<T, StringPropertyNames<T>>): void {
             const closeCurrentPageDefault = true
             if (typeof closeCurrentPage == 'object') {
                 data = closeCurrentPage;
@@ -261,10 +248,10 @@ namespace chitu {
             }
 
             this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
-            this.tempPageData = data;
+            this.tempPageData = data as any;
             history.back();
         }
-
     }
+}
 
-} 
+
