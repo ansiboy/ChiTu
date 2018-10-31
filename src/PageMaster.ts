@@ -68,7 +68,7 @@ namespace chitu {
                     throw Errors.canntFindAction(page.name);
                 }
 
-                let result = this.isClass(_action) ? new _action(page) : _action(page);
+                let result = this.isClass(_action) ? new _action(page, this) : _action(page, this);
                 return result;
             }
         }

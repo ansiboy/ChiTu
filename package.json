@@ -1,6 +1,6 @@
 {
   "name": "maishu-chitu",
-  "version": "1.6.0",
+  "version": "1.6.2",
   "author": "mai.shu",
   "devDependencies": {
     "babel-cli": "^6.26.0",
