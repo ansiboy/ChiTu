@@ -35,13 +35,8 @@ namespace chitu {
     export function Callbacks(): Callback {
         return new Callback();
     }
-    // export function Callbacks1<S, A, A1>(): Callback2<S, A, A1> {
-    //     return new Callback();
-    // }
 
-    // 服务以及实体类模块 结束
     //==========================================================
-
     /** 实现数据的存储，以及数据修改的通知 */
     export type ValueChangedCallback<T> = (args: T, sender: any) => void;
     export class ValueStore<T> {
@@ -79,7 +74,7 @@ namespace chitu {
      */
     export function loadjs(path: string): Promise<any> {
         return new Promise<Array<any>>((reslove, reject) => {
-            requirejs([path],
+            require([path],
                 function (result: any) {
                     reslove(result);
                 },
