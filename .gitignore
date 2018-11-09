@@ -4,3 +4,4 @@ node_modules
 /.git
 .tscache
 .baseDir.*
+package-lock.json
