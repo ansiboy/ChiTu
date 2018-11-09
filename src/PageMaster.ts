@@ -1,4 +1,8 @@
 namespace chitu {
+
+    type LoadJS = (path: string) =>
+        Promise<{ defalut: (page: Page, app: PageMaster) => void | { new(page: Page, app: PageMaster): any } }>//
+
     /**
      * 页面管理，用于管理各个页面
      */
@@ -31,7 +35,7 @@ namespace chitu {
          * @param allowCachePage 是允许缓存页面，默认 true
          */
         constructor(container: HTMLElement, parser?: PageNodeParser) {
-            this.parser = parser || PageMaster.defaultPageNodeParser();
+            this.parser = parser || this.defaultPageNodeParser();
             if (!container)
                 throw Errors.argumentNull("container");
 
@@ -39,15 +43,15 @@ namespace chitu {
             this.container = container;
         }
 
-        static defaultPageNodeParser() {
+        private defaultPageNodeParser() {
             let nodes: { [key: string]: chitu.PageNode } = {}
             let p: PageNodeParser = {
                 actions: {},
-                pageNameParse: (pageName) => {
+                parse: (pageName) => {
                     let node = nodes[pageName];
                     if (node == null) {
                         let path = `modules_${pageName}`.split('_').join('/');
-                        node = { action: this.createDefaultAction(path), name: pageName };
+                        node = { action: this.createDefaultAction(path, loadjs), name: pageName };
                         nodes[pageName] = node;
                     }
                     return node;
@@ -56,19 +60,27 @@ namespace chitu {
             return p
         }
 
-        static createDefaultAction(url: string): Action {
+        private createDefaultAction(url: string, loadjs: LoadJS): Action {
             return async (page: Page) => {
-                let actionExports = await chitu.loadjs(url);
+                let actionExports = await loadjs(url);
                 if (!actionExports)
                     throw Errors.exportsCanntNull(url);
 
-                let actionName = 'default';
-                let _action = actionExports[actionName];
+                let _action = actionExports.defalut
                 if (_action == null) {
                     throw Errors.canntFindAction(page.name);
                 }
 
-                let result = this.isClass(_action) ? new _action(page, this) : _action(page, this);
+                let result: any
+                if (PageMaster.isClass(_action)) {
+                    let action = _action as any as ({ new(page: Page, app: PageMaster): any })
+                    result = new action(page, this)
+                }
+                else {
+                    let action = _action as (page: Page, app: PageMaster) => void
+                    result = action(page, this)
+                }
+
                 return result;
             }
         }
@@ -120,7 +132,9 @@ namespace chitu {
             return page;
         }
 
-        protected createPage(pageName: string, values: any): Page {
+        protected createPage(pageName: string, values?: any): Page {
+            if (!pageName) throw Errors.argumentNull('pageName')
+            values = values || {}
             let element = this.createPageElement(pageName);
             let displayer = new this.pageDisplayType(this);
 
@@ -210,8 +224,8 @@ namespace chitu {
                 node = { action, name: pageName }
             }
 
-            if (node == null && this.parser.pageNameParse != null) {
-                node = this.parser.pageNameParse(pageName);
+            if (node == null && this.parser.parse != null) {
+                node = this.parser.parse(pageName);
                 console.assert(node.action != null);
             }
 

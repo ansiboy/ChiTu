@@ -2,7 +2,7 @@
 
 namespace chitu {
     export type StringPropertyNames<T> = { [K in keyof T]: T[K] extends string ? K : never }[keyof T];
-    export type Action = ((page: Page) => void);
+    export type Action = ((page: Page, app: PageMaster) => void);
     export type SiteMapChildren<T extends PageNode> = { [key: string]: T }
     /**
      * 页面结点
@@ -14,7 +14,7 @@ namespace chitu {
 
     export interface PageNodeParser {
         actions?: { [key: string]: Action },
-        pageNameParse?: (pageName: string) => PageNode
+        parse?: (pageName: string) => PageNode,
     }
 
     const EmtpyStateData = "";

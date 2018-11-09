@@ -1,6 +1,6 @@
 {
   "name": "maishu-chitu",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "author": "mai.shu",
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -16,10 +16,10 @@
     "grunt-contrib-copy": "~1.0.0",
     "grunt-contrib-uglify": "~1.0.1",
     "grunt-shell": "^2.1.0",
-    "typescript": "~2.6.1"
+    "typescript": "^3.1.4"
   },
   "description": "采用TypeScript编写的轻量级单页面类库，帮助开发人员编写易维护的大规模项目。采用面向对象，事件驱动的编程模式。",
-  "main": "chitu.js",
+  "main": "out/dis/chitu.js",
   "directories": {
     "test": "test"
   },
