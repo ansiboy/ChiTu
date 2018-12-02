@@ -32,9 +32,6 @@ namespace chitu {
 
         /** 以 ! 开头在 hash 忽略掉 */
         if (routeString.startsWith('!')) {
-            // let url = createUrl(app.currentPage.name, app.currentPage.data);
-            // history.replaceState(EmtpyStateData, "", url)
-            // return null;
             throw Errors.canntParseRouteString(routeString);
         }
 
@@ -144,8 +141,11 @@ namespace chitu {
                 let sharpIndex = url.indexOf('#');
                 let routeString = url.substr(sharpIndex + 1);
                 /** 以 ! 开头在 hash 忽略掉 */
-                if (sharpIndex < 0 || routeString.startsWith('!')) {
+                if (routeString.startsWith('!')) {
                     return
+                }
+                if (sharpIndex < 0) {
+                    url = '#' + DefaultPageName
                 }
                 this.showPageByUrl(url, true);
             });
