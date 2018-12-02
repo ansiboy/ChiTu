@@ -195,7 +195,7 @@ namespace chitu {
                 if (tempPageData) {
                     args = Object.assign(args, tempPageData);
                 }
-                result = this.showPage(routeData.pageName, fromCache, args);
+                result = this.showPage(routeData.pageName, args);
             }
             return result;
         }
@@ -213,24 +213,37 @@ namespace chitu {
             history.pushState(EmtpyStateData, "", url)
         }
 
-        public redirect<T extends { [k in keyof T]: string }>(pageName: string, args?: T): Page
-        public redirect<T extends { [k in keyof T]: string }>(pageName: string, fromCache?: boolean, args?: T): Page
         /**
          * 页面跳转
          * @param node 页面节点
-         * @param fromCache 是否从缓存读取，默认为 false
          * @param args 传递到页面的参数
          */
-        public redirect<T>(pageName: string, fromCache?: any, args?: Pick<T, StringPropertyNames<T>>): Page {
-            let result = this.showPage(pageName, fromCache, args);
-            if (typeof (fromCache) == 'object') {
-                args = fromCache;
-            }
+        public redirect<T>(pageName: string, args?: object): Page {
+            let result = this.showPage(pageName, args);
             let url = this.createUrl(pageName, args);
             this.setLocationHash(url);
 
             return result;
         }
+
+        /**
+         * 页面向下一级页面跳转，页面会重新渲染
+         * @param node 页面节点
+         * @param args 传递到页面的参数
+         */
+        public forward(pageName: string, args?: object) {
+            let result = this.showPage(pageName, args, true);
+            let url = this.createUrl(pageName, args);
+            this.setLocationHash(url);
+
+            return result;
+        }
+
+        public reload(pageName: string, args?: object) {
+            let result = this.showPage(pageName, args, true)
+            return result
+        }
+
 
         /**
          * 返回上一个页面

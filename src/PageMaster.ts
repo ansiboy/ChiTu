@@ -99,37 +99,38 @@ namespace chitu {
             return null;
         }
 
-        private getPage(node: PageNode, allowCache: boolean, values?: any): Page {
+        private getPage(node: PageNode, values?: any): { page: Page, isNew: boolean } {
             console.assert(node != null);
 
             values = values || {};
             let pageName = node.name;
             let cachePage = this.cachePages[pageName];
-            if (cachePage != null && allowCache) {
+            if (cachePage != null) {
                 cachePage.data = Object.assign(cachePage.data || {}, values);
-                return cachePage;
+                return { page: cachePage, isNew: false };
             }
 
-            if (cachePage != null)
-                cachePage.close();
+            // if (cachePage != null)
+            //     cachePage.close();
 
             let page = this.createPage(pageName, values);
+            this.cachePages[pageName] = page;
 
-            let page_onloadComplete = (sender: Page, args: PageData) => {
-                this.cachePages[sender.name] = sender;
-            }
-            let page_onclosed = (sender: chitu.Page) => {
-                delete this.cachePages[sender.name];
-                this.page_stack = this.page_stack.filter(o => o != sender);
-                page.closed.remove(page_onclosed);
-                page.load.remove(page_onloadComplete);
-            }
+            // let page_onloadComplete = (sender: Page, args: PageData) => {
+            //     this.cachePages[sender.name] = sender;
+            // }
+            // let page_onclosed = (sender: chitu.Page) => {
+            //     delete this.cachePages[sender.name];
+            //     this.page_stack = this.page_stack.filter(o => o != sender);
+            //     page.closed.remove(page_onclosed);
+            //     page.load.remove(page_onloadComplete);
+            // }
 
-            page.closed.add(page_onclosed);
-            page.load.add(page_onloadComplete);
+            // page.closed.add(page_onclosed);
+            // page.load.add(page_onloadComplete);
 
             this.on_pageCreated(page);
-            return page;
+            return { page, isNew: true };
         }
 
         protected createPage(pageName: string, values?: any): Page {
@@ -138,14 +139,6 @@ namespace chitu {
             let element = this.createPageElement(pageName);
             let displayer = new this.pageDisplayType(this);
 
-            let siteMapNode = this.findSiteMapNode(pageName);
-            if (siteMapNode == null)
-                throw Errors.pageNodeNotExists(pageName);
-
-            let action = siteMapNode.action;
-            if (action == null)
-                throw Errors.actionCanntNull(pageName);
-
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
@@ -153,7 +146,6 @@ namespace chitu {
                 data: values,
                 displayer,
                 element,
-                action,
             });
 
             return page;
@@ -165,26 +157,11 @@ namespace chitu {
             return element;
         }
 
-        /**
-         * 显示页面
-         * @param pageName 要显示页面的节点
-         * @param args 页面参数
-         */
-        public showPage(pageName: string, args?: any): Page
-        /**
-         * 显示页面
-         * @param pageName 要显示页面的节点
-         * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 true
-         * @param args 页面参数
-         */
-        public showPage(pageName: string, fromCache?: boolean, args?: any): Page
-        /**
-         * 显示页面
-         * @param pageName 要显示页面的节点
-         * @param fromCache 页面是否从缓存读取，true 为从缓存读取，false 为重新加载，默认为 false
-         * @param args 页面参数
-         */
-        public showPage(pageName: string | null, fromCache?: any, args?: any): Page | null {
+        public showPage(pageName: string, args?: object, rerender?: boolean): Page {
+
+            args = args || {}
+            rerender = rerender == null ? false : true
+
             if (!pageName) throw Errors.argumentNull('pageName');
 
             let node = this.findSiteMapNode(pageName);
@@ -194,20 +171,35 @@ namespace chitu {
             if (this.currentPage != null && this.currentPage.name == pageName)
                 return this.currentPage;
 
-            if (typeof (fromCache) == 'object') {
-                args = fromCache;
-                fromCache = null;
+            args = args || {}
+            let { page, isNew } = this.getPage(node, args);
+            if (isNew || rerender) {
+                let siteMapNode = this.findSiteMapNode(pageName);
+                if (siteMapNode == null)
+                    throw Errors.pageNodeNotExists(pageName);
+
+                let action = siteMapNode.action;
+                if (action == null)
+                    throw Errors.actionCanntNull(pageName);
+
+                action(page, this)
             }
 
-            const fromCacheDefault = false;
-            fromCache = fromCache == null ? fromCacheDefault : fromCache;
-            args = args || {}
-            let page = this.getPage(node, fromCache, args);
             page.show();
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
 
-            return this.currentPage;
+            return page;
+        }
+
+        protected closePage(page: Page) {
+            if (page == null)
+                throw Errors.argumentNull('page')
+
+            page.close()
+
+            delete this.cachePages[page.name];
+            this.page_stack = this.page_stack.filter(o => o != page);
         }
 
         private pushPage(page: Page) {
@@ -244,7 +236,8 @@ namespace chitu {
             if (page == null)
                 return;
 
-            page.close();
+            // page.close();
+            this.closePage(page)
             if (this.currentPage) {
                 if (passData) {
                     console.assert(this.currentPage.data != null);

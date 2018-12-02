@@ -1,8 +1,10 @@
 ﻿var build_dir = 'out';
-var release_dir = 'out/dist';
-var js_output_file = `${release_dir}/chitu.js`;
+var release_dir = 'dist';
 
 module.exports = function (grunt) {
+
+    require('load-grunt-tasks')(grunt);
+
     let pkg = grunt.file.readJSON('package.json');
 
     let license = `
@@ -52,8 +54,8 @@ ${license}
                     presets: ["es2015"],
                 },
                 files: [{
-                    src: [`out/es6/chitu.js`],
-                    dest: `out/dist/chitu.es5.js`
+                    src: [`${build_dir}/chitu.js`],
+                    dest: `${release_dir}/chitu.es5.js`
                 }]
             }
         },
@@ -63,35 +65,19 @@ ${license}
                     mangle: false
                 },
                 files: [{
-                    src: `out/dist/chitu.es5.js`,
-                    dest: `out/dist/chitu.min.js`
+                    src: `${release_dir}/chitu.es5.js`,
+                    dest: `${release_dir}/chitu.min.js`
                 }]
             }
         },
         concat: {
-            chitudts: {
-                options: {
-                    stripBanners: true,
-                    footer:
-                        `
-declare module "maishu-chitu" { \n\
-    export = chitu; \n\
-}\n
-declare module "chitu" { \n\
-    export = chitu; \n\
-}\n
-`
-                },
-                src: [build_dir + '/es6/chitu.d.ts'],
-                dest: `${release_dir}/chitu.d.ts`
-            },
             chitujs_es6: {
                 options: {
                     banner: chitu_js_banner,
                     footer: chitu_js_footer,
                 },
-                src: [build_dir + '/es6/chitu.js'],
-                dest: release_dir + '/chitu.js'
+                src: [`${build_dir}/chitu.js`],
+                dest: `${release_dir}/chitu.js`
             }
         },
         clean: [build_dir + '/**/*.d.ts', build_dir + '/**/*.js'],
@@ -136,17 +122,7 @@ declare module "chitu" { \n\
     };
 
 
-
     grunt.initConfig(config);
-
-    grunt.loadNpmTasks('grunt-babel');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-contrib-concat');
-    grunt.loadNpmTasks('grunt-contrib-connect');
-    grunt.loadNpmTasks('grunt-contrib-clean');
-    grunt.loadNpmTasks('grunt-contrib-copy');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-shell');
     grunt.registerTask('default', ['shell', 'concat', 'babel', 'uglify']); //, 'copy'
 
 };

@@ -13,7 +13,7 @@ namespace chitu {
 
     export interface PageParams {
         app: PageMaster,
-        action: Action,
+        // action: Action,
         element: HTMLElement,
         displayer: PageDisplayer,
         name: string,
@@ -28,15 +28,12 @@ namespace chitu {
         private _element: HTMLElement;
         private _app: PageMaster;
         private _displayer: PageDisplayer;
-        private _action: Action;
+        // private _action: Action;
         private _name: string
 
         static tagName = 'div';
 
         data: PageData = {}
-
-        /** 脚本执行完成后引发 */
-        load = Callbacks<this, PageData>();
 
         /** 页面显示时引发 */
         showing = Callbacks<this, PageData>();
@@ -54,17 +51,8 @@ namespace chitu {
             this._element = params.element;
             this._app = params.app;
             this._displayer = params.displayer;
-            this._action = params.action;
             this.data = params.data
             this._name = params.name;
-
-            // 确保异步调用
-            setTimeout(() => {
-                this.executePageAction();
-            });
-        }
-        on_load() {
-            return this.load.fire(this, this.data);
         }
         private on_showing() {
             return this.showing.fire(this, this.data);
@@ -132,32 +120,6 @@ namespace chitu {
          */
         get name(): string {
             return this._name;
-        }
-
-        private async executePageAction() {
-            let pageName: string = this.name;
-            let action: Function;
-
-            action = this._action;
-            let actionExecuteResult;
-            if (typeof action != 'function') {
-                throw Errors.actionTypeError(pageName);
-            }
-
-            let actionResult = action(this) as Promise<any>;
-            if (actionResult != null && actionResult.then != null) {
-                actionResult.then(() => {
-                    this.on_load();
-                    // this.on_loadComplete();
-                })
-            }
-            else {
-                this.on_load();
-            }
-        }
-
-        reload() {
-            return this.executePageAction();
         }
 
         get app() {
