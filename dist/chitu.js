@@ -1,7 +1,7 @@
 
 
 /*!
- * CHITU v2.0.2
+ * CHITU v2.0.6
  * https://github.com/ansiboy/ChiTu
  *
  * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -69,7 +69,7 @@ var chitu;
                 let actionExports = yield loadjs(url);
                 if (!actionExports)
                     throw chitu.Errors.exportsCanntNull(url);
-                let _action = actionExports.defalut;
+                let _action = actionExports.default;
                 if (_action == null) {
                     throw chitu.Errors.canntFindAction(page.name);
                 }

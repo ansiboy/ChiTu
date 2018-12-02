@@ -1,8 +1,5 @@
 namespace chitu {
 
-    type LoadJS = (path: string) =>
-        Promise<{ defalut: (page: Page, app: PageMaster) => void | { new(page: Page, app: PageMaster): any } }>//
-
     /**
      * 页面管理，用于管理各个页面
      */
@@ -43,7 +40,7 @@ namespace chitu {
             this.container = container;
         }
 
-        private defaultPageNodeParser() {
+        protected defaultPageNodeParser() {
             let nodes: { [key: string]: chitu.PageNode } = {}
             let p: PageNodeParser = {
                 actions: {},
@@ -60,13 +57,13 @@ namespace chitu {
             return p
         }
 
-        private createDefaultAction(url: string, loadjs: LoadJS): Action {
+        protected createDefaultAction(url: string, loadjs: (path: string) => Promise<any>): Action {
             return async (page: Page) => {
                 let actionExports = await loadjs(url);
                 if (!actionExports)
                     throw Errors.exportsCanntNull(url);
 
-                let _action = actionExports.defalut
+                let _action = actionExports.default
                 if (_action == null) {
                     throw Errors.canntFindAction(page.name);
                 }

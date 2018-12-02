@@ -11,8 +11,8 @@ declare namespace chitu {
         error: Callback2<this, Error, Page>;
         parser: PageNodeParser;
         constructor(container: HTMLElement, parser?: PageNodeParser);
-        private defaultPageNodeParser;
-        private createDefaultAction;
+        protected defaultPageNodeParser(): PageNodeParser;
+        protected createDefaultAction(url: string, loadjs: (path: string) => Promise<any>): Action;
         private on_pageCreated;
         readonly currentPage: Page | null;
         private getPage;

@@ -101,7 +101,7 @@ var chitu;
                                         throw chitu.Errors.exportsCanntNull(url);
 
                                     case 5:
-                                        _action = actionExports.defalut;
+                                        _action = actionExports.default;
 
                                         if (!(_action == null)) {
                                             _context.next = 8;

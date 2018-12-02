@@ -78,7 +78,24 @@ ${license}
                 },
                 src: [`${build_dir}/chitu.js`],
                 dest: `${release_dir}/chitu.js`
-            }
+            },
+            chitujs_declare: {
+                options: {
+                    banner: `
+/// <reference path="../out/chitu.d.ts"/>
+
+declare module "maishu-chitu" { 
+    export = chitu; 
+}
+
+declare module "chitu" { 
+    export = chitu; 
+}                   
+`,
+                },
+                src: [],
+                dest: `${release_dir}/chitu.d.ts`
+            },
         },
         clean: [build_dir + '/**/*.d.ts', build_dir + '/**/*.js'],
         // 通过connect任务，创建一个静态服务器

@@ -46,7 +46,7 @@ var chitu;
                 let actionExports = yield loadjs(url);
                 if (!actionExports)
                     throw chitu.Errors.exportsCanntNull(url);
-                let _action = actionExports.defalut;
+                let _action = actionExports.default;
                 if (_action == null) {
                     throw chitu.Errors.canntFindAction(page.name);
                 }

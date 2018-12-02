@@ -55,7 +55,7 @@
   },
   "homepage": "https://github.com/ansiboy/chitu#readme",
   "license": "MIT",
-  "main": "dis/chitu.js",
+  "main": "dist/chitu.js",
   "name": "maishu-chitu",
   "repository": {
     "type": "git",
@@ -65,5 +65,5 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "grunt"
   },
-  "version": "2.0.3"
+  "version": "2.0.8"
 }
