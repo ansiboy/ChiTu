@@ -107,24 +107,8 @@ namespace chitu {
                 return { page: cachePage, isNew: false };
             }
 
-            // if (cachePage != null)
-            //     cachePage.close();
-
             let page = this.createPage(pageName, values);
             this.cachePages[pageName] = page;
-
-            // let page_onloadComplete = (sender: Page, args: PageData) => {
-            //     this.cachePages[sender.name] = sender;
-            // }
-            // let page_onclosed = (sender: chitu.Page) => {
-            //     delete this.cachePages[sender.name];
-            //     this.page_stack = this.page_stack.filter(o => o != sender);
-            //     page.closed.remove(page_onclosed);
-            //     page.load.remove(page_onloadComplete);
-            // }
-
-            // page.closed.add(page_onclosed);
-            // page.load.add(page_onloadComplete);
 
             this.on_pageCreated(page);
             return { page, isNew: true };
