@@ -48,17 +48,146 @@ var chitu;
             this.page_stack = new Array();
             this.nodes = {};
             this.error = chitu.Callbacks();
-            this.parser = parser || this.defaultPageNodeParser();
+            this.parser = parser || PageMaster.defaultPageNodeParser();
             if (!container) throw chitu.Errors.argumentNull("container");
             this.parser.actions = this.parser.actions || {};
             this.container = container;
         }
 
         _createClass(PageMaster, [{
-            key: "defaultPageNodeParser",
-            value: function defaultPageNodeParser() {
+            key: "on_pageCreated",
+            value: function on_pageCreated(page) {
+                return this.pageCreated.fire(this, page);
+            }
+        }, {
+            key: "getPage",
+            value: function getPage(node, allowCache, values) {
                 var _this = this;
 
+                console.assert(node != null);
+                values = values || {};
+                var pageName = node.name;
+                var cachePage = this.cachePages[pageName];
+                if (cachePage != null && allowCache) {
+                    cachePage.data = Object.assign(cachePage.data || {}, values);
+                    return cachePage;
+                }
+                if (cachePage != null) cachePage.close();
+                var page = this.createPage(pageName, values);
+                var page_onloadComplete = function page_onloadComplete(sender, args) {
+                    _this.cachePages[sender.name] = sender;
+                };
+                var page_onclosed = function page_onclosed(sender) {
+                    delete _this.cachePages[sender.name];
+                    _this.page_stack = _this.page_stack.filter(function (o) {
+                        return o != sender;
+                    });
+                    page.closed.remove(page_onclosed);
+                    page.load.remove(page_onloadComplete);
+                };
+                page.closed.add(page_onclosed);
+                page.load.add(page_onloadComplete);
+                this.on_pageCreated(page);
+                return page;
+            }
+        }, {
+            key: "createPage",
+            value: function createPage(pageName, values) {
+                if (!pageName) throw chitu.Errors.argumentNull('pageName');
+                values = values || {};
+                var element = this.createPageElement(pageName);
+                var displayer = new this.pageDisplayType(this);
+                var siteMapNode = this.findSiteMapNode(pageName);
+                if (siteMapNode == null) throw chitu.Errors.pageNodeNotExists(pageName);
+                var action = siteMapNode.action;
+                if (action == null) throw chitu.Errors.actionCanntNull(pageName);
+                console.assert(this.pageType != null);
+                var page = new this.pageType({
+                    app: this,
+                    name: pageName,
+                    data: values,
+                    displayer: displayer,
+                    element: element,
+                    action: action
+                });
+                return page;
+            }
+        }, {
+            key: "createPageElement",
+            value: function createPageElement(pageName) {
+                var element = document.createElement(chitu.Page.tagName);
+                this.container.appendChild(element);
+                return element;
+            }
+        }, {
+            key: "showPage",
+            value: function showPage(pageName, fromCache, args) {
+                if (!pageName) throw chitu.Errors.argumentNull('pageName');
+                var node = this.findSiteMapNode(pageName);
+                if (node == null) throw chitu.Errors.pageNodeNotExists(pageName);
+                if (this.currentPage != null && this.currentPage.name == pageName) return this.currentPage;
+                if ((typeof fromCache === "undefined" ? "undefined" : _typeof(fromCache)) == 'object') {
+                    args = fromCache;
+                    fromCache = null;
+                }
+                var fromCacheDefault = false;
+                fromCache = fromCache == null ? fromCacheDefault : fromCache;
+                args = args || {};
+                var page = this.getPage(node, fromCache, args);
+                page.show();
+                this.pushPage(page);
+                console.assert(page == this.currentPage, "page is not current page");
+                return this.currentPage;
+            }
+        }, {
+            key: "pushPage",
+            value: function pushPage(page) {
+                this.page_stack.push(page);
+            }
+        }, {
+            key: "findSiteMapNode",
+            value: function findSiteMapNode(pageName) {
+                if (this.nodes[pageName]) return this.nodes[pageName];
+                var node = null;
+                var action = this.parser.actions ? this.parser.actions[pageName] : null;
+                if (action != null) {
+                    node = { action: action, name: pageName };
+                }
+                if (node == null && this.parser.parse != null) {
+                    node = this.parser.parse(pageName);
+                    console.assert(node.action != null);
+                }
+                if (node != null) this.nodes[pageName] = node;
+                return node;
+            }
+        }, {
+            key: "closeCurrentPage",
+            value: function closeCurrentPage(passData) {
+                var page = this.page_stack.pop();
+                if (page == null) return;
+                page.close();
+                if (this.currentPage) {
+                    if (passData) {
+                        console.assert(this.currentPage.data != null);
+                        this.currentPage.data = Object.assign(this.currentPage.data, passData);
+                    }
+                    this.currentPage.show();
+                }
+            }
+        }, {
+            key: "currentPage",
+            get: function get() {
+                if (this.page_stack.length > 0) return this.page_stack[this.page_stack.length - 1];
+                return null;
+            }
+        }, {
+            key: "pageStack",
+            get: function get() {
+                return this.page_stack;
+            }
+        }], [{
+            key: "defaultPageNodeParser",
+            value: function defaultPageNodeParser() {
                 var nodes = {};
                 var p = {
                     actions: {},
@@ -66,7 +195,7 @@ var chitu;
                         var node = nodes[pageName];
                         if (node == null) {
                             var path = ("modules_" + pageName).split('_').join('/');
-                            node = { action: _this.createDefaultAction(path, chitu.loadjs), name: pageName };
+                            node = { action: PageMaster.createDefaultAction(path, chitu.loadjs), name: pageName };
                             nodes[pageName] = node;
                         }
                         return node;
@@ -79,7 +208,7 @@ var chitu;
             value: function createDefaultAction(url, loadjs) {
                 var _this2 = this;
 
-                return function (page) {
+                return function (page, app) {
                     return __awaiter(_this2, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
                         var actionExports, _action, result, action, _action2;
 
@@ -116,11 +245,11 @@ var chitu;
                                         if (PageMaster.isClass(_action)) {
                                             action = _action;
 
-                                            result = new action(page, this);
+                                            result = new action(page, app);
                                         } else {
                                             _action2 = _action;
 
-                                            result = _action2(page, this);
+                                            result = _action2(page, app);
                                         }
                                         return _context.abrupt("return", result);
 
@@ -132,134 +261,6 @@ var chitu;
                         }, _callee, this);
                     }));
                 };
-            }
-        }, {
-            key: "on_pageCreated",
-            value: function on_pageCreated(page) {
-                return this.pageCreated.fire(this, page);
-            }
-        }, {
-            key: "getPage",
-            value: function getPage(node, values) {
-                console.assert(node != null);
-                values = values || {};
-                var pageName = node.name;
-                var cachePage = this.cachePages[pageName];
-                if (cachePage != null) {
-                    cachePage.data = Object.assign(cachePage.data || {}, values);
-                    return { page: cachePage, isNew: false };
-                }
-                var page = this.createPage(pageName, values);
-                this.cachePages[pageName] = page;
-                this.on_pageCreated(page);
-                return { page: page, isNew: true };
-            }
-        }, {
-            key: "createPage",
-            value: function createPage(pageName, values) {
-                if (!pageName) throw chitu.Errors.argumentNull('pageName');
-                values = values || {};
-                var element = this.createPageElement(pageName);
-                var displayer = new this.pageDisplayType(this);
-                console.assert(this.pageType != null);
-                var page = new this.pageType({
-                    app: this,
-                    name: pageName,
-                    data: values,
-                    displayer: displayer,
-                    element: element
-                });
-                return page;
-            }
-        }, {
-            key: "createPageElement",
-            value: function createPageElement(pageName) {
-                var element = document.createElement(chitu.Page.tagName);
-                this.container.appendChild(element);
-                return element;
-            }
-        }, {
-            key: "showPage",
-            value: function showPage(pageName, args, rerender) {
-                args = args || {};
-                rerender = rerender == null ? false : true;
-                if (!pageName) throw chitu.Errors.argumentNull('pageName');
-                var node = this.findSiteMapNode(pageName);
-                if (node == null) throw chitu.Errors.pageNodeNotExists(pageName);
-                if (this.currentPage != null && this.currentPage.name == pageName) return this.currentPage;
-                args = args || {};
-
-                var _getPage = this.getPage(node, args),
-                    page = _getPage.page,
-                    isNew = _getPage.isNew;
-
-                if (isNew || rerender) {
-                    var siteMapNode = this.findSiteMapNode(pageName);
-                    if (siteMapNode == null) throw chitu.Errors.pageNodeNotExists(pageName);
-                    var action = siteMapNode.action;
-                    if (action == null) throw chitu.Errors.actionCanntNull(pageName);
-                    action(page, this);
-                }
-                page.show();
-                this.pushPage(page);
-                console.assert(page == this.currentPage, "page is not current page");
-                return page;
-            }
-        }, {
-            key: "closePage",
-            value: function closePage(page) {
-                if (page == null) throw chitu.Errors.argumentNull('page');
-                page.close();
-                delete this.cachePages[page.name];
-                this.page_stack = this.page_stack.filter(function (o) {
-                    return o != page;
-                });
-            }
-        }, {
-            key: "pushPage",
-            value: function pushPage(page) {
-                this.page_stack.push(page);
-            }
-        }, {
-            key: "findSiteMapNode",
-            value: function findSiteMapNode(pageName) {
-                if (this.nodes[pageName]) return this.nodes[pageName];
-                var node = null;
-                var action = this.parser.actions ? this.parser.actions[pageName] : null;
-                if (action != null) {
-                    node = { action: action, name: pageName };
-                }
-                if (node == null && this.parser.parse != null) {
-                    node = this.parser.parse(pageName);
-                    console.assert(node.action != null);
-                }
-                if (node != null) this.nodes[pageName] = node;
-                return node;
-            }
-        }, {
-            key: "closeCurrentPage",
-            value: function closeCurrentPage(passData) {
-                var page = this.page_stack.pop();
-                if (page == null) return;
-                this.closePage(page);
-                if (this.currentPage) {
-                    if (passData) {
-                        console.assert(this.currentPage.data != null);
-                        this.currentPage.data = Object.assign(this.currentPage.data, passData);
-                    }
-                    this.currentPage.show();
-                }
-            }
-        }, {
-            key: "currentPage",
-            get: function get() {
-                if (this.page_stack.length > 0) return this.page_stack[this.page_stack.length - 1];
-                return null;
-            }
-        }, {
-            key: "pageStack",
-            get: function get() {
-                return this.page_stack;
             }
         }]);
 
@@ -374,11 +375,8 @@ var chitu;
                     var url = location.href;
                     var sharpIndex = url.indexOf('#');
                     var routeString = url.substr(sharpIndex + 1);
-                    if (routeString.startsWith('!')) {
+                    if (sharpIndex < 0 || routeString.startsWith('!')) {
                         return;
-                    }
-                    if (sharpIndex < 0) {
-                        url = '#' + DefaultPageName;
                     }
                     _this4.showPageByUrl(url, true);
                 });
@@ -410,7 +408,7 @@ var chitu;
                     if (tempPageData) {
                         args = Object.assign(args, tempPageData);
                     }
-                    result = this.showPage(routeData.pageName, args);
+                    result = this.showPage(routeData.pageName, fromCache, args);
                 }
                 return result;
             }
@@ -431,24 +429,13 @@ var chitu;
             }
         }, {
             key: "redirect",
-            value: function redirect(pageName, args) {
-                var result = this.showPage(pageName, args);
+            value: function redirect(pageName, fromCache, args) {
+                var result = this.showPage(pageName, fromCache, args);
+                if ((typeof fromCache === "undefined" ? "undefined" : _typeof(fromCache)) == 'object') {
+                    args = fromCache;
+                }
                 var url = this.createUrl(pageName, args);
                 this.setLocationHash(url);
-                return result;
-            }
-        }, {
-            key: "forward",
-            value: function forward(pageName, args) {
-                var result = this.showPage(pageName, args, true);
-                var url = this.createUrl(pageName, args);
-                this.setLocationHash(url);
-                return result;
-            }
-        }, {
-            key: "reload",
-            value: function reload(pageName, args) {
-                var result = this.showPage(pageName, args, true);
                 return result;
             }
         }, {
@@ -729,9 +716,12 @@ var chitu;
 (function (chitu) {
     var Page = function () {
         function Page(params) {
+            var _this5 = this;
+
             _classCallCheck(this, Page);
 
             this.data = {};
+            this.load = chitu.Callbacks();
             this.showing = chitu.Callbacks();
             this.shown = chitu.Callbacks();
             this.hiding = chitu.Callbacks();
@@ -741,11 +731,20 @@ var chitu;
             this._element = params.element;
             this._app = params.app;
             this._displayer = params.displayer;
+            this._action = params.action;
             this.data = params.data;
             this._name = params.name;
+            setTimeout(function () {
+                _this5.executePageAction();
+            });
         }
 
         _createClass(Page, [{
+            key: "on_load",
+            value: function on_load() {
+                return this.load.fire(this, this.data);
+            }
+        }, {
             key: "on_showing",
             value: function on_showing() {
                 return this.showing.fire(this, this.data);
@@ -778,7 +777,7 @@ var chitu;
         }, {
             key: "show",
             value: function show() {
-                var _this5 = this;
+                var _this6 = this;
 
                 this.on_showing();
                 var currentPage = this._app.currentPage;
@@ -786,17 +785,17 @@ var chitu;
                     currentPage = null;
                 }
                 return this._displayer.show(this, currentPage).then(function (o) {
-                    _this5.on_shown();
+                    _this6.on_shown();
                 });
             }
         }, {
             key: "hide",
             value: function hide(currentPage) {
-                var _this6 = this;
+                var _this7 = this;
 
                 this.on_hiding();
                 return this._displayer.hide(this, currentPage).then(function (o) {
-                    _this6.on_hidden();
+                    _this7.on_hidden();
                 });
             }
         }, {
@@ -810,14 +809,62 @@ var chitu;
         }, {
             key: "createService",
             value: function createService(type) {
-                var _this7 = this;
+                var _this8 = this;
 
                 type = type || chitu.Service;
                 var service = new type();
                 service.error.add(function (ender, error) {
-                    _this7._app.error.fire(_this7._app, error, _this7);
+                    _this8._app.error.fire(_this8._app, error, _this8);
                 });
                 return service;
+            }
+        }, {
+            key: "executePageAction",
+            value: function executePageAction() {
+                return __awaiter(this, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+                    var _this9 = this;
+
+                    var pageName, action, actionExecuteResult, actionResult;
+                    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                        while (1) {
+                            switch (_context2.prev = _context2.next) {
+                                case 0:
+                                    pageName = this.name;
+                                    action = void 0;
+
+                                    action = this._action;
+                                    actionExecuteResult = void 0;
+
+                                    if (!(typeof action != 'function')) {
+                                        _context2.next = 6;
+                                        break;
+                                    }
+
+                                    throw chitu.Errors.actionTypeError(pageName);
+
+                                case 6:
+                                    actionResult = action(this);
+
+                                    if (actionResult != null && actionResult.then != null) {
+                                        actionResult.then(function () {
+                                            _this9.on_load();
+                                        });
+                                    } else {
+                                        this.on_load();
+                                    }
+
+                                case 8:
+                                case "end":
+                                    return _context2.stop();
+                            }
+                        }
+                    }, _callee2, this);
+                }));
+            }
+        }, {
+            key: "reload",
+            value: function reload() {
+                return this.executePageAction();
             }
         }, {
             key: "element",
@@ -872,17 +919,17 @@ var PageDisplayerImplement = function () {
 }();
 
 function ajax(url, options) {
-    return __awaiter(this, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+    return __awaiter(this, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
         var response, responseText, p, text, textObject, isJSONContextType, err;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
-                switch (_context2.prev = _context2.next) {
+                switch (_context3.prev = _context3.next) {
                     case 0:
-                        _context2.next = 2;
+                        _context3.next = 2;
                         return fetch(url, options);
 
                     case 2:
-                        response = _context2.sent;
+                        response = _context3.sent;
                         responseText = response.text();
                         p = void 0;
 
@@ -893,11 +940,11 @@ function ajax(url, options) {
                         } else {
                             p = responseText;
                         }
-                        _context2.next = 8;
+                        _context3.next = 8;
                         return responseText;
 
                     case 8:
-                        text = _context2.sent;
+                        text = _context3.sent;
                         textObject = void 0;
                         isJSONContextType = (response.headers.get('content-type') || '').indexOf('json') >= 0;
 
@@ -908,7 +955,7 @@ function ajax(url, options) {
                         }
 
                         if (!(response.status >= 300)) {
-                            _context2.next = 19;
+                            _context3.next = 19;
                             break;
                         }
 
@@ -921,14 +968,14 @@ function ajax(url, options) {
                         throw err;
 
                     case 19:
-                        return _context2.abrupt("return", textObject);
+                        return _context3.abrupt("return", textObject);
 
                     case 20:
                     case "end":
-                        return _context2.stop();
+                        return _context3.stop();
                 }
             }
-        }, _callee2, this);
+        }, _callee3, this);
     }));
 }
 function callAjax(url, options, service, error) {

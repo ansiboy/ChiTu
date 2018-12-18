@@ -1,26 +1,3 @@
-
-
-/*!
- * CHITU v2.0.8
- * https://github.com/ansiboy/ChiTu
- *
- * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
- * Licensed under the MIT License.
- *
- */
-
-(function(factory) { 
-    if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') { 
-        // [1] CommonJS/Node.js 
-        var target = module['exports'] || exports;
-        var chitu = factory(target, require);
-        Object.assign(target,chitu);
-    } else if (typeof define === 'function' && define['amd']) {
-        define(factory); 
-    } else { 
-        factory();
-    } 
-})(function() {
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -42,13 +19,13 @@ var chitu;
             this.page_stack = new Array();
             this.nodes = {};
             this.error = chitu.Callbacks();
-            this.parser = parser || this.defaultPageNodeParser();
+            this.parser = parser || PageMaster.defaultPageNodeParser();
             if (!container)
                 throw chitu.Errors.argumentNull("container");
             this.parser.actions = this.parser.actions || {};
             this.container = container;
         }
-        defaultPageNodeParser() {
+        static defaultPageNodeParser() {
             let nodes = {};
             let p = {
                 actions: {},
@@ -56,7 +33,7 @@ var chitu;
                     let node = nodes[pageName];
                     if (node == null) {
                         let path = `modules_${pageName}`.split('_').join('/');
-                        node = { action: this.createDefaultAction(path, chitu.loadjs), name: pageName };
+                        node = { action: PageMaster.createDefaultAction(path, chitu.loadjs), name: pageName };
                         nodes[pageName] = node;
                     }
                     return node;
@@ -64,8 +41,8 @@ var chitu;
             };
             return p;
         }
-        createDefaultAction(url, loadjs) {
-            return (page) => __awaiter(this, void 0, void 0, function* () {
+        static createDefaultAction(url, loadjs) {
+            return (page, app) => __awaiter(this, void 0, void 0, function* () {
                 let actionExports = yield loadjs(url);
                 if (!actionExports)
                     throw chitu.Errors.exportsCanntNull(url);
@@ -76,11 +53,11 @@ var chitu;
                 let result;
                 if (PageMaster.isClass(_action)) {
                     let action = _action;
-                    result = new action(page, this);
+                    result = new action(page, app);
                 }
                 else {
                     let action = _action;
-                    result = action(page, this);
+                    result = action(page, app);
                 }
                 return result;
             });
@@ -93,19 +70,31 @@ var chitu;
                 return this.page_stack[this.page_stack.length - 1];
             return null;
         }
-        getPage(node, values) {
+        getPage(node, allowCache, values) {
             console.assert(node != null);
             values = values || {};
             let pageName = node.name;
             let cachePage = this.cachePages[pageName];
-            if (cachePage != null) {
+            if (cachePage != null && allowCache) {
                 cachePage.data = Object.assign(cachePage.data || {}, values);
-                return { page: cachePage, isNew: false };
+                return cachePage;
             }
+            if (cachePage != null)
+                cachePage.close();
             let page = this.createPage(pageName, values);
-            this.cachePages[pageName] = page;
+            let page_onloadComplete = (sender, args) => {
+                this.cachePages[sender.name] = sender;
+            };
+            let page_onclosed = (sender) => {
+                delete this.cachePages[sender.name];
+                this.page_stack = this.page_stack.filter(o => o != sender);
+                page.closed.remove(page_onclosed);
+                page.load.remove(page_onloadComplete);
+            };
+            page.closed.add(page_onclosed);
+            page.load.add(page_onloadComplete);
             this.on_pageCreated(page);
-            return { page, isNew: true };
+            return page;
         }
         createPage(pageName, values) {
             if (!pageName)
@@ -113,6 +102,12 @@ var chitu;
             values = values || {};
             let element = this.createPageElement(pageName);
             let displayer = new this.pageDisplayType(this);
+            let siteMapNode = this.findSiteMapNode(pageName);
+            if (siteMapNode == null)
+                throw chitu.Errors.pageNodeNotExists(pageName);
+            let action = siteMapNode.action;
+            if (action == null)
+                throw chitu.Errors.actionCanntNull(pageName);
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
@@ -120,6 +115,7 @@ var chitu;
                 data: values,
                 displayer,
                 element,
+                action,
             });
             return page;
         }
@@ -128,9 +124,7 @@ var chitu;
             this.container.appendChild(element);
             return element;
         }
-        showPage(pageName, args, rerender) {
-            args = args || {};
-            rerender = rerender == null ? false : true;
+        showPage(pageName, fromCache, args) {
             if (!pageName)
                 throw chitu.Errors.argumentNull('pageName');
             let node = this.findSiteMapNode(pageName);
@@ -138,28 +132,18 @@ var chitu;
                 throw chitu.Errors.pageNodeNotExists(pageName);
             if (this.currentPage != null && this.currentPage.name == pageName)
                 return this.currentPage;
-            args = args || {};
-            let { page, isNew } = this.getPage(node, args);
-            if (isNew || rerender) {
-                let siteMapNode = this.findSiteMapNode(pageName);
-                if (siteMapNode == null)
-                    throw chitu.Errors.pageNodeNotExists(pageName);
-                let action = siteMapNode.action;
-                if (action == null)
-                    throw chitu.Errors.actionCanntNull(pageName);
-                action(page, this);
+            if (typeof (fromCache) == 'object') {
+                args = fromCache;
+                fromCache = null;
             }
+            const fromCacheDefault = false;
+            fromCache = fromCache == null ? fromCacheDefault : fromCache;
+            args = args || {};
+            let page = this.getPage(node, fromCache, args);
             page.show();
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
-            return page;
-        }
-        closePage(page) {
-            if (page == null)
-                throw chitu.Errors.argumentNull('page');
-            page.close();
-            delete this.cachePages[page.name];
-            this.page_stack = this.page_stack.filter(o => o != page);
+            return this.currentPage;
         }
         pushPage(page) {
             this.page_stack.push(page);
@@ -184,7 +168,7 @@ var chitu;
             var page = this.page_stack.pop();
             if (page == null)
                 return;
-            this.closePage(page);
+            page.close();
             if (this.currentPage) {
                 if (passData) {
                     console.assert(this.currentPage.data != null);
@@ -291,11 +275,8 @@ var chitu;
                 let url = location.href;
                 let sharpIndex = url.indexOf('#');
                 let routeString = url.substr(sharpIndex + 1);
-                if (routeString.startsWith('!')) {
+                if (sharpIndex < 0 || routeString.startsWith('!')) {
                     return;
-                }
-                if (sharpIndex < 0) {
-                    url = '#' + DefaultPageName;
                 }
                 this.showPageByUrl(url, true);
             });
@@ -331,7 +312,7 @@ var chitu;
                 if (tempPageData) {
                     args = Object.assign(args, tempPageData);
                 }
-                result = this.showPage(routeData.pageName, args);
+                result = this.showPage(routeData.pageName, fromCache, args);
             }
             return result;
         }
@@ -346,20 +327,13 @@ var chitu;
         setLocationHash(url) {
             history.pushState(EmtpyStateData, "", url);
         }
-        redirect(pageName, args) {
-            let result = this.showPage(pageName, args);
+        redirect(pageName, fromCache, args) {
+            let result = this.showPage(pageName, fromCache, args);
+            if (typeof (fromCache) == 'object') {
+                args = fromCache;
+            }
             let url = this.createUrl(pageName, args);
             this.setLocationHash(url);
-            return result;
-        }
-        forward(pageName, args) {
-            let result = this.showPage(pageName, args, true);
-            let url = this.createUrl(pageName, args);
-            this.setLocationHash(url);
-            return result;
-        }
-        reload(pageName, args) {
-            let result = this.showPage(pageName, args, true);
             return result;
         }
         back(closeCurrentPage, data) {
@@ -539,6 +513,7 @@ var chitu;
     class Page {
         constructor(params) {
             this.data = {};
+            this.load = chitu.Callbacks();
             this.showing = chitu.Callbacks();
             this.shown = chitu.Callbacks();
             this.hiding = chitu.Callbacks();
@@ -548,8 +523,15 @@ var chitu;
             this._element = params.element;
             this._app = params.app;
             this._displayer = params.displayer;
+            this._action = params.action;
             this.data = params.data;
             this._name = params.name;
+            setTimeout(() => {
+                this.executePageAction();
+            });
+        }
+        on_load() {
+            return this.load.fire(this, this.data);
         }
         on_showing() {
             return this.showing.fire(this, this.data);
@@ -604,6 +586,29 @@ var chitu;
         }
         get name() {
             return this._name;
+        }
+        executePageAction() {
+            return __awaiter(this, void 0, void 0, function* () {
+                let pageName = this.name;
+                let action;
+                action = this._action;
+                let actionExecuteResult;
+                if (typeof action != 'function') {
+                    throw chitu.Errors.actionTypeError(pageName);
+                }
+                let actionResult = action(this);
+                if (actionResult != null && actionResult.then != null) {
+                    actionResult.then(() => {
+                        this.on_load();
+                    });
+                }
+                else {
+                    this.on_load();
+                }
+            });
+        }
+        reload() {
+            return this.executePageAction();
         }
         get app() {
             return this._app;
@@ -721,8 +726,3 @@ var chitu;
     };
     chitu.Service = Service;
 })(chitu || (chitu = {}));
-
-window['chitu'] = window['chitu'] || chitu 
-                            
- return chitu;
-            });

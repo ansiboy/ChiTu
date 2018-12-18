@@ -268,8 +268,11 @@ var chitu;
                 let url = location.href;
                 let sharpIndex = url.indexOf('#');
                 let routeString = url.substr(sharpIndex + 1);
-                if (sharpIndex < 0 || routeString.startsWith('!')) {
+                if (routeString.startsWith('!')) {
                     return;
+                }
+                if (sharpIndex < 0) {
+                    url = '#' + DefaultPageName;
                 }
                 this.showPageByUrl(url, true);
             });
