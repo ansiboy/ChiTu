@@ -1,7 +1,8 @@
 declare namespace chitu {
     class PageMaster {
         pageCreated: Callback1<this, Page>;
-        pageLoad: Callback2<this, Page, any>;
+        pageShowing: Callback1<this, Page>;
+        pageShown: Callback1<this, Page>;
         protected pageType: PageConstructor;
         protected pageDisplayType: PageDisplayConstructor;
         private cachePages;
@@ -56,13 +57,13 @@ declare namespace chitu {
         parseUrl(url: string): {
             pageName: string;
             values: PageData;
-        } | null;
+        };
         createUrl<T>(pageName: string, values?: T): string;
         run(): void;
         private showPageByUrl;
         private fetchTemplatePageData;
         private setLocationHash;
-        redirect<T>(pageName: string, args?: object): Page;
+        redirect<T>(pageNameOrUrl: string, args?: object): Page;
         forward(pageName: string, args?: object): Page;
         reload(pageName: string, args?: object): Page;
         back(): void;

@@ -7,4 +7,4 @@ declare module "maishu-chitu" {
 
 declare module "chitu" { 
     export = chitu; 
-}                   
+}

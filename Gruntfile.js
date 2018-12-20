@@ -90,8 +90,7 @@ declare module "maishu-chitu" {
 
 declare module "chitu" { 
     export = chitu; 
-}                   
-`,
+}`,
                 },
                 src: [],
                 dest: `${release_dir}/chitu.d.ts`

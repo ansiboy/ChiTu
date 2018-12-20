@@ -41,7 +41,8 @@ var chitu;
             _classCallCheck(this, PageMaster);
 
             this.pageCreated = chitu.Callbacks();
-            this.pageLoad = chitu.Callbacks();
+            this.pageShowing = chitu.Callbacks();
+            this.pageShown = chitu.Callbacks();
             this.pageType = chitu.Page;
             this.pageDisplayType = PageDisplayerImplement;
             this.cachePages = {};
@@ -157,6 +158,8 @@ var chitu;
         }, {
             key: "createPage",
             value: function createPage(pageName, values) {
+                var _this3 = this;
+
                 if (!pageName) throw chitu.Errors.argumentNull('pageName');
                 values = values || {};
                 var element = this.createPageElement(pageName);
@@ -168,6 +171,18 @@ var chitu;
                     data: values,
                     displayer: displayer,
                     element: element
+                });
+                var showing = function showing(sender) {
+                    _this3.pageShowing.fire(_this3, sender);
+                };
+                var shown = function shown(sender) {
+                    _this3.pageShown.fire(_this3, sender);
+                };
+                page.showing.add(showing);
+                page.shown.add(shown);
+                page.closed.add(function () {
+                    page.showing.remove(showing);
+                    page.shown.remove(shown);
                 });
                 return page;
             }
@@ -344,12 +359,12 @@ var chitu;
         function Application(args) {
             _classCallCheck(this, Application);
 
-            var _this3 = _possibleConstructorReturn(this, (Application.__proto__ || Object.getPrototypeOf(Application)).call(this, (args || {}).container || document.body, (args || {}).parser));
+            var _this4 = _possibleConstructorReturn(this, (Application.__proto__ || Object.getPrototypeOf(Application)).call(this, (args || {}).container || document.body, (args || {}).parser));
 
-            _this3._runned = false;
-            _this3.closeCurrentOnBack = null;
-            _this3.tempPageData = undefined;
-            return _this3;
+            _this4._runned = false;
+            _this4.closeCurrentOnBack = null;
+            _this4.tempPageData = undefined;
+            return _this4;
         }
 
         _createClass(Application, [{
@@ -366,7 +381,7 @@ var chitu;
         }, {
             key: "run",
             value: function run() {
-                var _this4 = this;
+                var _this5 = this;
 
                 if (this._runned) return;
                 this.showPageByUrl(location.href, false);
@@ -380,7 +395,7 @@ var chitu;
                     if (sharpIndex < 0) {
                         url = '#' + DefaultPageName;
                     }
-                    _this4.showPageByUrl(url, true);
+                    _this5.showPageByUrl(url, true);
                 });
                 this._runned = true;
             }
@@ -431,7 +446,15 @@ var chitu;
             }
         }, {
             key: "redirect",
-            value: function redirect(pageName, args) {
+            value: function redirect(pageNameOrUrl, args) {
+                var pageName = void 0;
+                if (pageNameOrUrl.indexOf('?') < 0) {
+                    pageName = pageNameOrUrl;
+                } else {
+                    var obj = this.parseUrl(pageNameOrUrl);
+                    pageName = obj.pageName;
+                    args = obj.values;
+                }
                 var result = this.showPage(pageName, args);
                 var url = this.createUrl(pageName, args);
                 this.setLocationHash(url);
@@ -778,7 +801,7 @@ var chitu;
         }, {
             key: "show",
             value: function show() {
-                var _this5 = this;
+                var _this6 = this;
 
                 this.on_showing();
                 var currentPage = this._app.currentPage;
@@ -786,17 +809,17 @@ var chitu;
                     currentPage = null;
                 }
                 return this._displayer.show(this, currentPage).then(function (o) {
-                    _this5.on_shown();
+                    _this6.on_shown();
                 });
             }
         }, {
             key: "hide",
             value: function hide(currentPage) {
-                var _this6 = this;
+                var _this7 = this;
 
                 this.on_hiding();
                 return this._displayer.hide(this, currentPage).then(function (o) {
-                    _this6.on_hidden();
+                    _this7.on_hidden();
                 });
             }
         }, {
@@ -810,12 +833,12 @@ var chitu;
         }, {
             key: "createService",
             value: function createService(type) {
-                var _this7 = this;
+                var _this8 = this;
 
                 type = type || chitu.Service;
                 var service = new type();
                 service.error.add(function (ender, error) {
-                    _this7._app.error.fire(_this7._app, error, _this7);
+                    _this8._app.error.fire(_this8._app, error, _this8);
                 });
                 return service;
             }

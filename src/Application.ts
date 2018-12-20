@@ -19,7 +19,7 @@ namespace chitu {
 
     const EmtpyStateData = "";
     const DefaultPageName = "index"
-    function parseUrl(app: Application, url: string): { pageName: string, values: PageData } | null {
+    function parseUrl(app: Application, url: string): { pageName: string, values: PageData } {
         let sharpIndex = url.indexOf('#');
         if (sharpIndex < 0) {
             let pageName = DefaultPageName
@@ -218,7 +218,18 @@ namespace chitu {
          * @param node 页面节点
          * @param args 传递到页面的参数
          */
-        public redirect<T>(pageName: string, args?: object): Page {
+        public redirect<T>(pageNameOrUrl: string, args?: object): Page {
+
+            let pageName: string
+            if (pageNameOrUrl.indexOf('?') < 0) {
+                pageName = pageNameOrUrl
+            }
+            else {
+                let obj = this.parseUrl(pageNameOrUrl);
+                pageName = obj.pageName;
+                args = obj.values;
+            }
+
             let result = this.showPage(pageName, args);
             let url = this.createUrl(pageName, args);
             this.setLocationHash(url);

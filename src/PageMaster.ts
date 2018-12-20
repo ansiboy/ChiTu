@@ -10,7 +10,11 @@ namespace chitu {
          */
         pageCreated = Callbacks<this, Page>();
 
-        pageLoad = Callbacks<this, Page, any>();
+        /** 页面显示时引发 */
+        pageShowing = Callbacks<this, Page>();
+
+        /** 页面显示时完成后引发 */
+        pageShown = Callbacks<this, Page>();
 
         protected pageType: PageConstructor = Page;
         protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
@@ -129,6 +133,20 @@ namespace chitu {
                 element,
             });
 
+            let showing = (sender: Page) => {
+                this.pageShowing.fire(this, sender)
+            }
+            let shown = (sender: Page) => {
+                this.pageShown.fire(this, sender)
+            }
+            page.showing.add(showing)
+            page.shown.add(shown)
+
+            page.closed.add(() => {
+                page.showing.remove(showing)
+                page.shown.remove(shown)
+            })
+
             return page;
         }
 
@@ -167,6 +185,8 @@ namespace chitu {
             }
 
             page.show();
+
+
             this.pushPage(page);
             console.assert(page == this.currentPage, "page is not current page");
 

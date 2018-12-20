@@ -12,7 +12,8 @@ var chitu;
     class PageMaster {
         constructor(container, parser) {
             this.pageCreated = chitu.Callbacks();
-            this.pageLoad = chitu.Callbacks();
+            this.pageShowing = chitu.Callbacks();
+            this.pageShown = chitu.Callbacks();
             this.pageType = chitu.Page;
             this.pageDisplayType = PageDisplayerImplement;
             this.cachePages = {};
@@ -97,6 +98,18 @@ var chitu;
                 data: values,
                 displayer,
                 element,
+            });
+            let showing = (sender) => {
+                this.pageShowing.fire(this, sender);
+            };
+            let shown = (sender) => {
+                this.pageShown.fire(this, sender);
+            };
+            page.showing.add(showing);
+            page.shown.add(shown);
+            page.closed.add(() => {
+                page.showing.remove(showing);
+                page.shown.remove(shown);
             });
             return page;
         }
@@ -323,7 +336,16 @@ var chitu;
         setLocationHash(url) {
             history.pushState(EmtpyStateData, "", url);
         }
-        redirect(pageName, args) {
+        redirect(pageNameOrUrl, args) {
+            let pageName;
+            if (pageNameOrUrl.indexOf('?') < 0) {
+                pageName = pageNameOrUrl;
+            }
+            else {
+                let obj = this.parseUrl(pageNameOrUrl);
+                pageName = obj.pageName;
+                args = obj.values;
+            }
             let result = this.showPage(pageName, args);
             let url = this.createUrl(pageName, args);
             this.setLocationHash(url);
