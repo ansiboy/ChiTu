@@ -1,7 +1,7 @@
 
 
 /*!
- * CHITU v2.0.10
+ * CHITU v2.0.13
  * https://github.com/ansiboy/ChiTu
  *
  * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -229,12 +229,16 @@ var chitu;
     const EmtpyStateData = "";
     const DefaultPageName = "index";
     function parseUrl(app, url) {
+        if (!app)
+            throw chitu.Errors.argumentNull('app');
+        if (!url)
+            throw chitu.Errors.argumentNull('url');
         let sharpIndex = url.indexOf('#');
-        if (sharpIndex < 0) {
-            let pageName = DefaultPageName;
-            return { pageName, values: {} };
-        }
-        let routeString = url.substr(sharpIndex + 1);
+        let routeString;
+        if (sharpIndex >= 0)
+            routeString = url.substr(sharpIndex + 1);
+        else
+            routeString = url;
         if (!routeString)
             throw chitu.Errors.canntParseRouteString(url);
         if (routeString.startsWith('!')) {
@@ -290,6 +294,8 @@ var chitu;
             this.tempPageData = undefined;
         }
         parseUrl(url) {
+            if (!url)
+                throw chitu.Errors.argumentNull('url');
             let routeData = parseUrl(this, url);
             return routeData;
         }
@@ -360,6 +366,18 @@ var chitu;
             history.pushState(EmtpyStateData, "", url);
         }
         redirect(pageNameOrUrl, args) {
+            let page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+            let url = this.createUrl(page.name, page.data);
+            this.setLocationHash(url);
+            return page;
+        }
+        forward(pageNameOrUrl, args) {
+            let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+            let url = this.createUrl(page.name, page.data);
+            this.setLocationHash(url);
+            return page;
+        }
+        showPageByNameOrUrl(pageNameOrUrl, args, rerender) {
             let pageName;
             if (pageNameOrUrl.indexOf('?') < 0) {
                 pageName = pageNameOrUrl;
@@ -367,18 +385,9 @@ var chitu;
             else {
                 let obj = this.parseUrl(pageNameOrUrl);
                 pageName = obj.pageName;
-                args = obj.values;
+                args = Object.assign(obj.values, args || {});
             }
-            let result = this.showPage(pageName, args);
-            let url = this.createUrl(pageName, args);
-            this.setLocationHash(url);
-            return result;
-        }
-        forward(pageName, args) {
-            let result = this.showPage(pageName, args, true);
-            let url = this.createUrl(pageName, args);
-            this.setLocationHash(url);
-            return result;
+            return this.showPage(pageName, args, rerender);
         }
         reload(pageName, args) {
             let result = this.showPage(pageName, args, true);

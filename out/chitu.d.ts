@@ -64,7 +64,8 @@ declare namespace chitu {
         private fetchTemplatePageData;
         private setLocationHash;
         redirect<T>(pageNameOrUrl: string, args?: object): Page;
-        forward(pageName: string, args?: object): Page;
+        forward(pageNameOrUrl: string, args?: object): Page;
+        private showPageByNameOrUrl;
         reload(pageName: string, args?: object): Page;
         back(): void;
         back(closeCurrentPage: boolean): void;

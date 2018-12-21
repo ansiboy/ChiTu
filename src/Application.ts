@@ -20,13 +20,21 @@ namespace chitu {
     const EmtpyStateData = "";
     const DefaultPageName = "index"
     function parseUrl(app: Application, url: string): { pageName: string, values: PageData } {
-        let sharpIndex = url.indexOf('#');
-        if (sharpIndex < 0) {
-            let pageName = DefaultPageName
-            return { pageName, values: {} };
-        }
+        if (!app) throw Errors.argumentNull('app')
+        if (!url) throw Errors.argumentNull('url')
 
-        let routeString = url.substr(sharpIndex + 1);
+        let sharpIndex = url.indexOf('#');
+        // if (sharpIndex < 0) {
+        //     let pageName = DefaultPageName
+        //     return { pageName, values: {} };
+        // }
+
+        let routeString;
+        if (sharpIndex >= 0)
+            routeString = url.substr(sharpIndex + 1);
+        else
+            routeString = url
+
         if (!routeString)
             throw Errors.canntParseRouteString(url);
 
@@ -115,6 +123,9 @@ namespace chitu {
          * @param url 要解释的 路由字符串
          */
         parseUrl(url: string) {
+            if (!url)
+                throw Errors.argumentNull('url')
+
             let routeData = parseUrl(this, url);
             return routeData;
         }
@@ -220,21 +231,11 @@ namespace chitu {
          */
         public redirect<T>(pageNameOrUrl: string, args?: object): Page {
 
-            let pageName: string
-            if (pageNameOrUrl.indexOf('?') < 0) {
-                pageName = pageNameOrUrl
-            }
-            else {
-                let obj = this.parseUrl(pageNameOrUrl);
-                pageName = obj.pageName;
-                args = obj.values;
-            }
-
-            let result = this.showPage(pageName, args);
-            let url = this.createUrl(pageName, args);
+            let page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+            let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
 
-            return result;
+            return page;
         }
 
         /**
@@ -242,12 +243,26 @@ namespace chitu {
          * @param node 页面节点
          * @param args 传递到页面的参数
          */
-        public forward(pageName: string, args?: object) {
-            let result = this.showPage(pageName, args, true);
-            let url = this.createUrl(pageName, args);
+        public forward(pageNameOrUrl: string, args?: object) {
+
+            let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+            let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
 
-            return result;
+            return page;
+        }
+
+        private showPageByNameOrUrl(pageNameOrUrl: string, args?: object, rerender?: boolean) {
+            let pageName: string
+            if (pageNameOrUrl.indexOf('?') < 0) {
+                pageName = pageNameOrUrl
+            }
+            else {
+                let obj = this.parseUrl(pageNameOrUrl);
+                pageName = obj.pageName;
+                args = Object.assign(obj.values, args || {});
+            }
+            return this.showPage(pageName, args, rerender);
         }
 
         public reload(pageName: string, args?: object) {

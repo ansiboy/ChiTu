@@ -298,12 +298,11 @@ var chitu;
     var EmtpyStateData = "";
     var DefaultPageName = "index";
     function _parseUrl(app, url) {
+        if (!app) throw chitu.Errors.argumentNull('app');
+        if (!url) throw chitu.Errors.argumentNull('url');
         var sharpIndex = url.indexOf('#');
-        if (sharpIndex < 0) {
-            var _pageName = DefaultPageName;
-            return { pageName: _pageName, values: {} };
-        }
-        var routeString = url.substr(sharpIndex + 1);
+        var routeString = void 0;
+        if (sharpIndex >= 0) routeString = url.substr(sharpIndex + 1);else routeString = url;
         if (!routeString) throw chitu.Errors.canntParseRouteString(url);
         if (routeString.startsWith('!')) {
             throw chitu.Errors.canntParseRouteString(routeString);
@@ -370,6 +369,7 @@ var chitu;
         _createClass(Application, [{
             key: "parseUrl",
             value: function parseUrl(url) {
+                if (!url) throw chitu.Errors.argumentNull('url');
                 var routeData = _parseUrl(this, url);
                 return routeData;
             }
@@ -447,26 +447,31 @@ var chitu;
         }, {
             key: "redirect",
             value: function redirect(pageNameOrUrl, args) {
+                var page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+                var url = this.createUrl(page.name, page.data);
+                this.setLocationHash(url);
+                return page;
+            }
+        }, {
+            key: "forward",
+            value: function forward(pageNameOrUrl, args) {
+                var page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+                var url = this.createUrl(page.name, page.data);
+                this.setLocationHash(url);
+                return page;
+            }
+        }, {
+            key: "showPageByNameOrUrl",
+            value: function showPageByNameOrUrl(pageNameOrUrl, args, rerender) {
                 var pageName = void 0;
                 if (pageNameOrUrl.indexOf('?') < 0) {
                     pageName = pageNameOrUrl;
                 } else {
                     var obj = this.parseUrl(pageNameOrUrl);
                     pageName = obj.pageName;
-                    args = obj.values;
+                    args = Object.assign(obj.values, args || {});
                 }
-                var result = this.showPage(pageName, args);
-                var url = this.createUrl(pageName, args);
-                this.setLocationHash(url);
-                return result;
-            }
-        }, {
-            key: "forward",
-            value: function forward(pageName, args) {
-                var result = this.showPage(pageName, args, true);
-                var url = this.createUrl(pageName, args);
-                this.setLocationHash(url);
-                return result;
+                return this.showPage(pageName, args, rerender);
             }
         }, {
             key: "reload",
