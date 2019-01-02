@@ -1,7 +1,7 @@
 
 
 /*!
- * CHITU v2.0.13
+ * CHITU v2.0.14
  * https://github.com/ansiboy/ChiTu
  *
  * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -305,8 +305,7 @@ var chitu;
         run() {
             if (this._runned)
                 return;
-            this.showPageByUrl(location.href, false);
-            window.addEventListener('popstate', () => {
+            let showPage = () => {
                 let url = location.href;
                 let sharpIndex = url.indexOf('#');
                 let routeString = url.substr(sharpIndex + 1);
@@ -317,6 +316,10 @@ var chitu;
                     url = '#' + DefaultPageName;
                 }
                 this.showPageByUrl(url, true);
+            };
+            showPage();
+            window.addEventListener('popstate', () => {
+                showPage();
             });
             this._runned = true;
         }
@@ -366,12 +369,16 @@ var chitu;
             history.pushState(EmtpyStateData, "", url);
         }
         redirect(pageNameOrUrl, args) {
+            if (!pageNameOrUrl)
+                throw chitu.Errors.argumentNull('pageNameOrUrl');
             let page = this.showPageByNameOrUrl(pageNameOrUrl, args);
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
             return page;
         }
         forward(pageNameOrUrl, args) {
+            if (!pageNameOrUrl)
+                throw chitu.Errors.argumentNull('pageNameOrUrl');
             let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);

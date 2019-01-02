@@ -384,8 +384,7 @@ var chitu;
                 var _this5 = this;
 
                 if (this._runned) return;
-                this.showPageByUrl(location.href, false);
-                window.addEventListener('popstate', function () {
+                var showPage = function showPage() {
                     var url = location.href;
                     var sharpIndex = url.indexOf('#');
                     var routeString = url.substr(sharpIndex + 1);
@@ -396,6 +395,10 @@ var chitu;
                         url = '#' + DefaultPageName;
                     }
                     _this5.showPageByUrl(url, true);
+                };
+                showPage();
+                window.addEventListener('popstate', function () {
+                    showPage();
                 });
                 this._runned = true;
             }
@@ -447,6 +450,7 @@ var chitu;
         }, {
             key: "redirect",
             value: function redirect(pageNameOrUrl, args) {
+                if (!pageNameOrUrl) throw chitu.Errors.argumentNull('pageNameOrUrl');
                 var page = this.showPageByNameOrUrl(pageNameOrUrl, args);
                 var url = this.createUrl(page.name, page.data);
                 this.setLocationHash(url);
@@ -455,6 +459,7 @@ var chitu;
         }, {
             key: "forward",
             value: function forward(pageNameOrUrl, args) {
+                if (!pageNameOrUrl) throw chitu.Errors.argumentNull('pageNameOrUrl');
                 var page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
                 var url = this.createUrl(page.name, page.data);
                 this.setLocationHash(url);

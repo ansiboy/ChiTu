@@ -145,9 +145,7 @@ namespace chitu {
         public run() {
             if (this._runned) return;
 
-            this.showPageByUrl(location.href, false);
-            window.addEventListener('popstate', () => {
-
+            let showPage = () => {
                 let url = location.href;
                 let sharpIndex = url.indexOf('#');
                 let routeString = url.substr(sharpIndex + 1);
@@ -159,6 +157,11 @@ namespace chitu {
                     url = '#' + DefaultPageName
                 }
                 this.showPageByUrl(url, true);
+            }
+            
+            showPage()
+            window.addEventListener('popstate', () => {
+                showPage()
             });
 
             this._runned = true;
@@ -230,6 +233,7 @@ namespace chitu {
          * @param args 传递到页面的参数
          */
         public redirect<T>(pageNameOrUrl: string, args?: object): Page {
+            if (!pageNameOrUrl) throw Errors.argumentNull('pageNameOrUrl')
 
             let page = this.showPageByNameOrUrl(pageNameOrUrl, args);
             let url = this.createUrl(page.name, page.data);
@@ -244,6 +248,7 @@ namespace chitu {
          * @param args 传递到页面的参数
          */
         public forward(pageNameOrUrl: string, args?: object) {
+            if (!pageNameOrUrl) throw Errors.argumentNull('pageNameOrUrl')
 
             let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
             let url = this.createUrl(page.name, page.data);
