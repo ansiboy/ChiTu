@@ -102,7 +102,7 @@ namespace chitu {
         createService<T extends Service>(type?: ServiceConstructor<T>): T {
             type = type || chitu.Service as any as ServiceConstructor<T>
             let service = new type();
-            service.error.add((ender, error) => {
+            service.error.add((sender, error) => {
                 this._app.error.fire(this._app, error, this)
             })
             return service;

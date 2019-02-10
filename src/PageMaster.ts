@@ -27,7 +27,7 @@ namespace chitu {
         /** 
          * 错误事件 
          */
-        error = Callbacks<this, Error, Page>();
+        error = Callbacks<this, Error, Page | null>();
         parser: PageNodeParser;
 
         /**
