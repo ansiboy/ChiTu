@@ -387,6 +387,14 @@ var chitu;
             this.tempPageData = data;
             history.back();
         }
+        createService(type) {
+            type = type || chitu.Service;
+            let service = new type();
+            service.error.add((sender, error) => {
+                this.error.fire(this, error, null);
+            });
+            return service;
+        }
     }
     chitu.Application = Application;
 })(chitu || (chitu = {}));
@@ -609,7 +617,7 @@ var chitu;
         createService(type) {
             type = type || chitu.Service;
             let service = new type();
-            service.error.add((ender, error) => {
+            service.error.add((sender, error) => {
                 this._app.error.fire(this._app, error, this);
             });
             return service;

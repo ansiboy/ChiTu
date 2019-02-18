@@ -1,7 +1,7 @@
 
 
 /*!
- * CHITU v2.0.14
+ * CHITU v2.0.15
  * https://github.com/ansiboy/ChiTu
  *
  * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -410,6 +410,14 @@ var chitu;
             this.tempPageData = data;
             history.back();
         }
+        createService(type) {
+            type = type || chitu.Service;
+            let service = new type();
+            service.error.add((sender, error) => {
+                this.error.fire(this, error, null);
+            });
+            return service;
+        }
     }
     chitu.Application = Application;
 })(chitu || (chitu = {}));
@@ -632,7 +640,7 @@ var chitu;
         createService(type) {
             type = type || chitu.Service;
             let service = new type();
-            service.error.add((ender, error) => {
+            service.error.add((sender, error) => {
                 this._app.error.fire(this._app, error, this);
             });
             return service;

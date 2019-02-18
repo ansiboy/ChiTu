@@ -107,7 +107,7 @@ namespace chitu {
             let pageName = node.name;
             let cachePage = this.cachePages[pageName];
             if (cachePage != null) {
-                cachePage.data = Object.assign(cachePage.data || {}, values);
+                cachePage.data = values || {} //Object.assign(cachePage.data || {}, values);
                 return { page: cachePage, isNew: false };
             }
 
@@ -176,7 +176,6 @@ namespace chitu {
             if (this.currentPage != null && this.currentPage.name == pageName)
                 return this.currentPage;
 
-            args = args || {}
             let { page, isNew } = this.getPage(node, args);
             if (isNew || rerender) {
                 let siteMapNode = this.findSiteMapNode(pageName);

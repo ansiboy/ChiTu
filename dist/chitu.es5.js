@@ -496,6 +496,18 @@ var chitu;
                 this.tempPageData = data;
                 history.back();
             }
+        }, {
+            key: "createService",
+            value: function createService(type) {
+                var _this6 = this;
+
+                type = type || chitu.Service;
+                var service = new type();
+                service.error.add(function (sender, error) {
+                    _this6.error.fire(_this6, error, null);
+                });
+                return service;
+            }
         }]);
 
         return Application;
@@ -811,7 +823,7 @@ var chitu;
         }, {
             key: "show",
             value: function show() {
-                var _this6 = this;
+                var _this7 = this;
 
                 this.on_showing();
                 var currentPage = this._app.currentPage;
@@ -819,17 +831,17 @@ var chitu;
                     currentPage = null;
                 }
                 return this._displayer.show(this, currentPage).then(function (o) {
-                    _this6.on_shown();
+                    _this7.on_shown();
                 });
             }
         }, {
             key: "hide",
             value: function hide(currentPage) {
-                var _this7 = this;
+                var _this8 = this;
 
                 this.on_hiding();
                 return this._displayer.hide(this, currentPage).then(function (o) {
-                    _this7.on_hidden();
+                    _this8.on_hidden();
                 });
             }
         }, {
@@ -843,12 +855,12 @@ var chitu;
         }, {
             key: "createService",
             value: function createService(type) {
-                var _this8 = this;
+                var _this9 = this;
 
                 type = type || chitu.Service;
                 var service = new type();
-                service.error.add(function (ender, error) {
-                    _this8._app.error.fire(_this8._app, error, _this8);
+                service.error.add(function (sender, error) {
+                    _this9._app.error.fire(_this9._app, error, _this9);
                 });
                 return service;
             }

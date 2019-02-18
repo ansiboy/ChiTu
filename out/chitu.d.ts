@@ -9,7 +9,7 @@ declare namespace chitu {
         private page_stack;
         private container;
         private nodes;
-        error: Callback2<this, Error, Page>;
+        error: Callback2<this, Error, Page | null>;
         parser: PageNodeParser;
         constructor(container: HTMLElement, parser?: PageNodeParser);
         protected defaultPageNodeParser(): PageNodeParser;
@@ -71,6 +71,7 @@ declare namespace chitu {
         back(closeCurrentPage: boolean): void;
         back(data: any): void;
         back<T>(closeCurrentPage?: boolean, data?: Pick<T, StringPropertyNames<T>>): void;
+        createService<T extends Service>(type?: ServiceConstructor<T>): T;
     }
 }
 declare namespace chitu {
