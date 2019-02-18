@@ -246,13 +246,21 @@ namespace chitu {
          * 页面向下一级页面跳转，页面会重新渲染
          * @param node 页面节点
          * @param args 传递到页面的参数
+         * @param setUrl 是否设置链接里 Hash
          */
-        public forward(pageNameOrUrl: string, args?: object) {
+        public forward(pageNameOrUrl: string, args?: object, setUrl?: boolean) {
             if (!pageNameOrUrl) throw Errors.argumentNull('pageNameOrUrl')
+            if (setUrl == null)
+                setUrl = true
 
             let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
-            let url = this.createUrl(page.name, page.data);
-            this.setLocationHash(url);
+            if (setUrl) {
+                let url = this.createUrl(page.name, page.data);
+                this.setLocationHash(url);
+            }
+            else {
+                history.pushState(pageNameOrUrl, "", "")
+            }
 
             return page;
         }

@@ -160,12 +160,12 @@ namespace chitu {
          * 显示页面
          * @param pageName 页面名称
          * @param args 传递给页面的参数
-         * @param rerender 是否强制重新渲染页面，是表示强制重新渲染
+         * @param forceRender 是否强制重新渲染页面，是表示强制重新渲染
          */
-        public showPage(pageName: string, args?: object, rerender?: boolean): Page {
+        public showPage(pageName: string, args?: object, forceRender?: boolean): Page {
 
             args = args || {}
-            rerender = rerender == null ? false : true
+            forceRender = forceRender == null ? false : true
 
             if (!pageName) throw Errors.argumentNull('pageName');
 
@@ -177,7 +177,7 @@ namespace chitu {
                 return this.currentPage;
 
             let { page, isNew } = this.getPage(node, args);
-            if (isNew || rerender) {
+            if (isNew || forceRender) {
                 let siteMapNode = this.findSiteMapNode(pageName);
                 if (siteMapNode == null)
                     throw Errors.pageNodeNotExists(pageName);
