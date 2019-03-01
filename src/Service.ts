@@ -115,5 +115,18 @@ namespace chitu {
             return callAjax<T>(url, { headers: headers as any, body, method }, this, this.error);
         }
 
+        /**
+         * 创建服务
+         * @param type 服务类型
+         */
+        createService<T extends Service>(type?: ServiceConstructor<T>): T {
+            type = type || chitu.Service as any as ServiceConstructor<T>
+            let service = new type();
+            service.error.add((sender, error) => {
+                this.error.fire(service, error)
+            })
+            return service;
+        }
+
     }
 }
