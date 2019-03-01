@@ -24,11 +24,6 @@ namespace chitu {
         if (!url) throw Errors.argumentNull('url')
 
         let sharpIndex = url.indexOf('#');
-        // if (sharpIndex < 0) {
-        //     let pageName = DefaultPageName
-        //     return { pageName, values: {} };
-        // }
-
         let routeString;
         if (sharpIndex >= 0)
             routeString = url.substr(sharpIndex + 1);
@@ -204,7 +199,7 @@ namespace chitu {
             }
             //==========================================
 
-            if (result == null) {
+            if (result == null || result.name != routeData.pageName) {
                 let args = routeData.values || {};
                 if (tempPageData) {
                     args = Object.assign(args, tempPageData);

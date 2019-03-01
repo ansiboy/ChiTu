@@ -68,19 +68,19 @@ namespace chitu {
         }
     }
 
-    /**
-     * 使用 requirejs 加载 JS
-     * @param path JS 路径
-     */
-    export function loadjs(path: string): Promise<any> {
-        return new Promise<Array<any>>((reslove, reject) => {
-            require([path],
-                function (result: any) {
-                    reslove(result);
-                },
-                function (err: Error) {
-                    reject(err);
-                });
-        });
-    }
+    // /**
+    //  * 使用 requirejs 加载 JS
+    //  * @param path JS 路径
+    //  */
+    // export function loadjs(path: string): Promise<any> {
+    //     return new Promise<Array<any>>((reslove, reject) => {
+    //         require([path],
+    //             function (result: any) {
+    //                 reslove(result);
+    //             },
+    //             function (err: Error) {
+    //                 reject(err);
+    //             });
+    //     });
+    // }
 } 

@@ -52,7 +52,7 @@ namespace chitu {
                     let node = nodes[pageName];
                     if (node == null) {
                         let path = `modules_${pageName}`.split('_').join('/');
-                        node = { action: this.createDefaultAction(path, loadjs), name: pageName };
+                        node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
                         nodes[pageName] = node;
                     }
                     return node;
@@ -84,6 +84,18 @@ namespace chitu {
 
                 return result;
             }
+        }
+
+        protected loadjs(path: string) {
+            return new Promise<Array<any>>((reslove, reject) => {
+                requirejs([path],
+                    function (result: any) {
+                        reslove(result);
+                    },
+                    function (err: Error) {
+                        reject(err);
+                    });
+            });
         }
 
         private on_pageCreated(page: Page) {
