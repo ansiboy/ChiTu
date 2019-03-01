@@ -20,7 +20,7 @@ async function ajax<T>(url: string, options: RequestInit): Promise<T> {
     let textObject;
     let isJSONContextType = (response.headers.get('content-type') || '').indexOf('json') >= 0;
     if (isJSONContextType) {
-        textObject = JSON.parse(text);
+        textObject = text ? JSON.parse(text) : null;
     }
     else {
         textObject = text;
