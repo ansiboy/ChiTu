@@ -41,7 +41,7 @@ namespace chitu {
         let routePath: string;
         let search: string | null = null;
         let param_spliter_index: number = routeString.indexOf('?');
-        if (param_spliter_index > 0) {
+        if (param_spliter_index >= 0) {
             search = routeString.substr(param_spliter_index + 1);
             routePath = routeString.substring(0, param_spliter_index);
         }
@@ -50,7 +50,7 @@ namespace chitu {
         }
 
         if (!routePath)
-            throw Errors.canntParseRouteString(routeString);
+            routePath = DefaultPageName //throw Errors.canntParseRouteString(routeString);
 
         let values: { [key: string]: string } = {};
         if (search) {
