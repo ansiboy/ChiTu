@@ -2,7 +2,7 @@ interface ServiceError extends Error {
     method?: string
 }
 
-async function ajax<T>(url: string, options: RequestInit): Promise<T> {
+async function ajax<T>(url: string, options: RequestInit): Promise<T | null> {
     let response = await fetch(url, options);
 
     let responseText = response.text();
@@ -43,7 +43,7 @@ function callAjax<T>(
     url: string, options: RequestInit,
     service: chitu.Service, error: chitu.Callback1<chitu.Service, Error>
 ) {
-    return new Promise<T>((reslove, reject) => {
+    return new Promise<T | null>((reslove, reject) => {
         let timeId: number;
         if (options.method == 'get') {
             timeId = setTimeout(() => {
