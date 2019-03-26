@@ -81,6 +81,10 @@ namespace chitu {
 
     export type AjaxOptions = { data?: any, headers?: { [key: string]: string }, method?: string };
 
+    export interface IService {
+        error: Callback1<Service, Error>
+    }
+
     export class Service {
 
         error = Callbacks<Service, Error>();

@@ -303,7 +303,7 @@ namespace chitu {
          * 创建服务
          * @param type 服务类型
          */
-        createService<T extends Service>(type?: ServiceConstructor<T>): T {
+        createService<T extends IService>(type?: ServiceConstructor<T>): T {
             type = type || chitu.Service as any as ServiceConstructor<T>
             let service = new type();
             service.error.add((sender, error) => {
