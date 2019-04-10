@@ -1,191 +1,703 @@
-/*!
- * CHITU v2.4.0
- * https://github.com/ansiboy/chitu
- * 
+
+/*
+ * SERVICE SDK v2.5.4
+ * https://github.com/ansiboy/dilu
+ *
  * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
  * Licensed under the MIT License.
+ *
  */
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./out/index.js");
-/******/ })
-/************************************************************************/
-/******/ ({
-
-/***/ "./node_modules/maishu-chitu-service/dist/index.js":
-/*!*********************************************************!*\
-  !*** ./node_modules/maishu-chitu-service/dist/index.js ***!
-  \*********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-eval("/*!\n * CHITU SERVICE v1.0.0\n * https://github.com/ansiboy/chitu-service\n * \n * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>\n * Licensed under the MIT License.\n */\n/******/ (function(modules) { // webpackBootstrap\n/******/ \t// The module cache\n/******/ \tvar installedModules = {};\n/******/\n/******/ \t// The require function\n/******/ \tfunction __webpack_require__(moduleId) {\n/******/\n/******/ \t\t// Check if module is in cache\n/******/ \t\tif(installedModules[moduleId]) {\n/******/ \t\t\treturn installedModules[moduleId].exports;\n/******/ \t\t}\n/******/ \t\t// Create a new module (and put it into the cache)\n/******/ \t\tvar module = installedModules[moduleId] = {\n/******/ \t\t\ti: moduleId,\n/******/ \t\t\tl: false,\n/******/ \t\t\texports: {}\n/******/ \t\t};\n/******/\n/******/ \t\t// Execute the module function\n/******/ \t\tmodules[moduleId].call(module.exports, module, module.exports, __webpack_require__);\n/******/\n/******/ \t\t// Flag the module as loaded\n/******/ \t\tmodule.l = true;\n/******/\n/******/ \t\t// Return the exports of the module\n/******/ \t\treturn module.exports;\n/******/ \t}\n/******/\n/******/\n/******/ \t// expose the modules object (__webpack_modules__)\n/******/ \t__webpack_require__.m = modules;\n/******/\n/******/ \t// expose the module cache\n/******/ \t__webpack_require__.c = installedModules;\n/******/\n/******/ \t// define getter function for harmony exports\n/******/ \t__webpack_require__.d = function(exports, name, getter) {\n/******/ \t\tif(!__webpack_require__.o(exports, name)) {\n/******/ \t\t\tObject.defineProperty(exports, name, { enumerable: true, get: getter });\n/******/ \t\t}\n/******/ \t};\n/******/\n/******/ \t// define __esModule on exports\n/******/ \t__webpack_require__.r = function(exports) {\n/******/ \t\tif(typeof Symbol !== 'undefined' && Symbol.toStringTag) {\n/******/ \t\t\tObject.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });\n/******/ \t\t}\n/******/ \t\tObject.defineProperty(exports, '__esModule', { value: true });\n/******/ \t};\n/******/\n/******/ \t// create a fake namespace object\n/******/ \t// mode & 1: value is a module id, require it\n/******/ \t// mode & 2: merge all properties of value into the ns\n/******/ \t// mode & 4: return value when already ns object\n/******/ \t// mode & 8|1: behave like require\n/******/ \t__webpack_require__.t = function(value, mode) {\n/******/ \t\tif(mode & 1) value = __webpack_require__(value);\n/******/ \t\tif(mode & 8) return value;\n/******/ \t\tif((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;\n/******/ \t\tvar ns = Object.create(null);\n/******/ \t\t__webpack_require__.r(ns);\n/******/ \t\tObject.defineProperty(ns, 'default', { enumerable: true, value: value });\n/******/ \t\tif(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));\n/******/ \t\treturn ns;\n/******/ \t};\n/******/\n/******/ \t// getDefaultExport function for compatibility with non-harmony modules\n/******/ \t__webpack_require__.n = function(module) {\n/******/ \t\tvar getter = module && module.__esModule ?\n/******/ \t\t\tfunction getDefault() { return module['default']; } :\n/******/ \t\t\tfunction getModuleExports() { return module; };\n/******/ \t\t__webpack_require__.d(getter, 'a', getter);\n/******/ \t\treturn getter;\n/******/ \t};\n/******/\n/******/ \t// Object.prototype.hasOwnProperty.call\n/******/ \t__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };\n/******/\n/******/ \t// __webpack_public_path__\n/******/ \t__webpack_require__.p = \"\";\n/******/\n/******/\n/******/ \t// Load entry module and return exports\n/******/ \treturn __webpack_require__(__webpack_require__.s = \"./out/index.js\");\n/******/ })\n/************************************************************************/\n/******/ ({\n\n/***/ \"./out/callback.js\":\n/*!*************************!*\\\n  !*** ./out/callback.js ***!\n  \\*************************/\n/*! no static exports found */\n/***/ (function(module, exports, __webpack_require__) {\n\n\"use strict\";\neval(\"\\r\\nObject.defineProperty(exports, \\\"__esModule\\\", { value: true });\\r\\nclass Callback {\\r\\n    constructor() {\\r\\n        this.funcs = new Array();\\r\\n    }\\r\\n    add(func) {\\r\\n        this.funcs.push(func);\\r\\n    }\\r\\n    remove(func) {\\r\\n        this.funcs = this.funcs.filter(o => o != func);\\r\\n    }\\r\\n    fire(...args) {\\r\\n        this.funcs.forEach(o => o(...args));\\r\\n    }\\r\\n}\\r\\nexports.Callback = Callback;\\r\\nfunction Callbacks() {\\r\\n    return new Callback();\\r\\n}\\r\\nexports.Callbacks = Callbacks;\\r\\n\\n\\n//# sourceURL=webpack:///./out/callback.js?\");\n\n/***/ }),\n\n/***/ \"./out/errors.js\":\n/*!***********************!*\\\n  !*** ./out/errors.js ***!\n  \\***********************/\n/*! no static exports found */\n/***/ (function(module, exports, __webpack_require__) {\n\n\"use strict\";\neval(\"\\r\\nObject.defineProperty(exports, \\\"__esModule\\\", { value: true });\\r\\nexports.errors = {\\r\\n    serviceUrlCanntNull(serviceName) {\\r\\n        let msg = `Service '${serviceName}' base url can not null.`;\\r\\n        return new Error(msg);\\r\\n    },\\r\\n    unexpectedNullResult() {\\r\\n        let msg = `Null result is unexpected.`;\\r\\n        return new Error(msg);\\r\\n    },\\r\\n    unexpectedNullValue(name) {\\r\\n        let msg = `variable ${name} is unexpected null value.`;\\r\\n        return new Error(msg);\\r\\n    },\\r\\n    argumentNull(name) {\\r\\n        let msg = `Arugment ${name} cannt null or empty.`;\\r\\n        return new Error(msg);\\r\\n    },\\r\\n    fieldNull(field, itemName) {\\r\\n        let msg = `${itemName} ${field} cannt be null or empty`;\\r\\n        return new Error(msg);\\r\\n    },\\r\\n    instanceMessangerStart() {\\r\\n        let msg = `Instance messanger is start.`;\\r\\n        return new Error(msg);\\r\\n    }\\r\\n};\\r\\n\\n\\n//# sourceURL=webpack:///./out/errors.js?\");\n\n/***/ }),\n\n/***/ \"./out/index.js\":\n/*!**********************!*\\\n  !*** ./out/index.js ***!\n  \\**********************/\n/*! no static exports found */\n/***/ (function(module, exports, __webpack_require__) {\n\n\"use strict\";\neval(\"\\r\\nObject.defineProperty(exports, \\\"__esModule\\\", { value: true });\\r\\nvar service_1 = __webpack_require__(/*! ./service */ \\\"./out/service.js\\\");\\r\\nexports.Service = service_1.Service;\\r\\nvar callback_1 = __webpack_require__(/*! ./callback */ \\\"./out/callback.js\\\");\\r\\nexports.Callback = callback_1.Callback;\\r\\nvar value_store_1 = __webpack_require__(/*! ./value-store */ \\\"./out/value-store.js\\\");\\r\\nexports.ValueStore = value_store_1.ValueStore;\\r\\n\\n\\n//# sourceURL=webpack:///./out/index.js?\");\n\n/***/ }),\n\n/***/ \"./out/service.js\":\n/*!************************!*\\\n  !*** ./out/service.js ***!\n  \\************************/\n/*! no static exports found */\n/***/ (function(module, exports, __webpack_require__) {\n\n\"use strict\";\neval(\"\\r\\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\\r\\n    return new (P || (P = Promise))(function (resolve, reject) {\\r\\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\\r\\n        function rejected(value) { try { step(generator[\\\"throw\\\"](value)); } catch (e) { reject(e); } }\\r\\n        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }\\r\\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\\r\\n    });\\r\\n};\\r\\nObject.defineProperty(exports, \\\"__esModule\\\", { value: true });\\r\\nconst callback_1 = __webpack_require__(/*! ./callback */ \\\"./out/callback.js\\\");\\r\\nconst errors_1 = __webpack_require__(/*! ./errors */ \\\"./out/errors.js\\\");\\r\\nclass Service {\\r\\n    constructor() {\\r\\n        this.error = callback_1.Callbacks();\\r\\n    }\\r\\n    ajax(url, options) {\\r\\n        // options = options || {} as any\\r\\n        if (options === undefined)\\r\\n            options = {};\\r\\n        let data = options.data;\\r\\n        let method = options.method;\\r\\n        let headers = options.headers || {};\\r\\n        let body;\\r\\n        if (data != null) {\\r\\n            let is_json = (headers['content-type'] || '').indexOf('json') >= 0;\\r\\n            if (is_json) {\\r\\n                body = JSON.stringify(data);\\r\\n            }\\r\\n            else {\\r\\n                body = new URLSearchParams();\\r\\n                for (let key in data) {\\r\\n                    body.append(key, data[key]);\\r\\n                }\\r\\n            }\\r\\n        }\\r\\n        // return callAjax<T>(url, { headers: headers as any, body, method }, this, this.error);\\r\\n        return new Promise((reslove, reject) => {\\r\\n            let options = { headers: headers, body, method };\\r\\n            let timeId;\\r\\n            if (options == null)\\r\\n                throw errors_1.errors.unexpectedNullValue('options');\\r\\n            if (method == 'get') {\\r\\n                timeId = setTimeout(() => {\\r\\n                    let err = new Error(); //new AjaxError(options.method);\\r\\n                    err.name = 'timeout';\\r\\n                    err.message = '网络连接超时';\\r\\n                    reject(err);\\r\\n                    this.error.fire(this, err);\\r\\n                    clearTimeout(timeId);\\r\\n                }, Service.settings.ajaxTimeout * 1000);\\r\\n            }\\r\\n            ajax(url, options)\\r\\n                .then(data => {\\r\\n                reslove(data);\\r\\n                if (timeId)\\r\\n                    clearTimeout(timeId);\\r\\n            })\\r\\n                .catch(err => {\\r\\n                reject(err);\\r\\n                this.error.fire(this, err);\\r\\n                if (timeId)\\r\\n                    clearTimeout(timeId);\\r\\n            });\\r\\n        });\\r\\n    }\\r\\n    /**\\r\\n     * 创建服务\\r\\n     * @param type 服务类型\\r\\n     */\\r\\n    createService(type) {\\r\\n        type = type || Service;\\r\\n        let service = new type();\\r\\n        service.error.add((sender, error) => {\\r\\n            this.error.fire(service, error);\\r\\n        });\\r\\n        return service;\\r\\n    }\\r\\n}\\r\\nService.settings = {\\r\\n    ajaxTimeout: 30,\\r\\n};\\r\\nexports.Service = Service;\\r\\nfunction ajax(url, options) {\\r\\n    return __awaiter(this, void 0, void 0, function* () {\\r\\n        let response = yield fetch(url, options);\\r\\n        let responseText = response.text();\\r\\n        let p;\\r\\n        if (typeof responseText == 'string') {\\r\\n            p = new Promise((reslove, reject) => {\\r\\n                reslove(responseText);\\r\\n            });\\r\\n        }\\r\\n        else {\\r\\n            p = responseText;\\r\\n        }\\r\\n        let text = yield responseText;\\r\\n        let textObject;\\r\\n        let isJSONContextType = (response.headers.get('content-type') || '').indexOf('json') >= 0;\\r\\n        if (isJSONContextType) {\\r\\n            textObject = text ? JSON.parse(text) : null;\\r\\n        }\\r\\n        else {\\r\\n            textObject = text;\\r\\n        }\\r\\n        if (response.status >= 300) {\\r\\n            let err = new Error();\\r\\n            err.method = options.method;\\r\\n            err.name = `${response.status}`;\\r\\n            err.message = isJSONContextType ? (textObject.Message || textObject.message) : textObject;\\r\\n            err.message = err.message || response.statusText;\\r\\n            throw err;\\r\\n        }\\r\\n        return textObject;\\r\\n    });\\r\\n}\\r\\n\\n\\n//# sourceURL=webpack:///./out/service.js?\");\n\n/***/ }),\n\n/***/ \"./out/value-store.js\":\n/*!****************************!*\\\n  !*** ./out/value-store.js ***!\n  \\****************************/\n/*! no static exports found */\n/***/ (function(module, exports, __webpack_require__) {\n\n\"use strict\";\neval(\"\\r\\nObject.defineProperty(exports, \\\"__esModule\\\", { value: true });\\r\\n/**\\r\\n * 实现数据的存储，以及数据修改的通知\\r\\n */\\r\\nclass ValueStore {\\r\\n    constructor(value) {\\r\\n        this.items = new Array();\\r\\n        this._value = value === undefined ? null : value;\\r\\n    }\\r\\n    add(func, sender) {\\r\\n        this.items.push({ func, sender });\\r\\n        return func;\\r\\n    }\\r\\n    remove(func) {\\r\\n        this.items = this.items.filter(o => o.func != func);\\r\\n    }\\r\\n    fire(value) {\\r\\n        this.items.forEach(o => o.func(value, o.sender));\\r\\n    }\\r\\n    get value() {\\r\\n        if (this._value === undefined)\\r\\n            return null;\\r\\n        return this._value;\\r\\n    }\\r\\n    set value(value) {\\r\\n        this._value = value;\\r\\n        this.fire(value);\\r\\n    }\\r\\n}\\r\\nexports.ValueStore = ValueStore;\\r\\n\\n\\n//# sourceURL=webpack:///./out/value-store.js?\");\n\n/***/ })\n\n/******/ });\n\n//# sourceURL=webpack:///./node_modules/maishu-chitu-service/dist/index.js?");
-
-/***/ }),
-
-/***/ "./out/Application.js":
-/*!****************************!*\
-  !*** ./out/Application.js ***!
-  \****************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nconst Service_1 = __webpack_require__(/*! ./Service */ \"./out/Service.js\");\r\nconst PageMaster_1 = __webpack_require__(/*! ./PageMaster */ \"./out/PageMaster.js\");\r\nconst Errors_1 = __webpack_require__(/*! ./Errors */ \"./out/Errors.js\");\r\nconst EmtpyStateData = \"\";\r\nconst DefaultPageName = \"index\";\r\nfunction parseUrl(app, url) {\r\n    if (!app)\r\n        throw Errors_1.Errors.argumentNull('app');\r\n    if (!url)\r\n        throw Errors_1.Errors.argumentNull('url');\r\n    let sharpIndex = url.indexOf('#');\r\n    let routeString;\r\n    if (sharpIndex >= 0)\r\n        routeString = url.substr(sharpIndex + 1);\r\n    else\r\n        routeString = url;\r\n    if (!routeString)\r\n        throw Errors_1.Errors.canntParseRouteString(url);\r\n    if (routeString.startsWith('!')) {\r\n        throw Errors_1.Errors.canntParseRouteString(routeString);\r\n    }\r\n    let routePath;\r\n    let search = null;\r\n    let param_spliter_index = routeString.indexOf('?');\r\n    if (param_spliter_index >= 0) {\r\n        search = routeString.substr(param_spliter_index + 1);\r\n        routePath = routeString.substring(0, param_spliter_index);\r\n    }\r\n    else {\r\n        routePath = routeString;\r\n    }\r\n    if (!routePath)\r\n        routePath = DefaultPageName;\r\n    let values = {};\r\n    if (search) {\r\n        values = pareeUrlQuery(search);\r\n    }\r\n    let pageName = routePath;\r\n    return { pageName, values };\r\n}\r\nfunction pareeUrlQuery(query) {\r\n    let match, pl = /\\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURIComponent(s.replace(pl, \" \")); };\r\n    let urlParams = {};\r\n    while (match = search.exec(query))\r\n        urlParams[decode(match[1])] = decode(match[2]);\r\n    return urlParams;\r\n}\r\nfunction createUrl(pageName, params) {\r\n    let path_parts = pageName.split('.');\r\n    let path = path_parts.join('/');\r\n    if (!params)\r\n        return `#${path}`;\r\n    let paramsText = '';\r\n    for (let key in params) {\r\n        let value = params[key];\r\n        let type = typeof params[key];\r\n        if (type != 'string' || value == null) {\r\n            continue;\r\n        }\r\n        paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;\r\n    }\r\n    return `#${path}${paramsText}`;\r\n}\r\nclass Application extends PageMaster_1.PageMaster {\r\n    constructor(args) {\r\n        super((args || {}).container || document.body, (args || {}).parser);\r\n        this._runned = false;\r\n        this.closeCurrentOnBack = null;\r\n        this.tempPageData = undefined;\r\n    }\r\n    parseUrl(url) {\r\n        if (!url)\r\n            throw Errors_1.Errors.argumentNull('url');\r\n        let routeData = parseUrl(this, url);\r\n        return routeData;\r\n    }\r\n    createUrl(pageName, values) {\r\n        return createUrl(pageName, values);\r\n    }\r\n    run() {\r\n        if (this._runned)\r\n            return;\r\n        let showPage = () => {\r\n            let url = location.href;\r\n            let sharpIndex = url.indexOf('#');\r\n            let routeString = url.substr(sharpIndex + 1);\r\n            if (routeString.startsWith('!')) {\r\n                return;\r\n            }\r\n            if (sharpIndex < 0) {\r\n                url = '#' + DefaultPageName;\r\n            }\r\n            this.showPageByUrl(url, true);\r\n        };\r\n        showPage();\r\n        window.addEventListener('popstate', () => {\r\n            showPage();\r\n        });\r\n        this._runned = true;\r\n    }\r\n    showPageByUrl(url, fromCache) {\r\n        if (!url)\r\n            throw Errors_1.Errors.argumentNull('url');\r\n        var routeData = this.parseUrl(url);\r\n        if (routeData == null) {\r\n            throw Errors_1.Errors.noneRouteMatched(url);\r\n        }\r\n        let tempPageData = this.fetchTemplatePageData();\r\n        let result = null;\r\n        if (this.closeCurrentOnBack == true) {\r\n            this.closeCurrentOnBack = null;\r\n            if (tempPageData == null)\r\n                this.closeCurrentPage();\r\n            else\r\n                this.closeCurrentPage(tempPageData);\r\n            result = this.currentPage;\r\n        }\r\n        else if (this.closeCurrentOnBack == false) {\r\n            this.closeCurrentOnBack = null;\r\n            var page = this.pageStack.pop();\r\n            if (page == null)\r\n                throw new Error('page is null');\r\n            page.hide(this.currentPage);\r\n            result = this.currentPage;\r\n        }\r\n        if (result == null || result.name != routeData.pageName) {\r\n            let args = routeData.values || {};\r\n            if (tempPageData) {\r\n                args = Object.assign(args, tempPageData);\r\n            }\r\n            result = this.showPage(routeData.pageName, args);\r\n        }\r\n        return result;\r\n    }\r\n    fetchTemplatePageData() {\r\n        if (this.tempPageData == null) {\r\n            return null;\r\n        }\r\n        let data = this.tempPageData;\r\n        this.tempPageData = undefined;\r\n        return data;\r\n    }\r\n    setLocationHash(url) {\r\n        history.pushState(EmtpyStateData, \"\", url);\r\n    }\r\n    redirect(pageNameOrUrl, args) {\r\n        if (!pageNameOrUrl)\r\n            throw Errors_1.Errors.argumentNull('pageNameOrUrl');\r\n        let page = this.showPageByNameOrUrl(pageNameOrUrl, args);\r\n        let url = this.createUrl(page.name, page.data);\r\n        this.setLocationHash(url);\r\n        return page;\r\n    }\r\n    forward(pageNameOrUrl, args, setUrl) {\r\n        if (!pageNameOrUrl)\r\n            throw Errors_1.Errors.argumentNull('pageNameOrUrl');\r\n        if (setUrl == null)\r\n            setUrl = true;\r\n        let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);\r\n        if (setUrl) {\r\n            let url = this.createUrl(page.name, page.data);\r\n            this.setLocationHash(url);\r\n        }\r\n        else {\r\n            history.pushState(pageNameOrUrl, \"\", \"\");\r\n        }\r\n        return page;\r\n    }\r\n    showPageByNameOrUrl(pageNameOrUrl, args, rerender) {\r\n        let pageName;\r\n        if (pageNameOrUrl.indexOf('?') < 0) {\r\n            pageName = pageNameOrUrl;\r\n        }\r\n        else {\r\n            let obj = this.parseUrl(pageNameOrUrl);\r\n            pageName = obj.pageName;\r\n            args = Object.assign(obj.values, args || {});\r\n        }\r\n        return this.showPage(pageName, args, rerender);\r\n    }\r\n    reload(pageName, args) {\r\n        let result = this.showPage(pageName, args, true);\r\n        return result;\r\n    }\r\n    back(closeCurrentPage, data) {\r\n        const closeCurrentPageDefault = true;\r\n        if (typeof closeCurrentPage == 'object') {\r\n            data = closeCurrentPage;\r\n            closeCurrentPage = null;\r\n        }\r\n        this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;\r\n        this.tempPageData = data;\r\n        history.back();\r\n    }\r\n    createService(type) {\r\n        type = type || Service_1.Service;\r\n        let service = new type();\r\n        service.error.add((sender, error) => {\r\n            this.error.fire(this, error, null);\r\n        });\r\n        return service;\r\n    }\r\n}\r\nexports.Application = Application;\r\n\n\n//# sourceURL=webpack:///./out/Application.js?");
+Object.defineProperty(exports, "__esModule", { value: true });
+const Service_1 = require("./Service");
+const PageMaster_1 = require("./PageMaster");
+const Errors_1 = require("./Errors");
+const EmtpyStateData = "";
+const DefaultPageName = "index";
+function parseUrl(app, url) {
+    if (!app)
+        throw Errors_1.Errors.argumentNull('app');
+    if (!url)
+        throw Errors_1.Errors.argumentNull('url');
+    let sharpIndex = url.indexOf('#');
+    let routeString;
+    if (sharpIndex >= 0)
+        routeString = url.substr(sharpIndex + 1);
+    else
+        routeString = url;
+    if (!routeString)
+        throw Errors_1.Errors.canntParseRouteString(url);
+    if (routeString.startsWith('!')) {
+        throw Errors_1.Errors.canntParseRouteString(routeString);
+    }
+    let routePath;
+    let search = null;
+    let param_spliter_index = routeString.indexOf('?');
+    if (param_spliter_index >= 0) {
+        search = routeString.substr(param_spliter_index + 1);
+        routePath = routeString.substring(0, param_spliter_index);
+    }
+    else {
+        routePath = routeString;
+    }
+    if (!routePath)
+        routePath = DefaultPageName;
+    let values = {};
+    if (search) {
+        values = pareeUrlQuery(search);
+    }
+    let pageName = routePath;
+    return { pageName, values };
+}
+function pareeUrlQuery(query) {
+    let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
+    let urlParams = {};
+    while (match = search.exec(query))
+        urlParams[decode(match[1])] = decode(match[2]);
+    return urlParams;
+}
+function createUrl(pageName, params) {
+    let path_parts = pageName.split('.');
+    let path = path_parts.join('/');
+    if (!params)
+        return `#${path}`;
+    let paramsText = '';
+    for (let key in params) {
+        let value = params[key];
+        let type = typeof params[key];
+        if (type != 'string' || value == null) {
+            continue;
+        }
+        paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
+    }
+    return `#${path}${paramsText}`;
+}
+class Application extends PageMaster_1.PageMaster {
+    constructor(args) {
+        super((args || {}).container || document.body, (args || {}).parser);
+        this._runned = false;
+        this.closeCurrentOnBack = null;
+        this.tempPageData = undefined;
+    }
+    parseUrl(url) {
+        if (!url)
+            throw Errors_1.Errors.argumentNull('url');
+        let routeData = parseUrl(this, url);
+        return routeData;
+    }
+    createUrl(pageName, values) {
+        return createUrl(pageName, values);
+    }
+    run() {
+        if (this._runned)
+            return;
+        let showPage = () => {
+            let url = location.href;
+            let sharpIndex = url.indexOf('#');
+            let routeString = url.substr(sharpIndex + 1);
+            if (routeString.startsWith('!')) {
+                return;
+            }
+            if (sharpIndex < 0) {
+                url = '#' + DefaultPageName;
+            }
+            this.showPageByUrl(url, true);
+        };
+        showPage();
+        window.addEventListener('popstate', () => {
+            showPage();
+        });
+        this._runned = true;
+    }
+    showPageByUrl(url, fromCache) {
+        if (!url)
+            throw Errors_1.Errors.argumentNull('url');
+        var routeData = this.parseUrl(url);
+        if (routeData == null) {
+            throw Errors_1.Errors.noneRouteMatched(url);
+        }
+        let tempPageData = this.fetchTemplatePageData();
+        let result = null;
+        if (this.closeCurrentOnBack == true) {
+            this.closeCurrentOnBack = null;
+            if (tempPageData == null)
+                this.closeCurrentPage();
+            else
+                this.closeCurrentPage(tempPageData);
+            result = this.currentPage;
+        }
+        else if (this.closeCurrentOnBack == false) {
+            this.closeCurrentOnBack = null;
+            var page = this.pageStack.pop();
+            if (page == null)
+                throw new Error('page is null');
+            page.hide(this.currentPage);
+            result = this.currentPage;
+        }
+        if (result == null || result.name != routeData.pageName) {
+            let args = routeData.values || {};
+            if (tempPageData) {
+                args = Object.assign(args, tempPageData);
+            }
+            result = this.showPage(routeData.pageName, args);
+        }
+        return result;
+    }
+    fetchTemplatePageData() {
+        if (this.tempPageData == null) {
+            return null;
+        }
+        let data = this.tempPageData;
+        this.tempPageData = undefined;
+        return data;
+    }
+    setLocationHash(url) {
+        history.pushState(EmtpyStateData, "", url);
+    }
+    redirect(pageNameOrUrl, args) {
+        if (!pageNameOrUrl)
+            throw Errors_1.Errors.argumentNull('pageNameOrUrl');
+        let page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+        let url = this.createUrl(page.name, page.data);
+        this.setLocationHash(url);
+        return page;
+    }
+    forward(pageNameOrUrl, args, setUrl) {
+        if (!pageNameOrUrl)
+            throw Errors_1.Errors.argumentNull('pageNameOrUrl');
+        if (setUrl == null)
+            setUrl = true;
+        let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+        if (setUrl) {
+            let url = this.createUrl(page.name, page.data);
+            this.setLocationHash(url);
+        }
+        else {
+            history.pushState(pageNameOrUrl, "", "");
+        }
+        return page;
+    }
+    showPageByNameOrUrl(pageNameOrUrl, args, rerender) {
+        let pageName;
+        if (pageNameOrUrl.indexOf('?') < 0) {
+            pageName = pageNameOrUrl;
+        }
+        else {
+            let obj = this.parseUrl(pageNameOrUrl);
+            pageName = obj.pageName;
+            args = Object.assign(obj.values, args || {});
+        }
+        return this.showPage(pageName, args, rerender);
+    }
+    reload(pageName, args) {
+        let result = this.showPage(pageName, args, true);
+        return result;
+    }
+    back(closeCurrentPage, data) {
+        const closeCurrentPageDefault = true;
+        if (typeof closeCurrentPage == 'object') {
+            data = closeCurrentPage;
+            closeCurrentPage = null;
+        }
+        this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
+        this.tempPageData = data;
+        history.back();
+    }
+    createService(type) {
+        type = type || Service_1.Service;
+        let service = new type();
+        service.error.add((sender, error) => {
+            this.error.fire(this, error, null);
+        });
+        return service;
+    }
+}
+exports.Application = Application;
 
-/***/ }),
-
-/***/ "./out/Errors.js":
-/*!***********************!*\
-  !*** ./out/Errors.js ***!
-  \***********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
+},{"./Errors":2,"./PageMaster":5,"./Service":6}],2:[function(require,module,exports){
 "use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nclass Errors {\r\n    static pageNodeNotExists(pageName) {\r\n        let msg = `Page node named ${pageName} is not exists.`;\r\n        return new Error(msg);\r\n    }\r\n    static actionCanntNull(pageName) {\r\n        let msg = `Action of '${pageName}' can not be null.`;\r\n        return new Error(msg);\r\n    }\r\n    static argumentNull(paramName) {\r\n        var msg = `The argument \"${paramName}\" cannt be null.`;\r\n        return new Error(msg);\r\n    }\r\n    static modelFileExpecteFunction(script) {\r\n        var msg = `The eval result of script file \"${script}\" is expected a function.`;\r\n        return new Error(msg);\r\n    }\r\n    static paramTypeError(paramName, expectedType) {\r\n        var msg = `The param \"${paramName}\" is expected \"${expectedType}\" type.`;\r\n        return new Error(msg);\r\n    }\r\n    static paramError(msg) {\r\n        return new Error(msg);\r\n    }\r\n    static pathPairRequireView(index) {\r\n        var msg = `The view value is required for path pair, but the item with index \"${index}\" is miss it.`;\r\n        return new Error(msg);\r\n    }\r\n    static notImplemented(name) {\r\n        var msg = `'The method \"${name}\" is not implemented.'`;\r\n        return new Error(msg);\r\n    }\r\n    static routeExists(name) {\r\n        var msg = `Route named \"${name}\" is exists.`;\r\n        return new Error(msg);\r\n    }\r\n    static noneRouteMatched(url) {\r\n        var msg = `None route matched with url \"${url}\".`;\r\n        var error = new Error(msg);\r\n        return error;\r\n    }\r\n    static emptyStack() {\r\n        return new Error('The stack is empty.');\r\n    }\r\n    static canntParseUrl(url) {\r\n        var msg = `Can not parse the url \"${url}\" to route data.`;\r\n        return new Error(msg);\r\n    }\r\n    static canntParseRouteString(routeString) {\r\n        var msg = `Can not parse the route string \"${routeString}\" to route data.;`;\r\n        return new Error(msg);\r\n    }\r\n    static routeDataRequireController() {\r\n        var msg = 'The route data does not contains a \"controller\" file.';\r\n        return new Error(msg);\r\n    }\r\n    static routeDataRequireAction() {\r\n        var msg = 'The route data does not contains a \"action\" file.';\r\n        return new Error(msg);\r\n    }\r\n    static viewCanntNull() {\r\n        var msg = 'The view or viewDeferred of the page cannt null.';\r\n        return new Error(msg);\r\n    }\r\n    static createPageFail(pageName) {\r\n        var msg = `Create page \"${pageName}\" fail.`;\r\n        return new Error(msg);\r\n    }\r\n    static actionTypeError(pageName) {\r\n        let msg = `The action in page '${pageName}' is expect as function.`;\r\n        return new Error(msg);\r\n    }\r\n    static canntFindAction(pageName) {\r\n        let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;\r\n        return new Error(msg);\r\n    }\r\n    static exportsCanntNull(pageName) {\r\n        let msg = `Exports of page '${pageName}' is null.`;\r\n        return new Error(msg);\r\n    }\r\n    static scrollerElementNotExists() {\r\n        let msg = \"Scroller element is not exists.\";\r\n        return new Error(msg);\r\n    }\r\n    static resourceExists(resourceName, pageName) {\r\n        let msg = `Rosource '${resourceName}' is exists in the resources of page '${pageName}'.`;\r\n        return new Error(msg);\r\n    }\r\n    static siteMapRootCanntNull() {\r\n        let msg = `The site map root node can not be null.`;\r\n        return new Error(msg);\r\n    }\r\n    static duplicateSiteMapNode(name) {\r\n        let msg = `The site map node ${name} is exists.`;\r\n        return new Error(name);\r\n    }\r\n}\r\nexports.Errors = Errors;\r\n\n\n//# sourceURL=webpack:///./out/Errors.js?");
+Object.defineProperty(exports, "__esModule", { value: true });
+class Errors {
+    static pageNodeNotExists(pageName) {
+        let msg = `Page node named ${pageName} is not exists.`;
+        return new Error(msg);
+    }
+    static actionCanntNull(pageName) {
+        let msg = `Action of '${pageName}' can not be null.`;
+        return new Error(msg);
+    }
+    static argumentNull(paramName) {
+        var msg = `The argument "${paramName}" cannt be null.`;
+        return new Error(msg);
+    }
+    static modelFileExpecteFunction(script) {
+        var msg = `The eval result of script file "${script}" is expected a function.`;
+        return new Error(msg);
+    }
+    static paramTypeError(paramName, expectedType) {
+        var msg = `The param "${paramName}" is expected "${expectedType}" type.`;
+        return new Error(msg);
+    }
+    static paramError(msg) {
+        return new Error(msg);
+    }
+    static pathPairRequireView(index) {
+        var msg = `The view value is required for path pair, but the item with index "${index}" is miss it.`;
+        return new Error(msg);
+    }
+    static notImplemented(name) {
+        var msg = `'The method "${name}" is not implemented.'`;
+        return new Error(msg);
+    }
+    static routeExists(name) {
+        var msg = `Route named "${name}" is exists.`;
+        return new Error(msg);
+    }
+    static noneRouteMatched(url) {
+        var msg = `None route matched with url "${url}".`;
+        var error = new Error(msg);
+        return error;
+    }
+    static emptyStack() {
+        return new Error('The stack is empty.');
+    }
+    static canntParseUrl(url) {
+        var msg = `Can not parse the url "${url}" to route data.`;
+        return new Error(msg);
+    }
+    static canntParseRouteString(routeString) {
+        var msg = `Can not parse the route string "${routeString}" to route data.;`;
+        return new Error(msg);
+    }
+    static routeDataRequireController() {
+        var msg = 'The route data does not contains a "controller" file.';
+        return new Error(msg);
+    }
+    static routeDataRequireAction() {
+        var msg = 'The route data does not contains a "action" file.';
+        return new Error(msg);
+    }
+    static viewCanntNull() {
+        var msg = 'The view or viewDeferred of the page cannt null.';
+        return new Error(msg);
+    }
+    static createPageFail(pageName) {
+        var msg = `Create page "${pageName}" fail.`;
+        return new Error(msg);
+    }
+    static actionTypeError(pageName) {
+        let msg = `The action in page '${pageName}' is expect as function.`;
+        return new Error(msg);
+    }
+    static canntFindAction(pageName) {
+        let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;
+        return new Error(msg);
+    }
+    static exportsCanntNull(pageName) {
+        let msg = `Exports of page '${pageName}' is null.`;
+        return new Error(msg);
+    }
+    static scrollerElementNotExists() {
+        let msg = "Scroller element is not exists.";
+        return new Error(msg);
+    }
+    static resourceExists(resourceName, pageName) {
+        let msg = `Rosource '${resourceName}' is exists in the resources of page '${pageName}'.`;
+        return new Error(msg);
+    }
+    static siteMapRootCanntNull() {
+        let msg = `The site map root node can not be null.`;
+        return new Error(msg);
+    }
+    static duplicateSiteMapNode(name) {
+        let msg = `The site map node ${name} is exists.`;
+        return new Error(name);
+    }
+}
+exports.Errors = Errors;
 
-/***/ }),
-
-/***/ "./out/Extends.js":
-/*!************************!*\
-  !*** ./out/Extends.js ***!
-  \************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
+},{}],3:[function(require,module,exports){
 "use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nclass Callback {\r\n    constructor() {\r\n        this.funcs = new Array();\r\n    }\r\n    add(func) {\r\n        this.funcs.push(func);\r\n    }\r\n    remove(func) {\r\n        this.funcs = this.funcs.filter(o => o != func);\r\n    }\r\n    fire(...args) {\r\n        this.funcs.forEach(o => o(...args));\r\n    }\r\n}\r\nexports.Callback = Callback;\r\nfunction Callbacks() {\r\n    return new Callback();\r\n}\r\nexports.Callbacks = Callbacks;\r\nclass ValueStore {\r\n    constructor(value) {\r\n        this.items = new Array();\r\n        this._value = value === undefined ? null : value;\r\n    }\r\n    add(func, sender) {\r\n        this.items.push({ func, sender });\r\n        return func;\r\n    }\r\n    remove(func) {\r\n        this.items = this.items.filter(o => o.func != func);\r\n    }\r\n    fire(value) {\r\n        this.items.forEach(o => o.func(value, o.sender));\r\n    }\r\n    get value() {\r\n        if (this._value === undefined)\r\n            return null;\r\n        return this._value;\r\n    }\r\n    set value(value) {\r\n        this._value = value;\r\n        this.fire(value);\r\n    }\r\n}\r\nexports.ValueStore = ValueStore;\r\n\n\n//# sourceURL=webpack:///./out/Extends.js?");
+Object.defineProperty(exports, "__esModule", { value: true });
+class Callback {
+    constructor() {
+        this.funcs = new Array();
+    }
+    add(func) {
+        this.funcs.push(func);
+    }
+    remove(func) {
+        this.funcs = this.funcs.filter(o => o != func);
+    }
+    fire(...args) {
+        this.funcs.forEach(o => o(...args));
+    }
+}
+exports.Callback = Callback;
+function Callbacks() {
+    return new Callback();
+}
+exports.Callbacks = Callbacks;
+class ValueStore {
+    constructor(value) {
+        this.items = new Array();
+        this._value = value === undefined ? null : value;
+    }
+    add(func, sender) {
+        this.items.push({ func, sender });
+        return func;
+    }
+    remove(func) {
+        this.items = this.items.filter(o => o.func != func);
+    }
+    fire(value) {
+        this.items.forEach(o => o.func(value, o.sender));
+    }
+    get value() {
+        if (this._value === undefined)
+            return null;
+        return this._value;
+    }
+    set value(value) {
+        this._value = value;
+        this.fire(value);
+    }
+}
+exports.ValueStore = ValueStore;
 
-/***/ }),
-
-/***/ "./out/Page.js":
-/*!*********************!*\
-  !*** ./out/Page.js ***!
-  \*********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
+},{}],4:[function(require,module,exports){
 "use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nconst Extends_1 = __webpack_require__(/*! ./Extends */ \"./out/Extends.js\");\r\nconst Service_1 = __webpack_require__(/*! ./Service */ \"./out/Service.js\");\r\nclass Page {\r\n    constructor(params) {\r\n        this.data = {};\r\n        this.showing = Extends_1.Callbacks();\r\n        this.shown = Extends_1.Callbacks();\r\n        this.hiding = Extends_1.Callbacks();\r\n        this.hidden = Extends_1.Callbacks();\r\n        this.closing = Extends_1.Callbacks();\r\n        this.closed = Extends_1.Callbacks();\r\n        this._element = params.element;\r\n        this._app = params.app;\r\n        this._displayer = params.displayer;\r\n        this.data = params.data;\r\n        this._name = params.name;\r\n    }\r\n    on_showing() {\r\n        return this.showing.fire(this, this.data);\r\n    }\r\n    on_shown() {\r\n        return this.shown.fire(this, this.data);\r\n    }\r\n    on_hiding() {\r\n        return this.hiding.fire(this, this.data);\r\n    }\r\n    on_hidden() {\r\n        return this.hidden.fire(this, this.data);\r\n    }\r\n    on_closing() {\r\n        return this.closing.fire(this, this.data);\r\n    }\r\n    on_closed() {\r\n        return this.closed.fire(this, this.data);\r\n    }\r\n    show() {\r\n        this.on_showing();\r\n        let currentPage = this._app.currentPage;\r\n        if (this == currentPage) {\r\n            currentPage = null;\r\n        }\r\n        return this._displayer.show(this, currentPage).then(o => {\r\n            this.on_shown();\r\n        });\r\n    }\r\n    hide(currentPage) {\r\n        this.on_hiding();\r\n        return this._displayer.hide(this, currentPage).then(o => {\r\n            this.on_hidden();\r\n        });\r\n    }\r\n    close() {\r\n        this.on_closing();\r\n        this._element.remove();\r\n        this.on_closed();\r\n        return Promise.resolve();\r\n    }\r\n    createService(type) {\r\n        type = type || Service_1.Service;\r\n        let service = new type();\r\n        service.error.add((sender, error) => {\r\n            this._app.error.fire(this._app, error, this);\r\n        });\r\n        return service;\r\n    }\r\n    get element() {\r\n        return this._element;\r\n    }\r\n    get name() {\r\n        return this._name;\r\n    }\r\n    get app() {\r\n        return this._app;\r\n    }\r\n}\r\nPage.tagName = 'div';\r\nexports.Page = Page;\r\nclass PageDisplayerImplement {\r\n    show(page, previous) {\r\n        page.element.style.display = 'block';\r\n        if (previous != null) {\r\n            previous.element.style.display = 'none';\r\n        }\r\n        return Promise.resolve();\r\n    }\r\n    hide(page, previous) {\r\n        page.element.style.display = 'none';\r\n        if (previous != null) {\r\n            previous.element.style.display = 'block';\r\n        }\r\n        return Promise.resolve();\r\n    }\r\n}\r\nexports.PageDisplayerImplement = PageDisplayerImplement;\r\n\n\n//# sourceURL=webpack:///./out/Page.js?");
+Object.defineProperty(exports, "__esModule", { value: true });
+const Extends_1 = require("./Extends");
+const Service_1 = require("./Service");
+class Page {
+    constructor(params) {
+        this.data = {};
+        this.showing = Extends_1.Callbacks();
+        this.shown = Extends_1.Callbacks();
+        this.hiding = Extends_1.Callbacks();
+        this.hidden = Extends_1.Callbacks();
+        this.closing = Extends_1.Callbacks();
+        this.closed = Extends_1.Callbacks();
+        this._element = params.element;
+        this._app = params.app;
+        this._displayer = params.displayer;
+        this.data = params.data;
+        this._name = params.name;
+    }
+    on_showing() {
+        return this.showing.fire(this, this.data);
+    }
+    on_shown() {
+        return this.shown.fire(this, this.data);
+    }
+    on_hiding() {
+        return this.hiding.fire(this, this.data);
+    }
+    on_hidden() {
+        return this.hidden.fire(this, this.data);
+    }
+    on_closing() {
+        return this.closing.fire(this, this.data);
+    }
+    on_closed() {
+        return this.closed.fire(this, this.data);
+    }
+    show() {
+        this.on_showing();
+        let currentPage = this._app.currentPage;
+        if (this == currentPage) {
+            currentPage = null;
+        }
+        return this._displayer.show(this, currentPage).then(o => {
+            this.on_shown();
+        });
+    }
+    hide(currentPage) {
+        this.on_hiding();
+        return this._displayer.hide(this, currentPage).then(o => {
+            this.on_hidden();
+        });
+    }
+    close() {
+        this.on_closing();
+        this._element.remove();
+        this.on_closed();
+        return Promise.resolve();
+    }
+    createService(type) {
+        type = type || Service_1.Service;
+        let service = new type();
+        service.error.add((sender, error) => {
+            this._app.error.fire(this._app, error, this);
+        });
+        return service;
+    }
+    get element() {
+        return this._element;
+    }
+    get name() {
+        return this._name;
+    }
+    get app() {
+        return this._app;
+    }
+}
+Page.tagName = 'div';
+exports.Page = Page;
+class PageDisplayerImplement {
+    show(page, previous) {
+        page.element.style.display = 'block';
+        if (previous != null) {
+            previous.element.style.display = 'none';
+        }
+        return Promise.resolve();
+    }
+    hide(page, previous) {
+        page.element.style.display = 'none';
+        if (previous != null) {
+            previous.element.style.display = 'block';
+        }
+        return Promise.resolve();
+    }
+}
+exports.PageDisplayerImplement = PageDisplayerImplement;
 
-/***/ }),
-
-/***/ "./out/PageMaster.js":
-/*!***************************!*\
-  !*** ./out/PageMaster.js ***!
-  \***************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
+},{"./Extends":3,"./Service":6}],5:[function(require,module,exports){
 "use strict";
-eval("\r\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\r\n    return new (P || (P = Promise))(function (resolve, reject) {\r\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\r\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\r\n        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }\r\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\r\n    });\r\n};\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nconst Extends_1 = __webpack_require__(/*! ./Extends */ \"./out/Extends.js\");\r\nconst Page_1 = __webpack_require__(/*! ./Page */ \"./out/Page.js\");\r\nconst Errors_1 = __webpack_require__(/*! ./Errors */ \"./out/Errors.js\");\r\nclass PageMaster {\r\n    constructor(container, parser) {\r\n        this.pageCreated = Extends_1.Callbacks();\r\n        this.pageShowing = Extends_1.Callbacks();\r\n        this.pageShown = Extends_1.Callbacks();\r\n        this.pageType = Page_1.Page;\r\n        this.pageDisplayType = Page_1.PageDisplayerImplement;\r\n        this.cachePages = {};\r\n        this.page_stack = new Array();\r\n        this.nodes = {};\r\n        this.error = Extends_1.Callbacks();\r\n        this.parser = parser || this.defaultPageNodeParser();\r\n        if (!container)\r\n            throw Errors_1.Errors.argumentNull(\"container\");\r\n        this.parser.actions = this.parser.actions || {};\r\n        this.container = container;\r\n    }\r\n    defaultPageNodeParser() {\r\n        let nodes = {};\r\n        let p = {\r\n            actions: {},\r\n            parse: (pageName) => {\r\n                let node = nodes[pageName];\r\n                if (node == null) {\r\n                    let path = `modules_${pageName}`.split('_').join('/');\r\n                    node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };\r\n                    nodes[pageName] = node;\r\n                }\r\n                return node;\r\n            }\r\n        };\r\n        return p;\r\n    }\r\n    createDefaultAction(url, loadjs) {\r\n        return (page) => __awaiter(this, void 0, void 0, function* () {\r\n            let actionExports = yield loadjs(url);\r\n            if (!actionExports)\r\n                throw Errors_1.Errors.exportsCanntNull(url);\r\n            let _action = actionExports.default;\r\n            if (_action == null) {\r\n                throw Errors_1.Errors.canntFindAction(page.name);\r\n            }\r\n            let result;\r\n            if (PageMaster.isClass(_action)) {\r\n                let action = _action;\r\n                result = new action(page, this);\r\n            }\r\n            else {\r\n                let action = _action;\r\n                result = action(page, this);\r\n            }\r\n            return result;\r\n        });\r\n    }\r\n    loadjs(path) {\r\n        return new Promise((reslove, reject) => {\r\n            requirejs([path], function (result) {\r\n                reslove(result);\r\n            }, function (err) {\r\n                reject(err);\r\n            });\r\n        });\r\n    }\r\n    on_pageCreated(page) {\r\n        return this.pageCreated.fire(this, page);\r\n    }\r\n    get currentPage() {\r\n        if (this.page_stack.length > 0)\r\n            return this.page_stack[this.page_stack.length - 1];\r\n        return null;\r\n    }\r\n    getPage(node, values) {\r\n        console.assert(node != null);\r\n        values = values || {};\r\n        let pageName = node.name;\r\n        let cachePage = this.cachePages[pageName];\r\n        if (cachePage != null) {\r\n            cachePage.data = values || {};\r\n            return { page: cachePage, isNew: false };\r\n        }\r\n        let page = this.createPage(pageName, values);\r\n        this.cachePages[pageName] = page;\r\n        this.on_pageCreated(page);\r\n        return { page, isNew: true };\r\n    }\r\n    createPage(pageName, values) {\r\n        if (!pageName)\r\n            throw Errors_1.Errors.argumentNull('pageName');\r\n        values = values || {};\r\n        let element = this.createPageElement(pageName);\r\n        let displayer = new this.pageDisplayType(this);\r\n        console.assert(this.pageType != null);\r\n        let page = new this.pageType({\r\n            app: this,\r\n            name: pageName,\r\n            data: values,\r\n            displayer,\r\n            element,\r\n        });\r\n        let showing = (sender) => {\r\n            this.pageShowing.fire(this, sender);\r\n        };\r\n        let shown = (sender) => {\r\n            this.pageShown.fire(this, sender);\r\n        };\r\n        page.showing.add(showing);\r\n        page.shown.add(shown);\r\n        page.closed.add(() => {\r\n            page.showing.remove(showing);\r\n            page.shown.remove(shown);\r\n        });\r\n        return page;\r\n    }\r\n    createPageElement(pageName) {\r\n        let element = document.createElement(Page_1.Page.tagName);\r\n        this.container.appendChild(element);\r\n        return element;\r\n    }\r\n    showPage(pageName, args, forceRender) {\r\n        args = args || {};\r\n        forceRender = forceRender == null ? false : true;\r\n        if (!pageName)\r\n            throw Errors_1.Errors.argumentNull('pageName');\r\n        let node = this.findSiteMapNode(pageName);\r\n        if (node == null)\r\n            throw Errors_1.Errors.pageNodeNotExists(pageName);\r\n        if (this.currentPage != null && this.currentPage.name == pageName)\r\n            return this.currentPage;\r\n        let { page, isNew } = this.getPage(node, args);\r\n        if (isNew || forceRender) {\r\n            let siteMapNode = this.findSiteMapNode(pageName);\r\n            if (siteMapNode == null)\r\n                throw Errors_1.Errors.pageNodeNotExists(pageName);\r\n            let action = siteMapNode.action;\r\n            if (action == null)\r\n                throw Errors_1.Errors.actionCanntNull(pageName);\r\n            action(page, this);\r\n        }\r\n        page.show();\r\n        this.pushPage(page);\r\n        console.assert(page == this.currentPage, \"page is not current page\");\r\n        return page;\r\n    }\r\n    closePage(page) {\r\n        if (page == null)\r\n            throw Errors_1.Errors.argumentNull('page');\r\n        page.close();\r\n        delete this.cachePages[page.name];\r\n        this.page_stack = this.page_stack.filter(o => o != page);\r\n    }\r\n    pushPage(page) {\r\n        this.page_stack.push(page);\r\n    }\r\n    findSiteMapNode(pageName) {\r\n        if (this.nodes[pageName])\r\n            return this.nodes[pageName];\r\n        let node = null;\r\n        let action = this.parser.actions ? this.parser.actions[pageName] : null;\r\n        if (action != null) {\r\n            node = { action, name: pageName };\r\n        }\r\n        if (node == null && this.parser.parse != null) {\r\n            node = this.parser.parse(pageName);\r\n            console.assert(node.action != null);\r\n        }\r\n        if (node != null)\r\n            this.nodes[pageName] = node;\r\n        return node;\r\n    }\r\n    closeCurrentPage(passData) {\r\n        var page = this.page_stack.pop();\r\n        if (page == null)\r\n            return;\r\n        this.closePage(page);\r\n        if (this.currentPage) {\r\n            if (passData) {\r\n                console.assert(this.currentPage.data != null);\r\n                this.currentPage.data = Object.assign(this.currentPage.data, passData);\r\n            }\r\n            this.currentPage.show();\r\n        }\r\n    }\r\n    get pageStack() {\r\n        return this.page_stack;\r\n    }\r\n}\r\nPageMaster.isClass = (function () {\r\n    var toString = Function.prototype.toString;\r\n    function fnBody(fn) {\r\n        return toString.call(fn).replace(/^[^{]*{\\s*/, '').replace(/\\s*}[^}]*$/, '');\r\n    }\r\n    function isClass(fn) {\r\n        return (typeof fn === 'function' &&\r\n            (/^class(\\s|\\{\\}$)/.test(toString.call(fn)) ||\r\n                (/^.*classCallCheck\\(/.test(fnBody(fn)))));\r\n    }\r\n    return isClass;\r\n})();\r\nexports.PageMaster = PageMaster;\r\n\n\n//# sourceURL=webpack:///./out/PageMaster.js?");
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const Extends_1 = require("./Extends");
+const Page_1 = require("./Page");
+const Errors_1 = require("./Errors");
+class PageMaster {
+    constructor(container, parser) {
+        this.pageCreated = Extends_1.Callbacks();
+        this.pageShowing = Extends_1.Callbacks();
+        this.pageShown = Extends_1.Callbacks();
+        this.pageType = Page_1.Page;
+        this.pageDisplayType = Page_1.PageDisplayerImplement;
+        this.cachePages = {};
+        this.page_stack = new Array();
+        this.nodes = {};
+        this.error = Extends_1.Callbacks();
+        this.parser = parser || this.defaultPageNodeParser();
+        if (!container)
+            throw Errors_1.Errors.argumentNull("container");
+        this.parser.actions = this.parser.actions || {};
+        this.container = container;
+    }
+    defaultPageNodeParser() {
+        let nodes = {};
+        let p = {
+            actions: {},
+            parse: (pageName) => {
+                let node = nodes[pageName];
+                if (node == null) {
+                    let path = `modules_${pageName}`.split('_').join('/');
+                    node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
+                    nodes[pageName] = node;
+                }
+                return node;
+            }
+        };
+        return p;
+    }
+    createDefaultAction(url, loadjs) {
+        return (page) => __awaiter(this, void 0, void 0, function* () {
+            let actionExports = yield loadjs(url);
+            if (!actionExports)
+                throw Errors_1.Errors.exportsCanntNull(url);
+            let _action = actionExports.default;
+            if (_action == null) {
+                throw Errors_1.Errors.canntFindAction(page.name);
+            }
+            let result;
+            if (PageMaster.isClass(_action)) {
+                let action = _action;
+                result = new action(page, this);
+            }
+            else {
+                let action = _action;
+                result = action(page, this);
+            }
+            return result;
+        });
+    }
+    loadjs(path) {
+        return new Promise((reslove, reject) => {
+            requirejs([path], function (result) {
+                reslove(result);
+            }, function (err) {
+                reject(err);
+            });
+        });
+    }
+    on_pageCreated(page) {
+        return this.pageCreated.fire(this, page);
+    }
+    get currentPage() {
+        if (this.page_stack.length > 0)
+            return this.page_stack[this.page_stack.length - 1];
+        return null;
+    }
+    getPage(node, values) {
+        console.assert(node != null);
+        values = values || {};
+        let pageName = node.name;
+        let cachePage = this.cachePages[pageName];
+        if (cachePage != null) {
+            cachePage.data = values || {};
+            return { page: cachePage, isNew: false };
+        }
+        let page = this.createPage(pageName, values);
+        this.cachePages[pageName] = page;
+        this.on_pageCreated(page);
+        return { page, isNew: true };
+    }
+    createPage(pageName, values) {
+        if (!pageName)
+            throw Errors_1.Errors.argumentNull('pageName');
+        values = values || {};
+        let element = this.createPageElement(pageName);
+        let displayer = new this.pageDisplayType(this);
+        console.assert(this.pageType != null);
+        let page = new this.pageType({
+            app: this,
+            name: pageName,
+            data: values,
+            displayer,
+            element,
+        });
+        let showing = (sender) => {
+            this.pageShowing.fire(this, sender);
+        };
+        let shown = (sender) => {
+            this.pageShown.fire(this, sender);
+        };
+        page.showing.add(showing);
+        page.shown.add(shown);
+        page.closed.add(() => {
+            page.showing.remove(showing);
+            page.shown.remove(shown);
+        });
+        return page;
+    }
+    createPageElement(pageName) {
+        let element = document.createElement(Page_1.Page.tagName);
+        this.container.appendChild(element);
+        return element;
+    }
+    showPage(pageName, args, forceRender) {
+        args = args || {};
+        forceRender = forceRender == null ? false : true;
+        if (!pageName)
+            throw Errors_1.Errors.argumentNull('pageName');
+        let node = this.findSiteMapNode(pageName);
+        if (node == null)
+            throw Errors_1.Errors.pageNodeNotExists(pageName);
+        if (this.currentPage != null && this.currentPage.name == pageName)
+            return this.currentPage;
+        let { page, isNew } = this.getPage(node, args);
+        if (isNew || forceRender) {
+            let siteMapNode = this.findSiteMapNode(pageName);
+            if (siteMapNode == null)
+                throw Errors_1.Errors.pageNodeNotExists(pageName);
+            let action = siteMapNode.action;
+            if (action == null)
+                throw Errors_1.Errors.actionCanntNull(pageName);
+            action(page, this);
+        }
+        page.show();
+        this.pushPage(page);
+        console.assert(page == this.currentPage, "page is not current page");
+        return page;
+    }
+    closePage(page) {
+        if (page == null)
+            throw Errors_1.Errors.argumentNull('page');
+        page.close();
+        delete this.cachePages[page.name];
+        this.page_stack = this.page_stack.filter(o => o != page);
+    }
+    pushPage(page) {
+        this.page_stack.push(page);
+    }
+    findSiteMapNode(pageName) {
+        if (this.nodes[pageName])
+            return this.nodes[pageName];
+        let node = null;
+        let action = this.parser.actions ? this.parser.actions[pageName] : null;
+        if (action != null) {
+            node = { action, name: pageName };
+        }
+        if (node == null && this.parser.parse != null) {
+            node = this.parser.parse(pageName);
+            console.assert(node.action != null);
+        }
+        if (node != null)
+            this.nodes[pageName] = node;
+        return node;
+    }
+    closeCurrentPage(passData) {
+        var page = this.page_stack.pop();
+        if (page == null)
+            return;
+        this.closePage(page);
+        if (this.currentPage) {
+            if (passData) {
+                console.assert(this.currentPage.data != null);
+                this.currentPage.data = Object.assign(this.currentPage.data, passData);
+            }
+            this.currentPage.show();
+        }
+    }
+    get pageStack() {
+        return this.page_stack;
+    }
+}
+PageMaster.isClass = (function () {
+    var toString = Function.prototype.toString;
+    function fnBody(fn) {
+        return toString.call(fn).replace(/^[^{]*{\s*/, '').replace(/\s*}[^}]*$/, '');
+    }
+    function isClass(fn) {
+        return (typeof fn === 'function' &&
+            (/^class(\s|\{\}$)/.test(toString.call(fn)) ||
+                (/^.*classCallCheck\(/.test(fnBody(fn)))));
+    }
+    return isClass;
+})();
+exports.PageMaster = PageMaster;
 
-/***/ }),
-
-/***/ "./out/Service.js":
-/*!************************!*\
-  !*** ./out/Service.js ***!
-  \************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
+},{"./Errors":2,"./Extends":3,"./Page":4}],6:[function(require,module,exports){
 "use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nvar maishu_chitu_service_1 = __webpack_require__(/*! maishu-chitu-service */ \"./node_modules/maishu-chitu-service/dist/index.js\");\r\nexports.Service = maishu_chitu_service_1.Service;\r\nexports.Callback = maishu_chitu_service_1.Callback;\r\nexports.ValueStore = maishu_chitu_service_1.ValueStore;\r\n\n\n//# sourceURL=webpack:///./out/Service.js?");
+Object.defineProperty(exports, "__esModule", { value: true });
+var maishu_chitu_service_1 = require("maishu-chitu-service");
+exports.Service = maishu_chitu_service_1.Service;
+exports.Callback = maishu_chitu_service_1.Callback;
+exports.ValueStore = maishu_chitu_service_1.ValueStore;
 
-/***/ }),
-
-/***/ "./out/index.js":
-/*!**********************!*\
-  !*** ./out/index.js ***!
-  \**********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
+},{"maishu-chitu-service":"maishu-chitu-service"}],7:[function(require,module,exports){
 "use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nvar Application_1 = __webpack_require__(/*! ./Application */ \"./out/Application.js\");\r\nexports.Application = Application_1.Application;\r\n\n\n//# sourceURL=webpack:///./out/index.js?");
+Object.defineProperty(exports, "__esModule", { value: true });
+var Application_1 = require("./Application");
+exports.Application = Application_1.Application;
+var PageMaster_1 = require("./PageMaster");
+exports.PageMaster = PageMaster_1.PageMaster;
+var Page_1 = require("./Page");
+exports.Page = Page_1.Page;
+var maishu_chitu_service_1 = require("maishu-chitu-service");
+exports.Callback = maishu_chitu_service_1.Callback;
+exports.Callbacks = maishu_chitu_service_1.Callbacks;
+exports.ValueStore = maishu_chitu_service_1.ValueStore;
 
-/***/ })
-
-/******/ });
+},{"./Application":1,"./Page":4,"./PageMaster":5,"maishu-chitu-service":"maishu-chitu-service"}]},{},[7]);

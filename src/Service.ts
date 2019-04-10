@@ -1,6 +1,6 @@
 import { Service, Callback1 } from 'maishu-chitu-service';
 
-export { Service, Callback, ValueStore, Callback0, Callback1, Callback2 } from 'maishu-chitu-service'
+export { Service, Callback, ValueStore, Callback0, Callback1, Callback2, IService } from 'maishu-chitu-service'
 
 // import { Callback1, Callbacks } from "./Extends";
 
@@ -86,9 +86,9 @@ export interface ServiceConstructor<T> {
 
 // type AjaxOptions = { data?: any, headers?: { [key: string]: string }, method?: string };
 
-export interface IService {
-    error: Callback1<Service, Error>
-}
+// export interface IService {
+//     error: Callback1<Service, Error>
+// }
 
 // export class Service {
 
