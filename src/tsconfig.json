@@ -5,17 +5,19 @@
         "sourceMap": false,
         "declaration": true,
         // "declarationDir": "../build",
+        "outDir": "../out",
         "removeComments": true,
-        "outFile": "../out/chitu.js",
-        "rootDir": ".",
         "lib": [
             "dom",
             "scripthost",
             "es2015"
         ],
-        "strict": true
-    },
-    "exclude": [
-        "mobile/*.ts"
-    ]
+        "strict": true,
+        "baseUrl": "./",
+        "paths": {
+            "maishu-chitu-service": [
+                "../node_modules/maishu-chitu-service/out/index.d.ts"
+            ]
+        }
+    }
 }

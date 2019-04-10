@@ -1,37 +1,18 @@
 {
-  "_from": "maishu-chitu",
-  "_id": "maishu-chitu@2.0.0",
-  "_inBundle": false,
-  "_integrity": "sha512-9QlTWeIAjs3Tcj9MZP72xolnzb17g33+nphCLU30gZNAB2jqUgUyU0H2mJF86qNB+CSw5HnXXAHjesASoisQkA==",
-  "_location": "/maishu-chitu",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "tag",
-    "registry": true,
-    "raw": "maishu-chitu",
-    "name": "maishu-chitu",
-    "escapedName": "maishu-chitu",
-    "rawSpec": "",
-    "saveSpec": null,
-    "fetchSpec": "latest"
-  },
-  "_requiredBy": [
-    "#USER",
-    "/"
-  ],
-  "_resolved": "https://registry.npmjs.org/maishu-chitu/-/maishu-chitu-2.0.0.tgz",
-  "_shasum": "51cd566086cfbe2ca437a8ed919688a6798ccfd4",
-  "_spec": "maishu-chitu",
-  "_where": "D:\\projects\\chitu-react",
   "author": {
     "name": "mai.shu"
   },
   "bugs": {
     "url": "https://github.com/ansiboy/chitu/issues"
   },
-  "bundleDependencies": false,
-  "dependencies": {},
-  "deprecated": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ansiboy/chitu.git"
+  },
+  "dependencies": {
+    "maishu-chitu-service": "^1.0.1"
+  },
+  "homepage": "https://github.com/ansiboy/chitu#readme",
   "description": "采用TypeScript编写的轻量级单页面类库，帮助开发人员编写易维护的大规模项目。采用面向对象，事件驱动的编程模式。",
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -48,22 +29,16 @@
     "grunt-contrib-uglify": "~1.0.1",
     "grunt-shell": "^2.1.0",
     "load-grunt-tasks": "^4.0.0",
-    "typescript": "^3.1.4"
+    "typescript": "^3.1.4",
+    "webpack": "^4.29.6"
   },
-  "directories": {
-    "test": "test"
-  },
-  "homepage": "https://github.com/ansiboy/chitu#readme",
   "license": "MIT",
-  "main": "dist/chitu.js",
+  "main": "./dist/index.js",
   "name": "maishu-chitu",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ansiboy/chitu.git"
-  },
+  "types": "./out/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "grunt"
   },
-  "version": "2.0.15"
+  "version": "2.4.0"
 }
