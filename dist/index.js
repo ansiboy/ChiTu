@@ -1,13 +1,13 @@
 
 /*
- * SERVICE SDK v2.5.4
- * https://github.com/ansiboy/dilu
+ * CHITU v2.5.5
+ * https://github.com/ansiboy/chitu
  *
  * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
  * Licensed under the MIT License.
  *
  */
-(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.chitu = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Service_1 = require("./Service");
@@ -700,4 +700,5 @@ exports.Callback = maishu_chitu_service_1.Callback;
 exports.Callbacks = maishu_chitu_service_1.Callbacks;
 exports.ValueStore = maishu_chitu_service_1.ValueStore;
 
-},{"./Application":1,"./Page":4,"./PageMaster":5,"maishu-chitu-service":"maishu-chitu-service"}]},{},[7]);
+},{"./Application":1,"./Page":4,"./PageMaster":5,"maishu-chitu-service":"maishu-chitu-service"}]},{},[7])(7)
+});

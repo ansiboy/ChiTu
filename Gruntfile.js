@@ -23,6 +23,9 @@
             },
             options: {
                 banner: license,
+                browserifyOptions: {
+                    standalone: 'chitu',
+                },
                 external: ['maishu-chitu-service'],
             },
         },
