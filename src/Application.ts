@@ -1,4 +1,4 @@
-﻿import { IService, ServiceConstructor, Service } from "./Service";
+﻿import { IService, ServiceConstructor, Service } from "maishu-chitu-service";
 import { PageMaster } from "./PageMaster";
 import { PageData, Page } from "./Page";
 import { Errors } from "./Errors";

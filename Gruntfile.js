@@ -1,4 +1,6 @@
-﻿module.exports = function (grunt) {
+﻿let node_modules = 'node_modules'
+
+module.exports = function (grunt) {
 
     require('load-grunt-tasks')(grunt);
 
@@ -15,22 +17,36 @@
  */`;
 
     grunt.initConfig({
-        browserify: {
-            dist: {
-                files: {
-                    'dist/index.js': ['out/index.js']
-                }
-            },
-            options: {
-                banner: license,
-                browserifyOptions: {
-                    standalone: pkg.name,
+        concat: {
+            chitudts: {
+                options: {
+                    stripBanners: true,
+                    banner: license
                 },
-                // external: ['maishu-chitu-service'],
-                alias: [
-                    `./node_modules/maishu-chitu-service/out/index.js:maishu-chitu-service`,
-                ]
+                src: ['./dist/index.js'],
+                dest: './dist/index.js'
             },
+
+        },
+        requirejs: {
+            dev: {
+                options: {
+                    baseUrl: `./`,
+                    include: [
+                        "out/index"
+                    ],
+                    out: `dist/index.js`,
+                    optimize: "none",
+                    optimizeCss: "standard.keepLines",
+                    paths: {
+                        "maishu-chitu-service": `${node_modules}/maishu-chitu-service/dist/index`
+                    },
+                    shim: {
+
+
+                    }
+                },
+            }
         },
         shell: {
             src: {
@@ -39,5 +55,5 @@
         }
     });
 
-    grunt.registerTask('default', ['shell', 'browserify']);// 'babel', 
+    grunt.registerTask('default', ['shell', 'requirejs', 'concat']);// 'babel', 
 }

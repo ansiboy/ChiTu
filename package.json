@@ -28,6 +28,7 @@
     "grunt-contrib-concat": "~1.0.1",
     "grunt-contrib-connect": "~1.0.0",
     "grunt-contrib-copy": "~1.0.0",
+    "grunt-contrib-requirejs": "^1.0.0",
     "grunt-contrib-uglify": "~1.0.1",
     "grunt-shell": "^2.1.0",
     "load-grunt-tasks": "^4.0.0",
@@ -41,5 +42,5 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "grunt"
   },
-  "version": "2.7.0"
+  "version": "2.7.12"
 }
