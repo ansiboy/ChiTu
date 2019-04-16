@@ -1,4 +1,4 @@
-import { IService, ServiceConstructor } from "./Service";
+import { IService, ServiceConstructor } from "maishu-chitu-service";
 import { PageMaster } from "./PageMaster";
 import { PageData, Page } from "./Page";
 export declare type StringPropertyNames<T> = {

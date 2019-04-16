@@ -1,5 +1,5 @@
 import { PageMaster } from "./PageMaster";
-import { IService, ServiceConstructor } from "./Service";
+import { IService, ServiceConstructor } from "maishu-chitu-service";
 export declare type PageData = {
     [key: string]: string | Function;
 };
