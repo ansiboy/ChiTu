@@ -1,4 +1,4 @@
-import { Callbacks } from "./Extends";
+import { Callbacks } from "maishu-chitu-service";
 import { Page, PageConstructor, PageDisplayConstructor, PageDisplayerImplement } from "./Page";
 import { PageNodeParser, PageNode, StringPropertyNames, Action } from "./Application";
 import { Errors } from "./Errors";

@@ -51,9 +51,12 @@ module.exports = function (grunt) {
         shell: {
             src: {
                 command: `tsc -p src`
+            },
+            webpack: {
+                command: `webpack`
             }
         }
     });
 
-    grunt.registerTask('default', ['shell', 'requirejs', 'concat']);// 'babel', 
+    grunt.registerTask('default', ['shell:src', 'shell:webpack']);// 'babel', 
 }

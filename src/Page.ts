@@ -1,6 +1,5 @@
 import { PageMaster } from "./PageMaster";
-import { Callbacks } from "./Extends";
-import { IService, ServiceConstructor, Service } from "maishu-chitu-service";
+import { IService, ServiceConstructor, Service, Callbacks } from "maishu-chitu-service";
 
 export type PageData = { [key: string]: string | Function }
 
