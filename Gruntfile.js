@@ -27,6 +27,9 @@
                     standalone: pkg.name,
                 },
                 // external: ['maishu-chitu-service'],
+                alias: [
+                    `./node_modules/maishu-chitu-service/out/index.js:maishu-chitu-service`,
+                ]
             },
         },
         shell: {

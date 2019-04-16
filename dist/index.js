@@ -1,6 +1,6 @@
 
 /*
- * maishu-chitu v2.5.5
+ * maishu-chitu v2.7.0
  * https://github.com/ansiboy/chitu
  *
  * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -8,163 +8,210 @@
  *
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.maishuChitu = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-/*!
- * CHITU SERVICE v1.0.4
- * https://github.com/ansiboy/chitu-service
- * 
- * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
- * Licensed under the MIT License.
- */
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./out/index.js");
-/******/ })
-/************************************************************************/
-/******/ ({
-
-/***/ "./out/callback.js":
-/*!*************************!*\
-  !*** ./out/callback.js ***!
-  \*************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
 "use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nclass Callback {\r\n    constructor() {\r\n        this.funcs = new Array();\r\n    }\r\n    add(func) {\r\n        this.funcs.push(func);\r\n    }\r\n    remove(func) {\r\n        this.funcs = this.funcs.filter(o => o != func);\r\n    }\r\n    fire(...args) {\r\n        this.funcs.forEach(o => o(...args));\r\n    }\r\n}\r\nexports.Callback = Callback;\r\nfunction Callbacks() {\r\n    return new Callback();\r\n}\r\nexports.Callbacks = Callbacks;\r\n\n\n//# sourceURL=webpack:///./out/callback.js?");
+Object.defineProperty(exports, "__esModule", { value: true });
+class Callback {
+    constructor() {
+        this.funcs = new Array();
+    }
+    add(func) {
+        this.funcs.push(func);
+    }
+    remove(func) {
+        this.funcs = this.funcs.filter(o => o != func);
+    }
+    fire(...args) {
+        this.funcs.forEach(o => o(...args));
+    }
+}
+exports.Callback = Callback;
+function Callbacks() {
+    return new Callback();
+}
+exports.Callbacks = Callbacks;
 
-/***/ }),
-
-/***/ "./out/errors.js":
-/*!***********************!*\
-  !*** ./out/errors.js ***!
-  \***********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nexports.errors = {\r\n    serviceUrlCanntNull(serviceName) {\r\n        let msg = `Service '${serviceName}' base url can not null.`;\r\n        return new Error(msg);\r\n    },\r\n    unexpectedNullResult() {\r\n        let msg = `Null result is unexpected.`;\r\n        return new Error(msg);\r\n    },\r\n    unexpectedNullValue(name) {\r\n        let msg = `variable ${name} is unexpected null value.`;\r\n        return new Error(msg);\r\n    },\r\n    argumentNull(name) {\r\n        let msg = `Arugment ${name} cannt null or empty.`;\r\n        return new Error(msg);\r\n    },\r\n    fieldNull(field, itemName) {\r\n        let msg = `${itemName} ${field} cannt be null or empty`;\r\n        return new Error(msg);\r\n    },\r\n    instanceMessangerStart() {\r\n        let msg = `Instance messanger is start.`;\r\n        return new Error(msg);\r\n    }\r\n};\r\n\n\n//# sourceURL=webpack:///./out/errors.js?");
-
-/***/ }),
-
-/***/ "./out/index.js":
-/*!**********************!*\
-  !*** ./out/index.js ***!
-  \**********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nvar service_1 = __webpack_require__(/*! ./service */ \"./out/service.js\");\r\nexports.Service = service_1.Service;\r\nvar callback_1 = __webpack_require__(/*! ./callback */ \"./out/callback.js\");\r\nexports.Callback = callback_1.Callback;\r\nexports.Callbacks = callback_1.Callbacks;\r\nvar value_store_1 = __webpack_require__(/*! ./value-store */ \"./out/value-store.js\");\r\nexports.ValueStore = value_store_1.ValueStore;\r\n\n\n//# sourceURL=webpack:///./out/index.js?");
-
-/***/ }),
-
-/***/ "./out/service.js":
-/*!************************!*\
-  !*** ./out/service.js ***!
-  \************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-eval("\r\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\r\n    return new (P || (P = Promise))(function (resolve, reject) {\r\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\r\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\r\n        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }\r\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\r\n    });\r\n};\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\nconst callback_1 = __webpack_require__(/*! ./callback */ \"./out/callback.js\");\r\nconst errors_1 = __webpack_require__(/*! ./errors */ \"./out/errors.js\");\r\nclass Service {\r\n    constructor() {\r\n        this.error = callback_1.Callbacks();\r\n    }\r\n    ajax(url, options) {\r\n        // options = options || {} as any\r\n        if (options === undefined)\r\n            options = {};\r\n        let data = options.data;\r\n        let method = options.method;\r\n        let headers = options.headers || {};\r\n        let body;\r\n        if (data != null) {\r\n            let is_json = (headers['content-type'] || '').indexOf('json') >= 0;\r\n            if (is_json) {\r\n                body = JSON.stringify(data);\r\n            }\r\n            else {\r\n                body = new URLSearchParams();\r\n                for (let key in data) {\r\n                    body.append(key, data[key]);\r\n                }\r\n            }\r\n        }\r\n        // return callAjax<T>(url, { headers: headers as any, body, method }, this, this.error);\r\n        return new Promise((reslove, reject) => {\r\n            let options = { headers: headers, body, method };\r\n            let timeId;\r\n            if (options == null)\r\n                throw errors_1.errors.unexpectedNullValue('options');\r\n            if (method == 'get') {\r\n                timeId = setTimeout(() => {\r\n                    let err = new Error(); //new AjaxError(options.method);\r\n                    err.name = 'timeout';\r\n                    err.message = '网络连接超时';\r\n                    reject(err);\r\n                    this.error.fire(this, err);\r\n                    clearTimeout(timeId);\r\n                }, Service.settings.ajaxTimeout * 1000);\r\n            }\r\n            ajax(url, options)\r\n                .then(data => {\r\n                reslove(data);\r\n                if (timeId)\r\n                    clearTimeout(timeId);\r\n            })\r\n                .catch(err => {\r\n                reject(err);\r\n                this.error.fire(this, err);\r\n                if (timeId)\r\n                    clearTimeout(timeId);\r\n            });\r\n        });\r\n    }\r\n    /**\r\n     * 创建服务\r\n     * @param type 服务类型\r\n     */\r\n    createService(type) {\r\n        type = type || Service;\r\n        let service = new type();\r\n        service.error.add((sender, error) => {\r\n            this.error.fire(service, error);\r\n        });\r\n        return service;\r\n    }\r\n}\r\nService.settings = {\r\n    ajaxTimeout: 30,\r\n};\r\nexports.Service = Service;\r\nfunction ajax(url, options) {\r\n    return __awaiter(this, void 0, void 0, function* () {\r\n        let response = yield fetch(url, options);\r\n        let responseText = response.text();\r\n        let p;\r\n        if (typeof responseText == 'string') {\r\n            p = new Promise((reslove, reject) => {\r\n                reslove(responseText);\r\n            });\r\n        }\r\n        else {\r\n            p = responseText;\r\n        }\r\n        let text = yield responseText;\r\n        let textObject;\r\n        let isJSONContextType = (response.headers.get('content-type') || '').indexOf('json') >= 0;\r\n        if (isJSONContextType) {\r\n            textObject = text ? JSON.parse(text) : null;\r\n        }\r\n        else {\r\n            textObject = text;\r\n        }\r\n        if (response.status >= 300) {\r\n            let err = new Error();\r\n            err.method = options.method;\r\n            err.name = `${response.status}`;\r\n            err.message = isJSONContextType ? (textObject.Message || textObject.message) : textObject;\r\n            err.message = err.message || response.statusText;\r\n            throw err;\r\n        }\r\n        return textObject;\r\n    });\r\n}\r\n\n\n//# sourceURL=webpack:///./out/service.js?");
-
-/***/ }),
-
-/***/ "./out/value-store.js":
-/*!****************************!*\
-  !*** ./out/value-store.js ***!
-  \****************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-eval("\r\nObject.defineProperty(exports, \"__esModule\", { value: true });\r\n/**\r\n * 实现数据的存储，以及数据修改的通知\r\n */\r\nclass ValueStore {\r\n    constructor(value) {\r\n        this.items = new Array();\r\n        this._value = value === undefined ? null : value;\r\n    }\r\n    add(func, sender) {\r\n        this.items.push({ func, sender });\r\n        return func;\r\n    }\r\n    remove(func) {\r\n        this.items = this.items.filter(o => o.func != func);\r\n    }\r\n    fire(value) {\r\n        this.items.forEach(o => o.func(value, o.sender));\r\n    }\r\n    get value() {\r\n        if (this._value === undefined)\r\n            return null;\r\n        return this._value;\r\n    }\r\n    set value(value) {\r\n        this._value = value;\r\n        this.fire(value);\r\n    }\r\n}\r\nexports.ValueStore = ValueStore;\r\n\n\n//# sourceURL=webpack:///./out/value-store.js?");
-
-/***/ })
-
-/******/ });
 },{}],2:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.errors = {
+    serviceUrlCanntNull(serviceName) {
+        let msg = `Service '${serviceName}' base url can not null.`;
+        return new Error(msg);
+    },
+    unexpectedNullResult() {
+        let msg = `Null result is unexpected.`;
+        return new Error(msg);
+    },
+    unexpectedNullValue(name) {
+        let msg = `variable ${name} is unexpected null value.`;
+        return new Error(msg);
+    },
+    argumentNull(name) {
+        let msg = `Arugment ${name} cannt null or empty.`;
+        return new Error(msg);
+    },
+    fieldNull(field, itemName) {
+        let msg = `${itemName} ${field} cannt be null or empty`;
+        return new Error(msg);
+    },
+    instanceMessangerStart() {
+        let msg = `Instance messanger is start.`;
+        return new Error(msg);
+    }
+};
+
+},{}],3:[function(require,module,exports){
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const callback_1 = require("./callback");
+const errors_1 = require("./errors");
+class Service {
+    constructor() {
+        this.error = callback_1.Callbacks();
+    }
+    ajax(url, options) {
+        // options = options || {} as any
+        if (options === undefined)
+            options = {};
+        let data = options.data;
+        let method = options.method;
+        let headers = options.headers || {};
+        let body;
+        if (data != null) {
+            let is_json = (headers['content-type'] || '').indexOf('json') >= 0;
+            if (is_json) {
+                body = JSON.stringify(data);
+            }
+            else {
+                body = new URLSearchParams();
+                for (let key in data) {
+                    body.append(key, data[key]);
+                }
+            }
+        }
+        // return callAjax<T>(url, { headers: headers as any, body, method }, this, this.error);
+        return new Promise((reslove, reject) => {
+            let options = { headers: headers, body, method };
+            let timeId;
+            if (options == null)
+                throw errors_1.errors.unexpectedNullValue('options');
+            if (method == 'get') {
+                timeId = setTimeout(() => {
+                    let err = new Error(); //new AjaxError(options.method);
+                    err.name = 'timeout';
+                    err.message = '网络连接超时';
+                    reject(err);
+                    this.error.fire(this, err);
+                    clearTimeout(timeId);
+                }, Service.settings.ajaxTimeout * 1000);
+            }
+            ajax(url, options)
+                .then(data => {
+                reslove(data);
+                if (timeId)
+                    clearTimeout(timeId);
+            })
+                .catch(err => {
+                reject(err);
+                this.error.fire(this, err);
+                if (timeId)
+                    clearTimeout(timeId);
+            });
+        });
+    }
+    /**
+     * 创建服务
+     * @param type 服务类型
+     */
+    createService(type) {
+        type = type || Service;
+        let service = new type();
+        service.error.add((sender, error) => {
+            this.error.fire(service, error);
+        });
+        return service;
+    }
+}
+Service.settings = {
+    ajaxTimeout: 30,
+};
+exports.Service = Service;
+function ajax(url, options) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let response = yield fetch(url, options);
+        let responseText = response.text();
+        let p;
+        if (typeof responseText == 'string') {
+            p = new Promise((reslove, reject) => {
+                reslove(responseText);
+            });
+        }
+        else {
+            p = responseText;
+        }
+        let text = yield responseText;
+        let textObject;
+        let isJSONContextType = (response.headers.get('content-type') || '').indexOf('json') >= 0;
+        if (isJSONContextType) {
+            textObject = text ? JSON.parse(text) : null;
+        }
+        else {
+            textObject = text;
+        }
+        if (response.status >= 300) {
+            let err = new Error();
+            err.method = options.method;
+            err.name = `${response.status}`;
+            err.message = isJSONContextType ? (textObject.Message || textObject.message) : textObject;
+            err.message = err.message || response.statusText;
+            throw err;
+        }
+        return textObject;
+    });
+}
+
+},{"./callback":1,"./errors":2}],4:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * 实现数据的存储，以及数据修改的通知
+ */
+class ValueStore {
+    constructor(value) {
+        this.items = new Array();
+        this._value = value === undefined ? null : value;
+    }
+    add(func, sender) {
+        this.items.push({ func, sender });
+        return func;
+    }
+    remove(func) {
+        this.items = this.items.filter(o => o.func != func);
+    }
+    fire(value) {
+        this.items.forEach(o => o.func(value, o.sender));
+    }
+    get value() {
+        if (this._value === undefined)
+            return null;
+        return this._value;
+    }
+    set value(value) {
+        this._value = value;
+        this.fire(value);
+    }
+}
+exports.ValueStore = ValueStore;
+
+},{}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Service_1 = require("./Service");
@@ -372,7 +419,7 @@ class Application extends PageMaster_1.PageMaster {
 }
 exports.Application = Application;
 
-},{"./Errors":3,"./PageMaster":6,"./Service":7}],3:[function(require,module,exports){
+},{"./Errors":6,"./PageMaster":9,"./Service":10}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class Errors {
@@ -474,7 +521,7 @@ class Errors {
 }
 exports.Errors = Errors;
 
-},{}],4:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class Callback {
@@ -523,7 +570,7 @@ class ValueStore {
 }
 exports.ValueStore = ValueStore;
 
-},{}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Extends_1 = require("./Extends");
@@ -621,7 +668,7 @@ class PageDisplayerImplement {
 }
 exports.PageDisplayerImplement = PageDisplayerImplement;
 
-},{"./Extends":4,"./Service":7}],6:[function(require,module,exports){
+},{"./Extends":7,"./Service":10}],9:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -835,7 +882,7 @@ PageMaster.isClass = (function () {
 })();
 exports.PageMaster = PageMaster;
 
-},{"./Errors":3,"./Extends":4,"./Page":5}],7:[function(require,module,exports){
+},{"./Errors":6,"./Extends":7,"./Page":8}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var maishu_chitu_service_1 = require("maishu-chitu-service");
@@ -843,7 +890,7 @@ exports.Service = maishu_chitu_service_1.Service;
 exports.Callback = maishu_chitu_service_1.Callback;
 exports.ValueStore = maishu_chitu_service_1.ValueStore;
 
-},{"maishu-chitu-service":1}],8:[function(require,module,exports){
+},{"maishu-chitu-service":"maishu-chitu-service"}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Application_1 = require("./Application");
@@ -857,5 +904,16 @@ exports.Callback = maishu_chitu_service_1.Callback;
 exports.Callbacks = maishu_chitu_service_1.Callbacks;
 exports.ValueStore = maishu_chitu_service_1.ValueStore;
 
-},{"./Application":2,"./Page":5,"./PageMaster":6,"maishu-chitu-service":1}]},{},[8])(8)
+},{"./Application":5,"./Page":8,"./PageMaster":9,"maishu-chitu-service":"maishu-chitu-service"}],"maishu-chitu-service":[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var service_1 = require("./service");
+exports.Service = service_1.Service;
+var callback_1 = require("./callback");
+exports.Callback = callback_1.Callback;
+exports.Callbacks = callback_1.Callbacks;
+var value_store_1 = require("./value-store");
+exports.ValueStore = value_store_1.ValueStore;
+
+},{"./callback":1,"./service":3,"./value-store":4}]},{},[11])("maishu-chitu-service")
 });
