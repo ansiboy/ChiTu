@@ -41,5 +41,5 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "grunt"
   },
-  "version": "2.5.5"
+  "version": "2.6.0"
 }

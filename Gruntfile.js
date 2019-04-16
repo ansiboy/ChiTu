@@ -6,7 +6,7 @@
 
     let license = `
 /*
- * CHITU v${pkg.version}
+ * ${pkg.name} v${pkg.version}
  * https://github.com/ansiboy/chitu
  *
  * Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -24,9 +24,9 @@
             options: {
                 banner: license,
                 browserifyOptions: {
-                    standalone: 'chitu',
+                    standalone: pkg.name,
                 },
-                external: ['maishu-chitu-service'],
+                // external: ['maishu-chitu-service'],
             },
         },
         shell: {
