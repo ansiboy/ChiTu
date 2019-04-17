@@ -17,37 +17,6 @@ module.exports = function (grunt) {
  */`;
 
     grunt.initConfig({
-        concat: {
-            chitudts: {
-                options: {
-                    stripBanners: true,
-                    banner: license
-                },
-                src: ['./dist/index.js'],
-                dest: './dist/index.js'
-            },
-
-        },
-        requirejs: {
-            dev: {
-                options: {
-                    baseUrl: `./`,
-                    include: [
-                        "out/index"
-                    ],
-                    out: `dist/index.js`,
-                    optimize: "none",
-                    optimizeCss: "standard.keepLines",
-                    paths: {
-                        "maishu-chitu-service": `${node_modules}/maishu-chitu-service/dist/index`
-                    },
-                    shim: {
-
-
-                    }
-                },
-            }
-        },
         shell: {
             src: {
                 command: `tsc -p src`
@@ -58,5 +27,5 @@ module.exports = function (grunt) {
         }
     });
 
-    grunt.registerTask('default', ['shell:src', 'shell:webpack']);// 'babel', 
+    grunt.registerTask('default', ['shell:src', 'shell:webpack']);
 }

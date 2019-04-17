@@ -14,8 +14,7 @@ module.exports = {
         filename: "index.js",//打包后输出文件的文件名
         libraryTarget: 'amd'
     },
-    mode: 'production',
-    // externals: ['maishu-chitu-service'],
+    mode: 'development',
     plugins: [
         new webpack.BannerPlugin(license),
     ],
