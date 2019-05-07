@@ -2,7 +2,7 @@ const webpack = require('webpack');
 let pkg = require("./package.json");
 let license = `
  ${pkg.name} v${pkg.version}
- https://github.com/ansiboy/services-sdk
+ https://github.com/ansiboy/chitu
  
  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
  Licensed under the MIT License.
@@ -15,6 +15,7 @@ module.exports = {
         libraryTarget: 'amd'
     },
     mode: 'development',
+    externals: ['maishu-chitu-service'],
     plugins: [
         new webpack.BannerPlugin(license),
     ],

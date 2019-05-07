@@ -1,5 +1,5 @@
 import { PageMaster } from "./PageMaster";
-import { IService, ServiceConstructor, Service, Callbacks } from "maishu-chitu-service";
+import { IService, ServiceConstructor, Service, Callbacks, Callback1 } from "maishu-chitu-service";
 
 export type PageData = { [key: string]: string | Function }
 
@@ -37,16 +37,16 @@ export class Page {
     data: PageData = {}
 
     /** 页面显示时引发 */
-    showing = Callbacks<this, PageData>();
+    showing: Callback1<this, PageData> = Callbacks<this, PageData>();
 
     /** 页面显示时完成后引发 */
-    shown = Callbacks<this, PageData>();
+    shown: Callback1<this, PageData> = Callbacks<this, PageData>();
 
-    hiding = Callbacks<this, PageData>();
-    hidden = Callbacks<this, PageData>();
+    hiding: Callback1<this, PageData> = Callbacks<this, PageData>();
+    hidden: Callback1<this, PageData> = Callbacks<this, PageData>();
 
-    closing = Callbacks<this, PageData>();
-    closed = Callbacks<this, PageData>();
+    closing: Callback1<this, PageData> = Callbacks<this, PageData>();
+    closed: Callback1<this, PageData> = Callbacks<this, PageData>();
 
     constructor(params: PageParams) {
         this._element = params.element;

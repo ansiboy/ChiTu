@@ -116,7 +116,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
                     throw Errors_1.Errors.exportsCanntNull(url);
 
                   case 5:
-                    _action = actionExports["default"];
+                    _action = actionExports.default;
 
                     if (!(_action == null)) {
                       _context.next = 8;

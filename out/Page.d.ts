@@ -1,5 +1,5 @@
 import { PageMaster } from "./PageMaster";
-import { IService, ServiceConstructor } from "maishu-chitu-service";
+import { IService, ServiceConstructor, Callback1 } from "maishu-chitu-service";
 export declare type PageData = {
     [key: string]: string | Function;
 };
@@ -24,12 +24,12 @@ export declare class Page {
     private _name;
     static tagName: string;
     data: PageData;
-    showing: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
-    shown: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
-    hiding: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
-    hidden: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
-    closing: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
-    closed: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
+    showing: Callback1<this, PageData>;
+    shown: Callback1<this, PageData>;
+    hiding: Callback1<this, PageData>;
+    hidden: Callback1<this, PageData>;
+    closing: Callback1<this, PageData>;
+    closed: Callback1<this, PageData>;
     constructor(params: PageParams);
     private on_showing;
     private on_shown;

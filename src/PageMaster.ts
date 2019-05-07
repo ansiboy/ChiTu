@@ -1,4 +1,4 @@
-import { Callbacks } from "maishu-chitu-service";
+import { Callbacks, Callback1, Callback2 } from "maishu-chitu-service";
 import { Page, PageConstructor, PageDisplayConstructor, PageDisplayerImplement } from "./Page";
 import { PageNodeParser, PageNode, StringPropertyNames, Action } from "./Application";
 import { Errors } from "./Errors";
@@ -11,13 +11,13 @@ export class PageMaster {
     /**
      * 当页面创建后发生
      */
-    pageCreated = Callbacks<this, Page>();
+    pageCreated: Callback1<this, Page> = Callbacks<this, Page>();
 
     /** 页面显示时引发 */
-    pageShowing = Callbacks<this, Page>();
+    pageShowing: Callback1<this, Page> = Callbacks<this, Page>();
 
     /** 页面显示时完成后引发 */
-    pageShown = Callbacks<this, Page>();
+    pageShown: Callback1<this, Page> = Callbacks<this, Page>();
 
     protected pageType: PageConstructor = Page;
     protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
@@ -30,7 +30,7 @@ export class PageMaster {
     /** 
      * 错误事件 
      */
-    error = Callbacks<this, Error, Page | null>();
+    error: Callback2<this, Error, Page | null> = Callbacks<this, Error, Page | null>();
     parser: PageNodeParser;
 
     /**
