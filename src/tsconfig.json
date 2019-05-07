@@ -5,7 +5,7 @@
         "sourceMap": false,
         "declaration": true,
         // "declarationDir": "../build",
-        "outDir": "../out/es6",
+        "outDir": "../out",
         "removeComments": true,
         "lib": [
             "dom",
