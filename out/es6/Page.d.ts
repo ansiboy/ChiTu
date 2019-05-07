@@ -24,12 +24,12 @@ export declare class Page {
     private _name;
     static tagName: string;
     data: PageData;
-    showing: import("maishu-chitu-service").Callback1<this, PageData>;
-    shown: import("maishu-chitu-service").Callback1<this, PageData>;
-    hiding: import("maishu-chitu-service").Callback1<this, PageData>;
-    hidden: import("maishu-chitu-service").Callback1<this, PageData>;
-    closing: import("maishu-chitu-service").Callback1<this, PageData>;
-    closed: import("maishu-chitu-service").Callback1<this, PageData>;
+    showing: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
+    shown: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
+    hiding: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
+    hidden: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
+    closing: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
+    closed: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, PageData>;
     constructor(params: PageParams);
     private on_showing;
     private on_shown;

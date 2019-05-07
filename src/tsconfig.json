@@ -1,11 +1,11 @@
 {
     "compilerOptions": {
         "target": "es6",
-        "module": "commonjs",
+        "module": "amd",
         "sourceMap": false,
         "declaration": true,
         // "declarationDir": "../build",
-        "outDir": "../out",
+        "outDir": "../out/es6",
         "removeComments": true,
         "lib": [
             "dom",

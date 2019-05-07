@@ -1,16 +1,16 @@
 import { Page, PageConstructor, PageDisplayConstructor } from "./Page";
 import { PageNodeParser, PageNode, StringPropertyNames, Action } from "./Application";
 export declare class PageMaster {
-    pageCreated: import("maishu-chitu-service").Callback1<this, Page>;
-    pageShowing: import("maishu-chitu-service").Callback1<this, Page>;
-    pageShown: import("maishu-chitu-service").Callback1<this, Page>;
+    pageCreated: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, Page>;
+    pageShowing: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, Page>;
+    pageShown: import("../node_modules/maishu-chitu-service/out/callback").Callback1<this, Page>;
     protected pageType: PageConstructor;
     protected pageDisplayType: PageDisplayConstructor;
     private cachePages;
     private page_stack;
     private container;
     private nodes;
-    error: import("maishu-chitu-service").Callback2<this, Error, Page | null>;
+    error: import("../node_modules/maishu-chitu-service/out/callback").Callback2<this, Error, Page | null>;
     parser: PageNodeParser;
     constructor(container: HTMLElement, parser?: PageNodeParser);
     protected defaultPageNodeParser(): PageNodeParser;
