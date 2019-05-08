@@ -157,9 +157,12 @@ export class Application extends PageMaster {
         }
 
         showPage()
-        window.addEventListener('popstate', () => {
+        // window.addEventListener('popstate', () => {
+        //     showPage()
+        // });
+        window.addEventListener('hashchange', () => {
             showPage()
-        });
+        })
 
         this._runned = true;
     }

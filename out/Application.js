@@ -93,7 +93,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
                 this.showPageByUrl(url, true);
             };
             showPage();
-            window.addEventListener('popstate', () => {
+            window.addEventListener('hashchange', () => {
                 showPage();
             });
             this._runned = true;

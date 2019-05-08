@@ -157,7 +157,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         };
 
         showPage();
-        window.addEventListener('popstate', function () {
+        window.addEventListener('hashchange', function () {
           showPage();
         });
         this._runned = true;
