@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v2.9.22
+ *  maishu-chitu v2.9.25
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -103,7 +103,305 @@ define(["maishu-chitu-service"], function(__WEBPACK_EXTERNAL_MODULE_maishu_chitu
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\nfunction _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === \"object\" || typeof call === \"function\")) { return call; } return _assertThisInitialized(self); }\n\nfunction _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError(\"this hasn't been initialised - super() hasn't been called\"); } return self; }\n\nfunction _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }\n\nfunction _inherits(subClass, superClass) { if (typeof superClass !== \"function\" && superClass !== null) { throw new TypeError(\"Super expression must either be null or a function\"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }\n\nfunction _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }\n\nfunction _typeof(obj) { if (typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; }; } return _typeof(obj); }\n\n!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ \"maishu-chitu-service\"), __webpack_require__(/*! ./PageMaster */ \"./out-es5/PageMaster.js\"), __webpack_require__(/*! ./Errors */ \"./out-es5/Errors.js\")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, PageMaster_1, Errors_1) {\n  \"use strict\";\n\n  Object.defineProperty(exports, \"__esModule\", {\n    value: true\n  });\n  var EmtpyStateData = \"\";\n  var DefaultPageName = \"index\";\n\n  function _parseUrl(app, url) {\n    if (!app) throw Errors_1.Errors.argumentNull('app');\n    if (!url) throw Errors_1.Errors.argumentNull('url');\n    var sharpIndex = url.indexOf('#');\n    var routeString;\n    if (sharpIndex >= 0) routeString = url.substr(sharpIndex + 1);else routeString = url;\n    if (!routeString) throw Errors_1.Errors.canntParseRouteString(url);\n\n    if (routeString.startsWith('!')) {\n      throw Errors_1.Errors.canntParseRouteString(routeString);\n    }\n\n    var routePath;\n    var search = null;\n    var param_spliter_index = routeString.indexOf('?');\n\n    if (param_spliter_index >= 0) {\n      search = routeString.substr(param_spliter_index + 1);\n      routePath = routeString.substring(0, param_spliter_index);\n    } else {\n      routePath = routeString;\n    }\n\n    if (!routePath) routePath = DefaultPageName;\n    var values = {};\n\n    if (search) {\n      values = pareeUrlQuery(search);\n    }\n\n    var pageName = routePath;\n    return {\n      pageName: pageName,\n      values: values\n    };\n  }\n\n  function pareeUrlQuery(query) {\n    var match,\n        pl = /\\+/g,\n        search = /([^&=]+)=?([^&]*)/g,\n        decode = function decode(s) {\n      return decodeURIComponent(s.replace(pl, \" \"));\n    };\n\n    var urlParams = {};\n\n    while (match = search.exec(query)) {\n      urlParams[decode(match[1])] = decode(match[2]);\n    }\n\n    return urlParams;\n  }\n\n  function _createUrl(pageName, params) {\n    var path_parts = pageName.split('.');\n    var path = path_parts.join('/');\n    if (!params) return \"#\".concat(path);\n    var paramsText = '';\n\n    for (var key in params) {\n      var value = params[key];\n\n      var type = _typeof(params[key]);\n\n      if (type != 'string' || value == null) {\n        continue;\n      }\n\n      paramsText = paramsText == '' ? \"?\".concat(key, \"=\").concat(params[key]) : paramsText + \"&\".concat(key, \"=\").concat(params[key]);\n    }\n\n    return \"#\".concat(path).concat(paramsText);\n  }\n\n  var Application =\n  /*#__PURE__*/\n  function (_PageMaster_1$PageMas) {\n    _inherits(Application, _PageMaster_1$PageMas);\n\n    function Application(args) {\n      var _this;\n\n      _classCallCheck(this, Application);\n\n      _this = _possibleConstructorReturn(this, _getPrototypeOf(Application).call(this, (args || {}).container || document.body, (args || {}).parser));\n      _this._runned = false;\n      _this.closeCurrentOnBack = null;\n      _this.tempPageData = undefined;\n      return _this;\n    }\n\n    _createClass(Application, [{\n      key: \"parseUrl\",\n      value: function parseUrl(url) {\n        if (!url) throw Errors_1.Errors.argumentNull('url');\n\n        var routeData = _parseUrl(this, url);\n\n        return routeData;\n      }\n    }, {\n      key: \"createUrl\",\n      value: function createUrl(pageName, values) {\n        return _createUrl(pageName, values);\n      }\n    }, {\n      key: \"run\",\n      value: function run() {\n        var _this2 = this;\n\n        if (this._runned) return;\n\n        var showPage = function showPage() {\n          var url = location.href;\n          var sharpIndex = url.indexOf('#');\n          var routeString = url.substr(sharpIndex + 1);\n\n          if (routeString.startsWith('!')) {\n            return;\n          }\n\n          if (sharpIndex < 0) {\n            url = '#' + DefaultPageName;\n          }\n\n          _this2.showPageByUrl(url, true);\n        };\n\n        showPage();\n        window.addEventListener('hashchange', function () {\n          showPage();\n        });\n        this._runned = true;\n      }\n    }, {\n      key: \"showPageByUrl\",\n      value: function showPageByUrl(url, fromCache) {\n        if (!url) throw Errors_1.Errors.argumentNull('url');\n        var routeData = this.parseUrl(url);\n\n        if (routeData == null) {\n          throw Errors_1.Errors.noneRouteMatched(url);\n        }\n\n        var tempPageData = this.fetchTemplatePageData();\n        var result = null;\n\n        if (this.closeCurrentOnBack == true) {\n          this.closeCurrentOnBack = null;\n          if (tempPageData == null) this.closeCurrentPage();else this.closeCurrentPage(tempPageData);\n          result = this.currentPage;\n        } else if (this.closeCurrentOnBack == false) {\n          this.closeCurrentOnBack = null;\n          var page = this.pageStack.pop();\n          if (page == null) throw new Error('page is null');\n          page.hide(this.currentPage);\n          result = this.currentPage;\n        }\n\n        if (result == null || result.name != routeData.pageName) {\n          var args = routeData.values || {};\n\n          if (tempPageData) {\n            args = Object.assign(args, tempPageData);\n          }\n\n          result = this.showPage(routeData.pageName, args);\n        }\n\n        return result;\n      }\n    }, {\n      key: \"fetchTemplatePageData\",\n      value: function fetchTemplatePageData() {\n        if (this.tempPageData == null) {\n          return null;\n        }\n\n        var data = this.tempPageData;\n        this.tempPageData = undefined;\n        return data;\n      }\n    }, {\n      key: \"setLocationHash\",\n      value: function setLocationHash(url) {\n        history.pushState(EmtpyStateData, \"\", url);\n      }\n    }, {\n      key: \"redirect\",\n      value: function redirect(pageNameOrUrl, args) {\n        if (!pageNameOrUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');\n        var page = this.showPageByNameOrUrl(pageNameOrUrl, args);\n        var url = this.createUrl(page.name, page.data);\n        this.setLocationHash(url);\n        return page;\n      }\n    }, {\n      key: \"forward\",\n      value: function forward(pageNameOrUrl, args, setUrl) {\n        if (!pageNameOrUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');\n        if (setUrl == null) setUrl = true;\n        var page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);\n\n        if (setUrl) {\n          var url = this.createUrl(page.name, page.data);\n          this.setLocationHash(url);\n        } else {\n          history.pushState(pageNameOrUrl, \"\", \"\");\n        }\n\n        return page;\n      }\n    }, {\n      key: \"showPageByNameOrUrl\",\n      value: function showPageByNameOrUrl(pageNameOrUrl, args, rerender) {\n        var pageName;\n\n        if (pageNameOrUrl.indexOf('?') < 0) {\n          pageName = pageNameOrUrl;\n        } else {\n          var obj = this.parseUrl(pageNameOrUrl);\n          pageName = obj.pageName;\n          args = Object.assign(obj.values, args || {});\n        }\n\n        return this.showPage(pageName, args, rerender);\n      }\n    }, {\n      key: \"reload\",\n      value: function reload(pageName, args) {\n        var result = this.showPage(pageName, args, true);\n        return result;\n      }\n    }, {\n      key: \"back\",\n      value: function back(closeCurrentPage, data) {\n        var closeCurrentPageDefault = true;\n\n        if (_typeof(closeCurrentPage) == 'object') {\n          data = closeCurrentPage;\n          closeCurrentPage = null;\n        }\n\n        this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;\n        this.tempPageData = data;\n        history.back();\n      }\n    }, {\n      key: \"createService\",\n      value: function createService(type) {\n        var _this3 = this;\n\n        type = type || maishu_chitu_service_1.Service;\n        var service = new type();\n        service.error.add(function (sender, error) {\n          _this3.error.fire(_this3, error, null);\n        });\n        return service;\n      }\n    }]);\n\n    return Application;\n  }(PageMaster_1.PageMaster);\n\n  exports.Application = Application;\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\n//# sourceMappingURL=Application.js.map\n\n\n//# sourceURL=webpack:///./out-es5/Application.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./PageMaster */ "./out-es5/PageMaster.js"), __webpack_require__(/*! ./Errors */ "./out-es5/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, PageMaster_1, Errors_1) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  var EmtpyStateData = "";
+  var DefaultPageName = "index";
+
+  function _parseUrl(app, url) {
+    if (!app) throw Errors_1.Errors.argumentNull('app');
+    if (!url) throw Errors_1.Errors.argumentNull('url');
+    var sharpIndex = url.indexOf('#');
+    var routeString;
+    if (sharpIndex >= 0) routeString = url.substr(sharpIndex + 1);else routeString = url;
+    if (!routeString) throw Errors_1.Errors.canntParseRouteString(url);
+
+    if (routeString.startsWith('!')) {
+      throw Errors_1.Errors.canntParseRouteString(routeString);
+    }
+
+    var routePath;
+    var search = null;
+    var param_spliter_index = routeString.indexOf('?');
+
+    if (param_spliter_index >= 0) {
+      search = routeString.substr(param_spliter_index + 1);
+      routePath = routeString.substring(0, param_spliter_index);
+    } else {
+      routePath = routeString;
+    }
+
+    if (!routePath) routePath = DefaultPageName;
+    var values = {};
+
+    if (search) {
+      values = pareeUrlQuery(search);
+    }
+
+    var pageName = routePath;
+    return {
+      pageName: pageName,
+      values: values
+    };
+  }
+
+  function pareeUrlQuery(query) {
+    var match,
+        pl = /\+/g,
+        search = /([^&=]+)=?([^&]*)/g,
+        decode = function decode(s) {
+      return decodeURIComponent(s.replace(pl, " "));
+    };
+
+    var urlParams = {};
+
+    while (match = search.exec(query)) {
+      urlParams[decode(match[1])] = decode(match[2]);
+    }
+
+    return urlParams;
+  }
+
+  function _createUrl(pageName, params) {
+    var path_parts = pageName.split('.');
+    var path = path_parts.join('/');
+    if (!params) return "#".concat(path);
+    var paramsText = '';
+
+    for (var key in params) {
+      var value = params[key];
+
+      var type = _typeof(params[key]);
+
+      if (type != 'string' || value == null) {
+        continue;
+      }
+
+      paramsText = paramsText == '' ? "?".concat(key, "=").concat(params[key]) : paramsText + "&".concat(key, "=").concat(params[key]);
+    }
+
+    return "#".concat(path).concat(paramsText);
+  }
+
+  var Application =
+  /*#__PURE__*/
+  function (_PageMaster_1$PageMas) {
+    _inherits(Application, _PageMaster_1$PageMas);
+
+    function Application(args) {
+      var _this;
+
+      _classCallCheck(this, Application);
+
+      _this = _possibleConstructorReturn(this, _getPrototypeOf(Application).call(this, (args || {}).container || document.body, (args || {}).parser));
+      _this._runned = false;
+      _this.closeCurrentOnBack = null;
+      _this.tempPageData = undefined;
+      return _this;
+    }
+
+    _createClass(Application, [{
+      key: "parseUrl",
+      value: function parseUrl(url) {
+        if (!url) throw Errors_1.Errors.argumentNull('url');
+
+        var routeData = _parseUrl(this, url);
+
+        return routeData;
+      }
+    }, {
+      key: "createUrl",
+      value: function createUrl(pageName, values) {
+        return _createUrl(pageName, values);
+      }
+    }, {
+      key: "run",
+      value: function run() {
+        var _this2 = this;
+
+        if (this._runned) return;
+
+        var showPage = function showPage() {
+          var url = location.href;
+          var sharpIndex = url.indexOf('#');
+          var routeString = url.substr(sharpIndex + 1);
+
+          if (routeString.startsWith('!')) {
+            return;
+          }
+
+          if (sharpIndex < 0) {
+            url = '#' + DefaultPageName;
+          }
+
+          _this2.showPageByUrl(url, true);
+        };
+
+        showPage();
+        window.addEventListener('hashchange', function () {
+          showPage();
+        });
+        this._runned = true;
+      }
+    }, {
+      key: "showPageByUrl",
+      value: function showPageByUrl(url, fromCache) {
+        if (!url) throw Errors_1.Errors.argumentNull('url');
+        var routeData = this.parseUrl(url);
+
+        if (routeData == null) {
+          throw Errors_1.Errors.noneRouteMatched(url);
+        }
+
+        var tempPageData = this.fetchTemplatePageData();
+        var result = null;
+
+        if (this.closeCurrentOnBack == true) {
+          this.closeCurrentOnBack = null;
+          if (tempPageData == null) this.closeCurrentPage();else this.closeCurrentPage(tempPageData);
+          result = this.currentPage;
+        } else if (this.closeCurrentOnBack == false) {
+          this.closeCurrentOnBack = null;
+          var page = this.pageStack.pop();
+          if (page == null) throw new Error('page is null');
+          page.hide(this.currentPage);
+          result = this.currentPage;
+        }
+
+        if (result == null || result.name != routeData.pageName) {
+          var args = routeData.values || {};
+
+          if (tempPageData) {
+            args = Object.assign(args, tempPageData);
+          }
+
+          result = this.showPage(routeData.pageName, args);
+        }
+
+        return result;
+      }
+    }, {
+      key: "fetchTemplatePageData",
+      value: function fetchTemplatePageData() {
+        if (this.tempPageData == null) {
+          return null;
+        }
+
+        var data = this.tempPageData;
+        this.tempPageData = undefined;
+        return data;
+      }
+    }, {
+      key: "setLocationHash",
+      value: function setLocationHash(url) {
+        history.pushState(EmtpyStateData, "", url);
+      }
+    }, {
+      key: "redirect",
+      value: function redirect(pageNameOrUrl, args) {
+        if (!pageNameOrUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
+        var page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+        var url = this.createUrl(page.name, page.data);
+        this.setLocationHash(url);
+        return page;
+      }
+    }, {
+      key: "forward",
+      value: function forward(pageNameOrUrl, args, setUrl) {
+        if (!pageNameOrUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
+        if (setUrl == null) setUrl = true;
+        var page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+
+        if (setUrl) {
+          var url = this.createUrl(page.name, page.data);
+          this.setLocationHash(url);
+        } else {
+          history.pushState(pageNameOrUrl, "", "");
+        }
+
+        return page;
+      }
+    }, {
+      key: "showPageByNameOrUrl",
+      value: function showPageByNameOrUrl(pageNameOrUrl, args, rerender) {
+        var pageName;
+
+        if (pageNameOrUrl.indexOf('?') < 0) {
+          pageName = pageNameOrUrl;
+        } else {
+          var obj = this.parseUrl(pageNameOrUrl);
+          pageName = obj.pageName;
+          args = Object.assign(obj.values, args || {});
+        }
+
+        return this.showPage(pageName, args, rerender);
+      }
+    }, {
+      key: "reload",
+      value: function reload(pageName, args) {
+        var result = this.showPage(pageName, args, true);
+        return result;
+      }
+    }, {
+      key: "back",
+      value: function back(closeCurrentPage, data) {
+        var closeCurrentPageDefault = true;
+
+        if (_typeof(closeCurrentPage) == 'object') {
+          data = closeCurrentPage;
+          closeCurrentPage = null;
+        }
+
+        this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
+        this.tempPageData = data;
+        history.back();
+      }
+    }, {
+      key: "createService",
+      value: function createService(type) {
+        var _this3 = this;
+
+        type = type || maishu_chitu_service_1.Service;
+        var service = new type();
+        service.error.add(function (sender, error) {
+          _this3.error.fire(_this3, error, null);
+        });
+        return service;
+      }
+    }]);
+
+    return Application;
+  }(PageMaster_1.PageMaster);
+
+  exports.Application = Application;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+//# sourceMappingURL=Application.js.map
+
 
 /***/ }),
 
@@ -115,7 +413,181 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\nfuncti
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\n!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports) {\n  \"use strict\";\n\n  Object.defineProperty(exports, \"__esModule\", {\n    value: true\n  });\n\n  var Errors =\n  /*#__PURE__*/\n  function () {\n    function Errors() {\n      _classCallCheck(this, Errors);\n    }\n\n    _createClass(Errors, null, [{\n      key: \"pageNodeNotExists\",\n      value: function pageNodeNotExists(pageName) {\n        var msg = \"Page node named \".concat(pageName, \" is not exists.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"actionCanntNull\",\n      value: function actionCanntNull(pageName) {\n        var msg = \"Action of '\".concat(pageName, \"' can not be null.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"argumentNull\",\n      value: function argumentNull(paramName) {\n        var msg = \"The argument \\\"\".concat(paramName, \"\\\" cannt be null.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"modelFileExpecteFunction\",\n      value: function modelFileExpecteFunction(script) {\n        var msg = \"The eval result of script file \\\"\".concat(script, \"\\\" is expected a function.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"paramTypeError\",\n      value: function paramTypeError(paramName, expectedType) {\n        var msg = \"The param \\\"\".concat(paramName, \"\\\" is expected \\\"\").concat(expectedType, \"\\\" type.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"paramError\",\n      value: function paramError(msg) {\n        return new Error(msg);\n      }\n    }, {\n      key: \"pathPairRequireView\",\n      value: function pathPairRequireView(index) {\n        var msg = \"The view value is required for path pair, but the item with index \\\"\".concat(index, \"\\\" is miss it.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"notImplemented\",\n      value: function notImplemented(name) {\n        var msg = \"'The method \\\"\".concat(name, \"\\\" is not implemented.'\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"routeExists\",\n      value: function routeExists(name) {\n        var msg = \"Route named \\\"\".concat(name, \"\\\" is exists.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"noneRouteMatched\",\n      value: function noneRouteMatched(url) {\n        var msg = \"None route matched with url \\\"\".concat(url, \"\\\".\");\n        var error = new Error(msg);\n        return error;\n      }\n    }, {\n      key: \"emptyStack\",\n      value: function emptyStack() {\n        return new Error('The stack is empty.');\n      }\n    }, {\n      key: \"canntParseUrl\",\n      value: function canntParseUrl(url) {\n        var msg = \"Can not parse the url \\\"\".concat(url, \"\\\" to route data.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"canntParseRouteString\",\n      value: function canntParseRouteString(routeString) {\n        var msg = \"Can not parse the route string \\\"\".concat(routeString, \"\\\" to route data.;\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"routeDataRequireController\",\n      value: function routeDataRequireController() {\n        var msg = 'The route data does not contains a \"controller\" file.';\n        return new Error(msg);\n      }\n    }, {\n      key: \"routeDataRequireAction\",\n      value: function routeDataRequireAction() {\n        var msg = 'The route data does not contains a \"action\" file.';\n        return new Error(msg);\n      }\n    }, {\n      key: \"viewCanntNull\",\n      value: function viewCanntNull() {\n        var msg = 'The view or viewDeferred of the page cannt null.';\n        return new Error(msg);\n      }\n    }, {\n      key: \"createPageFail\",\n      value: function createPageFail(pageName) {\n        var msg = \"Create page \\\"\".concat(pageName, \"\\\" fail.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"actionTypeError\",\n      value: function actionTypeError(pageName) {\n        var msg = \"The action in page '\".concat(pageName, \"' is expect as function.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"canntFindAction\",\n      value: function canntFindAction(pageName) {\n        var msg = \"Cannt find action in page '\".concat(pageName, \"', is the exports has default field?\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"exportsCanntNull\",\n      value: function exportsCanntNull(pageName) {\n        var msg = \"Exports of page '\".concat(pageName, \"' is null.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"scrollerElementNotExists\",\n      value: function scrollerElementNotExists() {\n        var msg = \"Scroller element is not exists.\";\n        return new Error(msg);\n      }\n    }, {\n      key: \"resourceExists\",\n      value: function resourceExists(resourceName, pageName) {\n        var msg = \"Rosource '\".concat(resourceName, \"' is exists in the resources of page '\").concat(pageName, \"'.\");\n        return new Error(msg);\n      }\n    }, {\n      key: \"siteMapRootCanntNull\",\n      value: function siteMapRootCanntNull() {\n        var msg = \"The site map root node can not be null.\";\n        return new Error(msg);\n      }\n    }, {\n      key: \"duplicateSiteMapNode\",\n      value: function duplicateSiteMapNode(name) {\n        var msg = \"The site map node \".concat(name, \" is exists.\");\n        return new Error(name);\n      }\n    }]);\n\n    return Errors;\n  }();\n\n  exports.Errors = Errors;\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\n//# sourceMappingURL=Errors.js.map\n\n\n//# sourceURL=webpack:///./out-es5/Errors.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var Errors =
+  /*#__PURE__*/
+  function () {
+    function Errors() {
+      _classCallCheck(this, Errors);
+    }
+
+    _createClass(Errors, null, [{
+      key: "pageNodeNotExists",
+      value: function pageNodeNotExists(pageName) {
+        var msg = "Page node named ".concat(pageName, " is not exists.");
+        return new Error(msg);
+      }
+    }, {
+      key: "actionCanntNull",
+      value: function actionCanntNull(pageName) {
+        var msg = "Action of '".concat(pageName, "' can not be null.");
+        return new Error(msg);
+      }
+    }, {
+      key: "argumentNull",
+      value: function argumentNull(paramName) {
+        var msg = "The argument \"".concat(paramName, "\" cannt be null.");
+        return new Error(msg);
+      }
+    }, {
+      key: "modelFileExpecteFunction",
+      value: function modelFileExpecteFunction(script) {
+        var msg = "The eval result of script file \"".concat(script, "\" is expected a function.");
+        return new Error(msg);
+      }
+    }, {
+      key: "paramTypeError",
+      value: function paramTypeError(paramName, expectedType) {
+        var msg = "The param \"".concat(paramName, "\" is expected \"").concat(expectedType, "\" type.");
+        return new Error(msg);
+      }
+    }, {
+      key: "paramError",
+      value: function paramError(msg) {
+        return new Error(msg);
+      }
+    }, {
+      key: "pathPairRequireView",
+      value: function pathPairRequireView(index) {
+        var msg = "The view value is required for path pair, but the item with index \"".concat(index, "\" is miss it.");
+        return new Error(msg);
+      }
+    }, {
+      key: "notImplemented",
+      value: function notImplemented(name) {
+        var msg = "'The method \"".concat(name, "\" is not implemented.'");
+        return new Error(msg);
+      }
+    }, {
+      key: "routeExists",
+      value: function routeExists(name) {
+        var msg = "Route named \"".concat(name, "\" is exists.");
+        return new Error(msg);
+      }
+    }, {
+      key: "noneRouteMatched",
+      value: function noneRouteMatched(url) {
+        var msg = "None route matched with url \"".concat(url, "\".");
+        var error = new Error(msg);
+        return error;
+      }
+    }, {
+      key: "emptyStack",
+      value: function emptyStack() {
+        return new Error('The stack is empty.');
+      }
+    }, {
+      key: "canntParseUrl",
+      value: function canntParseUrl(url) {
+        var msg = "Can not parse the url \"".concat(url, "\" to route data.");
+        return new Error(msg);
+      }
+    }, {
+      key: "canntParseRouteString",
+      value: function canntParseRouteString(routeString) {
+        var msg = "Can not parse the route string \"".concat(routeString, "\" to route data.;");
+        return new Error(msg);
+      }
+    }, {
+      key: "routeDataRequireController",
+      value: function routeDataRequireController() {
+        var msg = 'The route data does not contains a "controller" file.';
+        return new Error(msg);
+      }
+    }, {
+      key: "routeDataRequireAction",
+      value: function routeDataRequireAction() {
+        var msg = 'The route data does not contains a "action" file.';
+        return new Error(msg);
+      }
+    }, {
+      key: "viewCanntNull",
+      value: function viewCanntNull() {
+        var msg = 'The view or viewDeferred of the page cannt null.';
+        return new Error(msg);
+      }
+    }, {
+      key: "createPageFail",
+      value: function createPageFail(pageName) {
+        var msg = "Create page \"".concat(pageName, "\" fail.");
+        return new Error(msg);
+      }
+    }, {
+      key: "actionTypeError",
+      value: function actionTypeError(pageName) {
+        var msg = "The action in page '".concat(pageName, "' is expect as function.");
+        return new Error(msg);
+      }
+    }, {
+      key: "canntFindAction",
+      value: function canntFindAction(pageName) {
+        var msg = "Cannt find action in page '".concat(pageName, "', is the exports has default field?");
+        return new Error(msg);
+      }
+    }, {
+      key: "exportsCanntNull",
+      value: function exportsCanntNull(pageName) {
+        var msg = "Exports of page '".concat(pageName, "' is null.");
+        return new Error(msg);
+      }
+    }, {
+      key: "scrollerElementNotExists",
+      value: function scrollerElementNotExists() {
+        var msg = "Scroller element is not exists.";
+        return new Error(msg);
+      }
+    }, {
+      key: "resourceExists",
+      value: function resourceExists(resourceName, pageName) {
+        var msg = "Rosource '".concat(resourceName, "' is exists in the resources of page '").concat(pageName, "'.");
+        return new Error(msg);
+      }
+    }, {
+      key: "siteMapRootCanntNull",
+      value: function siteMapRootCanntNull() {
+        var msg = "The site map root node can not be null.";
+        return new Error(msg);
+      }
+    }, {
+      key: "duplicateSiteMapNode",
+      value: function duplicateSiteMapNode(name) {
+        var msg = "The site map node ".concat(name, " is exists.");
+        return new Error(name);
+      }
+    }]);
+
+    return Errors;
+  }();
+
+  exports.Errors = Errors;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+//# sourceMappingURL=Errors.js.map
+
 
 /***/ }),
 
@@ -127,7 +599,181 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\nfuncti
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\n!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ \"maishu-chitu-service\")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1) {\n  \"use strict\";\n\n  Object.defineProperty(exports, \"__esModule\", {\n    value: true\n  });\n\n  var Page =\n  /*#__PURE__*/\n  function () {\n    function Page(params) {\n      _classCallCheck(this, Page);\n\n      this.data = {};\n      this.showing = maishu_chitu_service_1.Callbacks();\n      this.shown = maishu_chitu_service_1.Callbacks();\n      this.hiding = maishu_chitu_service_1.Callbacks();\n      this.hidden = maishu_chitu_service_1.Callbacks();\n      this.closing = maishu_chitu_service_1.Callbacks();\n      this.closed = maishu_chitu_service_1.Callbacks();\n      this._element = params.element;\n      this._app = params.app;\n      this._displayer = params.displayer;\n      this.data = params.data;\n      this._name = params.name;\n    }\n\n    _createClass(Page, [{\n      key: \"on_showing\",\n      value: function on_showing() {\n        return this.showing.fire(this, this.data);\n      }\n    }, {\n      key: \"on_shown\",\n      value: function on_shown() {\n        return this.shown.fire(this, this.data);\n      }\n    }, {\n      key: \"on_hiding\",\n      value: function on_hiding() {\n        return this.hiding.fire(this, this.data);\n      }\n    }, {\n      key: \"on_hidden\",\n      value: function on_hidden() {\n        return this.hidden.fire(this, this.data);\n      }\n    }, {\n      key: \"on_closing\",\n      value: function on_closing() {\n        return this.closing.fire(this, this.data);\n      }\n    }, {\n      key: \"on_closed\",\n      value: function on_closed() {\n        return this.closed.fire(this, this.data);\n      }\n    }, {\n      key: \"show\",\n      value: function show() {\n        var _this = this;\n\n        this.on_showing();\n        var currentPage = this._app.currentPage;\n\n        if (this == currentPage) {\n          currentPage = null;\n        }\n\n        return this._displayer.show(this, currentPage).then(function (o) {\n          _this.on_shown();\n        });\n      }\n    }, {\n      key: \"hide\",\n      value: function hide(currentPage) {\n        var _this2 = this;\n\n        this.on_hiding();\n        return this._displayer.hide(this, currentPage).then(function (o) {\n          _this2.on_hidden();\n        });\n      }\n    }, {\n      key: \"close\",\n      value: function close() {\n        this.on_closing();\n\n        this._element.remove();\n\n        this.on_closed();\n        return Promise.resolve();\n      }\n    }, {\n      key: \"createService\",\n      value: function createService(type) {\n        var _this3 = this;\n\n        type = type || maishu_chitu_service_1.Service;\n        var service = new type();\n        service.error.add(function (sender, error) {\n          _this3._app.error.fire(_this3._app, error, _this3);\n        });\n        return service;\n      }\n    }, {\n      key: \"element\",\n      get: function get() {\n        return this._element;\n      }\n    }, {\n      key: \"name\",\n      get: function get() {\n        return this._name;\n      }\n    }, {\n      key: \"app\",\n      get: function get() {\n        return this._app;\n      }\n    }]);\n\n    return Page;\n  }();\n\n  Page.tagName = 'div';\n  exports.Page = Page;\n\n  var PageDisplayerImplement =\n  /*#__PURE__*/\n  function () {\n    function PageDisplayerImplement() {\n      _classCallCheck(this, PageDisplayerImplement);\n    }\n\n    _createClass(PageDisplayerImplement, [{\n      key: \"show\",\n      value: function show(page, previous) {\n        page.element.style.display = 'block';\n\n        if (previous != null) {\n          previous.element.style.display = 'none';\n        }\n\n        return Promise.resolve();\n      }\n    }, {\n      key: \"hide\",\n      value: function hide(page, previous) {\n        page.element.style.display = 'none';\n\n        if (previous != null) {\n          previous.element.style.display = 'block';\n        }\n\n        return Promise.resolve();\n      }\n    }]);\n\n    return PageDisplayerImplement;\n  }();\n\n  exports.PageDisplayerImplement = PageDisplayerImplement;\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\n//# sourceMappingURL=Page.js.map\n\n\n//# sourceURL=webpack:///./out-es5/Page.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var Page =
+  /*#__PURE__*/
+  function () {
+    function Page(params) {
+      _classCallCheck(this, Page);
+
+      this.data = {};
+      this.showing = maishu_chitu_service_1.Callbacks();
+      this.shown = maishu_chitu_service_1.Callbacks();
+      this.hiding = maishu_chitu_service_1.Callbacks();
+      this.hidden = maishu_chitu_service_1.Callbacks();
+      this.closing = maishu_chitu_service_1.Callbacks();
+      this.closed = maishu_chitu_service_1.Callbacks();
+      this._element = params.element;
+      this._app = params.app;
+      this._displayer = params.displayer;
+      this.data = params.data;
+      this._name = params.name;
+    }
+
+    _createClass(Page, [{
+      key: "on_showing",
+      value: function on_showing() {
+        return this.showing.fire(this, this.data);
+      }
+    }, {
+      key: "on_shown",
+      value: function on_shown() {
+        return this.shown.fire(this, this.data);
+      }
+    }, {
+      key: "on_hiding",
+      value: function on_hiding() {
+        return this.hiding.fire(this, this.data);
+      }
+    }, {
+      key: "on_hidden",
+      value: function on_hidden() {
+        return this.hidden.fire(this, this.data);
+      }
+    }, {
+      key: "on_closing",
+      value: function on_closing() {
+        return this.closing.fire(this, this.data);
+      }
+    }, {
+      key: "on_closed",
+      value: function on_closed() {
+        return this.closed.fire(this, this.data);
+      }
+    }, {
+      key: "show",
+      value: function show() {
+        var _this = this;
+
+        this.on_showing();
+        var currentPage = this._app.currentPage;
+
+        if (this == currentPage) {
+          currentPage = null;
+        }
+
+        return this._displayer.show(this, currentPage).then(function (o) {
+          _this.on_shown();
+        });
+      }
+    }, {
+      key: "hide",
+      value: function hide(currentPage) {
+        var _this2 = this;
+
+        this.on_hiding();
+        return this._displayer.hide(this, currentPage).then(function (o) {
+          _this2.on_hidden();
+        });
+      }
+    }, {
+      key: "close",
+      value: function close() {
+        this.on_closing();
+
+        this._element.remove();
+
+        this.on_closed();
+        return Promise.resolve();
+      }
+    }, {
+      key: "createService",
+      value: function createService(type) {
+        var _this3 = this;
+
+        type = type || maishu_chitu_service_1.Service;
+        var service = new type();
+        service.error.add(function (sender, error) {
+          _this3._app.error.fire(_this3._app, error, _this3);
+        });
+        return service;
+      }
+    }, {
+      key: "element",
+      get: function get() {
+        return this._element;
+      }
+    }, {
+      key: "name",
+      get: function get() {
+        return this._name;
+      }
+    }, {
+      key: "app",
+      get: function get() {
+        return this._app;
+      }
+    }]);
+
+    return Page;
+  }();
+
+  Page.tagName = 'div';
+  exports.Page = Page;
+
+  var PageDisplayerImplement =
+  /*#__PURE__*/
+  function () {
+    function PageDisplayerImplement() {
+      _classCallCheck(this, PageDisplayerImplement);
+    }
+
+    _createClass(PageDisplayerImplement, [{
+      key: "show",
+      value: function show(page, previous) {
+        page.element.style.display = 'block';
+
+        if (previous != null) {
+          previous.element.style.display = 'none';
+        }
+
+        return Promise.resolve();
+      }
+    }, {
+      key: "hide",
+      value: function hide(page, previous) {
+        page.element.style.display = 'none';
+
+        if (previous != null) {
+          previous.element.style.display = 'block';
+        }
+
+        return Promise.resolve();
+      }
+    }]);
+
+    return PageDisplayerImplement;
+  }();
+
+  exports.PageDisplayerImplement = PageDisplayerImplement;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+//# sourceMappingURL=Page.js.map
+
 
 /***/ }),
 
@@ -139,7 +785,349 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\nfuncti
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\nvar __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {\n  return new (P || (P = Promise))(function (resolve, reject) {\n    function fulfilled(value) {\n      try {\n        step(generator.next(value));\n      } catch (e) {\n        reject(e);\n      }\n    }\n\n    function rejected(value) {\n      try {\n        step(generator[\"throw\"](value));\n      } catch (e) {\n        reject(e);\n      }\n    }\n\n    function step(result) {\n      result.done ? resolve(result.value) : new P(function (resolve) {\n        resolve(result.value);\n      }).then(fulfilled, rejected);\n    }\n\n    step((generator = generator.apply(thisArg, _arguments || [])).next());\n  });\n};\n\n!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ \"maishu-chitu-service\"), __webpack_require__(/*! ./Page */ \"./out-es5/Page.js\"), __webpack_require__(/*! ./Errors */ \"./out-es5/Errors.js\")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Page_1, Errors_1) {\n  \"use strict\";\n\n  Object.defineProperty(exports, \"__esModule\", {\n    value: true\n  });\n\n  var PageMaster =\n  /*#__PURE__*/\n  function () {\n    function PageMaster(container, parser) {\n      _classCallCheck(this, PageMaster);\n\n      this.pageCreated = maishu_chitu_service_1.Callbacks();\n      this.pageShowing = maishu_chitu_service_1.Callbacks();\n      this.pageShown = maishu_chitu_service_1.Callbacks();\n      this.pageType = Page_1.Page;\n      this.pageDisplayType = Page_1.PageDisplayerImplement;\n      this.cachePages = {};\n      this.page_stack = new Array();\n      this.nodes = {};\n      this.error = maishu_chitu_service_1.Callbacks();\n      this.parser = parser || this.defaultPageNodeParser();\n      if (!container) throw Errors_1.Errors.argumentNull(\"container\");\n      this.parser.actions = this.parser.actions || {};\n      this.container = container;\n    }\n\n    _createClass(PageMaster, [{\n      key: \"defaultPageNodeParser\",\n      value: function defaultPageNodeParser() {\n        var _this = this;\n\n        var nodes = {};\n        var p = {\n          actions: {},\n          parse: function parse(pageName) {\n            var node = nodes[pageName];\n\n            if (node == null) {\n              var path = \"modules_\".concat(pageName).split('_').join('/');\n              node = {\n                action: _this.createDefaultAction(path, _this.loadjs),\n                name: pageName\n              };\n              nodes[pageName] = node;\n            }\n\n            return node;\n          }\n        };\n        return p;\n      }\n    }, {\n      key: \"createDefaultAction\",\n      value: function createDefaultAction(url, loadjs) {\n        var _this2 = this;\n\n        return function (page) {\n          return __awaiter(_this2, void 0, void 0,\n          /*#__PURE__*/\n          regeneratorRuntime.mark(function _callee() {\n            var actionExports, _action, result, action, _action2;\n\n            return regeneratorRuntime.wrap(function _callee$(_context) {\n              while (1) {\n                switch (_context.prev = _context.next) {\n                  case 0:\n                    _context.next = 2;\n                    return loadjs(url);\n\n                  case 2:\n                    actionExports = _context.sent;\n\n                    if (actionExports) {\n                      _context.next = 5;\n                      break;\n                    }\n\n                    throw Errors_1.Errors.exportsCanntNull(url);\n\n                  case 5:\n                    _action = actionExports.default;\n\n                    if (!(_action == null)) {\n                      _context.next = 8;\n                      break;\n                    }\n\n                    throw Errors_1.Errors.canntFindAction(page.name);\n\n                  case 8:\n                    if (PageMaster.isClass(_action)) {\n                      action = _action;\n                      result = new action(page, this);\n                    } else {\n                      _action2 = _action;\n                      result = _action2(page, this);\n                    }\n\n                    return _context.abrupt(\"return\", result);\n\n                  case 10:\n                  case \"end\":\n                    return _context.stop();\n                }\n              }\n            }, _callee, this);\n          }));\n        };\n      }\n    }, {\n      key: \"loadjs\",\n      value: function loadjs(path) {\n        return new Promise(function (reslove, reject) {\n          requirejs([path], function (result) {\n            reslove(result);\n          }, function (err) {\n            reject(err);\n          });\n        });\n      }\n    }, {\n      key: \"on_pageCreated\",\n      value: function on_pageCreated(page) {\n        return this.pageCreated.fire(this, page);\n      }\n    }, {\n      key: \"getPage\",\n      value: function getPage(node, values) {\n        console.assert(node != null);\n        values = values || {};\n        var pageName = node.name;\n        var cachePage = this.cachePages[pageName];\n\n        if (cachePage != null) {\n          cachePage.data = values || {};\n          return {\n            page: cachePage,\n            isNew: false\n          };\n        }\n\n        var page = this.createPage(pageName, values);\n        this.cachePages[pageName] = page;\n        this.on_pageCreated(page);\n        return {\n          page: page,\n          isNew: true\n        };\n      }\n    }, {\n      key: \"createPage\",\n      value: function createPage(pageName, values) {\n        var _this3 = this;\n\n        if (!pageName) throw Errors_1.Errors.argumentNull('pageName');\n        values = values || {};\n        var element = this.createPageElement(pageName);\n        var displayer = new this.pageDisplayType(this);\n        console.assert(this.pageType != null);\n        var page = new this.pageType({\n          app: this,\n          name: pageName,\n          data: values,\n          displayer: displayer,\n          element: element\n        });\n\n        var showing = function showing(sender) {\n          _this3.pageShowing.fire(_this3, sender);\n        };\n\n        var shown = function shown(sender) {\n          _this3.pageShown.fire(_this3, sender);\n        };\n\n        page.showing.add(showing);\n        page.shown.add(shown);\n        page.closed.add(function () {\n          page.showing.remove(showing);\n          page.shown.remove(shown);\n        });\n        return page;\n      }\n    }, {\n      key: \"createPageElement\",\n      value: function createPageElement(pageName) {\n        var element = document.createElement(Page_1.Page.tagName);\n        this.container.appendChild(element);\n        return element;\n      }\n    }, {\n      key: \"showPage\",\n      value: function showPage(pageName, args, forceRender) {\n        args = args || {};\n        forceRender = forceRender == null ? false : true;\n        if (!pageName) throw Errors_1.Errors.argumentNull('pageName');\n        var node = this.findSiteMapNode(pageName);\n        if (node == null) throw Errors_1.Errors.pageNodeNotExists(pageName);\n        if (this.currentPage != null && this.currentPage.name == pageName) return this.currentPage;\n\n        var _this$getPage = this.getPage(node, args),\n            page = _this$getPage.page,\n            isNew = _this$getPage.isNew;\n\n        if (isNew || forceRender) {\n          var siteMapNode = this.findSiteMapNode(pageName);\n          if (siteMapNode == null) throw Errors_1.Errors.pageNodeNotExists(pageName);\n          var action = siteMapNode.action;\n          if (action == null) throw Errors_1.Errors.actionCanntNull(pageName);\n          action(page, this);\n        }\n\n        page.show();\n        this.pushPage(page);\n        console.assert(page == this.currentPage, \"page is not current page\");\n        return page;\n      }\n    }, {\n      key: \"closePage\",\n      value: function closePage(page) {\n        if (page == null) throw Errors_1.Errors.argumentNull('page');\n        page.close();\n        delete this.cachePages[page.name];\n        this.page_stack = this.page_stack.filter(function (o) {\n          return o != page;\n        });\n      }\n    }, {\n      key: \"pushPage\",\n      value: function pushPage(page) {\n        this.page_stack.push(page);\n      }\n    }, {\n      key: \"findSiteMapNode\",\n      value: function findSiteMapNode(pageName) {\n        if (this.nodes[pageName]) return this.nodes[pageName];\n        var node = null;\n        var action = this.parser.actions ? this.parser.actions[pageName] : null;\n\n        if (action != null) {\n          node = {\n            action: action,\n            name: pageName\n          };\n        }\n\n        if (node == null && this.parser.parse != null) {\n          node = this.parser.parse(pageName);\n          console.assert(node.action != null);\n        }\n\n        if (node != null) this.nodes[pageName] = node;\n        return node;\n      }\n    }, {\n      key: \"closeCurrentPage\",\n      value: function closeCurrentPage(passData) {\n        var page = this.page_stack.pop();\n        if (page == null) return;\n        this.closePage(page);\n\n        if (this.currentPage) {\n          if (passData) {\n            console.assert(this.currentPage.data != null);\n            this.currentPage.data = Object.assign(this.currentPage.data, passData);\n          }\n\n          this.currentPage.show();\n        }\n      }\n    }, {\n      key: \"currentPage\",\n      get: function get() {\n        if (this.page_stack.length > 0) return this.page_stack[this.page_stack.length - 1];\n        return null;\n      }\n    }, {\n      key: \"pageStack\",\n      get: function get() {\n        return this.page_stack;\n      }\n    }]);\n\n    return PageMaster;\n  }();\n\n  PageMaster.isClass = function () {\n    var toString = Function.prototype.toString;\n\n    function fnBody(fn) {\n      return toString.call(fn).replace(/^[^{]*{\\s*/, '').replace(/\\s*}[^}]*$/, '');\n    }\n\n    function isClass(fn) {\n      return typeof fn === 'function' && (/^class(\\s|\\{\\}$)/.test(toString.call(fn)) || /^.*classCallCheck\\(/.test(fnBody(fn)));\n    }\n\n    return isClass;\n  }();\n\n  exports.PageMaster = PageMaster;\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\n//# sourceMappingURL=PageMaster.js.map\n\n\n//# sourceURL=webpack:///./out-es5/PageMaster.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Page */ "./out-es5/Page.js"), __webpack_require__(/*! ./Errors */ "./out-es5/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Page_1, Errors_1) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var PageMaster =
+  /*#__PURE__*/
+  function () {
+    function PageMaster(container, parser) {
+      _classCallCheck(this, PageMaster);
+
+      this.pageCreated = maishu_chitu_service_1.Callbacks();
+      this.pageShowing = maishu_chitu_service_1.Callbacks();
+      this.pageShown = maishu_chitu_service_1.Callbacks();
+      this.pageType = Page_1.Page;
+      this.pageDisplayType = Page_1.PageDisplayerImplement;
+      this.cachePages = {};
+      this.page_stack = new Array();
+      this.nodes = {};
+      this.error = maishu_chitu_service_1.Callbacks();
+      this.parser = parser || this.defaultPageNodeParser();
+      if (!container) throw Errors_1.Errors.argumentNull("container");
+      this.parser.actions = this.parser.actions || {};
+      this.container = container;
+    }
+
+    _createClass(PageMaster, [{
+      key: "defaultPageNodeParser",
+      value: function defaultPageNodeParser() {
+        var _this = this;
+
+        var nodes = {};
+        var p = {
+          actions: {},
+          parse: function parse(pageName) {
+            var node = nodes[pageName];
+
+            if (node == null) {
+              var path = "modules_".concat(pageName).split('_').join('/');
+              node = {
+                action: _this.createDefaultAction(path, _this.loadjs),
+                name: pageName
+              };
+              nodes[pageName] = node;
+            }
+
+            return node;
+          }
+        };
+        return p;
+      }
+    }, {
+      key: "createDefaultAction",
+      value: function createDefaultAction(url, loadjs) {
+        var _this2 = this;
+
+        return function (page) {
+          return __awaiter(_this2, void 0, void 0,
+          /*#__PURE__*/
+          regeneratorRuntime.mark(function _callee() {
+            var actionExports, _action, result, action, _action2;
+
+            return regeneratorRuntime.wrap(function _callee$(_context) {
+              while (1) {
+                switch (_context.prev = _context.next) {
+                  case 0:
+                    _context.next = 2;
+                    return loadjs(url);
+
+                  case 2:
+                    actionExports = _context.sent;
+
+                    if (actionExports) {
+                      _context.next = 5;
+                      break;
+                    }
+
+                    throw Errors_1.Errors.exportsCanntNull(url);
+
+                  case 5:
+                    _action = actionExports.default;
+
+                    if (!(_action == null)) {
+                      _context.next = 8;
+                      break;
+                    }
+
+                    throw Errors_1.Errors.canntFindAction(page.name);
+
+                  case 8:
+                    if (PageMaster.isClass(_action)) {
+                      action = _action;
+                      result = new action(page, this);
+                    } else {
+                      _action2 = _action;
+                      result = _action2(page, this);
+                    }
+
+                    return _context.abrupt("return", result);
+
+                  case 10:
+                  case "end":
+                    return _context.stop();
+                }
+              }
+            }, _callee, this);
+          }));
+        };
+      }
+    }, {
+      key: "loadjs",
+      value: function loadjs(path) {
+        return new Promise(function (reslove, reject) {
+          requirejs([path], function (result) {
+            reslove(result);
+          }, function (err) {
+            reject(err);
+          });
+        });
+      }
+    }, {
+      key: "on_pageCreated",
+      value: function on_pageCreated(page) {
+        return this.pageCreated.fire(this, page);
+      }
+    }, {
+      key: "getPage",
+      value: function getPage(node, values) {
+        console.assert(node != null);
+        values = values || {};
+        var pageName = node.name;
+        var cachePage = this.cachePages[pageName];
+
+        if (cachePage != null) {
+          cachePage.data = values || {};
+          return {
+            page: cachePage,
+            isNew: false
+          };
+        }
+
+        var page = this.createPage(pageName, values);
+        this.cachePages[pageName] = page;
+        this.on_pageCreated(page);
+        return {
+          page: page,
+          isNew: true
+        };
+      }
+    }, {
+      key: "createPage",
+      value: function createPage(pageName, values) {
+        var _this3 = this;
+
+        if (!pageName) throw Errors_1.Errors.argumentNull('pageName');
+        values = values || {};
+        var element = this.createPageElement(pageName);
+        var displayer = new this.pageDisplayType(this);
+        console.assert(this.pageType != null);
+        var page = new this.pageType({
+          app: this,
+          name: pageName,
+          data: values,
+          displayer: displayer,
+          element: element
+        });
+
+        var showing = function showing(sender) {
+          _this3.pageShowing.fire(_this3, sender);
+        };
+
+        var shown = function shown(sender) {
+          _this3.pageShown.fire(_this3, sender);
+        };
+
+        page.showing.add(showing);
+        page.shown.add(shown);
+        page.closed.add(function () {
+          page.showing.remove(showing);
+          page.shown.remove(shown);
+        });
+        return page;
+      }
+    }, {
+      key: "createPageElement",
+      value: function createPageElement(pageName) {
+        var element = document.createElement(Page_1.Page.tagName);
+        this.container.appendChild(element);
+        return element;
+      }
+    }, {
+      key: "showPage",
+      value: function showPage(pageName, args, forceRender) {
+        args = args || {};
+        forceRender = forceRender == null ? false : true;
+        if (!pageName) throw Errors_1.Errors.argumentNull('pageName');
+        var node = this.findSiteMapNode(pageName);
+        if (node == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
+        if (this.currentPage != null && this.currentPage.name == pageName) return this.currentPage;
+
+        var _this$getPage = this.getPage(node, args),
+            page = _this$getPage.page,
+            isNew = _this$getPage.isNew;
+
+        if (isNew || forceRender) {
+          var siteMapNode = this.findSiteMapNode(pageName);
+          if (siteMapNode == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
+          var action = siteMapNode.action;
+          if (action == null) throw Errors_1.Errors.actionCanntNull(pageName);
+          action(page, this);
+        }
+
+        page.show();
+        this.pushPage(page);
+        console.assert(page == this.currentPage, "page is not current page");
+        return page;
+      }
+    }, {
+      key: "closePage",
+      value: function closePage(page) {
+        if (page == null) throw Errors_1.Errors.argumentNull('page');
+        page.close();
+        delete this.cachePages[page.name];
+        this.page_stack = this.page_stack.filter(function (o) {
+          return o != page;
+        });
+      }
+    }, {
+      key: "pushPage",
+      value: function pushPage(page) {
+        this.page_stack.push(page);
+      }
+    }, {
+      key: "findSiteMapNode",
+      value: function findSiteMapNode(pageName) {
+        if (this.nodes[pageName]) return this.nodes[pageName];
+        var node = null;
+        var action = this.parser.actions ? this.parser.actions[pageName] : null;
+
+        if (action != null) {
+          node = {
+            action: action,
+            name: pageName
+          };
+        }
+
+        if (node == null && this.parser.parse != null) {
+          node = this.parser.parse(pageName);
+          console.assert(node.action != null);
+        }
+
+        if (node != null) this.nodes[pageName] = node;
+        return node;
+      }
+    }, {
+      key: "closeCurrentPage",
+      value: function closeCurrentPage(passData) {
+        var page = this.page_stack.pop();
+        if (page == null) return;
+        this.closePage(page);
+
+        if (this.currentPage) {
+          if (passData) {
+            console.assert(this.currentPage.data != null);
+            this.currentPage.data = Object.assign(this.currentPage.data, passData);
+          }
+
+          this.currentPage.show();
+        }
+      }
+    }, {
+      key: "currentPage",
+      get: function get() {
+        if (this.page_stack.length > 0) return this.page_stack[this.page_stack.length - 1];
+        return null;
+      }
+    }, {
+      key: "pageStack",
+      get: function get() {
+        return this.page_stack;
+      }
+    }]);
+
+    return PageMaster;
+  }();
+
+  PageMaster.isClass = function () {
+    var toString = Function.prototype.toString;
+
+    function fnBody(fn) {
+      return toString.call(fn).replace(/^[^{]*{\s*/, '').replace(/\s*}[^}]*$/, '');
+    }
+
+    function isClass(fn) {
+      return typeof fn === 'function' && (/^class(\s|\{\}$)/.test(toString.call(fn)) || /^.*classCallCheck\(/.test(fnBody(fn)));
+    }
+
+    return isClass;
+  }();
+
+  exports.PageMaster = PageMaster;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+//# sourceMappingURL=PageMaster.js.map
+
 
 /***/ }),
 
@@ -151,7 +1139,25 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\nfuncti
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\n!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! ./Application */ \"./out-es5/Application.js\"), __webpack_require__(/*! ./PageMaster */ \"./out-es5/PageMaster.js\"), __webpack_require__(/*! ./Page */ \"./out-es5/Page.js\"), __webpack_require__(/*! maishu-chitu-service */ \"maishu-chitu-service\")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, Application_1, PageMaster_1, Page_1, maishu_chitu_service_1) {\n  \"use strict\";\n\n  Object.defineProperty(exports, \"__esModule\", {\n    value: true\n  });\n  exports.Application = Application_1.Application;\n  exports.PageMaster = PageMaster_1.PageMaster;\n  exports.Page = Page_1.Page;\n  exports.Callback = maishu_chitu_service_1.Callback;\n  exports.Callbacks = maishu_chitu_service_1.Callbacks;\n  exports.ValueStore = maishu_chitu_service_1.ValueStore;\n  exports.Service = maishu_chitu_service_1.Service;\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\n//# sourceMappingURL=index.js.map\n\n\n//# sourceURL=webpack:///./out-es5/index.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
+
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! ./Application */ "./out-es5/Application.js"), __webpack_require__(/*! ./PageMaster */ "./out-es5/PageMaster.js"), __webpack_require__(/*! ./Page */ "./out-es5/Page.js"), __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, Application_1, PageMaster_1, Page_1, maishu_chitu_service_1) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.Application = Application_1.Application;
+  exports.PageMaster = PageMaster_1.PageMaster;
+  exports.Page = Page_1.Page;
+  exports.Callback = maishu_chitu_service_1.Callback;
+  exports.Callbacks = maishu_chitu_service_1.Callbacks;
+  exports.ValueStore = maishu_chitu_service_1.ValueStore;
+  exports.Service = maishu_chitu_service_1.Service;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+//# sourceMappingURL=index.js.map
+
 
 /***/ }),
 
@@ -162,8 +1168,9 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;\n\n!(__WE
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("module.exports = __WEBPACK_EXTERNAL_MODULE_maishu_chitu_service__;\n\n//# sourceURL=webpack:///external_%22maishu-chitu-service%22?");
+module.exports = __WEBPACK_EXTERNAL_MODULE_maishu_chitu_service__;
 
 /***/ })
 
 /******/ })});;
+//# sourceMappingURL=index.es5.js.map

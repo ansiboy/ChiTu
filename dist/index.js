@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v2.9.22
+ *  maishu-chitu v2.9.25
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -102,7 +102,213 @@ define(["maishu-chitu-service"], function(__WEBPACK_EXTERNAL_MODULE_maishu_chitu
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ \"maishu-chitu-service\"), __webpack_require__(/*! ./PageMaster */ \"./out/PageMaster.js\"), __webpack_require__(/*! ./Errors */ \"./out/Errors.js\")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, PageMaster_1, Errors_1) {\r\n    \"use strict\";\r\n    Object.defineProperty(exports, \"__esModule\", { value: true });\r\n    const EmtpyStateData = \"\";\r\n    const DefaultPageName = \"index\";\r\n    function parseUrl(app, url) {\r\n        if (!app)\r\n            throw Errors_1.Errors.argumentNull('app');\r\n        if (!url)\r\n            throw Errors_1.Errors.argumentNull('url');\r\n        let sharpIndex = url.indexOf('#');\r\n        let routeString;\r\n        if (sharpIndex >= 0)\r\n            routeString = url.substr(sharpIndex + 1);\r\n        else\r\n            routeString = url;\r\n        if (!routeString)\r\n            throw Errors_1.Errors.canntParseRouteString(url);\r\n        if (routeString.startsWith('!')) {\r\n            throw Errors_1.Errors.canntParseRouteString(routeString);\r\n        }\r\n        let routePath;\r\n        let search = null;\r\n        let param_spliter_index = routeString.indexOf('?');\r\n        if (param_spliter_index >= 0) {\r\n            search = routeString.substr(param_spliter_index + 1);\r\n            routePath = routeString.substring(0, param_spliter_index);\r\n        }\r\n        else {\r\n            routePath = routeString;\r\n        }\r\n        if (!routePath)\r\n            routePath = DefaultPageName;\r\n        let values = {};\r\n        if (search) {\r\n            values = pareeUrlQuery(search);\r\n        }\r\n        let pageName = routePath;\r\n        return { pageName, values };\r\n    }\r\n    function pareeUrlQuery(query) {\r\n        let match, pl = /\\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURIComponent(s.replace(pl, \" \")); };\r\n        let urlParams = {};\r\n        while (match = search.exec(query))\r\n            urlParams[decode(match[1])] = decode(match[2]);\r\n        return urlParams;\r\n    }\r\n    function createUrl(pageName, params) {\r\n        let path_parts = pageName.split('.');\r\n        let path = path_parts.join('/');\r\n        if (!params)\r\n            return `#${path}`;\r\n        let paramsText = '';\r\n        for (let key in params) {\r\n            let value = params[key];\r\n            let type = typeof params[key];\r\n            if (type != 'string' || value == null) {\r\n                continue;\r\n            }\r\n            paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;\r\n        }\r\n        return `#${path}${paramsText}`;\r\n    }\r\n    class Application extends PageMaster_1.PageMaster {\r\n        constructor(args) {\r\n            super((args || {}).container || document.body, (args || {}).parser);\r\n            this._runned = false;\r\n            this.closeCurrentOnBack = null;\r\n            this.tempPageData = undefined;\r\n        }\r\n        parseUrl(url) {\r\n            if (!url)\r\n                throw Errors_1.Errors.argumentNull('url');\r\n            let routeData = parseUrl(this, url);\r\n            return routeData;\r\n        }\r\n        createUrl(pageName, values) {\r\n            return createUrl(pageName, values);\r\n        }\r\n        run() {\r\n            if (this._runned)\r\n                return;\r\n            let showPage = () => {\r\n                let url = location.href;\r\n                let sharpIndex = url.indexOf('#');\r\n                let routeString = url.substr(sharpIndex + 1);\r\n                if (routeString.startsWith('!')) {\r\n                    return;\r\n                }\r\n                if (sharpIndex < 0) {\r\n                    url = '#' + DefaultPageName;\r\n                }\r\n                this.showPageByUrl(url, true);\r\n            };\r\n            showPage();\r\n            window.addEventListener('hashchange', () => {\r\n                showPage();\r\n            });\r\n            this._runned = true;\r\n        }\r\n        showPageByUrl(url, fromCache) {\r\n            if (!url)\r\n                throw Errors_1.Errors.argumentNull('url');\r\n            var routeData = this.parseUrl(url);\r\n            if (routeData == null) {\r\n                throw Errors_1.Errors.noneRouteMatched(url);\r\n            }\r\n            let tempPageData = this.fetchTemplatePageData();\r\n            let result = null;\r\n            if (this.closeCurrentOnBack == true) {\r\n                this.closeCurrentOnBack = null;\r\n                if (tempPageData == null)\r\n                    this.closeCurrentPage();\r\n                else\r\n                    this.closeCurrentPage(tempPageData);\r\n                result = this.currentPage;\r\n            }\r\n            else if (this.closeCurrentOnBack == false) {\r\n                this.closeCurrentOnBack = null;\r\n                var page = this.pageStack.pop();\r\n                if (page == null)\r\n                    throw new Error('page is null');\r\n                page.hide(this.currentPage);\r\n                result = this.currentPage;\r\n            }\r\n            if (result == null || result.name != routeData.pageName) {\r\n                let args = routeData.values || {};\r\n                if (tempPageData) {\r\n                    args = Object.assign(args, tempPageData);\r\n                }\r\n                result = this.showPage(routeData.pageName, args);\r\n            }\r\n            return result;\r\n        }\r\n        fetchTemplatePageData() {\r\n            if (this.tempPageData == null) {\r\n                return null;\r\n            }\r\n            let data = this.tempPageData;\r\n            this.tempPageData = undefined;\r\n            return data;\r\n        }\r\n        setLocationHash(url) {\r\n            history.pushState(EmtpyStateData, \"\", url);\r\n        }\r\n        redirect(pageNameOrUrl, args) {\r\n            if (!pageNameOrUrl)\r\n                throw Errors_1.Errors.argumentNull('pageNameOrUrl');\r\n            let page = this.showPageByNameOrUrl(pageNameOrUrl, args);\r\n            let url = this.createUrl(page.name, page.data);\r\n            this.setLocationHash(url);\r\n            return page;\r\n        }\r\n        forward(pageNameOrUrl, args, setUrl) {\r\n            if (!pageNameOrUrl)\r\n                throw Errors_1.Errors.argumentNull('pageNameOrUrl');\r\n            if (setUrl == null)\r\n                setUrl = true;\r\n            let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);\r\n            if (setUrl) {\r\n                let url = this.createUrl(page.name, page.data);\r\n                this.setLocationHash(url);\r\n            }\r\n            else {\r\n                history.pushState(pageNameOrUrl, \"\", \"\");\r\n            }\r\n            return page;\r\n        }\r\n        showPageByNameOrUrl(pageNameOrUrl, args, rerender) {\r\n            let pageName;\r\n            if (pageNameOrUrl.indexOf('?') < 0) {\r\n                pageName = pageNameOrUrl;\r\n            }\r\n            else {\r\n                let obj = this.parseUrl(pageNameOrUrl);\r\n                pageName = obj.pageName;\r\n                args = Object.assign(obj.values, args || {});\r\n            }\r\n            return this.showPage(pageName, args, rerender);\r\n        }\r\n        reload(pageName, args) {\r\n            let result = this.showPage(pageName, args, true);\r\n            return result;\r\n        }\r\n        back(closeCurrentPage, data) {\r\n            const closeCurrentPageDefault = true;\r\n            if (typeof closeCurrentPage == 'object') {\r\n                data = closeCurrentPage;\r\n                closeCurrentPage = null;\r\n            }\r\n            this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;\r\n            this.tempPageData = data;\r\n            history.back();\r\n        }\r\n        createService(type) {\r\n            type = type || maishu_chitu_service_1.Service;\r\n            let service = new type();\r\n            service.error.add((sender, error) => {\r\n                this.error.fire(this, error, null);\r\n            });\r\n            return service;\r\n        }\r\n    }\r\n    exports.Application = Application;\r\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\r\n\n\n//# sourceURL=webpack:///./out/Application.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./PageMaster */ "./out/PageMaster.js"), __webpack_require__(/*! ./Errors */ "./out/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, PageMaster_1, Errors_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const EmtpyStateData = "";
+    const DefaultPageName = "index";
+    function parseUrl(app, url) {
+        if (!app)
+            throw Errors_1.Errors.argumentNull('app');
+        if (!url)
+            throw Errors_1.Errors.argumentNull('url');
+        let sharpIndex = url.indexOf('#');
+        let routeString;
+        if (sharpIndex >= 0)
+            routeString = url.substr(sharpIndex + 1);
+        else
+            routeString = url;
+        if (!routeString)
+            throw Errors_1.Errors.canntParseRouteString(url);
+        if (routeString.startsWith('!')) {
+            throw Errors_1.Errors.canntParseRouteString(routeString);
+        }
+        let routePath;
+        let search = null;
+        let param_spliter_index = routeString.indexOf('?');
+        if (param_spliter_index >= 0) {
+            search = routeString.substr(param_spliter_index + 1);
+            routePath = routeString.substring(0, param_spliter_index);
+        }
+        else {
+            routePath = routeString;
+        }
+        if (!routePath)
+            routePath = DefaultPageName;
+        let values = {};
+        if (search) {
+            values = pareeUrlQuery(search);
+        }
+        let pageName = routePath;
+        return { pageName, values };
+    }
+    function pareeUrlQuery(query) {
+        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
+        let urlParams = {};
+        while (match = search.exec(query))
+            urlParams[decode(match[1])] = decode(match[2]);
+        return urlParams;
+    }
+    function createUrl(pageName, params) {
+        let path_parts = pageName.split('.');
+        let path = path_parts.join('/');
+        if (!params)
+            return `#${path}`;
+        let paramsText = '';
+        for (let key in params) {
+            let value = params[key];
+            let type = typeof params[key];
+            if (type != 'string' || value == null) {
+                continue;
+            }
+            paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
+        }
+        return `#${path}${paramsText}`;
+    }
+    class Application extends PageMaster_1.PageMaster {
+        constructor(args) {
+            super((args || {}).container || document.body, (args || {}).parser);
+            this._runned = false;
+            this.closeCurrentOnBack = null;
+            this.tempPageData = undefined;
+        }
+        parseUrl(url) {
+            if (!url)
+                throw Errors_1.Errors.argumentNull('url');
+            let routeData = parseUrl(this, url);
+            return routeData;
+        }
+        createUrl(pageName, values) {
+            return createUrl(pageName, values);
+        }
+        run() {
+            if (this._runned)
+                return;
+            let showPage = () => {
+                let url = location.href;
+                let sharpIndex = url.indexOf('#');
+                let routeString = url.substr(sharpIndex + 1);
+                if (routeString.startsWith('!')) {
+                    return;
+                }
+                if (sharpIndex < 0) {
+                    url = '#' + DefaultPageName;
+                }
+                this.showPageByUrl(url, true);
+            };
+            showPage();
+            window.addEventListener('hashchange', () => {
+                showPage();
+            });
+            this._runned = true;
+        }
+        showPageByUrl(url, fromCache) {
+            if (!url)
+                throw Errors_1.Errors.argumentNull('url');
+            var routeData = this.parseUrl(url);
+            if (routeData == null) {
+                throw Errors_1.Errors.noneRouteMatched(url);
+            }
+            let tempPageData = this.fetchTemplatePageData();
+            let result = null;
+            if (this.closeCurrentOnBack == true) {
+                this.closeCurrentOnBack = null;
+                if (tempPageData == null)
+                    this.closeCurrentPage();
+                else
+                    this.closeCurrentPage(tempPageData);
+                result = this.currentPage;
+            }
+            else if (this.closeCurrentOnBack == false) {
+                this.closeCurrentOnBack = null;
+                var page = this.pageStack.pop();
+                if (page == null)
+                    throw new Error('page is null');
+                page.hide(this.currentPage);
+                result = this.currentPage;
+            }
+            if (result == null || result.name != routeData.pageName) {
+                let args = routeData.values || {};
+                if (tempPageData) {
+                    args = Object.assign(args, tempPageData);
+                }
+                result = this.showPage(routeData.pageName, args);
+            }
+            return result;
+        }
+        fetchTemplatePageData() {
+            if (this.tempPageData == null) {
+                return null;
+            }
+            let data = this.tempPageData;
+            this.tempPageData = undefined;
+            return data;
+        }
+        setLocationHash(url) {
+            history.pushState(EmtpyStateData, "", url);
+        }
+        redirect(pageNameOrUrl, args) {
+            if (!pageNameOrUrl)
+                throw Errors_1.Errors.argumentNull('pageNameOrUrl');
+            let page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+            let url = this.createUrl(page.name, page.data);
+            this.setLocationHash(url);
+            return page;
+        }
+        forward(pageNameOrUrl, args, setUrl) {
+            if (!pageNameOrUrl)
+                throw Errors_1.Errors.argumentNull('pageNameOrUrl');
+            if (setUrl == null)
+                setUrl = true;
+            let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+            if (setUrl) {
+                let url = this.createUrl(page.name, page.data);
+                this.setLocationHash(url);
+            }
+            else {
+                history.pushState(pageNameOrUrl, "", "");
+            }
+            return page;
+        }
+        showPageByNameOrUrl(pageNameOrUrl, args, rerender) {
+            let pageName;
+            if (pageNameOrUrl.indexOf('?') < 0) {
+                pageName = pageNameOrUrl;
+            }
+            else {
+                let obj = this.parseUrl(pageNameOrUrl);
+                pageName = obj.pageName;
+                args = Object.assign(obj.values, args || {});
+            }
+            return this.showPage(pageName, args, rerender);
+        }
+        reload(pageName, args) {
+            let result = this.showPage(pageName, args, true);
+            return result;
+        }
+        back(closeCurrentPage, data) {
+            const closeCurrentPageDefault = true;
+            if (typeof closeCurrentPage == 'object') {
+                data = closeCurrentPage;
+                closeCurrentPage = null;
+            }
+            this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
+            this.tempPageData = data;
+            history.back();
+        }
+        createService(type) {
+            type = type || maishu_chitu_service_1.Service;
+            let service = new type();
+            service.error.add((sender, error) => {
+                this.error.fire(this, error, null);
+            });
+            return service;
+        }
+    }
+    exports.Application = Application;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
 
 /***/ }),
 
@@ -113,7 +319,110 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPAC
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports) {\r\n    \"use strict\";\r\n    Object.defineProperty(exports, \"__esModule\", { value: true });\r\n    class Errors {\r\n        static pageNodeNotExists(pageName) {\r\n            let msg = `Page node named ${pageName} is not exists.`;\r\n            return new Error(msg);\r\n        }\r\n        static actionCanntNull(pageName) {\r\n            let msg = `Action of '${pageName}' can not be null.`;\r\n            return new Error(msg);\r\n        }\r\n        static argumentNull(paramName) {\r\n            var msg = `The argument \"${paramName}\" cannt be null.`;\r\n            return new Error(msg);\r\n        }\r\n        static modelFileExpecteFunction(script) {\r\n            var msg = `The eval result of script file \"${script}\" is expected a function.`;\r\n            return new Error(msg);\r\n        }\r\n        static paramTypeError(paramName, expectedType) {\r\n            var msg = `The param \"${paramName}\" is expected \"${expectedType}\" type.`;\r\n            return new Error(msg);\r\n        }\r\n        static paramError(msg) {\r\n            return new Error(msg);\r\n        }\r\n        static pathPairRequireView(index) {\r\n            var msg = `The view value is required for path pair, but the item with index \"${index}\" is miss it.`;\r\n            return new Error(msg);\r\n        }\r\n        static notImplemented(name) {\r\n            var msg = `'The method \"${name}\" is not implemented.'`;\r\n            return new Error(msg);\r\n        }\r\n        static routeExists(name) {\r\n            var msg = `Route named \"${name}\" is exists.`;\r\n            return new Error(msg);\r\n        }\r\n        static noneRouteMatched(url) {\r\n            var msg = `None route matched with url \"${url}\".`;\r\n            var error = new Error(msg);\r\n            return error;\r\n        }\r\n        static emptyStack() {\r\n            return new Error('The stack is empty.');\r\n        }\r\n        static canntParseUrl(url) {\r\n            var msg = `Can not parse the url \"${url}\" to route data.`;\r\n            return new Error(msg);\r\n        }\r\n        static canntParseRouteString(routeString) {\r\n            var msg = `Can not parse the route string \"${routeString}\" to route data.;`;\r\n            return new Error(msg);\r\n        }\r\n        static routeDataRequireController() {\r\n            var msg = 'The route data does not contains a \"controller\" file.';\r\n            return new Error(msg);\r\n        }\r\n        static routeDataRequireAction() {\r\n            var msg = 'The route data does not contains a \"action\" file.';\r\n            return new Error(msg);\r\n        }\r\n        static viewCanntNull() {\r\n            var msg = 'The view or viewDeferred of the page cannt null.';\r\n            return new Error(msg);\r\n        }\r\n        static createPageFail(pageName) {\r\n            var msg = `Create page \"${pageName}\" fail.`;\r\n            return new Error(msg);\r\n        }\r\n        static actionTypeError(pageName) {\r\n            let msg = `The action in page '${pageName}' is expect as function.`;\r\n            return new Error(msg);\r\n        }\r\n        static canntFindAction(pageName) {\r\n            let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;\r\n            return new Error(msg);\r\n        }\r\n        static exportsCanntNull(pageName) {\r\n            let msg = `Exports of page '${pageName}' is null.`;\r\n            return new Error(msg);\r\n        }\r\n        static scrollerElementNotExists() {\r\n            let msg = \"Scroller element is not exists.\";\r\n            return new Error(msg);\r\n        }\r\n        static resourceExists(resourceName, pageName) {\r\n            let msg = `Rosource '${resourceName}' is exists in the resources of page '${pageName}'.`;\r\n            return new Error(msg);\r\n        }\r\n        static siteMapRootCanntNull() {\r\n            let msg = `The site map root node can not be null.`;\r\n            return new Error(msg);\r\n        }\r\n        static duplicateSiteMapNode(name) {\r\n            let msg = `The site map node ${name} is exists.`;\r\n            return new Error(name);\r\n        }\r\n    }\r\n    exports.Errors = Errors;\r\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\r\n\n\n//# sourceURL=webpack:///./out/Errors.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Errors {
+        static pageNodeNotExists(pageName) {
+            let msg = `Page node named ${pageName} is not exists.`;
+            return new Error(msg);
+        }
+        static actionCanntNull(pageName) {
+            let msg = `Action of '${pageName}' can not be null.`;
+            return new Error(msg);
+        }
+        static argumentNull(paramName) {
+            var msg = `The argument "${paramName}" cannt be null.`;
+            return new Error(msg);
+        }
+        static modelFileExpecteFunction(script) {
+            var msg = `The eval result of script file "${script}" is expected a function.`;
+            return new Error(msg);
+        }
+        static paramTypeError(paramName, expectedType) {
+            var msg = `The param "${paramName}" is expected "${expectedType}" type.`;
+            return new Error(msg);
+        }
+        static paramError(msg) {
+            return new Error(msg);
+        }
+        static pathPairRequireView(index) {
+            var msg = `The view value is required for path pair, but the item with index "${index}" is miss it.`;
+            return new Error(msg);
+        }
+        static notImplemented(name) {
+            var msg = `'The method "${name}" is not implemented.'`;
+            return new Error(msg);
+        }
+        static routeExists(name) {
+            var msg = `Route named "${name}" is exists.`;
+            return new Error(msg);
+        }
+        static noneRouteMatched(url) {
+            var msg = `None route matched with url "${url}".`;
+            var error = new Error(msg);
+            return error;
+        }
+        static emptyStack() {
+            return new Error('The stack is empty.');
+        }
+        static canntParseUrl(url) {
+            var msg = `Can not parse the url "${url}" to route data.`;
+            return new Error(msg);
+        }
+        static canntParseRouteString(routeString) {
+            var msg = `Can not parse the route string "${routeString}" to route data.;`;
+            return new Error(msg);
+        }
+        static routeDataRequireController() {
+            var msg = 'The route data does not contains a "controller" file.';
+            return new Error(msg);
+        }
+        static routeDataRequireAction() {
+            var msg = 'The route data does not contains a "action" file.';
+            return new Error(msg);
+        }
+        static viewCanntNull() {
+            var msg = 'The view or viewDeferred of the page cannt null.';
+            return new Error(msg);
+        }
+        static createPageFail(pageName) {
+            var msg = `Create page "${pageName}" fail.`;
+            return new Error(msg);
+        }
+        static actionTypeError(pageName) {
+            let msg = `The action in page '${pageName}' is expect as function.`;
+            return new Error(msg);
+        }
+        static canntFindAction(pageName) {
+            let msg = `Cannt find action in page '${pageName}', is the exports has default field?`;
+            return new Error(msg);
+        }
+        static exportsCanntNull(pageName) {
+            let msg = `Exports of page '${pageName}' is null.`;
+            return new Error(msg);
+        }
+        static scrollerElementNotExists() {
+            let msg = "Scroller element is not exists.";
+            return new Error(msg);
+        }
+        static resourceExists(resourceName, pageName) {
+            let msg = `Rosource '${resourceName}' is exists in the resources of page '${pageName}'.`;
+            return new Error(msg);
+        }
+        static siteMapRootCanntNull() {
+            let msg = `The site map root node can not be null.`;
+            return new Error(msg);
+        }
+        static duplicateSiteMapNode(name) {
+            let msg = `The site map node ${name} is exists.`;
+            return new Error(name);
+        }
+    }
+    exports.Errors = Errors;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
 
 /***/ }),
 
@@ -124,7 +433,104 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPAC
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ \"maishu-chitu-service\")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1) {\r\n    \"use strict\";\r\n    Object.defineProperty(exports, \"__esModule\", { value: true });\r\n    class Page {\r\n        constructor(params) {\r\n            this.data = {};\r\n            this.showing = maishu_chitu_service_1.Callbacks();\r\n            this.shown = maishu_chitu_service_1.Callbacks();\r\n            this.hiding = maishu_chitu_service_1.Callbacks();\r\n            this.hidden = maishu_chitu_service_1.Callbacks();\r\n            this.closing = maishu_chitu_service_1.Callbacks();\r\n            this.closed = maishu_chitu_service_1.Callbacks();\r\n            this._element = params.element;\r\n            this._app = params.app;\r\n            this._displayer = params.displayer;\r\n            this.data = params.data;\r\n            this._name = params.name;\r\n        }\r\n        on_showing() {\r\n            return this.showing.fire(this, this.data);\r\n        }\r\n        on_shown() {\r\n            return this.shown.fire(this, this.data);\r\n        }\r\n        on_hiding() {\r\n            return this.hiding.fire(this, this.data);\r\n        }\r\n        on_hidden() {\r\n            return this.hidden.fire(this, this.data);\r\n        }\r\n        on_closing() {\r\n            return this.closing.fire(this, this.data);\r\n        }\r\n        on_closed() {\r\n            return this.closed.fire(this, this.data);\r\n        }\r\n        show() {\r\n            this.on_showing();\r\n            let currentPage = this._app.currentPage;\r\n            if (this == currentPage) {\r\n                currentPage = null;\r\n            }\r\n            return this._displayer.show(this, currentPage).then(o => {\r\n                this.on_shown();\r\n            });\r\n        }\r\n        hide(currentPage) {\r\n            this.on_hiding();\r\n            return this._displayer.hide(this, currentPage).then(o => {\r\n                this.on_hidden();\r\n            });\r\n        }\r\n        close() {\r\n            this.on_closing();\r\n            this._element.remove();\r\n            this.on_closed();\r\n            return Promise.resolve();\r\n        }\r\n        createService(type) {\r\n            type = type || maishu_chitu_service_1.Service;\r\n            let service = new type();\r\n            service.error.add((sender, error) => {\r\n                this._app.error.fire(this._app, error, this);\r\n            });\r\n            return service;\r\n        }\r\n        get element() {\r\n            return this._element;\r\n        }\r\n        get name() {\r\n            return this._name;\r\n        }\r\n        get app() {\r\n            return this._app;\r\n        }\r\n    }\r\n    Page.tagName = 'div';\r\n    exports.Page = Page;\r\n    class PageDisplayerImplement {\r\n        show(page, previous) {\r\n            page.element.style.display = 'block';\r\n            if (previous != null) {\r\n                previous.element.style.display = 'none';\r\n            }\r\n            return Promise.resolve();\r\n        }\r\n        hide(page, previous) {\r\n            page.element.style.display = 'none';\r\n            if (previous != null) {\r\n                previous.element.style.display = 'block';\r\n            }\r\n            return Promise.resolve();\r\n        }\r\n    }\r\n    exports.PageDisplayerImplement = PageDisplayerImplement;\r\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\r\n\n\n//# sourceURL=webpack:///./out/Page.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Page {
+        constructor(params) {
+            this.data = {};
+            this.showing = maishu_chitu_service_1.Callbacks();
+            this.shown = maishu_chitu_service_1.Callbacks();
+            this.hiding = maishu_chitu_service_1.Callbacks();
+            this.hidden = maishu_chitu_service_1.Callbacks();
+            this.closing = maishu_chitu_service_1.Callbacks();
+            this.closed = maishu_chitu_service_1.Callbacks();
+            this._element = params.element;
+            this._app = params.app;
+            this._displayer = params.displayer;
+            this.data = params.data;
+            this._name = params.name;
+        }
+        on_showing() {
+            return this.showing.fire(this, this.data);
+        }
+        on_shown() {
+            return this.shown.fire(this, this.data);
+        }
+        on_hiding() {
+            return this.hiding.fire(this, this.data);
+        }
+        on_hidden() {
+            return this.hidden.fire(this, this.data);
+        }
+        on_closing() {
+            return this.closing.fire(this, this.data);
+        }
+        on_closed() {
+            return this.closed.fire(this, this.data);
+        }
+        show() {
+            this.on_showing();
+            let currentPage = this._app.currentPage;
+            if (this == currentPage) {
+                currentPage = null;
+            }
+            return this._displayer.show(this, currentPage).then(o => {
+                this.on_shown();
+            });
+        }
+        hide(currentPage) {
+            this.on_hiding();
+            return this._displayer.hide(this, currentPage).then(o => {
+                this.on_hidden();
+            });
+        }
+        close() {
+            this.on_closing();
+            this._element.remove();
+            this.on_closed();
+            return Promise.resolve();
+        }
+        createService(type) {
+            type = type || maishu_chitu_service_1.Service;
+            let service = new type();
+            service.error.add((sender, error) => {
+                this._app.error.fire(this._app, error, this);
+            });
+            return service;
+        }
+        get element() {
+            return this._element;
+        }
+        get name() {
+            return this._name;
+        }
+        get app() {
+            return this._app;
+        }
+    }
+    Page.tagName = 'div';
+    exports.Page = Page;
+    class PageDisplayerImplement {
+        show(page, previous) {
+            page.element.style.display = 'block';
+            if (previous != null) {
+                previous.element.style.display = 'none';
+            }
+            return Promise.resolve();
+        }
+        hide(page, previous) {
+            page.element.style.display = 'none';
+            if (previous != null) {
+                previous.element.style.display = 'block';
+            }
+            return Promise.resolve();
+        }
+    }
+    exports.PageDisplayerImplement = PageDisplayerImplement;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
 
 /***/ }),
 
@@ -135,7 +541,219 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPAC
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {\r\n    return new (P || (P = Promise))(function (resolve, reject) {\r\n        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }\r\n        function rejected(value) { try { step(generator[\"throw\"](value)); } catch (e) { reject(e); } }\r\n        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }\r\n        step((generator = generator.apply(thisArg, _arguments || [])).next());\r\n    });\r\n};\r\n!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ \"maishu-chitu-service\"), __webpack_require__(/*! ./Page */ \"./out/Page.js\"), __webpack_require__(/*! ./Errors */ \"./out/Errors.js\")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Page_1, Errors_1) {\r\n    \"use strict\";\r\n    Object.defineProperty(exports, \"__esModule\", { value: true });\r\n    class PageMaster {\r\n        constructor(container, parser) {\r\n            this.pageCreated = maishu_chitu_service_1.Callbacks();\r\n            this.pageShowing = maishu_chitu_service_1.Callbacks();\r\n            this.pageShown = maishu_chitu_service_1.Callbacks();\r\n            this.pageType = Page_1.Page;\r\n            this.pageDisplayType = Page_1.PageDisplayerImplement;\r\n            this.cachePages = {};\r\n            this.page_stack = new Array();\r\n            this.nodes = {};\r\n            this.error = maishu_chitu_service_1.Callbacks();\r\n            this.parser = parser || this.defaultPageNodeParser();\r\n            if (!container)\r\n                throw Errors_1.Errors.argumentNull(\"container\");\r\n            this.parser.actions = this.parser.actions || {};\r\n            this.container = container;\r\n        }\r\n        defaultPageNodeParser() {\r\n            let nodes = {};\r\n            let p = {\r\n                actions: {},\r\n                parse: (pageName) => {\r\n                    let node = nodes[pageName];\r\n                    if (node == null) {\r\n                        let path = `modules_${pageName}`.split('_').join('/');\r\n                        node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };\r\n                        nodes[pageName] = node;\r\n                    }\r\n                    return node;\r\n                }\r\n            };\r\n            return p;\r\n        }\r\n        createDefaultAction(url, loadjs) {\r\n            return (page) => __awaiter(this, void 0, void 0, function* () {\r\n                let actionExports = yield loadjs(url);\r\n                if (!actionExports)\r\n                    throw Errors_1.Errors.exportsCanntNull(url);\r\n                let _action = actionExports.default;\r\n                if (_action == null) {\r\n                    throw Errors_1.Errors.canntFindAction(page.name);\r\n                }\r\n                let result;\r\n                if (PageMaster.isClass(_action)) {\r\n                    let action = _action;\r\n                    result = new action(page, this);\r\n                }\r\n                else {\r\n                    let action = _action;\r\n                    result = action(page, this);\r\n                }\r\n                return result;\r\n            });\r\n        }\r\n        loadjs(path) {\r\n            return new Promise((reslove, reject) => {\r\n                requirejs([path], function (result) {\r\n                    reslove(result);\r\n                }, function (err) {\r\n                    reject(err);\r\n                });\r\n            });\r\n        }\r\n        on_pageCreated(page) {\r\n            return this.pageCreated.fire(this, page);\r\n        }\r\n        get currentPage() {\r\n            if (this.page_stack.length > 0)\r\n                return this.page_stack[this.page_stack.length - 1];\r\n            return null;\r\n        }\r\n        getPage(node, values) {\r\n            console.assert(node != null);\r\n            values = values || {};\r\n            let pageName = node.name;\r\n            let cachePage = this.cachePages[pageName];\r\n            if (cachePage != null) {\r\n                cachePage.data = values || {};\r\n                return { page: cachePage, isNew: false };\r\n            }\r\n            let page = this.createPage(pageName, values);\r\n            this.cachePages[pageName] = page;\r\n            this.on_pageCreated(page);\r\n            return { page, isNew: true };\r\n        }\r\n        createPage(pageName, values) {\r\n            if (!pageName)\r\n                throw Errors_1.Errors.argumentNull('pageName');\r\n            values = values || {};\r\n            let element = this.createPageElement(pageName);\r\n            let displayer = new this.pageDisplayType(this);\r\n            console.assert(this.pageType != null);\r\n            let page = new this.pageType({\r\n                app: this,\r\n                name: pageName,\r\n                data: values,\r\n                displayer,\r\n                element,\r\n            });\r\n            let showing = (sender) => {\r\n                this.pageShowing.fire(this, sender);\r\n            };\r\n            let shown = (sender) => {\r\n                this.pageShown.fire(this, sender);\r\n            };\r\n            page.showing.add(showing);\r\n            page.shown.add(shown);\r\n            page.closed.add(() => {\r\n                page.showing.remove(showing);\r\n                page.shown.remove(shown);\r\n            });\r\n            return page;\r\n        }\r\n        createPageElement(pageName) {\r\n            let element = document.createElement(Page_1.Page.tagName);\r\n            this.container.appendChild(element);\r\n            return element;\r\n        }\r\n        showPage(pageName, args, forceRender) {\r\n            args = args || {};\r\n            forceRender = forceRender == null ? false : true;\r\n            if (!pageName)\r\n                throw Errors_1.Errors.argumentNull('pageName');\r\n            let node = this.findSiteMapNode(pageName);\r\n            if (node == null)\r\n                throw Errors_1.Errors.pageNodeNotExists(pageName);\r\n            if (this.currentPage != null && this.currentPage.name == pageName)\r\n                return this.currentPage;\r\n            let { page, isNew } = this.getPage(node, args);\r\n            if (isNew || forceRender) {\r\n                let siteMapNode = this.findSiteMapNode(pageName);\r\n                if (siteMapNode == null)\r\n                    throw Errors_1.Errors.pageNodeNotExists(pageName);\r\n                let action = siteMapNode.action;\r\n                if (action == null)\r\n                    throw Errors_1.Errors.actionCanntNull(pageName);\r\n                action(page, this);\r\n            }\r\n            page.show();\r\n            this.pushPage(page);\r\n            console.assert(page == this.currentPage, \"page is not current page\");\r\n            return page;\r\n        }\r\n        closePage(page) {\r\n            if (page == null)\r\n                throw Errors_1.Errors.argumentNull('page');\r\n            page.close();\r\n            delete this.cachePages[page.name];\r\n            this.page_stack = this.page_stack.filter(o => o != page);\r\n        }\r\n        pushPage(page) {\r\n            this.page_stack.push(page);\r\n        }\r\n        findSiteMapNode(pageName) {\r\n            if (this.nodes[pageName])\r\n                return this.nodes[pageName];\r\n            let node = null;\r\n            let action = this.parser.actions ? this.parser.actions[pageName] : null;\r\n            if (action != null) {\r\n                node = { action, name: pageName };\r\n            }\r\n            if (node == null && this.parser.parse != null) {\r\n                node = this.parser.parse(pageName);\r\n                console.assert(node.action != null);\r\n            }\r\n            if (node != null)\r\n                this.nodes[pageName] = node;\r\n            return node;\r\n        }\r\n        closeCurrentPage(passData) {\r\n            var page = this.page_stack.pop();\r\n            if (page == null)\r\n                return;\r\n            this.closePage(page);\r\n            if (this.currentPage) {\r\n                if (passData) {\r\n                    console.assert(this.currentPage.data != null);\r\n                    this.currentPage.data = Object.assign(this.currentPage.data, passData);\r\n                }\r\n                this.currentPage.show();\r\n            }\r\n        }\r\n        get pageStack() {\r\n            return this.page_stack;\r\n        }\r\n    }\r\n    PageMaster.isClass = (function () {\r\n        var toString = Function.prototype.toString;\r\n        function fnBody(fn) {\r\n            return toString.call(fn).replace(/^[^{]*{\\s*/, '').replace(/\\s*}[^}]*$/, '');\r\n        }\r\n        function isClass(fn) {\r\n            return (typeof fn === 'function' &&\r\n                (/^class(\\s|\\{\\}$)/.test(toString.call(fn)) ||\r\n                    (/^.*classCallCheck\\(/.test(fnBody(fn)))));\r\n        }\r\n        return isClass;\r\n    })();\r\n    exports.PageMaster = PageMaster;\r\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\r\n\n\n//# sourceURL=webpack:///./out/PageMaster.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Page */ "./out/Page.js"), __webpack_require__(/*! ./Errors */ "./out/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Page_1, Errors_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class PageMaster {
+        constructor(container, parser) {
+            this.pageCreated = maishu_chitu_service_1.Callbacks();
+            this.pageShowing = maishu_chitu_service_1.Callbacks();
+            this.pageShown = maishu_chitu_service_1.Callbacks();
+            this.pageType = Page_1.Page;
+            this.pageDisplayType = Page_1.PageDisplayerImplement;
+            this.cachePages = {};
+            this.page_stack = new Array();
+            this.nodes = {};
+            this.error = maishu_chitu_service_1.Callbacks();
+            this.parser = parser || this.defaultPageNodeParser();
+            if (!container)
+                throw Errors_1.Errors.argumentNull("container");
+            this.parser.actions = this.parser.actions || {};
+            this.container = container;
+        }
+        defaultPageNodeParser() {
+            let nodes = {};
+            let p = {
+                actions: {},
+                parse: (pageName) => {
+                    let node = nodes[pageName];
+                    if (node == null) {
+                        let path = `modules_${pageName}`.split('_').join('/');
+                        node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
+                        nodes[pageName] = node;
+                    }
+                    return node;
+                }
+            };
+            return p;
+        }
+        createDefaultAction(url, loadjs) {
+            return (page) => __awaiter(this, void 0, void 0, function* () {
+                let actionExports = yield loadjs(url);
+                if (!actionExports)
+                    throw Errors_1.Errors.exportsCanntNull(url);
+                let _action = actionExports.default;
+                if (_action == null) {
+                    throw Errors_1.Errors.canntFindAction(page.name);
+                }
+                let result;
+                if (PageMaster.isClass(_action)) {
+                    let action = _action;
+                    result = new action(page, this);
+                }
+                else {
+                    let action = _action;
+                    result = action(page, this);
+                }
+                return result;
+            });
+        }
+        loadjs(path) {
+            return new Promise((reslove, reject) => {
+                requirejs([path], function (result) {
+                    reslove(result);
+                }, function (err) {
+                    reject(err);
+                });
+            });
+        }
+        on_pageCreated(page) {
+            return this.pageCreated.fire(this, page);
+        }
+        get currentPage() {
+            if (this.page_stack.length > 0)
+                return this.page_stack[this.page_stack.length - 1];
+            return null;
+        }
+        getPage(node, values) {
+            console.assert(node != null);
+            values = values || {};
+            let pageName = node.name;
+            let cachePage = this.cachePages[pageName];
+            if (cachePage != null) {
+                cachePage.data = values || {};
+                return { page: cachePage, isNew: false };
+            }
+            let page = this.createPage(pageName, values);
+            this.cachePages[pageName] = page;
+            this.on_pageCreated(page);
+            return { page, isNew: true };
+        }
+        createPage(pageName, values) {
+            if (!pageName)
+                throw Errors_1.Errors.argumentNull('pageName');
+            values = values || {};
+            let element = this.createPageElement(pageName);
+            let displayer = new this.pageDisplayType(this);
+            console.assert(this.pageType != null);
+            let page = new this.pageType({
+                app: this,
+                name: pageName,
+                data: values,
+                displayer,
+                element,
+            });
+            let showing = (sender) => {
+                this.pageShowing.fire(this, sender);
+            };
+            let shown = (sender) => {
+                this.pageShown.fire(this, sender);
+            };
+            page.showing.add(showing);
+            page.shown.add(shown);
+            page.closed.add(() => {
+                page.showing.remove(showing);
+                page.shown.remove(shown);
+            });
+            return page;
+        }
+        createPageElement(pageName) {
+            let element = document.createElement(Page_1.Page.tagName);
+            this.container.appendChild(element);
+            return element;
+        }
+        showPage(pageName, args, forceRender) {
+            args = args || {};
+            forceRender = forceRender == null ? false : true;
+            if (!pageName)
+                throw Errors_1.Errors.argumentNull('pageName');
+            let node = this.findSiteMapNode(pageName);
+            if (node == null)
+                throw Errors_1.Errors.pageNodeNotExists(pageName);
+            if (this.currentPage != null && this.currentPage.name == pageName)
+                return this.currentPage;
+            let { page, isNew } = this.getPage(node, args);
+            if (isNew || forceRender) {
+                let siteMapNode = this.findSiteMapNode(pageName);
+                if (siteMapNode == null)
+                    throw Errors_1.Errors.pageNodeNotExists(pageName);
+                let action = siteMapNode.action;
+                if (action == null)
+                    throw Errors_1.Errors.actionCanntNull(pageName);
+                action(page, this);
+            }
+            page.show();
+            this.pushPage(page);
+            console.assert(page == this.currentPage, "page is not current page");
+            return page;
+        }
+        closePage(page) {
+            if (page == null)
+                throw Errors_1.Errors.argumentNull('page');
+            page.close();
+            delete this.cachePages[page.name];
+            this.page_stack = this.page_stack.filter(o => o != page);
+        }
+        pushPage(page) {
+            this.page_stack.push(page);
+        }
+        findSiteMapNode(pageName) {
+            if (this.nodes[pageName])
+                return this.nodes[pageName];
+            let node = null;
+            let action = this.parser.actions ? this.parser.actions[pageName] : null;
+            if (action != null) {
+                node = { action, name: pageName };
+            }
+            if (node == null && this.parser.parse != null) {
+                node = this.parser.parse(pageName);
+                console.assert(node.action != null);
+            }
+            if (node != null)
+                this.nodes[pageName] = node;
+            return node;
+        }
+        closeCurrentPage(passData) {
+            var page = this.page_stack.pop();
+            if (page == null)
+                return;
+            this.closePage(page);
+            if (this.currentPage) {
+                if (passData) {
+                    console.assert(this.currentPage.data != null);
+                    this.currentPage.data = Object.assign(this.currentPage.data, passData);
+                }
+                this.currentPage.show();
+            }
+        }
+        get pageStack() {
+            return this.page_stack;
+        }
+    }
+    PageMaster.isClass = (function () {
+        var toString = Function.prototype.toString;
+        function fnBody(fn) {
+            return toString.call(fn).replace(/^[^{]*{\s*/, '').replace(/\s*}[^}]*$/, '');
+        }
+        function isClass(fn) {
+            return (typeof fn === 'function' &&
+                (/^class(\s|\{\}$)/.test(toString.call(fn)) ||
+                    (/^.*classCallCheck\(/.test(fnBody(fn)))));
+        }
+        return isClass;
+    })();
+    exports.PageMaster = PageMaster;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
 
 /***/ }),
 
@@ -146,7 +764,19 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awai
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! ./Application */ \"./out/Application.js\"), __webpack_require__(/*! ./PageMaster */ \"./out/PageMaster.js\"), __webpack_require__(/*! ./Page */ \"./out/Page.js\"), __webpack_require__(/*! maishu-chitu-service */ \"maishu-chitu-service\")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, Application_1, PageMaster_1, Page_1, maishu_chitu_service_1) {\r\n    \"use strict\";\r\n    Object.defineProperty(exports, \"__esModule\", { value: true });\r\n    exports.Application = Application_1.Application;\r\n    exports.PageMaster = PageMaster_1.PageMaster;\r\n    exports.Page = Page_1.Page;\r\n    exports.Callback = maishu_chitu_service_1.Callback;\r\n    exports.Callbacks = maishu_chitu_service_1.Callbacks;\r\n    exports.ValueStore = maishu_chitu_service_1.ValueStore;\r\n    exports.Service = maishu_chitu_service_1.Service;\r\n}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),\n\t\t\t\t__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));\r\n\n\n//# sourceURL=webpack:///./out/index.js?");
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! ./Application */ "./out/Application.js"), __webpack_require__(/*! ./PageMaster */ "./out/PageMaster.js"), __webpack_require__(/*! ./Page */ "./out/Page.js"), __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, Application_1, PageMaster_1, Page_1, maishu_chitu_service_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Application = Application_1.Application;
+    exports.PageMaster = PageMaster_1.PageMaster;
+    exports.Page = Page_1.Page;
+    exports.Callback = maishu_chitu_service_1.Callback;
+    exports.Callbacks = maishu_chitu_service_1.Callbacks;
+    exports.ValueStore = maishu_chitu_service_1.ValueStore;
+    exports.Service = maishu_chitu_service_1.Service;
+}).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
 
 /***/ }),
 
@@ -157,8 +787,9 @@ eval("var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPAC
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("module.exports = __WEBPACK_EXTERNAL_MODULE_maishu_chitu_service__;\n\n//# sourceURL=webpack:///external_%22maishu-chitu-service%22?");
+module.exports = __WEBPACK_EXTERNAL_MODULE_maishu_chitu_service__;
 
 /***/ })
 
 /******/ })});;
+//# sourceMappingURL=index.js.map
