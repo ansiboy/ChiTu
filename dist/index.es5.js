@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v2.9.25
+ *  maishu-chitu v2.9.26
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -576,7 +576,13 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       key: "duplicateSiteMapNode",
       value: function duplicateSiteMapNode(name) {
         var msg = "The site map node ".concat(name, " is exists.");
-        return new Error(name);
+        return new Error(msg);
+      }
+    }, {
+      key: "unexpectedNullValue",
+      value: function unexpectedNullValue() {
+        var msg = "Unexpected null value.";
+        return new Error(msg);
       }
     }]);
 
@@ -607,7 +613,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1) {
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Errors */ "./out-es5/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Errors_1) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
@@ -694,9 +700,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       key: "close",
       value: function close() {
         this.on_closing();
-
-        this._element.remove();
-
+        var parentElement = this._element.parentElement;
+        if (parentElement == null) throw Errors_1.Errors.unexpectedNullValue();
+        parentElement.removeChild(this._element);
         this.on_closed();
         return Promise.resolve();
       }

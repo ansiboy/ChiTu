@@ -95,7 +95,11 @@ define(["require", "exports"], function (require, exports) {
         }
         static duplicateSiteMapNode(name) {
             let msg = `The site map node ${name} is exists.`;
-            return new Error(name);
+            return new Error(msg);
+        }
+        static unexpectedNullValue() {
+            let msg = `Unexpected null value.`;
+            return new Error(msg);
         }
     }
     exports.Errors = Errors;

@@ -6,7 +6,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-define(["require", "exports", "maishu-chitu-service"], function (require, exports, maishu_chitu_service_1) {
+define(["require", "exports", "maishu-chitu-service", "./Errors"], function (require, exports, maishu_chitu_service_1, Errors_1) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
@@ -93,9 +93,9 @@ define(["require", "exports", "maishu-chitu-service"], function (require, export
       key: "close",
       value: function close() {
         this.on_closing();
-
-        this._element.remove();
-
+        var parentElement = this._element.parentElement;
+        if (parentElement == null) throw Errors_1.Errors.unexpectedNullValue();
+        parentElement.removeChild(this._element);
         this.on_closed();
         return Promise.resolve();
       }

@@ -23,4 +23,5 @@ export declare class Errors {
     static resourceExists(resourceName: string, pageName: string): Error;
     static siteMapRootCanntNull(): Error;
     static duplicateSiteMapNode(name: string): Error;
+    static unexpectedNullValue(): Error;
 }

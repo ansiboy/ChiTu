@@ -1,4 +1,4 @@
-define(["require", "exports", "maishu-chitu-service"], function (require, exports, maishu_chitu_service_1) {
+define(["require", "exports", "maishu-chitu-service", "./Errors"], function (require, exports, maishu_chitu_service_1, Errors_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class Page {
@@ -52,7 +52,10 @@ define(["require", "exports", "maishu-chitu-service"], function (require, export
         }
         close() {
             this.on_closing();
-            this._element.remove();
+            let parentElement = this._element.parentElement;
+            if (parentElement == null)
+                throw Errors_1.Errors.unexpectedNullValue();
+            parentElement.removeChild(this._element);
             this.on_closed();
             return Promise.resolve();
         }

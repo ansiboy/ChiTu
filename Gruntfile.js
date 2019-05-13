@@ -1,5 +1,4 @@
-﻿let node_modules = 'node_modules'
-
+﻿
 const webpackES6Config = require('./webpack.config.js');
 let webpackES5Config = Object.assign({}, webpackES6Config)
 webpackES5Config.entry = __dirname + "/out-es5/index.js"//已多次提及的唯一入口文件
@@ -15,9 +14,6 @@ module.exports = function (grunt) {
             src: {
                 command: `tsc -p src`
             },
-            // webpack: {
-            //     command: `webpack`
-            // }
         },
         webpack: {
             es6: webpackES6Config,

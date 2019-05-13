@@ -161,7 +161,13 @@ define(["require", "exports"], function (require, exports) {
       key: "duplicateSiteMapNode",
       value: function duplicateSiteMapNode(name) {
         var msg = "The site map node ".concat(name, " is exists.");
-        return new Error(name);
+        return new Error(msg);
+      }
+    }, {
+      key: "unexpectedNullValue",
+      value: function unexpectedNullValue() {
+        var msg = "Unexpected null value.";
+        return new Error(msg);
       }
     }]);
 

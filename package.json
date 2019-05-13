@@ -10,7 +10,7 @@
     "url": "git+https://github.com/ansiboy/chitu.git"
   },
   "dependencies": {
-    "maishu-chitu-service": "^1.1.4"
+    "maishu-chitu-service": "^1.1.20"
   },
   "homepage": "https://github.com/ansiboy/chitu#readme",
   "description": "采用TypeScript编写的轻量级单页面类库，帮助开发人员编写易维护的大规模项目。采用面向对象，事件驱动的编程模式。",
@@ -33,5 +33,5 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "grunt"
   },
-  "version": "2.9.25"
+  "version": "2.9.26"
 }

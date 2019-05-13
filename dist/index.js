@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v2.9.25
+ *  maishu-chitu v2.9.26
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -416,7 +416,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         }
         static duplicateSiteMapNode(name) {
             let msg = `The site map node ${name} is exists.`;
-            return new Error(name);
+            return new Error(msg);
+        }
+        static unexpectedNullValue() {
+            let msg = `Unexpected null value.`;
+            return new Error(msg);
         }
     }
     exports.Errors = Errors;
@@ -433,7 +437,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1) {
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Errors */ "./out/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Errors_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class Page {
@@ -487,7 +491,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         }
         close() {
             this.on_closing();
-            this._element.remove();
+            let parentElement = this._element.parentElement;
+            if (parentElement == null)
+                throw Errors_1.Errors.unexpectedNullValue();
+            parentElement.removeChild(this._element);
             this.on_closed();
             return Promise.resolve();
         }
