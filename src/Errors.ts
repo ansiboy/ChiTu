@@ -92,7 +92,11 @@
     }
     public static duplicateSiteMapNode(name: string) {
         let msg = `The site map node ${name} is exists.`
-        return new Error(name);
+        return new Error(msg);
+    }
+    static unexpectedNullValue() {
+        let msg = `Unexpected null value.`
+        return new Error(msg);
     }
 }
 

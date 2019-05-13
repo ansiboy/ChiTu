@@ -1,5 +1,6 @@
 import { PageMaster } from "./PageMaster";
 import { IService, ServiceConstructor, Service, Callbacks, Callback1 } from "maishu-chitu-service";
+import { Errors } from "./Errors";
 
 export type PageData = { [key: string]: string | Function }
 
@@ -91,7 +92,13 @@ export class Page {
     }
     close(): Promise<any> {
         this.on_closing();
-        this._element.remove();
+        // this._element.remove();
+        let parentElement = this._element.parentElement as HTMLElement;
+        if (parentElement == null)
+            throw Errors.unexpectedNullValue()
+
+        parentElement.removeChild(this._element);
+
         this.on_closed();
         return Promise.resolve();
     }
