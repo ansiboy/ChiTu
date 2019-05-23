@@ -6,6 +6,7 @@ import { Errors } from "./Errors";
 export type StringPropertyNames<T> = { [K in keyof T]: T[K] extends string ? K : never }[keyof T];
 export type Action = ((page: Page, app: PageMaster) => void);
 export type SiteMapChildren<T extends PageNode> = { [key: string]: T }
+
 /**
  * 页面结点
  */
@@ -21,8 +22,7 @@ export interface PageNodeParser {
 
 const EmtpyStateData = "";
 const DefaultPageName = "index"
-function parseUrl(app: Application, url: string): { pageName: string, values: PageData } {
-    if (!app) throw Errors.argumentNull('app')
+export function parseUrl(url: string): { pageName: string, values: PageData } {
     if (!url) throw Errors.argumentNull('url')
 
     let sharpIndex = url.indexOf('#');
@@ -123,7 +123,7 @@ export class Application extends PageMaster {
         if (!url)
             throw Errors.argumentNull('url')
 
-        let routeData = parseUrl(this, url);
+        let routeData = parseUrl(url);
         return routeData;
     }
 
@@ -153,7 +153,7 @@ export class Application extends PageMaster {
             if (sharpIndex < 0) {
                 url = '#' + DefaultPageName
             }
-            this.showPageByUrl(url, true);
+            this.showPageByUrl(url);
         }
 
         showPage()
@@ -171,13 +171,13 @@ export class Application extends PageMaster {
      * 显示页面
      * @param url 页面的路径
      */
-    private showPageByUrl(url: string, fromCache: boolean): Page | null {
+    private showPageByUrl(url: string): Page | null {
         if (!url) throw Errors.argumentNull('url');
 
-        var routeData = this.parseUrl(url);
-        if (routeData == null) {
-            throw Errors.noneRouteMatched(url);
-        }
+        // var routeData = this.parseUrl(url);
+        // if (routeData == null) {
+        //     throw Errors.noneRouteMatched(url);
+        // }
 
         let tempPageData = this.fetchTemplatePageData();
 
@@ -204,12 +204,12 @@ export class Application extends PageMaster {
         }
         //==========================================
 
-        if (result == null || result.name != routeData.pageName) {
-            let args = routeData.values || {};
-            if (tempPageData) {
-                args = Object.assign(args, tempPageData);
-            }
-            result = this.showPage(routeData.pageName, args);
+        if (result == null || result.url != url) {
+            // let args = routeData.values || {};
+            // if (tempPageData) {
+            //     args = Object.assign(args, tempPageData);
+            // }
+            result = this.showPage(url);
         }
         return result;
     }

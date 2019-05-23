@@ -1,6 +1,6 @@
 import { Callbacks, Callback1, Callback2 } from "maishu-chitu-service";
 import { Page, PageConstructor, PageDisplayConstructor, PageDisplayerImplement } from "./Page";
-import { PageNodeParser, PageNode, StringPropertyNames, Action } from "./Application";
+import { PageNodeParser, PageNode, StringPropertyNames, Action, parseUrl } from "./Application";
 import { Errors } from "./Errors";
 
 /**
@@ -22,7 +22,7 @@ export class PageMaster {
     protected pageType: PageConstructor = Page;
     protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
 
-    private cachePages: { [name: string]: Page } = {};
+    private cachePages: { [pageUrl: string]: Page } = {};
     private page_stack = new Array<Page>();
     private container: HTMLElement;
     private nodes: { [name: string]: PageNode } = {}
@@ -115,34 +115,35 @@ export class PageMaster {
         return null;
     }
 
-    private getPage(node: PageNode, values?: any): { page: Page, isNew: boolean } {
-        console.assert(node != null);
+    private getPage(pageUrl: string, values?: any): { page: Page, isNew: boolean } {
+        // console.assert(node != null);
+        if (!pageUrl) throw Errors.argumentNull('pageUrl')
 
         values = values || {};
-        let pageName = node.name;
-        let cachePage = this.cachePages[pageName];
+        // let pageName = node.name;
+        let cachePage = this.cachePages[pageUrl];
         if (cachePage != null) {
             cachePage.data = values || {} //Object.assign(cachePage.data || {}, values);
             return { page: cachePage, isNew: false };
         }
 
-        let page = this.createPage(pageName, values);
-        this.cachePages[pageName] = page;
+        let page = this.createPage(pageUrl, values);
+        this.cachePages[pageUrl] = page;
 
         this.on_pageCreated(page);
         return { page, isNew: true };
     }
 
-    protected createPage(pageName: string, values?: any): Page {
-        if (!pageName) throw Errors.argumentNull('pageName')
+    protected createPage(pageUrl: string, values?: any): Page {
+        if (!pageUrl) throw Errors.argumentNull('pageUrl')
         values = values || {}
-        let element = this.createPageElement(pageName);
+        let element = this.createPageElement(pageUrl);
         let displayer = new this.pageDisplayType(this);
 
         console.assert(this.pageType != null);
         let page = new this.pageType({
             app: this,
-            name: pageName,
+            url: pageUrl,
             data: values,
             displayer,
             element,
@@ -173,33 +174,29 @@ export class PageMaster {
 
     /**
      * 显示页面
-     * @param pageName 页面名称
+     * @param pageUrl 页面名称
      * @param args 传递给页面的参数
      * @param forceRender 是否强制重新渲染页面，是表示强制重新渲染
      */
-    public showPage(pageName: string, args?: object, forceRender?: boolean): Page {
+    public showPage(pageUrl: string, args?: object, forceRender?: boolean): Page {
 
         args = args || {}
         forceRender = forceRender == null ? false : true
 
-        if (!pageName) throw Errors.argumentNull('pageName');
+        if (!pageUrl) throw Errors.argumentNull('pageName');
 
-        let node = this.findSiteMapNode(pageName);
-        if (node == null)
-            throw Errors.pageNodeNotExists(pageName)
+        // let node = this.findSiteMapNode(pageUrl);
+        // if (node == null)
+        //     throw Errors.pageNodeNotExists(pageUrl)
 
-        if (this.currentPage != null && this.currentPage.name == pageName)
+        if (this.currentPage != null && this.currentPage.url == pageUrl)
             return this.currentPage;
 
-        let { page, isNew } = this.getPage(node, args);
+        let { page, isNew } = this.getPage(pageUrl, args);
         if (isNew || forceRender) {
-            let siteMapNode = this.findSiteMapNode(pageName);
-            if (siteMapNode == null)
-                throw Errors.pageNodeNotExists(pageName);
-
-            let action = siteMapNode.action;
+            let action = this.findPageAction(pageUrl) //siteMapNode.action;
             if (action == null)
-                throw Errors.actionCanntNull(pageName);
+                throw Errors.actionCanntNull(pageUrl);
 
             action(page, this)
         }
@@ -219,7 +216,7 @@ export class PageMaster {
 
         page.close()
 
-        delete this.cachePages[page.name];
+        delete this.cachePages[page.url];
         this.page_stack = this.page_stack.filter(o => o != page);
     }
 
@@ -227,7 +224,21 @@ export class PageMaster {
         this.page_stack.push(page);
     }
 
-    protected findSiteMapNode(pageName: string): PageNode | null {
+    protected findPageAction(pageUrl: string): Action {
+        let routeData = parseUrl(pageUrl)
+        let pageName = routeData.pageName
+        let node = this.findSiteMapNode(pageName)
+        if (node == null)
+            throw Errors.pageNodeNotExists(pageName)
+
+        let action = node.action;
+        if (action == null)
+            throw Errors.actionCanntNull(pageName);
+
+        return node.action
+    }
+
+    private findSiteMapNode(pageName: string): PageNode | null {
         if (this.nodes[pageName])
             return this.nodes[pageName]
 

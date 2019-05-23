@@ -1,6 +1,7 @@
 import { PageMaster } from "./PageMaster";
 import { IService, ServiceConstructor, Service, Callbacks, Callback1 } from "maishu-chitu-service";
 import { Errors } from "./Errors";
+import { parseUrl } from "./Application";
 
 export type PageData = { [key: string]: string | Function }
 
@@ -18,8 +19,9 @@ export interface PageParams {
     // action: Action,
     element: HTMLElement,
     displayer: PageDisplayer,
-    name: string,
+    // name: string,
     data: PageData,
+    url: string
 }
 
 /**
@@ -32,6 +34,7 @@ export class Page {
     private _displayer: PageDisplayer;
     // private _action: Action;
     private _name: string
+    private _url: string
 
     static tagName = 'div';
 
@@ -53,8 +56,10 @@ export class Page {
         this._element = params.element;
         this._app = params.app;
         this._displayer = params.displayer;
-        this.data = params.data
-        this._name = params.name;
+        let routeData = parseUrl(params.url)
+        this.data = Object.assign(routeData.values, params.data || {})
+        this._name = routeData.pageName;
+        this._url = params.url
     }
     private on_showing() {
         return this.showing.fire(this, this.data);
@@ -128,6 +133,10 @@ export class Page {
      */
     get name(): string {
         return this._name;
+    }
+
+    get url(): string {
+        return this._url
     }
 
     get app() {
