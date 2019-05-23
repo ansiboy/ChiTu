@@ -18,6 +18,10 @@ export interface PageNodeParser {
     };
     parse?: (pageName: string) => PageNode;
 }
+export declare function parseUrl(url: string): {
+    pageName: string;
+    values: PageData;
+};
 export declare class Application extends PageMaster {
     private _runned;
     private closeCurrentOnBack;

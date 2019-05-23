@@ -3,9 +3,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     Object.defineProperty(exports, "__esModule", { value: true });
     const EmtpyStateData = "";
     const DefaultPageName = "index";
-    function parseUrl(app, url) {
-        if (!app)
-            throw Errors_1.Errors.argumentNull('app');
+    function parseUrl(url) {
         if (!url)
             throw Errors_1.Errors.argumentNull('url');
         let sharpIndex = url.indexOf('#');
@@ -38,6 +36,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         let pageName = routePath;
         return { pageName, values };
     }
+    exports.parseUrl = parseUrl;
     function pareeUrlQuery(query) {
         let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
         let urlParams = {};
@@ -71,7 +70,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         parseUrl(url) {
             if (!url)
                 throw Errors_1.Errors.argumentNull('url');
-            let routeData = parseUrl(this, url);
+            let routeData = parseUrl(url);
             return routeData;
         }
         createUrl(pageName, values) {
@@ -90,7 +89,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
                 if (sharpIndex < 0) {
                     url = '#' + DefaultPageName;
                 }
-                this.showPageByUrl(url, true);
+                this.showPageByUrl(url);
             };
             showPage();
             window.addEventListener('hashchange', () => {
@@ -98,13 +97,9 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
             });
             this._runned = true;
         }
-        showPageByUrl(url, fromCache) {
+        showPageByUrl(url) {
             if (!url)
                 throw Errors_1.Errors.argumentNull('url');
-            var routeData = this.parseUrl(url);
-            if (routeData == null) {
-                throw Errors_1.Errors.noneRouteMatched(url);
-            }
             let tempPageData = this.fetchTemplatePageData();
             let result = null;
             if (this.closeCurrentOnBack == true) {
@@ -123,12 +118,8 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
                 page.hide(this.currentPage);
                 result = this.currentPage;
             }
-            if (result == null || result.name != routeData.pageName) {
-                let args = routeData.values || {};
-                if (tempPageData) {
-                    args = Object.assign(args, tempPageData);
-                }
-                result = this.showPage(routeData.pageName, args);
+            if (result == null || result.url != url) {
+                result = this.showPage(url);
             }
             return result;
         }

@@ -107,9 +107,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
     Object.defineProperty(exports, "__esModule", { value: true });
     const EmtpyStateData = "";
     const DefaultPageName = "index";
-    function parseUrl(app, url) {
-        if (!app)
-            throw Errors_1.Errors.argumentNull('app');
+    function parseUrl(url) {
         if (!url)
             throw Errors_1.Errors.argumentNull('url');
         let sharpIndex = url.indexOf('#');
@@ -142,6 +140,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         let pageName = routePath;
         return { pageName, values };
     }
+    exports.parseUrl = parseUrl;
     function pareeUrlQuery(query) {
         let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
         let urlParams = {};
@@ -175,7 +174,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         parseUrl(url) {
             if (!url)
                 throw Errors_1.Errors.argumentNull('url');
-            let routeData = parseUrl(this, url);
+            let routeData = parseUrl(url);
             return routeData;
         }
         createUrl(pageName, values) {
@@ -194,7 +193,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                 if (sharpIndex < 0) {
                     url = '#' + DefaultPageName;
                 }
-                this.showPageByUrl(url, true);
+                this.showPageByUrl(url);
             };
             showPage();
             window.addEventListener('hashchange', () => {
@@ -202,13 +201,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             });
             this._runned = true;
         }
-        showPageByUrl(url, fromCache) {
+        showPageByUrl(url) {
             if (!url)
                 throw Errors_1.Errors.argumentNull('url');
-            var routeData = this.parseUrl(url);
-            if (routeData == null) {
-                throw Errors_1.Errors.noneRouteMatched(url);
-            }
             let tempPageData = this.fetchTemplatePageData();
             let result = null;
             if (this.closeCurrentOnBack == true) {
@@ -227,12 +222,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                 page.hide(this.currentPage);
                 result = this.currentPage;
             }
-            if (result == null || result.name != routeData.pageName) {
-                let args = routeData.values || {};
-                if (tempPageData) {
-                    args = Object.assign(args, tempPageData);
-                }
-                result = this.showPage(routeData.pageName, args);
+            if (result == null || result.url != url) {
+                result = this.showPage(url);
             }
             return result;
         }
@@ -437,7 +428,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Errors */ "./out/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Errors_1) {
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Errors */ "./out/Errors.js"), __webpack_require__(/*! ./Application */ "./out/Application.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Errors_1, Application_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class Page {
@@ -452,8 +443,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             this._element = params.element;
             this._app = params.app;
             this._displayer = params.displayer;
-            this.data = params.data;
-            this._name = params.name;
+            let routeData = Application_1.parseUrl(params.url);
+            this.data = Object.assign(routeData.values, params.data || {});
+            this._name = routeData.pageName;
+            this._url = params.url;
         }
         on_showing() {
             return this.showing.fire(this, this.data);
@@ -512,6 +505,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         get name() {
             return this._name;
         }
+        get url() {
+            return this._url;
+        }
         get app() {
             return this._app;
         }
@@ -556,7 +552,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Page */ "./out/Page.js"), __webpack_require__(/*! ./Errors */ "./out/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Page_1, Errors_1) {
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Page */ "./out/Page.js"), __webpack_require__(/*! ./Application */ "./out/Application.js"), __webpack_require__(/*! ./Errors */ "./out/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Page_1, Application_1, Errors_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class PageMaster {
@@ -630,30 +626,30 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 return this.page_stack[this.page_stack.length - 1];
             return null;
         }
-        getPage(node, values) {
-            console.assert(node != null);
+        getPage(pageUrl, values) {
+            if (!pageUrl)
+                throw Errors_1.Errors.argumentNull('pageUrl');
             values = values || {};
-            let pageName = node.name;
-            let cachePage = this.cachePages[pageName];
+            let cachePage = this.cachePages[pageUrl];
             if (cachePage != null) {
                 cachePage.data = values || {};
                 return { page: cachePage, isNew: false };
             }
-            let page = this.createPage(pageName, values);
-            this.cachePages[pageName] = page;
+            let page = this.createPage(pageUrl, values);
+            this.cachePages[pageUrl] = page;
             this.on_pageCreated(page);
             return { page, isNew: true };
         }
-        createPage(pageName, values) {
-            if (!pageName)
-                throw Errors_1.Errors.argumentNull('pageName');
+        createPage(pageUrl, values) {
+            if (!pageUrl)
+                throw Errors_1.Errors.argumentNull('pageUrl');
             values = values || {};
-            let element = this.createPageElement(pageName);
+            let element = this.createPageElement(pageUrl);
             let displayer = new this.pageDisplayType(this);
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
-                name: pageName,
+                url: pageUrl,
                 data: values,
                 displayer,
                 element,
@@ -677,24 +673,18 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             this.container.appendChild(element);
             return element;
         }
-        showPage(pageName, args, forceRender) {
+        showPage(pageUrl, args, forceRender) {
             args = args || {};
             forceRender = forceRender == null ? false : true;
-            if (!pageName)
+            if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageName');
-            let node = this.findSiteMapNode(pageName);
-            if (node == null)
-                throw Errors_1.Errors.pageNodeNotExists(pageName);
-            if (this.currentPage != null && this.currentPage.name == pageName)
+            if (this.currentPage != null && this.currentPage.url == pageUrl)
                 return this.currentPage;
-            let { page, isNew } = this.getPage(node, args);
+            let { page, isNew } = this.getPage(pageUrl, args);
             if (isNew || forceRender) {
-                let siteMapNode = this.findSiteMapNode(pageName);
-                if (siteMapNode == null)
-                    throw Errors_1.Errors.pageNodeNotExists(pageName);
-                let action = siteMapNode.action;
+                let action = this.findPageAction(pageUrl);
                 if (action == null)
-                    throw Errors_1.Errors.actionCanntNull(pageName);
+                    throw Errors_1.Errors.actionCanntNull(pageUrl);
                 action(page, this);
             }
             page.show();
@@ -706,11 +696,22 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             if (page == null)
                 throw Errors_1.Errors.argumentNull('page');
             page.close();
-            delete this.cachePages[page.name];
+            delete this.cachePages[page.url];
             this.page_stack = this.page_stack.filter(o => o != page);
         }
         pushPage(page) {
             this.page_stack.push(page);
+        }
+        findPageAction(pageUrl) {
+            let routeData = Application_1.parseUrl(pageUrl);
+            let pageName = routeData.pageName;
+            let node = this.findSiteMapNode(pageName);
+            if (node == null)
+                throw Errors_1.Errors.pageNodeNotExists(pageName);
+            let action = node.action;
+            if (action == null)
+                throw Errors_1.Errors.actionCanntNull(pageName);
+            return node.action;
         }
         findSiteMapNode(pageName) {
             if (this.nodes[pageName])

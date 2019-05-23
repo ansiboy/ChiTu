@@ -27,8 +27,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
   var EmtpyStateData = "";
   var DefaultPageName = "index";
 
-  function _parseUrl(app, url) {
-    if (!app) throw Errors_1.Errors.argumentNull('app');
+  function _parseUrl(url) {
     if (!url) throw Errors_1.Errors.argumentNull('url');
     var sharpIndex = url.indexOf('#');
     var routeString;
@@ -63,6 +62,8 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       values: values
     };
   }
+
+  exports.parseUrl = _parseUrl;
 
   function pareeUrlQuery(query) {
     var match,
@@ -124,7 +125,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       value: function parseUrl(url) {
         if (!url) throw Errors_1.Errors.argumentNull('url');
 
-        var routeData = _parseUrl(this, url);
+        var routeData = _parseUrl(url);
 
         return routeData;
       }
@@ -153,7 +154,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
             url = '#' + DefaultPageName;
           }
 
-          _this2.showPageByUrl(url, true);
+          _this2.showPageByUrl(url);
         };
 
         showPage();
@@ -164,14 +165,8 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       }
     }, {
       key: "showPageByUrl",
-      value: function showPageByUrl(url, fromCache) {
+      value: function showPageByUrl(url) {
         if (!url) throw Errors_1.Errors.argumentNull('url');
-        var routeData = this.parseUrl(url);
-
-        if (routeData == null) {
-          throw Errors_1.Errors.noneRouteMatched(url);
-        }
-
         var tempPageData = this.fetchTemplatePageData();
         var result = null;
 
@@ -187,14 +182,8 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
           result = this.currentPage;
         }
 
-        if (result == null || result.name != routeData.pageName) {
-          var args = routeData.values || {};
-
-          if (tempPageData) {
-            args = Object.assign(args, tempPageData);
-          }
-
-          result = this.showPage(routeData.pageName, args);
+        if (result == null || result.url != url) {
+          result = this.showPage(url);
         }
 
         return result;

@@ -6,7 +6,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], function (require, exports, maishu_chitu_service_1, Page_1, Errors_1) {
+define(["require", "exports", "maishu-chitu-service", "./Page", "./Application", "./Errors"], function (require, exports, maishu_chitu_service_1, Page_1, Application_1, Errors_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class PageMaster {
@@ -80,30 +80,30 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
                 return this.page_stack[this.page_stack.length - 1];
             return null;
         }
-        getPage(node, values) {
-            console.assert(node != null);
+        getPage(pageUrl, values) {
+            if (!pageUrl)
+                throw Errors_1.Errors.argumentNull('pageUrl');
             values = values || {};
-            let pageName = node.name;
-            let cachePage = this.cachePages[pageName];
+            let cachePage = this.cachePages[pageUrl];
             if (cachePage != null) {
                 cachePage.data = values || {};
                 return { page: cachePage, isNew: false };
             }
-            let page = this.createPage(pageName, values);
-            this.cachePages[pageName] = page;
+            let page = this.createPage(pageUrl, values);
+            this.cachePages[pageUrl] = page;
             this.on_pageCreated(page);
             return { page, isNew: true };
         }
-        createPage(pageName, values) {
-            if (!pageName)
-                throw Errors_1.Errors.argumentNull('pageName');
+        createPage(pageUrl, values) {
+            if (!pageUrl)
+                throw Errors_1.Errors.argumentNull('pageUrl');
             values = values || {};
-            let element = this.createPageElement(pageName);
+            let element = this.createPageElement(pageUrl);
             let displayer = new this.pageDisplayType(this);
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
-                name: pageName,
+                url: pageUrl,
                 data: values,
                 displayer,
                 element,
@@ -127,24 +127,18 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
             this.container.appendChild(element);
             return element;
         }
-        showPage(pageName, args, forceRender) {
+        showPage(pageUrl, args, forceRender) {
             args = args || {};
             forceRender = forceRender == null ? false : true;
-            if (!pageName)
+            if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageName');
-            let node = this.findSiteMapNode(pageName);
-            if (node == null)
-                throw Errors_1.Errors.pageNodeNotExists(pageName);
-            if (this.currentPage != null && this.currentPage.name == pageName)
+            if (this.currentPage != null && this.currentPage.url == pageUrl)
                 return this.currentPage;
-            let { page, isNew } = this.getPage(node, args);
+            let { page, isNew } = this.getPage(pageUrl, args);
             if (isNew || forceRender) {
-                let siteMapNode = this.findSiteMapNode(pageName);
-                if (siteMapNode == null)
-                    throw Errors_1.Errors.pageNodeNotExists(pageName);
-                let action = siteMapNode.action;
+                let action = this.findPageAction(pageUrl);
                 if (action == null)
-                    throw Errors_1.Errors.actionCanntNull(pageName);
+                    throw Errors_1.Errors.actionCanntNull(pageUrl);
                 action(page, this);
             }
             page.show();
@@ -156,11 +150,22 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
             if (page == null)
                 throw Errors_1.Errors.argumentNull('page');
             page.close();
-            delete this.cachePages[page.name];
+            delete this.cachePages[page.url];
             this.page_stack = this.page_stack.filter(o => o != page);
         }
         pushPage(page) {
             this.page_stack.push(page);
+        }
+        findPageAction(pageUrl) {
+            let routeData = Application_1.parseUrl(pageUrl);
+            let pageName = routeData.pageName;
+            let node = this.findSiteMapNode(pageName);
+            if (node == null)
+                throw Errors_1.Errors.pageNodeNotExists(pageName);
+            let action = node.action;
+            if (action == null)
+                throw Errors_1.Errors.actionCanntNull(pageName);
+            return node.action;
         }
         findSiteMapNode(pageName) {
             if (this.nodes[pageName])

@@ -6,7 +6,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-define(["require", "exports", "maishu-chitu-service", "./Errors"], function (require, exports, maishu_chitu_service_1, Errors_1) {
+define(["require", "exports", "maishu-chitu-service", "./Errors", "./Application"], function (require, exports, maishu_chitu_service_1, Errors_1, Application_1) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
@@ -29,8 +29,10 @@ define(["require", "exports", "maishu-chitu-service", "./Errors"], function (req
       this._element = params.element;
       this._app = params.app;
       this._displayer = params.displayer;
-      this.data = params.data;
-      this._name = params.name;
+      var routeData = Application_1.parseUrl(params.url);
+      this.data = Object.assign(routeData.values, params.data || {});
+      this._name = routeData.pageName;
+      this._url = params.url;
     }
 
     _createClass(Page, [{
@@ -120,6 +122,11 @@ define(["require", "exports", "maishu-chitu-service", "./Errors"], function (req
       key: "name",
       get: function get() {
         return this._name;
+      }
+    }, {
+      key: "url",
+      get: function get() {
+        return this._url;
       }
     }, {
       key: "app",

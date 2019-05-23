@@ -14,14 +14,15 @@ export interface PageParams {
     app: PageMaster;
     element: HTMLElement;
     displayer: PageDisplayer;
-    name: string;
     data: PageData;
+    url: string;
 }
 export declare class Page {
     private _element;
     private _app;
     private _displayer;
     private _name;
+    private _url;
     static tagName: string;
     data: PageData;
     showing: Callback1<this, PageData>;
@@ -43,6 +44,7 @@ export declare class Page {
     createService<T extends IService>(type?: ServiceConstructor<T>): T;
     readonly element: HTMLElement;
     readonly name: string;
+    readonly url: string;
     readonly app: PageMaster;
 }
 export interface PageConstructor {

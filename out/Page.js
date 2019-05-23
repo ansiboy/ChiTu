@@ -1,4 +1,4 @@
-define(["require", "exports", "maishu-chitu-service", "./Errors"], function (require, exports, maishu_chitu_service_1, Errors_1) {
+define(["require", "exports", "maishu-chitu-service", "./Errors", "./Application"], function (require, exports, maishu_chitu_service_1, Errors_1, Application_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class Page {
@@ -13,8 +13,10 @@ define(["require", "exports", "maishu-chitu-service", "./Errors"], function (req
             this._element = params.element;
             this._app = params.app;
             this._displayer = params.displayer;
-            this.data = params.data;
-            this._name = params.name;
+            let routeData = Application_1.parseUrl(params.url);
+            this.data = Object.assign(routeData.values, params.data || {});
+            this._name = routeData.pageName;
+            this._url = params.url;
         }
         on_showing() {
             return this.showing.fire(this, this.data);
@@ -72,6 +74,9 @@ define(["require", "exports", "maishu-chitu-service", "./Errors"], function (req
         }
         get name() {
             return this._name;
+        }
+        get url() {
+            return this._url;
         }
         get app() {
             return this._app;

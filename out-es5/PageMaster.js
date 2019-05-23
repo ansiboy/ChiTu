@@ -34,7 +34,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
   });
 };
 
-define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], function (require, exports, maishu_chitu_service_1, Page_1, Errors_1) {
+define(["require", "exports", "maishu-chitu-service", "./Page", "./Application", "./Errors"], function (require, exports, maishu_chitu_service_1, Page_1, Application_1, Errors_1) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
@@ -163,11 +163,10 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
       }
     }, {
       key: "getPage",
-      value: function getPage(node, values) {
-        console.assert(node != null);
+      value: function getPage(pageUrl, values) {
+        if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
         values = values || {};
-        var pageName = node.name;
-        var cachePage = this.cachePages[pageName];
+        var cachePage = this.cachePages[pageUrl];
 
         if (cachePage != null) {
           cachePage.data = values || {};
@@ -177,8 +176,8 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
           };
         }
 
-        var page = this.createPage(pageName, values);
-        this.cachePages[pageName] = page;
+        var page = this.createPage(pageUrl, values);
+        this.cachePages[pageUrl] = page;
         this.on_pageCreated(page);
         return {
           page: page,
@@ -187,17 +186,17 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
       }
     }, {
       key: "createPage",
-      value: function createPage(pageName, values) {
+      value: function createPage(pageUrl, values) {
         var _this3 = this;
 
-        if (!pageName) throw Errors_1.Errors.argumentNull('pageName');
+        if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
         values = values || {};
-        var element = this.createPageElement(pageName);
+        var element = this.createPageElement(pageUrl);
         var displayer = new this.pageDisplayType(this);
         console.assert(this.pageType != null);
         var page = new this.pageType({
           app: this,
-          name: pageName,
+          url: pageUrl,
           data: values,
           displayer: displayer,
           element: element
@@ -228,23 +227,19 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
       }
     }, {
       key: "showPage",
-      value: function showPage(pageName, args, forceRender) {
+      value: function showPage(pageUrl, args, forceRender) {
         args = args || {};
         forceRender = forceRender == null ? false : true;
-        if (!pageName) throw Errors_1.Errors.argumentNull('pageName');
-        var node = this.findSiteMapNode(pageName);
-        if (node == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
-        if (this.currentPage != null && this.currentPage.name == pageName) return this.currentPage;
+        if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
+        if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
 
-        var _this$getPage = this.getPage(node, args),
+        var _this$getPage = this.getPage(pageUrl, args),
             page = _this$getPage.page,
             isNew = _this$getPage.isNew;
 
         if (isNew || forceRender) {
-          var siteMapNode = this.findSiteMapNode(pageName);
-          if (siteMapNode == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
-          var action = siteMapNode.action;
-          if (action == null) throw Errors_1.Errors.actionCanntNull(pageName);
+          var action = this.findPageAction(pageUrl);
+          if (action == null) throw Errors_1.Errors.actionCanntNull(pageUrl);
           action(page, this);
         }
 
@@ -258,7 +253,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
       value: function closePage(page) {
         if (page == null) throw Errors_1.Errors.argumentNull('page');
         page.close();
-        delete this.cachePages[page.name];
+        delete this.cachePages[page.url];
         this.page_stack = this.page_stack.filter(function (o) {
           return o != page;
         });
@@ -267,6 +262,17 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Errors"], fun
       key: "pushPage",
       value: function pushPage(page) {
         this.page_stack.push(page);
+      }
+    }, {
+      key: "findPageAction",
+      value: function findPageAction(pageUrl) {
+        var routeData = Application_1.parseUrl(pageUrl);
+        var pageName = routeData.pageName;
+        var node = this.findSiteMapNode(pageName);
+        if (node == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
+        var action = node.action;
+        if (action == null) throw Errors_1.Errors.actionCanntNull(pageName);
+        return node.action;
       }
     }, {
       key: "findSiteMapNode",

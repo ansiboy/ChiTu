@@ -132,8 +132,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
   var EmtpyStateData = "";
   var DefaultPageName = "index";
 
-  function _parseUrl(app, url) {
-    if (!app) throw Errors_1.Errors.argumentNull('app');
+  function _parseUrl(url) {
     if (!url) throw Errors_1.Errors.argumentNull('url');
     var sharpIndex = url.indexOf('#');
     var routeString;
@@ -168,6 +167,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       values: values
     };
   }
+
+  exports.parseUrl = _parseUrl;
 
   function pareeUrlQuery(query) {
     var match,
@@ -229,7 +230,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       value: function parseUrl(url) {
         if (!url) throw Errors_1.Errors.argumentNull('url');
 
-        var routeData = _parseUrl(this, url);
+        var routeData = _parseUrl(url);
 
         return routeData;
       }
@@ -258,7 +259,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
             url = '#' + DefaultPageName;
           }
 
-          _this2.showPageByUrl(url, true);
+          _this2.showPageByUrl(url);
         };
 
         showPage();
@@ -269,14 +270,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       }
     }, {
       key: "showPageByUrl",
-      value: function showPageByUrl(url, fromCache) {
+      value: function showPageByUrl(url) {
         if (!url) throw Errors_1.Errors.argumentNull('url');
-        var routeData = this.parseUrl(url);
-
-        if (routeData == null) {
-          throw Errors_1.Errors.noneRouteMatched(url);
-        }
-
         var tempPageData = this.fetchTemplatePageData();
         var result = null;
 
@@ -292,14 +287,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
           result = this.currentPage;
         }
 
-        if (result == null || result.name != routeData.pageName) {
-          var args = routeData.values || {};
-
-          if (tempPageData) {
-            args = Object.assign(args, tempPageData);
-          }
-
-          result = this.showPage(routeData.pageName, args);
+        if (result == null || result.url != url) {
+          result = this.showPage(url);
         }
 
         return result;
@@ -613,7 +602,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Errors */ "./out-es5/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Errors_1) {
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Errors */ "./out-es5/Errors.js"), __webpack_require__(/*! ./Application */ "./out-es5/Application.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Errors_1, Application_1) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
@@ -636,8 +625,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       this._element = params.element;
       this._app = params.app;
       this._displayer = params.displayer;
-      this.data = params.data;
-      this._name = params.name;
+      var routeData = Application_1.parseUrl(params.url);
+      this.data = Object.assign(routeData.values, params.data || {});
+      this._name = routeData.pageName;
+      this._url = params.url;
     }
 
     _createClass(Page, [{
@@ -727,6 +718,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       key: "name",
       get: function get() {
         return this._name;
+      }
+    }, {
+      key: "url",
+      get: function get() {
+        return this._url;
       }
     }, {
       key: "app",
@@ -827,7 +823,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
   });
 };
 
-!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Page */ "./out-es5/Page.js"), __webpack_require__(/*! ./Errors */ "./out-es5/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Page_1, Errors_1) {
+!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./Page */ "./out-es5/Page.js"), __webpack_require__(/*! ./Application */ "./out-es5/Application.js"), __webpack_require__(/*! ./Errors */ "./out-es5/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, Page_1, Application_1, Errors_1) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
@@ -956,11 +952,10 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       }
     }, {
       key: "getPage",
-      value: function getPage(node, values) {
-        console.assert(node != null);
+      value: function getPage(pageUrl, values) {
+        if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
         values = values || {};
-        var pageName = node.name;
-        var cachePage = this.cachePages[pageName];
+        var cachePage = this.cachePages[pageUrl];
 
         if (cachePage != null) {
           cachePage.data = values || {};
@@ -970,8 +965,8 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
           };
         }
 
-        var page = this.createPage(pageName, values);
-        this.cachePages[pageName] = page;
+        var page = this.createPage(pageUrl, values);
+        this.cachePages[pageUrl] = page;
         this.on_pageCreated(page);
         return {
           page: page,
@@ -980,17 +975,17 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       }
     }, {
       key: "createPage",
-      value: function createPage(pageName, values) {
+      value: function createPage(pageUrl, values) {
         var _this3 = this;
 
-        if (!pageName) throw Errors_1.Errors.argumentNull('pageName');
+        if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
         values = values || {};
-        var element = this.createPageElement(pageName);
+        var element = this.createPageElement(pageUrl);
         var displayer = new this.pageDisplayType(this);
         console.assert(this.pageType != null);
         var page = new this.pageType({
           app: this,
-          name: pageName,
+          url: pageUrl,
           data: values,
           displayer: displayer,
           element: element
@@ -1021,23 +1016,19 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       }
     }, {
       key: "showPage",
-      value: function showPage(pageName, args, forceRender) {
+      value: function showPage(pageUrl, args, forceRender) {
         args = args || {};
         forceRender = forceRender == null ? false : true;
-        if (!pageName) throw Errors_1.Errors.argumentNull('pageName');
-        var node = this.findSiteMapNode(pageName);
-        if (node == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
-        if (this.currentPage != null && this.currentPage.name == pageName) return this.currentPage;
+        if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
+        if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
 
-        var _this$getPage = this.getPage(node, args),
+        var _this$getPage = this.getPage(pageUrl, args),
             page = _this$getPage.page,
             isNew = _this$getPage.isNew;
 
         if (isNew || forceRender) {
-          var siteMapNode = this.findSiteMapNode(pageName);
-          if (siteMapNode == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
-          var action = siteMapNode.action;
-          if (action == null) throw Errors_1.Errors.actionCanntNull(pageName);
+          var action = this.findPageAction(pageUrl);
+          if (action == null) throw Errors_1.Errors.actionCanntNull(pageUrl);
           action(page, this);
         }
 
@@ -1051,7 +1042,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       value: function closePage(page) {
         if (page == null) throw Errors_1.Errors.argumentNull('page');
         page.close();
-        delete this.cachePages[page.name];
+        delete this.cachePages[page.url];
         this.page_stack = this.page_stack.filter(function (o) {
           return o != page;
         });
@@ -1060,6 +1051,17 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       key: "pushPage",
       value: function pushPage(page) {
         this.page_stack.push(page);
+      }
+    }, {
+      key: "findPageAction",
+      value: function findPageAction(pageUrl) {
+        var routeData = Application_1.parseUrl(pageUrl);
+        var pageName = routeData.pageName;
+        var node = this.findSiteMapNode(pageName);
+        if (node == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
+        var action = node.action;
+        if (action == null) throw Errors_1.Errors.actionCanntNull(pageName);
+        return node.action;
       }
     }, {
       key: "findSiteMapNode",
