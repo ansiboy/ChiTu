@@ -26,6 +26,7 @@ export class PageMaster {
     private page_stack = new Array<Page>();
     private container: HTMLElement;
     private nodes: { [name: string]: PageNode } = {}
+    private MAX_PAGE_COUNT = 100
 
     /** 
      * 错误事件 
@@ -116,14 +117,12 @@ export class PageMaster {
     }
 
     private getPage(pageUrl: string, values?: any): { page: Page, isNew: boolean } {
-        // console.assert(node != null);
         if (!pageUrl) throw Errors.argumentNull('pageUrl')
 
         values = values || {};
-        // let pageName = node.name;
         let cachePage = this.cachePages[pageUrl];
         if (cachePage != null) {
-            cachePage.data = values || {} //Object.assign(cachePage.data || {}, values);
+            cachePage.data = values || {}
             return { page: cachePage, isNew: false };
         }
 
@@ -185,16 +184,12 @@ export class PageMaster {
 
         if (!pageUrl) throw Errors.argumentNull('pageName');
 
-        // let node = this.findSiteMapNode(pageUrl);
-        // if (node == null)
-        //     throw Errors.pageNodeNotExists(pageUrl)
-
         if (this.currentPage != null && this.currentPage.url == pageUrl)
             return this.currentPage;
 
         let { page, isNew } = this.getPage(pageUrl, args);
         if (isNew || forceRender) {
-            let action = this.findPageAction(pageUrl) //siteMapNode.action;
+            let action = this.findPageAction(pageUrl)
             if (action == null)
                 throw Errors.actionCanntNull(pageUrl);
 
@@ -222,6 +217,11 @@ export class PageMaster {
 
     private pushPage(page: Page) {
         this.page_stack.push(page);
+        if (this.page_stack.length > this.MAX_PAGE_COUNT) {
+            let page = this.page_stack.shift()
+            if (page)
+                this.closePage(page)
+        }
     }
 
     protected findPageAction(pageUrl: string): Action {
@@ -268,7 +268,6 @@ export class PageMaster {
         if (page == null)
             return;
 
-        // page.close();
         this.closePage(page)
         if (this.currentPage) {
             if (passData) {
