@@ -19,6 +19,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             this.cachePages = {};
             this.page_stack = new Array();
             this.nodes = {};
+            this.MAX_PAGE_COUNT = 100;
             this.error = maishu_chitu_service_1.Callbacks();
             this.parser = parser || this.defaultPageNodeParser();
             if (!container)
@@ -155,6 +156,11 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
         }
         pushPage(page) {
             this.page_stack.push(page);
+            if (this.page_stack.length > this.MAX_PAGE_COUNT) {
+                let page = this.page_stack.shift();
+                if (page)
+                    this.closePage(page);
+            }
         }
         findPageAction(pageUrl) {
             let routeData = Application_1.parseUrl(pageUrl);

@@ -11,6 +11,7 @@ export declare class PageMaster {
     private page_stack;
     private container;
     private nodes;
+    private MAX_PAGE_COUNT;
     error: Callback2<this, Error, Page | null>;
     parser: PageNodeParser;
     constructor(container: HTMLElement, parser?: PageNodeParser);

@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v2.9.26
+ *  maishu-chitu v2.10.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -565,6 +565,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             this.cachePages = {};
             this.page_stack = new Array();
             this.nodes = {};
+            this.MAX_PAGE_COUNT = 100;
             this.error = maishu_chitu_service_1.Callbacks();
             this.parser = parser || this.defaultPageNodeParser();
             if (!container)
@@ -701,6 +702,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
         }
         pushPage(page) {
             this.page_stack.push(page);
+            if (this.page_stack.length > this.MAX_PAGE_COUNT) {
+                let page = this.page_stack.shift();
+                if (page)
+                    this.closePage(page);
+            }
         }
         findPageAction(pageUrl) {
             let routeData = Application_1.parseUrl(pageUrl);
