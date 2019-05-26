@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v2.10.0
+ *  maishu-chitu v2.14.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
