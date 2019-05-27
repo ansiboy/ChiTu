@@ -75,11 +75,11 @@ function pareeUrlQuery(query: string): { [key: string]: string } {
     return urlParams;
 }
 
-function createUrl<T>(pageName: string, params?: T) {
+function createPageUrl<T>(pageName: string, params?: T) {
     let path_parts = pageName.split('.');
     let path = path_parts.join('/');
     if (!params)
-        return `#${path}`;
+        return `${path}`;
 
     //==============================================
     // 移除 function, null, object 字段
@@ -93,7 +93,7 @@ function createUrl<T>(pageName: string, params?: T) {
         paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
     }
     //==============================================
-    return `#${path}${paramsText}`;
+    return `${path}${paramsText}`;
 }
 
 /**
@@ -132,7 +132,7 @@ export class Application extends PageMaster {
      * @param values 页面参数
      */
     createUrl<T>(pageName: string, values?: T) {
-        return createUrl(pageName, values);
+        return createPageUrl(pageName, values);
     }
 
     /**
