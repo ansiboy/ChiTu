@@ -20,7 +20,6 @@ export interface PageNodeParser {
     parse?: (pageName: string) => PageNode,
 }
 
-const EmtpyStateData = "";
 const DefaultPageName = "index"
 export function parseUrl(url: string): { pageName: string, values: PageData } {
     if (!url) throw Errors.argumentNull('url')
@@ -161,6 +160,10 @@ export class Application extends PageMaster {
         //     showPage()
         // });
         window.addEventListener('hashchange', () => {
+            if(this.location.skip){
+                delete this.location.skip
+                return
+            }
             showPage()
         })
 
@@ -223,19 +226,26 @@ export class Application extends PageMaster {
         return data;
     }
 
-    private setLocationHash(url: string) {
-        history.pushState(EmtpyStateData, "", url)
+    private setLocationHash(pageUrl: string) {
+        // history.pushState(EmtpyStateData, "", url)
+        this.location.hash = `#${pageUrl}`
+        this.location.skip = true
     }
+
+    private get location(): Location & { skip?: boolean } {
+        return location
+    }
+
 
     /**
      * 页面跳转
      * @param node 页面节点
      * @param args 传递到页面的参数
      */
-    public redirect<T>(pageNameOrUrl: string, args?: object): Page {
-        if (!pageNameOrUrl) throw Errors.argumentNull('pageNameOrUrl')
+    public redirect<T>(pageUrl: string, args?: object): Page {
+        if (!pageUrl) throw Errors.argumentNull('pageUrl')
 
-        let page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+        let page = this.showPage(pageUrl, args);
         let url = this.createUrl(page.name, page.data);
         this.setLocationHash(url);
 
@@ -248,35 +258,35 @@ export class Application extends PageMaster {
      * @param args 传递到页面的参数
      * @param setUrl 是否设置链接里 Hash
      */
-    public forward(pageNameOrUrl: string, args?: object, setUrl?: boolean) {
-        if (!pageNameOrUrl) throw Errors.argumentNull('pageNameOrUrl')
+    public forward(pageUrl: string, args?: object, setUrl?: boolean) {
+        if (!pageUrl) throw Errors.argumentNull('pageNameOrUrl')
         if (setUrl == null)
             setUrl = true
 
-        let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+        let page = this.showPage(pageUrl, args, true);
         if (setUrl) {
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
         }
-        else {
-            history.pushState(pageNameOrUrl, "", "")
-        }
+        // else {
+        //     history.pushState(pageUrl, "", "")
+        // }
 
         return page;
     }
 
-    private showPageByNameOrUrl(pageNameOrUrl: string, args?: object, rerender?: boolean) {
-        let pageName: string
-        if (pageNameOrUrl.indexOf('?') < 0) {
-            pageName = pageNameOrUrl
-        }
-        else {
-            let obj = this.parseUrl(pageNameOrUrl);
-            pageName = obj.pageName;
-            args = Object.assign(obj.values, args || {});
-        }
-        return this.showPage(pageName, args, rerender);
-    }
+    // private showPageByNameOrUrl(pageNameOrUrl: string, args?: object, rerender?: boolean) {
+    //     // let pageName: string
+    //     // if (pageNameOrUrl.indexOf('?') < 0) {
+    //     //     pageName = pageNameOrUrl
+    //     // }
+    //     // else {
+    //     //     let obj = this.parseUrl(pageNameOrUrl);
+    //     //     pageName = obj.pageName;
+    //     //     args = Object.assign(obj.values, args || {});
+    //     // }
+    //     return this.showPage(pageNameOrUrl, args, rerender);
+    // }
 
     public reload(pageName: string, args?: object) {
         let result = this.showPage(pageName, args, true)
