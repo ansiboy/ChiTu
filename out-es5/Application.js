@@ -24,7 +24,6 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  var EmtpyStateData = "";
   var DefaultPageName = "index";
 
   function _parseUrl(url) {
@@ -82,10 +81,10 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     return urlParams;
   }
 
-  function _createUrl(pageName, params) {
+  function createPageUrl(pageName, params) {
     var path_parts = pageName.split('.');
     var path = path_parts.join('/');
-    if (!params) return "#".concat(path);
+    if (!params) return "".concat(path);
     var paramsText = '';
 
     for (var key in params) {
@@ -100,7 +99,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       paramsText = paramsText == '' ? "?".concat(key, "=").concat(params[key]) : paramsText + "&".concat(key, "=").concat(params[key]);
     }
 
-    return "#".concat(path).concat(paramsText);
+    return "".concat(path).concat(paramsText);
   }
 
   var Application =
@@ -132,7 +131,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     }, {
       key: "createUrl",
       value: function createUrl(pageName, values) {
-        return _createUrl(pageName, values);
+        return createPageUrl(pageName, values);
       }
     }, {
       key: "run",
@@ -159,6 +158,11 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
 
         showPage();
         window.addEventListener('hashchange', function () {
+          if (_this2.location.skip) {
+            delete _this2.location.skip;
+            return;
+          }
+
           showPage();
         });
         this._runned = true;
@@ -201,48 +205,32 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       }
     }, {
       key: "setLocationHash",
-      value: function setLocationHash(url) {
-        history.pushState(EmtpyStateData, "", url);
+      value: function setLocationHash(pageUrl) {
+        this.location.hash = "#".concat(pageUrl);
+        this.location.skip = true;
       }
     }, {
       key: "redirect",
-      value: function redirect(pageNameOrUrl, args) {
-        if (!pageNameOrUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
-        var page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+      value: function redirect(pageUrl, args) {
+        if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
+        var page = this.showPage(pageUrl, args);
         var url = this.createUrl(page.name, page.data);
         this.setLocationHash(url);
         return page;
       }
     }, {
       key: "forward",
-      value: function forward(pageNameOrUrl, args, setUrl) {
-        if (!pageNameOrUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
+      value: function forward(pageUrl, args, setUrl) {
+        if (!pageUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
         if (setUrl == null) setUrl = true;
-        var page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+        var page = this.showPage(pageUrl, args, true);
 
         if (setUrl) {
           var url = this.createUrl(page.name, page.data);
           this.setLocationHash(url);
-        } else {
-          history.pushState(pageNameOrUrl, "", "");
         }
 
         return page;
-      }
-    }, {
-      key: "showPageByNameOrUrl",
-      value: function showPageByNameOrUrl(pageNameOrUrl, args, rerender) {
-        var pageName;
-
-        if (pageNameOrUrl.indexOf('?') < 0) {
-          pageName = pageNameOrUrl;
-        } else {
-          var obj = this.parseUrl(pageNameOrUrl);
-          pageName = obj.pageName;
-          args = Object.assign(obj.values, args || {});
-        }
-
-        return this.showPage(pageName, args, rerender);
       }
     }, {
       key: "reload",
@@ -275,6 +263,11 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
           _this3.error.fire(_this3, error, null);
         });
         return service;
+      }
+    }, {
+      key: "location",
+      get: function get() {
+        return location;
       }
     }]);
 

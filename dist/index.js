@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v2.14.0
+ *  maishu-chitu v2.18.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -105,7 +105,6 @@ define(["maishu-chitu-service"], function(__WEBPACK_EXTERNAL_MODULE_maishu_chitu
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./PageMaster */ "./out/PageMaster.js"), __webpack_require__(/*! ./Errors */ "./out/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, PageMaster_1, Errors_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const EmtpyStateData = "";
     const DefaultPageName = "index";
     function parseUrl(url) {
         if (!url)
@@ -148,11 +147,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             urlParams[decode(match[1])] = decode(match[2]);
         return urlParams;
     }
-    function createUrl(pageName, params) {
+    function createPageUrl(pageName, params) {
         let path_parts = pageName.split('.');
         let path = path_parts.join('/');
         if (!params)
-            return `#${path}`;
+            return `${path}`;
         let paramsText = '';
         for (let key in params) {
             let value = params[key];
@@ -162,7 +161,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             }
             paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
         }
-        return `#${path}${paramsText}`;
+        return `${path}${paramsText}`;
     }
     class Application extends PageMaster_1.PageMaster {
         constructor(args) {
@@ -178,7 +177,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             return routeData;
         }
         createUrl(pageName, values) {
-            return createUrl(pageName, values);
+            return createPageUrl(pageName, values);
         }
         run() {
             if (this._runned)
@@ -197,6 +196,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             };
             showPage();
             window.addEventListener('hashchange', () => {
+                if (this.location.skip) {
+                    delete this.location.skip;
+                    return;
+                }
                 showPage();
             });
             this._runned = true;
@@ -235,43 +238,32 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             this.tempPageData = undefined;
             return data;
         }
-        setLocationHash(url) {
-            history.pushState(EmtpyStateData, "", url);
+        setLocationHash(pageUrl) {
+            this.location.hash = `#${pageUrl}`;
+            this.location.skip = true;
         }
-        redirect(pageNameOrUrl, args) {
-            if (!pageNameOrUrl)
-                throw Errors_1.Errors.argumentNull('pageNameOrUrl');
-            let page = this.showPageByNameOrUrl(pageNameOrUrl, args);
+        get location() {
+            return location;
+        }
+        redirect(pageUrl, args) {
+            if (!pageUrl)
+                throw Errors_1.Errors.argumentNull('pageUrl');
+            let page = this.showPage(pageUrl, args);
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
             return page;
         }
-        forward(pageNameOrUrl, args, setUrl) {
-            if (!pageNameOrUrl)
+        forward(pageUrl, args, setUrl) {
+            if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageNameOrUrl');
             if (setUrl == null)
                 setUrl = true;
-            let page = this.showPageByNameOrUrl(pageNameOrUrl, args, true);
+            let page = this.showPage(pageUrl, args, true);
             if (setUrl) {
                 let url = this.createUrl(page.name, page.data);
                 this.setLocationHash(url);
             }
-            else {
-                history.pushState(pageNameOrUrl, "", "");
-            }
             return page;
-        }
-        showPageByNameOrUrl(pageNameOrUrl, args, rerender) {
-            let pageName;
-            if (pageNameOrUrl.indexOf('?') < 0) {
-                pageName = pageNameOrUrl;
-            }
-            else {
-                let obj = this.parseUrl(pageNameOrUrl);
-                pageName = obj.pageName;
-                args = Object.assign(obj.values, args || {});
-            }
-            return this.showPage(pageName, args, rerender);
         }
         reload(pageName, args) {
             let result = this.showPage(pageName, args, true);

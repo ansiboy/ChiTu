@@ -39,9 +39,9 @@ export declare class Application extends PageMaster {
     private showPageByUrl;
     private fetchTemplatePageData;
     private setLocationHash;
-    redirect<T>(pageNameOrUrl: string, args?: object): Page;
-    forward(pageNameOrUrl: string, args?: object, setUrl?: boolean): Page;
-    private showPageByNameOrUrl;
+    private readonly location;
+    redirect<T>(pageUrl: string, args?: object): Page;
+    forward(pageUrl: string, args?: object, setUrl?: boolean): Page;
     reload(pageName: string, args?: object): Page;
     back(): void;
     back(closeCurrentPage: boolean): void;
