@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v2.18.0
+ *  maishu-chitu v3.1.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -217,10 +217,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
       _classCallCheck(this, Application);
 
-      _this = _possibleConstructorReturn(this, _getPrototypeOf(Application).call(this, (args || {}).container || document.body, (args || {}).parser));
+      _this = _possibleConstructorReturn(this, _getPrototypeOf(Application).call(this, Application.containers((args || {}).container), (args || {}).parser));
       _this._runned = false;
-      _this.closeCurrentOnBack = null;
-      _this.tempPageData = undefined;
       return _this;
     }
 
@@ -248,17 +246,18 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
         var showPage = function showPage() {
           var url = location.href;
           var sharpIndex = url.indexOf('#');
-          var routeString = url.substr(sharpIndex + 1);
-
-          if (routeString.startsWith('!')) {
-            return;
-          }
 
           if (sharpIndex < 0) {
             url = '#' + DefaultPageName;
+          } else {
+            url = url.substr(sharpIndex + 1);
           }
 
-          _this2.showPageByUrl(url);
+          if (url.startsWith('!')) {
+            return;
+          }
+
+          _this2.showPage(url);
         };
 
         showPage();
@@ -273,42 +272,6 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
         this._runned = true;
       }
     }, {
-      key: "showPageByUrl",
-      value: function showPageByUrl(url) {
-        if (!url) throw Errors_1.Errors.argumentNull('url');
-        var tempPageData = this.fetchTemplatePageData();
-        var result = null;
-
-        if (this.closeCurrentOnBack == true) {
-          this.closeCurrentOnBack = null;
-          if (tempPageData == null) this.closeCurrentPage();else this.closeCurrentPage(tempPageData);
-          result = this.currentPage;
-        } else if (this.closeCurrentOnBack == false) {
-          this.closeCurrentOnBack = null;
-          var page = this.pageStack.pop();
-          if (page == null) throw new Error('page is null');
-          page.hide(this.currentPage);
-          result = this.currentPage;
-        }
-
-        if (result == null || result.url != url) {
-          result = this.showPage(url);
-        }
-
-        return result;
-      }
-    }, {
-      key: "fetchTemplatePageData",
-      value: function fetchTemplatePageData() {
-        if (this.tempPageData == null) {
-          return null;
-        }
-
-        var data = this.tempPageData;
-        this.tempPageData = undefined;
-        return data;
-      }
-    }, {
       key: "setLocationHash",
       value: function setLocationHash(pageUrl) {
         this.location.hash = "#".concat(pageUrl);
@@ -318,7 +281,11 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       key: "redirect",
       value: function redirect(pageUrl, args) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
-        var page = this.showPage(pageUrl, args);
+
+        var routeData = _parseUrl(pageUrl);
+
+        var containerName = routeData.values.container || Application.DefaultContainerName;
+        var page = this.openPage(pageUrl, containerName, args);
         var url = this.createUrl(page.name, page.data);
         this.setLocationHash(url);
         return page;
@@ -328,7 +295,11 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       value: function forward(pageUrl, args, setUrl) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
         if (setUrl == null) setUrl = true;
-        var page = this.showPage(pageUrl, args, true);
+
+        var routeData = _parseUrl(pageUrl);
+
+        var containerName = routeData.values.container || Application.DefaultContainerName;
+        var page = this.openPage(pageUrl, containerName, args, true);
 
         if (setUrl) {
           var url = this.createUrl(page.name, page.data);
@@ -345,17 +316,11 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       }
     }, {
       key: "back",
-      value: function back(closeCurrentPage, data) {
-        var closeCurrentPageDefault = true;
-
-        if (_typeof(closeCurrentPage) == 'object') {
-          data = closeCurrentPage;
-          closeCurrentPage = null;
-        }
-
-        this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
-        this.tempPageData = data;
-        history.back();
+      value: function back() {
+        this.closeCurrentPage();
+        setTimeout(function () {
+          history.back();
+        }, 100);
       }
     }, {
       key: "createService",
@@ -374,11 +339,31 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       get: function get() {
         return location;
       }
+    }], [{
+      key: "containers",
+      value: function containers(container) {
+        var r = {};
+
+        if (container == null) {
+          r[Application.DefaultContainerName] = document.body;
+          return r;
+        }
+
+        if (container.tagName) {
+          r[Application.DefaultContainerName] = container;
+          return r;
+        }
+
+        r = container;
+        if (!Application.DefaultContainerName) throw Errors_1.Errors.containerIsNotExists(Application.DefaultContainerName);
+        return r;
+      }
     }]);
 
     return Application;
   }(PageMaster_1.PageMaster);
 
+  Application.DefaultContainerName = 'default';
   exports.Application = Application;
 }).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -566,6 +551,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         var msg = "Unexpected null value.";
         return new Error(msg);
       }
+    }, {
+      key: "containerIsNotExists",
+      value: function containerIsNotExists(name) {
+        var msg = "Container '".concat(name, "' is not exists");
+        return new Error(msg);
+      }
     }]);
 
     return Errors;
@@ -622,6 +613,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       this.data = Object.assign(routeData.values, params.data || {});
       this._name = routeData.pageName;
       this._url = params.url;
+      this._container = params.container;
     }
 
     _createClass(Page, [{
@@ -721,6 +713,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       key: "app",
       get: function get() {
         return this._app;
+      }
+    }, {
+      key: "container",
+      get: function get() {
+        return this._container;
       }
     }]);
 
@@ -826,7 +823,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
   var PageMaster =
   /*#__PURE__*/
   function () {
-    function PageMaster(container, parser) {
+    function PageMaster(containers, parser) {
       _classCallCheck(this, PageMaster);
 
       this.pageCreated = maishu_chitu_service_1.Callbacks();
@@ -840,9 +837,9 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       this.MAX_PAGE_COUNT = 100;
       this.error = maishu_chitu_service_1.Callbacks();
       this.parser = parser || this.defaultPageNodeParser();
-      if (!container) throw Errors_1.Errors.argumentNull("container");
+      if (!containers) throw Errors_1.Errors.argumentNull("containers");
       this.parser.actions = this.parser.actions || {};
-      this.container = container;
+      this.containers = containers;
     }
 
     _createClass(PageMaster, [{
@@ -946,10 +943,10 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       }
     }, {
       key: "getPage",
-      value: function getPage(pageUrl, values) {
+      value: function getPage(pageUrl, containerName, values) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
         values = values || {};
-        var cachePage = this.cachePages[pageUrl];
+        var cachePage = this.cachePages["".concat(containerName, "_").concat(pageUrl)];
 
         if (cachePage != null) {
           cachePage.data = values || {};
@@ -959,7 +956,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
           };
         }
 
-        var page = this.createPage(pageUrl, values);
+        var page = this.createPage(pageUrl, containerName, values);
         this.cachePages[pageUrl] = page;
         this.on_pageCreated(page);
         return {
@@ -969,23 +966,36 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       }
     }, {
       key: "createPage",
-      value: function createPage(pageUrl, values) {
+      value: function createPage(pageUrl, containerName, values) {
         var _this3 = this;
 
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
+        if (!containerName) throw Errors_1.Errors.argumentNull('containerName');
         values = values || {};
-        var element = this.createPageElement(pageUrl);
+        var element = this.createPageElement(pageUrl, containerName);
         var displayer = new this.pageDisplayType(this);
+        var container = this.containers[containerName];
+        if (!container) throw Errors_1.Errors.containerIsNotExists(containerName);
         console.assert(this.pageType != null);
         var page = new this.pageType({
           app: this,
           url: pageUrl,
           data: values,
           displayer: displayer,
-          element: element
+          element: element,
+          container: container
         });
 
         var showing = function showing(sender) {
+          for (var key in _this3.containers) {
+            if (_this3.containers[key] == sender.container) {
+              sender.container.style.removeProperty('display');
+              continue;
+            }
+
+            _this3.containers[key].style.display == 'none';
+          }
+
           _this3.pageShowing.fire(_this3, sender);
         };
 
@@ -1003,20 +1013,28 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       }
     }, {
       key: "createPageElement",
-      value: function createPageElement(pageName) {
+      value: function createPageElement(pageName, containerName) {
+        if (!containerName) throw Errors_1.Errors.argumentNull('containerName');
+        var container = this.containers[containerName];
+        if (!container) throw Errors_1.Errors.containerIsNotExists(containerName);
         var element = document.createElement(Page_1.Page.tagName);
-        this.container.appendChild(element);
+        container.appendChild(element);
         return element;
       }
     }, {
       key: "showPage",
       value: function showPage(pageUrl, args, forceRender) {
+        return this.openPage(pageUrl, Application_1.Application.DefaultContainerName, args, forceRender);
+      }
+    }, {
+      key: "openPage",
+      value: function openPage(pageUrl, containerName, args, forceRender) {
         args = args || {};
         forceRender = forceRender == null ? false : true;
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
         if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
 
-        var _this$getPage = this.getPage(pageUrl, args),
+        var _this$getPage = this.getPage(pageUrl, containerName, args),
             page = _this$getPage.page,
             isNew = _this$getPage.isNew;
 
@@ -1156,6 +1174,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
     value: true
   });
   exports.Application = Application_1.Application;
+  exports.parseUrl = Application_1.parseUrl;
   exports.PageMaster = PageMaster_1.PageMaster;
   exports.Page = Page_1.Page;
   exports.Callback = maishu_chitu_service_1.Callback;

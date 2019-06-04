@@ -44,7 +44,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
   var PageMaster =
   /*#__PURE__*/
   function () {
-    function PageMaster(container, parser) {
+    function PageMaster(containers, parser) {
       _classCallCheck(this, PageMaster);
 
       this.pageCreated = maishu_chitu_service_1.Callbacks();
@@ -58,9 +58,9 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
       this.MAX_PAGE_COUNT = 100;
       this.error = maishu_chitu_service_1.Callbacks();
       this.parser = parser || this.defaultPageNodeParser();
-      if (!container) throw Errors_1.Errors.argumentNull("container");
+      if (!containers) throw Errors_1.Errors.argumentNull("containers");
       this.parser.actions = this.parser.actions || {};
-      this.container = container;
+      this.containers = containers;
     }
 
     _createClass(PageMaster, [{
@@ -164,10 +164,10 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
       }
     }, {
       key: "getPage",
-      value: function getPage(pageUrl, values) {
+      value: function getPage(pageUrl, containerName, values) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
         values = values || {};
-        var cachePage = this.cachePages[pageUrl];
+        var cachePage = this.cachePages["".concat(containerName, "_").concat(pageUrl)];
 
         if (cachePage != null) {
           cachePage.data = values || {};
@@ -177,7 +177,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
           };
         }
 
-        var page = this.createPage(pageUrl, values);
+        var page = this.createPage(pageUrl, containerName, values);
         this.cachePages[pageUrl] = page;
         this.on_pageCreated(page);
         return {
@@ -187,23 +187,36 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
       }
     }, {
       key: "createPage",
-      value: function createPage(pageUrl, values) {
+      value: function createPage(pageUrl, containerName, values) {
         var _this3 = this;
 
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
+        if (!containerName) throw Errors_1.Errors.argumentNull('containerName');
         values = values || {};
-        var element = this.createPageElement(pageUrl);
+        var element = this.createPageElement(pageUrl, containerName);
         var displayer = new this.pageDisplayType(this);
+        var container = this.containers[containerName];
+        if (!container) throw Errors_1.Errors.containerIsNotExists(containerName);
         console.assert(this.pageType != null);
         var page = new this.pageType({
           app: this,
           url: pageUrl,
           data: values,
           displayer: displayer,
-          element: element
+          element: element,
+          container: container
         });
 
         var showing = function showing(sender) {
+          for (var key in _this3.containers) {
+            if (_this3.containers[key] == sender.container) {
+              sender.container.style.removeProperty('display');
+              continue;
+            }
+
+            _this3.containers[key].style.display == 'none';
+          }
+
           _this3.pageShowing.fire(_this3, sender);
         };
 
@@ -221,20 +234,28 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
       }
     }, {
       key: "createPageElement",
-      value: function createPageElement(pageName) {
+      value: function createPageElement(pageName, containerName) {
+        if (!containerName) throw Errors_1.Errors.argumentNull('containerName');
+        var container = this.containers[containerName];
+        if (!container) throw Errors_1.Errors.containerIsNotExists(containerName);
         var element = document.createElement(Page_1.Page.tagName);
-        this.container.appendChild(element);
+        container.appendChild(element);
         return element;
       }
     }, {
       key: "showPage",
       value: function showPage(pageUrl, args, forceRender) {
+        return this.openPage(pageUrl, Application_1.Application.DefaultContainerName, args, forceRender);
+      }
+    }, {
+      key: "openPage",
+      value: function openPage(pageUrl, containerName, args, forceRender) {
         args = args || {};
         forceRender = forceRender == null ? false : true;
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
         if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
 
-        var _this$getPage = this.getPage(pageUrl, args),
+        var _this$getPage = this.getPage(pageUrl, containerName, args),
             page = _this$getPage.page,
             isNew = _this$getPage.isNew;
 

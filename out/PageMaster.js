@@ -10,7 +10,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     class PageMaster {
-        constructor(container, parser) {
+        constructor(containers, parser) {
             this.pageCreated = maishu_chitu_service_1.Callbacks();
             this.pageShowing = maishu_chitu_service_1.Callbacks();
             this.pageShown = maishu_chitu_service_1.Callbacks();
@@ -22,10 +22,10 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             this.MAX_PAGE_COUNT = 100;
             this.error = maishu_chitu_service_1.Callbacks();
             this.parser = parser || this.defaultPageNodeParser();
-            if (!container)
-                throw Errors_1.Errors.argumentNull("container");
+            if (!containers)
+                throw Errors_1.Errors.argumentNull("containers");
             this.parser.actions = this.parser.actions || {};
-            this.container = container;
+            this.containers = containers;
         }
         defaultPageNodeParser() {
             let nodes = {};
@@ -81,26 +81,31 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
                 return this.page_stack[this.page_stack.length - 1];
             return null;
         }
-        getPage(pageUrl, values) {
+        getPage(pageUrl, containerName, values) {
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageUrl');
             values = values || {};
-            let cachePage = this.cachePages[pageUrl];
+            let cachePage = this.cachePages[`${containerName}_${pageUrl}`];
             if (cachePage != null) {
                 cachePage.data = values || {};
                 return { page: cachePage, isNew: false };
             }
-            let page = this.createPage(pageUrl, values);
+            let page = this.createPage(pageUrl, containerName, values);
             this.cachePages[pageUrl] = page;
             this.on_pageCreated(page);
             return { page, isNew: true };
         }
-        createPage(pageUrl, values) {
+        createPage(pageUrl, containerName, values) {
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageUrl');
+            if (!containerName)
+                throw Errors_1.Errors.argumentNull('containerName');
             values = values || {};
-            let element = this.createPageElement(pageUrl);
+            let element = this.createPageElement(pageUrl, containerName);
             let displayer = new this.pageDisplayType(this);
+            let container = this.containers[containerName];
+            if (!container)
+                throw Errors_1.Errors.containerIsNotExists(containerName);
             console.assert(this.pageType != null);
             let page = new this.pageType({
                 app: this,
@@ -108,8 +113,16 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
                 data: values,
                 displayer,
                 element,
+                container,
             });
             let showing = (sender) => {
+                for (let key in this.containers) {
+                    if (this.containers[key] == sender.container) {
+                        sender.container.style.removeProperty('display');
+                        continue;
+                    }
+                    this.containers[key].style.display == 'none';
+                }
                 this.pageShowing.fire(this, sender);
             };
             let shown = (sender) => {
@@ -123,19 +136,27 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             });
             return page;
         }
-        createPageElement(pageName) {
+        createPageElement(pageName, containerName) {
+            if (!containerName)
+                throw Errors_1.Errors.argumentNull('containerName');
+            let container = this.containers[containerName];
+            if (!container)
+                throw Errors_1.Errors.containerIsNotExists(containerName);
             let element = document.createElement(Page_1.Page.tagName);
-            this.container.appendChild(element);
+            container.appendChild(element);
             return element;
         }
         showPage(pageUrl, args, forceRender) {
+            return this.openPage(pageUrl, Application_1.Application.DefaultContainerName, args, forceRender);
+        }
+        openPage(pageUrl, containerName, args, forceRender) {
             args = args || {};
             forceRender = forceRender == null ? false : true;
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageName');
             if (this.currentPage != null && this.currentPage.url == pageUrl)
                 return this.currentPage;
-            let { page, isNew } = this.getPage(pageUrl, args);
+            let { page, isNew } = this.getPage(pageUrl, containerName, args);
             if (isNew || forceRender) {
                 let action = this.findPageAction(pageUrl);
                 if (action == null)

@@ -2,6 +2,7 @@ define(["require", "exports", "./Application", "./PageMaster", "./Page", "maishu
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Application = Application_1.Application;
+    exports.parseUrl = Application_1.parseUrl;
     exports.PageMaster = PageMaster_1.PageMaster;
     exports.Page = Page_1.Page;
     exports.Callback = maishu_chitu_service_1.Callback;

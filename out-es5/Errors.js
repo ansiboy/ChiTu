@@ -169,6 +169,12 @@ define(["require", "exports"], function (require, exports) {
         var msg = "Unexpected null value.";
         return new Error(msg);
       }
+    }, {
+      key: "containerIsNotExists",
+      value: function containerIsNotExists(name) {
+        var msg = "Container '".concat(name, "' is not exists");
+        return new Error(msg);
+      }
     }]);
 
     return Errors;

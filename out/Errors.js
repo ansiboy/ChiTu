@@ -101,6 +101,10 @@ define(["require", "exports"], function (require, exports) {
             let msg = `Unexpected null value.`;
             return new Error(msg);
         }
+        static containerIsNotExists(name) {
+            let msg = `Container '${name}' is not exists`;
+            return new Error(msg);
+        }
     }
     exports.Errors = Errors;
 });

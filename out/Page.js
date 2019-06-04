@@ -17,6 +17,7 @@ define(["require", "exports", "maishu-chitu-service", "./Errors", "./Application
             this.data = Object.assign(routeData.values, params.data || {});
             this._name = routeData.pageName;
             this._url = params.url;
+            this._container = params.container;
         }
         on_showing() {
             return this.showing.fire(this, this.data);
@@ -80,6 +81,9 @@ define(["require", "exports", "maishu-chitu-service", "./Errors", "./Application
         }
         get app() {
             return this._app;
+        }
+        get container() {
+            return this._container;
         }
     }
     Page.tagName = 'div';

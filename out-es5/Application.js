@@ -112,10 +112,8 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
 
       _classCallCheck(this, Application);
 
-      _this = _possibleConstructorReturn(this, _getPrototypeOf(Application).call(this, (args || {}).container || document.body, (args || {}).parser));
+      _this = _possibleConstructorReturn(this, _getPrototypeOf(Application).call(this, Application.containers((args || {}).container), (args || {}).parser));
       _this._runned = false;
-      _this.closeCurrentOnBack = null;
-      _this.tempPageData = undefined;
       return _this;
     }
 
@@ -143,17 +141,18 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         var showPage = function showPage() {
           var url = location.href;
           var sharpIndex = url.indexOf('#');
-          var routeString = url.substr(sharpIndex + 1);
-
-          if (routeString.startsWith('!')) {
-            return;
-          }
 
           if (sharpIndex < 0) {
             url = '#' + DefaultPageName;
+          } else {
+            url = url.substr(sharpIndex + 1);
           }
 
-          _this2.showPageByUrl(url);
+          if (url.startsWith('!')) {
+            return;
+          }
+
+          _this2.showPage(url);
         };
 
         showPage();
@@ -168,42 +167,6 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         this._runned = true;
       }
     }, {
-      key: "showPageByUrl",
-      value: function showPageByUrl(url) {
-        if (!url) throw Errors_1.Errors.argumentNull('url');
-        var tempPageData = this.fetchTemplatePageData();
-        var result = null;
-
-        if (this.closeCurrentOnBack == true) {
-          this.closeCurrentOnBack = null;
-          if (tempPageData == null) this.closeCurrentPage();else this.closeCurrentPage(tempPageData);
-          result = this.currentPage;
-        } else if (this.closeCurrentOnBack == false) {
-          this.closeCurrentOnBack = null;
-          var page = this.pageStack.pop();
-          if (page == null) throw new Error('page is null');
-          page.hide(this.currentPage);
-          result = this.currentPage;
-        }
-
-        if (result == null || result.url != url) {
-          result = this.showPage(url);
-        }
-
-        return result;
-      }
-    }, {
-      key: "fetchTemplatePageData",
-      value: function fetchTemplatePageData() {
-        if (this.tempPageData == null) {
-          return null;
-        }
-
-        var data = this.tempPageData;
-        this.tempPageData = undefined;
-        return data;
-      }
-    }, {
       key: "setLocationHash",
       value: function setLocationHash(pageUrl) {
         this.location.hash = "#".concat(pageUrl);
@@ -213,7 +176,11 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       key: "redirect",
       value: function redirect(pageUrl, args) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
-        var page = this.showPage(pageUrl, args);
+
+        var routeData = _parseUrl(pageUrl);
+
+        var containerName = routeData.values.container || Application.DefaultContainerName;
+        var page = this.openPage(pageUrl, containerName, args);
         var url = this.createUrl(page.name, page.data);
         this.setLocationHash(url);
         return page;
@@ -223,7 +190,11 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       value: function forward(pageUrl, args, setUrl) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
         if (setUrl == null) setUrl = true;
-        var page = this.showPage(pageUrl, args, true);
+
+        var routeData = _parseUrl(pageUrl);
+
+        var containerName = routeData.values.container || Application.DefaultContainerName;
+        var page = this.openPage(pageUrl, containerName, args, true);
 
         if (setUrl) {
           var url = this.createUrl(page.name, page.data);
@@ -240,17 +211,11 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       }
     }, {
       key: "back",
-      value: function back(closeCurrentPage, data) {
-        var closeCurrentPageDefault = true;
-
-        if (_typeof(closeCurrentPage) == 'object') {
-          data = closeCurrentPage;
-          closeCurrentPage = null;
-        }
-
-        this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
-        this.tempPageData = data;
-        history.back();
+      value: function back() {
+        this.closeCurrentPage();
+        setTimeout(function () {
+          history.back();
+        }, 100);
       }
     }, {
       key: "createService",
@@ -269,11 +234,31 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       get: function get() {
         return location;
       }
+    }], [{
+      key: "containers",
+      value: function containers(container) {
+        var r = {};
+
+        if (container == null) {
+          r[Application.DefaultContainerName] = document.body;
+          return r;
+        }
+
+        if (container.tagName) {
+          r[Application.DefaultContainerName] = container;
+          return r;
+        }
+
+        r = container;
+        if (!Application.DefaultContainerName) throw Errors_1.Errors.containerIsNotExists(Application.DefaultContainerName);
+        return r;
+      }
     }]);
 
     return Application;
   }(PageMaster_1.PageMaster);
 
+  Application.DefaultContainerName = 'default';
   exports.Application = Application;
 });
 //# sourceMappingURL=Application.js.map

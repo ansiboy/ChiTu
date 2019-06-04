@@ -61,10 +61,23 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     }
     class Application extends PageMaster_1.PageMaster {
         constructor(args) {
-            super((args || {}).container || document.body, (args || {}).parser);
+            super(Application.containers((args || {}).container), (args || {}).parser);
             this._runned = false;
-            this.closeCurrentOnBack = null;
-            this.tempPageData = undefined;
+        }
+        static containers(container) {
+            let r = {};
+            if (container == null) {
+                r[Application.DefaultContainerName] = document.body;
+                return r;
+            }
+            if (container.tagName) {
+                r[Application.DefaultContainerName] = container;
+                return r;
+            }
+            r = container;
+            if (!Application.DefaultContainerName)
+                throw Errors_1.Errors.containerIsNotExists(Application.DefaultContainerName);
+            return r;
         }
         parseUrl(url) {
             if (!url)
@@ -81,14 +94,16 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
             let showPage = () => {
                 let url = location.href;
                 let sharpIndex = url.indexOf('#');
-                let routeString = url.substr(sharpIndex + 1);
-                if (routeString.startsWith('!')) {
-                    return;
-                }
                 if (sharpIndex < 0) {
                     url = '#' + DefaultPageName;
                 }
-                this.showPageByUrl(url);
+                else {
+                    url = url.substr(sharpIndex + 1);
+                }
+                if (url.startsWith('!')) {
+                    return;
+                }
+                this.showPage(url);
             };
             showPage();
             window.addEventListener('hashchange', () => {
@@ -100,40 +115,6 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
             });
             this._runned = true;
         }
-        showPageByUrl(url) {
-            if (!url)
-                throw Errors_1.Errors.argumentNull('url');
-            let tempPageData = this.fetchTemplatePageData();
-            let result = null;
-            if (this.closeCurrentOnBack == true) {
-                this.closeCurrentOnBack = null;
-                if (tempPageData == null)
-                    this.closeCurrentPage();
-                else
-                    this.closeCurrentPage(tempPageData);
-                result = this.currentPage;
-            }
-            else if (this.closeCurrentOnBack == false) {
-                this.closeCurrentOnBack = null;
-                var page = this.pageStack.pop();
-                if (page == null)
-                    throw new Error('page is null');
-                page.hide(this.currentPage);
-                result = this.currentPage;
-            }
-            if (result == null || result.url != url) {
-                result = this.showPage(url);
-            }
-            return result;
-        }
-        fetchTemplatePageData() {
-            if (this.tempPageData == null) {
-                return null;
-            }
-            let data = this.tempPageData;
-            this.tempPageData = undefined;
-            return data;
-        }
         setLocationHash(pageUrl) {
             this.location.hash = `#${pageUrl}`;
             this.location.skip = true;
@@ -144,7 +125,9 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         redirect(pageUrl, args) {
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageUrl');
-            let page = this.showPage(pageUrl, args);
+            let routeData = parseUrl(pageUrl);
+            let containerName = routeData.values.container || Application.DefaultContainerName;
+            let page = this.openPage(pageUrl, containerName, args);
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
             return page;
@@ -154,7 +137,9 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
                 throw Errors_1.Errors.argumentNull('pageNameOrUrl');
             if (setUrl == null)
                 setUrl = true;
-            let page = this.showPage(pageUrl, args, true);
+            let routeData = parseUrl(pageUrl);
+            let containerName = routeData.values.container || Application.DefaultContainerName;
+            let page = this.openPage(pageUrl, containerName, args, true);
             if (setUrl) {
                 let url = this.createUrl(page.name, page.data);
                 this.setLocationHash(url);
@@ -165,15 +150,11 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
             let result = this.showPage(pageName, args, true);
             return result;
         }
-        back(closeCurrentPage, data) {
-            const closeCurrentPageDefault = true;
-            if (typeof closeCurrentPage == 'object') {
-                data = closeCurrentPage;
-                closeCurrentPage = null;
-            }
-            this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
-            this.tempPageData = data;
-            history.back();
+        back() {
+            this.closeCurrentPage();
+            setTimeout(() => {
+                history.back();
+            }, 100);
         }
         createService(type) {
             type = type || maishu_chitu_service_1.Service;
@@ -184,5 +165,6 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
             return service;
         }
     }
+    Application.DefaultContainerName = 'default';
     exports.Application = Application;
 });
