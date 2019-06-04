@@ -1,6 +1,6 @@
 import { Callbacks, Callback1, Callback2 } from "maishu-chitu-service";
-import { Page, PageConstructor, PageDisplayConstructor, PageDisplayerImplement } from "./Page";
-import { PageNodeParser, PageNode, StringPropertyNames, Action, parseUrl } from "./Application";
+import { Page, PageConstructor, PageDisplayConstructor, PageDisplayerImplement, PageData } from "./Page";
+import { PageNodeParser, PageNode, StringPropertyNames, Action, parseUrl, Application } from "./Application";
 import { Errors } from "./Errors";
 
 /**
@@ -24,9 +24,10 @@ export class PageMaster {
 
     private cachePages: { [pageUrl: string]: Page } = {};
     private page_stack = new Array<Page>();
-    private container: HTMLElement;
+    private containers: { [name: string]: HTMLElement };
     private nodes: { [name: string]: PageNode } = {}
     private MAX_PAGE_COUNT = 100
+
 
     /** 
      * 错误事件 
@@ -39,13 +40,13 @@ export class PageMaster {
      * @param parser 地图，描述站点各个页面结点
      * @param allowCachePage 是允许缓存页面，默认 true
      */
-    constructor(container: HTMLElement, parser?: PageNodeParser) {
+    constructor(containers: { [name: string]: HTMLElement }, parser?: PageNodeParser) {
         this.parser = parser || this.defaultPageNodeParser();
-        if (!container)
-            throw Errors.argumentNull("container");
+        if (!containers)
+            throw Errors.argumentNull("containers");
 
         this.parser.actions = this.parser.actions || {};
-        this.container = container;
+        this.containers = containers;
     }
 
     protected defaultPageNodeParser() {
@@ -116,28 +117,34 @@ export class PageMaster {
         return null;
     }
 
-    private getPage(pageUrl: string, values?: any): { page: Page, isNew: boolean } {
+    private getPage(pageUrl: string, containerName: string, values?: PageData): { page: Page, isNew: boolean } {
         if (!pageUrl) throw Errors.argumentNull('pageUrl')
 
         values = values || {};
-        let cachePage = this.cachePages[pageUrl];
+        let cachePage = this.cachePages[`${containerName}_${pageUrl}`];
         if (cachePage != null) {
             cachePage.data = values || {}
             return { page: cachePage, isNew: false };
         }
 
-        let page = this.createPage(pageUrl, values);
+        let page = this.createPage(pageUrl, containerName, values);
         this.cachePages[pageUrl] = page;
 
         this.on_pageCreated(page);
         return { page, isNew: true };
     }
 
-    protected createPage(pageUrl: string, values?: any): Page {
+    protected createPage(pageUrl: string, containerName: string, values?: PageData): Page {
         if (!pageUrl) throw Errors.argumentNull('pageUrl')
+        if (!containerName) throw Errors.argumentNull('containerName')
+
         values = values || {}
-        let element = this.createPageElement(pageUrl);
+
+        let element = this.createPageElement(pageUrl, containerName);
         let displayer = new this.pageDisplayType(this);
+        let container = this.containers[containerName]
+        if (!container)
+            throw Errors.containerIsNotExists(containerName)
 
         console.assert(this.pageType != null);
         let page = new this.pageType({
@@ -146,9 +153,17 @@ export class PageMaster {
             data: values,
             displayer,
             element,
+            container,
         });
 
         let showing = (sender: Page) => {
+            for (let key in this.containers) {
+                if (this.containers[key] == sender.container) {
+                    sender.container.style.removeProperty('display')
+                    continue
+                }
+                this.containers[key].style.display == 'none'
+            }
             this.pageShowing.fire(this, sender)
         }
         let shown = (sender: Page) => {
@@ -165,9 +180,14 @@ export class PageMaster {
         return page;
     }
 
-    protected createPageElement(pageName: string) {
+    protected createPageElement(pageName: string, containerName: string) {
+        if(!containerName) throw Errors.argumentNull('containerName')
+        let container = this.containers[containerName]
+        if (!container)
+            throw Errors.containerIsNotExists(containerName)
+
         let element: HTMLElement = document.createElement(Page.tagName);
-        this.container.appendChild(element);
+        container.appendChild(element);
         return element;
     }
 
@@ -177,8 +197,11 @@ export class PageMaster {
      * @param args 传递给页面的参数
      * @param forceRender 是否强制重新渲染页面，是表示强制重新渲染
      */
-    public showPage(pageUrl: string, args?: object, forceRender?: boolean): Page {
+    public showPage(pageUrl: string, args?: PageData, forceRender?: boolean): Page {
+        return this.openPage(pageUrl, Application.DefaultContainerName, args, forceRender)
+    }
 
+    public openPage(pageUrl: string, containerName: string, args?: PageData, forceRender?: boolean) {
         args = args || {}
         forceRender = forceRender == null ? false : true
 
@@ -187,7 +210,7 @@ export class PageMaster {
         if (this.currentPage != null && this.currentPage.url == pageUrl)
             return this.currentPage;
 
-        let { page, isNew } = this.getPage(pageUrl, args);
+        let { page, isNew } = this.getPage(pageUrl, containerName, args);
         if (isNew || forceRender) {
             let action = this.findPageAction(pageUrl)
             if (action == null)

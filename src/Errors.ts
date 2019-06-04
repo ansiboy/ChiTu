@@ -98,5 +98,9 @@
         let msg = `Unexpected null value.`
         return new Error(msg);
     }
+    static containerIsNotExists(name: string) {
+        let msg = `Container '${name}' is not exists`
+        return new Error(msg)
+    }
 }
 

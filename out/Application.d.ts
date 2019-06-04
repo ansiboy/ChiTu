@@ -24,28 +24,25 @@ export declare function parseUrl(url: string): {
 };
 export declare class Application extends PageMaster {
     private _runned;
-    private closeCurrentOnBack;
-    private tempPageData;
+    static DefaultContainerName: string;
     constructor(args?: {
         parser?: PageNodeParser;
-        container?: HTMLElement;
+        container?: HTMLElement | {
+            [name: string]: HTMLElement;
+        };
     });
+    private static containers;
     parseUrl(url: string): {
         pageName: string;
         values: PageData;
     };
     createUrl<T>(pageName: string, values?: T): string;
     run(): void;
-    private showPageByUrl;
-    private fetchTemplatePageData;
-    private setLocationHash;
+    setLocationHash(pageUrl: string): void;
     private readonly location;
-    redirect<T>(pageUrl: string, args?: object): Page;
-    forward(pageUrl: string, args?: object, setUrl?: boolean): Page;
-    reload(pageName: string, args?: object): Page;
+    redirect<T>(pageUrl: string, args?: PageData): Page;
+    forward(pageUrl: string, args?: PageData, setUrl?: boolean): Page;
+    reload(pageName: string, args?: PageData): Page;
     back(): void;
-    back(closeCurrentPage: boolean): void;
-    back(data: any): void;
-    back<T>(closeCurrentPage?: boolean, data?: Pick<T, StringPropertyNames<T>>): void;
     createService<T extends IService>(type?: ServiceConstructor<T>): T;
 }

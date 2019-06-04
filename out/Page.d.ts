@@ -16,6 +16,7 @@ export interface PageParams {
     displayer: PageDisplayer;
     data: PageData;
     url: string;
+    container: HTMLElement;
 }
 export declare class Page {
     private _element;
@@ -23,6 +24,7 @@ export declare class Page {
     private _displayer;
     private _name;
     private _url;
+    private _container;
     static tagName: string;
     data: PageData;
     showing: Callback1<this, PageData>;
@@ -46,6 +48,7 @@ export declare class Page {
     readonly name: string;
     readonly url: string;
     readonly app: PageMaster;
+    readonly container: HTMLElement;
 }
 export interface PageConstructor {
     new (args: PageParams): Page;

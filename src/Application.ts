@@ -102,16 +102,37 @@ function createPageUrl<T>(pageName: string, params?: T) {
 export class Application extends PageMaster {
 
     private _runned: boolean = false;
-    private closeCurrentOnBack: boolean | null = null;
-    private tempPageData: PageData | undefined = undefined;
+    // private closeCurrentOnBack: boolean | null = null;
+    // private tempPageData: PageData | undefined = undefined;
+
+    static DefaultContainerName = 'default'
 
     /**
      * 构造函数
      * @param parser 地图，描述站点各个页面结点
      * @param allowCachePage 是允许缓存页面，默认 true
      */
-    constructor(args?: { parser?: PageNodeParser, container?: HTMLElement }) {
-        super((args || {}).container || document.body, (args || {}).parser);
+    constructor(args?: { parser?: PageNodeParser, container?: HTMLElement | { [name: string]: HTMLElement } }) {
+        super(Application.containers((args || {}).container), (args || {}).parser);
+    }
+
+    private static containers(container: HTMLElement | { [name: string]: HTMLElement } | undefined): { [name: string]: HTMLElement } {
+        let r: { [name: string]: HTMLElement } = {}
+        if (container == null) {
+            r[Application.DefaultContainerName] = document.body
+            return r
+        }
+
+        if ((container as HTMLElement).tagName) {
+            r[Application.DefaultContainerName] = container as HTMLElement
+            return r
+        }
+
+        r = container as { [name: string]: HTMLElement }
+        if (!Application.DefaultContainerName)
+            throw Errors.containerIsNotExists(Application.DefaultContainerName)
+
+        return r
     }
 
     /**
@@ -143,24 +164,26 @@ export class Application extends PageMaster {
 
         let showPage = () => {
             let url = location.href;
+
             let sharpIndex = url.indexOf('#');
-            let routeString = url.substr(sharpIndex + 1);
-            /** 以 ! 开头在 hash 忽略掉 */
-            if (routeString.startsWith('!')) {
-                return
-            }
             if (sharpIndex < 0) {
                 url = '#' + DefaultPageName
             }
-            this.showPageByUrl(url);
+            else {
+                url = url.substr(sharpIndex + 1);
+            }
+            // let routeString = url.substr(sharpIndex + 1);
+            /** 以 ! 开头在 hash 忽略掉 */
+            if (url.startsWith('!')) {
+                return
+            }
+
+            this.showPage(url);
         }
 
         showPage()
-        // window.addEventListener('popstate', () => {
-        //     showPage()
-        // });
         window.addEventListener('hashchange', () => {
-            if(this.location.skip){
+            if (this.location.skip) {
                 delete this.location.skip
                 return
             }
@@ -170,64 +193,7 @@ export class Application extends PageMaster {
         this._runned = true;
     }
 
-    /**
-     * 显示页面
-     * @param url 页面的路径
-     */
-    private showPageByUrl(url: string): Page | null {
-        if (!url) throw Errors.argumentNull('url');
-
-        // var routeData = this.parseUrl(url);
-        // if (routeData == null) {
-        //     throw Errors.noneRouteMatched(url);
-        // }
-
-        let tempPageData = this.fetchTemplatePageData();
-
-        let result: Page | null = null;
-        //==========================================
-        // closeCurrentOnBack != null 表示返回操作
-        if (this.closeCurrentOnBack == true) {
-            this.closeCurrentOnBack = null;
-            if (tempPageData == null)
-                this.closeCurrentPage()
-            else
-                this.closeCurrentPage(tempPageData);
-
-            result = this.currentPage;
-        }
-        else if (this.closeCurrentOnBack == false) {
-            this.closeCurrentOnBack = null;
-            var page = this.pageStack.pop();
-            if (page == null)
-                throw new Error('page is null');
-
-            page.hide(this.currentPage);
-            result = this.currentPage;
-        }
-        //==========================================
-
-        if (result == null || result.url != url) {
-            // let args = routeData.values || {};
-            // if (tempPageData) {
-            //     args = Object.assign(args, tempPageData);
-            // }
-            result = this.showPage(url);
-        }
-        return result;
-    }
-
-    private fetchTemplatePageData() {
-        if (this.tempPageData == null) {
-            return null;
-        }
-        let data = this.tempPageData;
-        this.tempPageData = undefined;
-        return data;
-    }
-
-    private setLocationHash(pageUrl: string) {
-        // history.pushState(EmtpyStateData, "", url)
+    setLocationHash(pageUrl: string) {
         this.location.hash = `#${pageUrl}`
         this.location.skip = true
     }
@@ -242,10 +208,12 @@ export class Application extends PageMaster {
      * @param node 页面节点
      * @param args 传递到页面的参数
      */
-    public redirect<T>(pageUrl: string, args?: object): Page {
+    public redirect<T>(pageUrl: string, args?: PageData): Page {
         if (!pageUrl) throw Errors.argumentNull('pageUrl')
 
-        let page = this.showPage(pageUrl, args);
+        let routeData = parseUrl(pageUrl)
+        let containerName = (routeData.values.container as string) || Application.DefaultContainerName
+        let page = this.openPage(pageUrl, containerName, args);
         let url = this.createUrl(page.name, page.data);
         this.setLocationHash(url);
 
@@ -258,37 +226,23 @@ export class Application extends PageMaster {
      * @param args 传递到页面的参数
      * @param setUrl 是否设置链接里 Hash
      */
-    public forward(pageUrl: string, args?: object, setUrl?: boolean) {
+    public forward(pageUrl: string, args?: PageData, setUrl?: boolean) {
         if (!pageUrl) throw Errors.argumentNull('pageNameOrUrl')
         if (setUrl == null)
             setUrl = true
 
-        let page = this.showPage(pageUrl, args, true);
+        let routeData = parseUrl(pageUrl)
+        let containerName = (routeData.values.container as string) || Application.DefaultContainerName
+        let page = this.openPage(pageUrl, containerName, args, true);
         if (setUrl) {
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
         }
-        // else {
-        //     history.pushState(pageUrl, "", "")
-        // }
 
         return page;
     }
 
-    // private showPageByNameOrUrl(pageNameOrUrl: string, args?: object, rerender?: boolean) {
-    //     // let pageName: string
-    //     // if (pageNameOrUrl.indexOf('?') < 0) {
-    //     //     pageName = pageNameOrUrl
-    //     // }
-    //     // else {
-    //     //     let obj = this.parseUrl(pageNameOrUrl);
-    //     //     pageName = obj.pageName;
-    //     //     args = Object.assign(obj.values, args || {});
-    //     // }
-    //     return this.showPage(pageNameOrUrl, args, rerender);
-    // }
-
-    public reload(pageName: string, args?: object) {
+    public reload(pageName: string, args?: PageData) {
         let result = this.showPage(pageName, args, true)
         return result
     }
@@ -298,20 +252,11 @@ export class Application extends PageMaster {
      * 返回上一个页面
      * @param closeCurrentPage 返回上一个页面时，是否关闭当前页面，true 关闭当前页，false 隐藏当前页。默认为 true。
      */
-    public back(): void
-    public back(closeCurrentPage: boolean): void
-    public back(data: any): void
-    public back<T>(closeCurrentPage?: boolean, data?: Pick<T, StringPropertyNames<T>>): void
-    public back<T>(closeCurrentPage?: any, data?: Pick<T, StringPropertyNames<T>>): void {
-        const closeCurrentPageDefault = true
-        if (typeof closeCurrentPage == 'object') {
-            data = closeCurrentPage;
-            closeCurrentPage = null;
-        }
-
-        this.closeCurrentOnBack = closeCurrentPage == null ? closeCurrentPageDefault : closeCurrentPage;
-        this.tempPageData = data as any;
-        history.back();
+    public back(): void {
+        this.closeCurrentPage()
+        setTimeout(() => {
+            history.back();
+        }, 100)
     }
 
     /**

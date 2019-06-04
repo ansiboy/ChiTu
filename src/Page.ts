@@ -22,6 +22,7 @@ export interface PageParams {
     // name: string,
     data: PageData,
     url: string
+    container: HTMLElement
 }
 
 /**
@@ -35,6 +36,7 @@ export class Page {
     // private _action: Action;
     private _name: string
     private _url: string
+    private _container: HTMLElement
 
     static tagName = 'div';
 
@@ -60,6 +62,7 @@ export class Page {
         this.data = Object.assign(routeData.values, params.data || {})
         this._name = routeData.pageName;
         this._url = params.url
+        this._container = params.container
     }
     private on_showing() {
         return this.showing.fire(this, this.data);
@@ -141,6 +144,10 @@ export class Page {
 
     get app() {
         return this._app;
+    }
+
+    get container() {
+        return this._container
     }
 }
 

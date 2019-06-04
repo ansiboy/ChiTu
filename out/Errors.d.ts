@@ -24,4 +24,5 @@ export declare class Errors {
     static siteMapRootCanntNull(): Error;
     static duplicateSiteMapNode(name: string): Error;
     static unexpectedNullValue(): Error;
+    static containerIsNotExists(name: string): Error;
 }
