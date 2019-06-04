@@ -163,14 +163,22 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
         return this.pageCreated.fire(this, page);
       }
     }, {
+      key: "cachePageKey",
+      value: function cachePageKey(containerName, pageUrl) {
+        var key = "".concat(containerName, "_").concat(pageUrl);
+        return key;
+      }
+    }, {
       key: "getPage",
       value: function getPage(pageUrl, containerName, values) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
+        var key = this.cachePageKey(containerName, pageUrl);
         values = values || {};
-        var cachePage = this.cachePages["".concat(containerName, "_").concat(pageUrl)];
+        var cachePage = this.cachePages[key];
 
         if (cachePage != null) {
-          cachePage.data = values || {};
+          var r = Application_1.parseUrl(pageUrl);
+          cachePage.data = Object.assign(values || {}, r.values);
           return {
             page: cachePage,
             isNew: false
@@ -178,7 +186,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
         }
 
         var page = this.createPage(pageUrl, containerName, values);
-        this.cachePages[pageUrl] = page;
+        this.cachePages[key] = page;
         this.on_pageCreated(page);
         return {
           page: page,
@@ -204,13 +212,16 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
           data: values,
           displayer: displayer,
           element: element,
-          container: container
+          container: {
+            name: containerName,
+            element: container
+          }
         });
 
         var showing = function showing(sender) {
           for (var key in _this3.containers) {
-            if (_this3.containers[key] == sender.container) {
-              sender.container.style.removeProperty('display');
+            if (key == sender.container.name) {
+              sender.container.element.style.removeProperty('display');
               continue;
             }
 
@@ -252,6 +263,22 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
       value: function openPage(pageUrl, containerName, args, forceRender) {
         args = args || {};
         forceRender = forceRender == null ? false : true;
+        var values = {};
+        var funs = {};
+
+        for (var key in args) {
+          var arg = args[key];
+
+          if (typeof arg == 'function') {
+            funs[key] = arg;
+          } else {
+            values[key] = arg;
+          }
+        }
+
+        var r = Application_1.parseUrl(pageUrl);
+        values = Object.assign(values, r.values);
+        pageUrl = Application_1.createPageUrl(r.pageName, values);
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
         if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
 
@@ -275,7 +302,8 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
       value: function closePage(page) {
         if (page == null) throw Errors_1.Errors.argumentNull('page');
         page.close();
-        delete this.cachePages[page.url];
+        var key = this.cachePageKey(page.container.name, page.url);
+        delete this.cachePages[key];
         this.page_stack = this.page_stack.filter(function (o) {
           return o != page;
         });

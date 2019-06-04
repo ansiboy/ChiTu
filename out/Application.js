@@ -59,6 +59,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         }
         return `${path}${paramsText}`;
     }
+    exports.createPageUrl = createPageUrl;
     class Application extends PageMaster_1.PageMaster {
         constructor(args) {
             super(Application.containers((args || {}).container), (args || {}).parser);

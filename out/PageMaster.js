@@ -81,17 +81,23 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
                 return this.page_stack[this.page_stack.length - 1];
             return null;
         }
+        cachePageKey(containerName, pageUrl) {
+            let key = `${containerName}_${pageUrl}`;
+            return key;
+        }
         getPage(pageUrl, containerName, values) {
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageUrl');
+            let key = this.cachePageKey(containerName, pageUrl);
             values = values || {};
-            let cachePage = this.cachePages[`${containerName}_${pageUrl}`];
+            let cachePage = this.cachePages[key];
             if (cachePage != null) {
-                cachePage.data = values || {};
+                let r = Application_1.parseUrl(pageUrl);
+                cachePage.data = Object.assign(values || {}, r.values);
                 return { page: cachePage, isNew: false };
             }
             let page = this.createPage(pageUrl, containerName, values);
-            this.cachePages[pageUrl] = page;
+            this.cachePages[key] = page;
             this.on_pageCreated(page);
             return { page, isNew: true };
         }
@@ -113,12 +119,12 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
                 data: values,
                 displayer,
                 element,
-                container,
+                container: { name: containerName, element: container },
             });
             let showing = (sender) => {
                 for (let key in this.containers) {
-                    if (this.containers[key] == sender.container) {
-                        sender.container.style.removeProperty('display');
+                    if (key == sender.container.name) {
+                        sender.container.element.style.removeProperty('display');
                         continue;
                     }
                     this.containers[key].style.display == 'none';
@@ -152,6 +158,20 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
         openPage(pageUrl, containerName, args, forceRender) {
             args = args || {};
             forceRender = forceRender == null ? false : true;
+            let values = {};
+            let funs = {};
+            for (let key in args) {
+                let arg = args[key];
+                if (typeof arg == 'function') {
+                    funs[key] = arg;
+                }
+                else {
+                    values[key] = arg;
+                }
+            }
+            let r = Application_1.parseUrl(pageUrl);
+            values = Object.assign(values, r.values);
+            pageUrl = Application_1.createPageUrl(r.pageName, values);
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageName');
             if (this.currentPage != null && this.currentPage.url == pageUrl)
@@ -172,7 +192,8 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             if (page == null)
                 throw Errors_1.Errors.argumentNull('page');
             page.close();
-            delete this.cachePages[page.url];
+            let key = this.cachePageKey(page.container.name, page.url);
+            delete this.cachePages[key];
             this.page_stack = this.page_stack.filter(o => o != page);
         }
         pushPage(page) {

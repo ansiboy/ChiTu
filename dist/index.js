@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.1.0
+ *  maishu-chitu v3.4.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -163,6 +163,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         }
         return `${path}${paramsText}`;
     }
+    exports.createPageUrl = createPageUrl;
     class Application extends PageMaster_1.PageMaster {
         constructor(args) {
             super(Application.containers((args || {}).container), (args || {}).parser);
@@ -609,17 +610,23 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 return this.page_stack[this.page_stack.length - 1];
             return null;
         }
+        cachePageKey(containerName, pageUrl) {
+            let key = `${containerName}_${pageUrl}`;
+            return key;
+        }
         getPage(pageUrl, containerName, values) {
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageUrl');
+            let key = this.cachePageKey(containerName, pageUrl);
             values = values || {};
-            let cachePage = this.cachePages[`${containerName}_${pageUrl}`];
+            let cachePage = this.cachePages[key];
             if (cachePage != null) {
-                cachePage.data = values || {};
+                let r = Application_1.parseUrl(pageUrl);
+                cachePage.data = Object.assign(values || {}, r.values);
                 return { page: cachePage, isNew: false };
             }
             let page = this.createPage(pageUrl, containerName, values);
-            this.cachePages[pageUrl] = page;
+            this.cachePages[key] = page;
             this.on_pageCreated(page);
             return { page, isNew: true };
         }
@@ -641,12 +648,12 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 data: values,
                 displayer,
                 element,
-                container,
+                container: { name: containerName, element: container },
             });
             let showing = (sender) => {
                 for (let key in this.containers) {
-                    if (this.containers[key] == sender.container) {
-                        sender.container.style.removeProperty('display');
+                    if (key == sender.container.name) {
+                        sender.container.element.style.removeProperty('display');
                         continue;
                     }
                     this.containers[key].style.display == 'none';
@@ -680,6 +687,20 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
         openPage(pageUrl, containerName, args, forceRender) {
             args = args || {};
             forceRender = forceRender == null ? false : true;
+            let values = {};
+            let funs = {};
+            for (let key in args) {
+                let arg = args[key];
+                if (typeof arg == 'function') {
+                    funs[key] = arg;
+                }
+                else {
+                    values[key] = arg;
+                }
+            }
+            let r = Application_1.parseUrl(pageUrl);
+            values = Object.assign(values, r.values);
+            pageUrl = Application_1.createPageUrl(r.pageName, values);
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageName');
             if (this.currentPage != null && this.currentPage.url == pageUrl)
@@ -700,7 +721,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             if (page == null)
                 throw Errors_1.Errors.argumentNull('page');
             page.close();
-            delete this.cachePages[page.url];
+            let key = this.cachePageKey(page.container.name, page.url);
+            delete this.cachePages[key];
             this.page_stack = this.page_stack.filter(o => o != page);
         }
         pushPage(page) {

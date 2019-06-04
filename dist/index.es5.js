@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.1.0
+ *  maishu-chitu v3.4.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -206,6 +206,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
     return "".concat(path).concat(paramsText);
   }
+
+  exports.createPageUrl = createPageUrl;
 
   var Application =
   /*#__PURE__*/
@@ -942,14 +944,22 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         return this.pageCreated.fire(this, page);
       }
     }, {
+      key: "cachePageKey",
+      value: function cachePageKey(containerName, pageUrl) {
+        var key = "".concat(containerName, "_").concat(pageUrl);
+        return key;
+      }
+    }, {
       key: "getPage",
       value: function getPage(pageUrl, containerName, values) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
+        var key = this.cachePageKey(containerName, pageUrl);
         values = values || {};
-        var cachePage = this.cachePages["".concat(containerName, "_").concat(pageUrl)];
+        var cachePage = this.cachePages[key];
 
         if (cachePage != null) {
-          cachePage.data = values || {};
+          var r = Application_1.parseUrl(pageUrl);
+          cachePage.data = Object.assign(values || {}, r.values);
           return {
             page: cachePage,
             isNew: false
@@ -957,7 +967,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         }
 
         var page = this.createPage(pageUrl, containerName, values);
-        this.cachePages[pageUrl] = page;
+        this.cachePages[key] = page;
         this.on_pageCreated(page);
         return {
           page: page,
@@ -983,13 +993,16 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
           data: values,
           displayer: displayer,
           element: element,
-          container: container
+          container: {
+            name: containerName,
+            element: container
+          }
         });
 
         var showing = function showing(sender) {
           for (var key in _this3.containers) {
-            if (_this3.containers[key] == sender.container) {
-              sender.container.style.removeProperty('display');
+            if (key == sender.container.name) {
+              sender.container.element.style.removeProperty('display');
               continue;
             }
 
@@ -1031,6 +1044,22 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       value: function openPage(pageUrl, containerName, args, forceRender) {
         args = args || {};
         forceRender = forceRender == null ? false : true;
+        var values = {};
+        var funs = {};
+
+        for (var key in args) {
+          var arg = args[key];
+
+          if (typeof arg == 'function') {
+            funs[key] = arg;
+          } else {
+            values[key] = arg;
+          }
+        }
+
+        var r = Application_1.parseUrl(pageUrl);
+        values = Object.assign(values, r.values);
+        pageUrl = Application_1.createPageUrl(r.pageName, values);
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
         if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
 
@@ -1054,7 +1083,8 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       value: function closePage(page) {
         if (page == null) throw Errors_1.Errors.argumentNull('page');
         page.close();
-        delete this.cachePages[page.url];
+        var key = this.cachePageKey(page.container.name, page.url);
+        delete this.cachePages[key];
         this.page_stack = this.page_stack.filter(function (o) {
           return o != page;
         });

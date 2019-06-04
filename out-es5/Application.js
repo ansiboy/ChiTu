@@ -102,6 +102,8 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     return "".concat(path).concat(paramsText);
   }
 
+  exports.createPageUrl = createPageUrl;
+
   var Application =
   /*#__PURE__*/
   function (_PageMaster_1$PageMas) {
