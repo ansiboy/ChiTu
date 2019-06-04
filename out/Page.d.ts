@@ -10,13 +10,17 @@ export interface PageDisplayer {
     show(targetPage: Page, currentPage: Page | null): Promise<any>;
     hide(targetPage: Page, currentPage: Page | null): Promise<any>;
 }
+export interface PageContainer {
+    name: string;
+    element: HTMLElement;
+}
 export interface PageParams {
     app: PageMaster;
     element: HTMLElement;
     displayer: PageDisplayer;
     data: PageData;
     url: string;
-    container: HTMLElement;
+    container: PageContainer;
 }
 export declare class Page {
     private _element;
@@ -48,7 +52,7 @@ export declare class Page {
     readonly name: string;
     readonly url: string;
     readonly app: PageMaster;
-    readonly container: HTMLElement;
+    readonly container: PageContainer;
 }
 export interface PageConstructor {
     new (args: PageParams): Page;

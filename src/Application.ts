@@ -75,7 +75,7 @@ function pareeUrlQuery(query: string): { [key: string]: string } {
     return urlParams;
 }
 
-function createPageUrl<T>(pageName: string, params?: T) {
+export function createPageUrl<T>(pageName: string, params?: T) {
     let path_parts = pageName.split('.');
     let path = path_parts.join('/');
     if (!params)

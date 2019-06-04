@@ -1,7 +1,9 @@
 import { Callbacks, Callback1, Callback2 } from "maishu-chitu-service";
 import { Page, PageConstructor, PageDisplayConstructor, PageDisplayerImplement, PageData } from "./Page";
-import { PageNodeParser, PageNode, StringPropertyNames, Action, parseUrl, Application } from "./Application";
+import { PageNodeParser, PageNode, StringPropertyNames, Action, parseUrl, Application, createPageUrl } from "./Application";
 import { Errors } from "./Errors";
+
+
 
 /**
  * 页面管理，用于管理各个页面
@@ -22,7 +24,7 @@ export class PageMaster {
     protected pageType: PageConstructor = Page;
     protected pageDisplayType: PageDisplayConstructor = PageDisplayerImplement;
 
-    private cachePages: { [pageUrl: string]: Page } = {};
+    private cachePages: { [key: string]: Page } = {};
     private page_stack = new Array<Page>();
     private containers: { [name: string]: HTMLElement };
     private nodes: { [name: string]: PageNode } = {}
@@ -117,18 +119,25 @@ export class PageMaster {
         return null;
     }
 
+    private cachePageKey(containerName: string, pageUrl: string) {
+        let key = `${containerName}_${pageUrl}`
+        return key
+    }
+
     private getPage(pageUrl: string, containerName: string, values?: PageData): { page: Page, isNew: boolean } {
         if (!pageUrl) throw Errors.argumentNull('pageUrl')
 
+        let key = this.cachePageKey(containerName, pageUrl) //`${containerName}_${pageUrl}`
         values = values || {};
-        let cachePage = this.cachePages[`${containerName}_${pageUrl}`];
+        let cachePage = this.cachePages[key];
         if (cachePage != null) {
-            cachePage.data = values || {}
+            let r = parseUrl(pageUrl)
+            cachePage.data = Object.assign(values || {}, r.values)
             return { page: cachePage, isNew: false };
         }
 
         let page = this.createPage(pageUrl, containerName, values);
-        this.cachePages[pageUrl] = page;
+        this.cachePages[key] = page;
 
         this.on_pageCreated(page);
         return { page, isNew: true };
@@ -153,13 +162,13 @@ export class PageMaster {
             data: values,
             displayer,
             element,
-            container,
+            container: { name: containerName, element: container },
         });
 
         let showing = (sender: Page) => {
             for (let key in this.containers) {
-                if (this.containers[key] == sender.container) {
-                    sender.container.style.removeProperty('display')
+                if (key == sender.container.name) {
+                    sender.container.element.style.removeProperty('display')
                     continue
                 }
                 this.containers[key].style.display == 'none'
@@ -181,7 +190,7 @@ export class PageMaster {
     }
 
     protected createPageElement(pageName: string, containerName: string) {
-        if(!containerName) throw Errors.argumentNull('containerName')
+        if (!containerName) throw Errors.argumentNull('containerName')
         let container = this.containers[containerName]
         if (!container)
             throw Errors.containerIsNotExists(containerName)
@@ -198,12 +207,29 @@ export class PageMaster {
      * @param forceRender 是否强制重新渲染页面，是表示强制重新渲染
      */
     public showPage(pageUrl: string, args?: PageData, forceRender?: boolean): Page {
+
         return this.openPage(pageUrl, Application.DefaultContainerName, args, forceRender)
     }
 
     public openPage(pageUrl: string, containerName: string, args?: PageData, forceRender?: boolean) {
         args = args || {}
         forceRender = forceRender == null ? false : true
+
+        let values: { [key: string]: string } = {}
+        let funs: { [key: string]: Function } = {}
+        for (let key in args) {
+            let arg = args[key]
+            if (typeof arg == 'function') {
+                funs[key] = arg
+            }
+            else {
+                values[key] = arg
+            }
+        }
+
+        let r = parseUrl(pageUrl)
+        values = Object.assign(values, r.values)
+        pageUrl = createPageUrl(r.pageName, values)
 
         if (!pageUrl) throw Errors.argumentNull('pageName');
 
@@ -234,7 +260,8 @@ export class PageMaster {
 
         page.close()
 
-        delete this.cachePages[page.url];
+        let key = this.cachePageKey(page.container.name, page.url)
+        delete this.cachePages[key];
         this.page_stack = this.page_stack.filter(o => o != page);
     }
 

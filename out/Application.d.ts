@@ -22,6 +22,7 @@ export declare function parseUrl(url: string): {
     pageName: string;
     values: PageData;
 };
+export declare function createPageUrl<T>(pageName: string, params?: T): string;
 export declare class Application extends PageMaster {
     private _runned;
     static DefaultContainerName: string;

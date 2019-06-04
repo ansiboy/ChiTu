@@ -22,6 +22,7 @@ export declare class PageMaster {
     protected loadjs(path: string): Promise<any[]>;
     private on_pageCreated;
     readonly currentPage: Page | null;
+    private cachePageKey;
     private getPage;
     protected createPage(pageUrl: string, containerName: string, values?: PageData): Page;
     protected createPageElement(pageName: string, containerName: string): HTMLElement;

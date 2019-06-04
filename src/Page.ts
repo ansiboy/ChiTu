@@ -14,6 +14,11 @@ export interface PageDisplayer {
     hide(targetPage: Page, currentPage: Page | null): Promise<any>;
 }
 
+export interface PageContainer {
+    name: string,
+    element: HTMLElement
+}
+
 export interface PageParams {
     app: PageMaster,
     // action: Action,
@@ -22,7 +27,7 @@ export interface PageParams {
     // name: string,
     data: PageData,
     url: string
-    container: HTMLElement
+    container: PageContainer
 }
 
 /**
@@ -36,7 +41,7 @@ export class Page {
     // private _action: Action;
     private _name: string
     private _url: string
-    private _container: HTMLElement
+    private _container: PageContainer
 
     static tagName = 'div';
 
