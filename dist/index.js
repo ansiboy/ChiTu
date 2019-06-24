@@ -230,9 +230,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         redirect(pageUrl, args) {
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageUrl');
-            let routeData = parseUrl(pageUrl);
-            let containerName = routeData.values.container || Application.DefaultContainerName;
-            let page = this.openPage(pageUrl, containerName, args);
+            let page = this.showPage(pageUrl, args);
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
             return page;
@@ -242,9 +240,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                 throw Errors_1.Errors.argumentNull('pageNameOrUrl');
             if (setUrl == null)
                 setUrl = true;
-            let routeData = parseUrl(pageUrl);
-            let containerName = routeData.values.container || Application.DefaultContainerName;
-            let page = this.openPage(pageUrl, containerName, args, true);
+            let page = this.showPage(pageUrl, args, true);
             if (setUrl) {
                 let url = this.createUrl(page.name, page.data);
                 this.setLocationHash(url);
@@ -682,9 +678,6 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             return element;
         }
         showPage(pageUrl, args, forceRender) {
-            return this.openPage(pageUrl, Application_1.Application.DefaultContainerName, args, forceRender);
-        }
-        openPage(pageUrl, containerName, args, forceRender) {
             args = args || {};
             forceRender = forceRender == null ? false : true;
             let values = {};
@@ -705,6 +698,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 throw Errors_1.Errors.argumentNull('pageName');
             if (this.currentPage != null && this.currentPage.url == pageUrl)
                 return this.currentPage;
+            let containerName = values.container || Application_1.Application.DefaultContainerName;
             let { page, isNew } = this.getPage(pageUrl, containerName, args);
             if (isNew || forceRender) {
                 let action = this.findPageAction(pageUrl);

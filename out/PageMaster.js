@@ -153,9 +153,6 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             return element;
         }
         showPage(pageUrl, args, forceRender) {
-            return this.openPage(pageUrl, Application_1.Application.DefaultContainerName, args, forceRender);
-        }
-        openPage(pageUrl, containerName, args, forceRender) {
             args = args || {};
             forceRender = forceRender == null ? false : true;
             let values = {};
@@ -176,6 +173,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
                 throw Errors_1.Errors.argumentNull('pageName');
             if (this.currentPage != null && this.currentPage.url == pageUrl)
                 return this.currentPage;
+            let containerName = values.container || Application_1.Application.DefaultContainerName;
             let { page, isNew } = this.getPage(pageUrl, containerName, args);
             if (isNew || forceRender) {
                 let action = this.findPageAction(pageUrl);
