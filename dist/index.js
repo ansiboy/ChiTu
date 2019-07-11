@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.4.0
+ *  maishu-chitu v3.4.6
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -650,9 +650,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 for (let key in this.containers) {
                     if (key == sender.container.name) {
                         sender.container.element.style.removeProperty('display');
-                        continue;
                     }
-                    this.containers[key].style.display == 'none';
+                    else {
+                        this.containers[key].style.display = 'none';
+                    }
                 }
                 this.pageShowing.fire(this, sender);
             };

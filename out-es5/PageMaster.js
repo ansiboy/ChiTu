@@ -222,10 +222,9 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
           for (var key in _this3.containers) {
             if (key == sender.container.name) {
               sender.container.element.style.removeProperty('display');
-              continue;
+            } else {
+              _this3.containers[key].style.display = 'none';
             }
-
-            _this3.containers[key].style.display == 'none';
           }
 
           _this3.pageShowing.fire(_this3, sender);
