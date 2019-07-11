@@ -169,9 +169,10 @@ export class PageMaster {
             for (let key in this.containers) {
                 if (key == sender.container.name) {
                     sender.container.element.style.removeProperty('display')
-                    continue
                 }
-                this.containers[key].style.display == 'none'
+                else {
+                    this.containers[key].style.display = 'none'
+                }
             }
             this.pageShowing.fire(this, sender)
         }
