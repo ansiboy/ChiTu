@@ -75,7 +75,7 @@ function pareeUrlQuery(query: string): { [key: string]: string } {
     return urlParams;
 }
 
-export function createPageUrl<T>(pageName: string, params?: T) {
+export function createPageUrl(pageName: string, params?: PageData) {
     let path_parts = pageName.split('.');
     let path = path_parts.join('/');
     if (!params)
@@ -86,11 +86,11 @@ export function createPageUrl<T>(pageName: string, params?: T) {
     let paramsText = '';
     for (let key in params) {
         let value = params[key];
-        let type = typeof params[key];
-        if (type != 'string' || value == null) {
+        if (typeof value == "function" || value == null)
             continue;
-        }
-        paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
+
+        value = encodeURI(value);
+        paramsText = paramsText == '' ? `?${key}=${value}` : paramsText + `&${key}=${value}`;
     }
     //==============================================
     return `${path}${paramsText}`;
@@ -152,7 +152,7 @@ export class Application extends PageMaster {
      * @param pageName 页面名称
      * @param values 页面参数
      */
-    createUrl<T>(pageName: string, values?: T) {
+    createUrl<T>(pageName: string, values?: PageData) {
         return createPageUrl(pageName, values);
     }
 
