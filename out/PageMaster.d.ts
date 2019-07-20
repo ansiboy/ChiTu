@@ -27,7 +27,6 @@ export declare class PageMaster {
     protected createPage(pageUrl: string, containerName: string, values?: PageData): Page;
     protected createPageElement(pageName: string, containerName: string): HTMLElement;
     showPage(pageUrl: string, args?: PageData, forceRender?: boolean): Page;
-    openPage(pageUrl: string, containerName: string, args?: PageData, forceRender?: boolean): Page;
     protected closePage(page: Page): void;
     private pushPage;
     protected findPageAction(pageUrl: string): Action;

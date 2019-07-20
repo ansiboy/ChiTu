@@ -169,9 +169,10 @@ export class PageMaster {
             for (let key in this.containers) {
                 if (key == sender.container.name) {
                     sender.container.element.style.removeProperty('display')
-                    continue
                 }
-                this.containers[key].style.display == 'none'
+                else {
+                    this.containers[key].style.display = 'none'
+                }
             }
             this.pageShowing.fire(this, sender)
         }
@@ -208,10 +209,6 @@ export class PageMaster {
      */
     public showPage(pageUrl: string, args?: PageData, forceRender?: boolean): Page {
 
-        return this.openPage(pageUrl, Application.DefaultContainerName, args, forceRender)
-    }
-
-    public openPage(pageUrl: string, containerName: string, args?: PageData, forceRender?: boolean) {
         args = args || {}
         forceRender = forceRender == null ? false : true
 
@@ -236,6 +233,7 @@ export class PageMaster {
         if (this.currentPage != null && this.currentPage.url == pageUrl)
             return this.currentPage;
 
+        let containerName = (values.container as string) || Application.DefaultContainerName
         let { page, isNew } = this.getPage(pageUrl, containerName, args);
         if (isNew || forceRender) {
             let action = this.findPageAction(pageUrl)
@@ -253,6 +251,10 @@ export class PageMaster {
 
         return page;
     }
+
+    // public openPage(pageUrl: string, containerName: string, args?: PageData, forceRender?: boolean) {
+
+    // }
 
     protected closePage(page: Page) {
         if (page == null)

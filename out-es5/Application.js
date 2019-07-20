@@ -173,11 +173,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       key: "redirect",
       value: function redirect(pageUrl, args) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
-
-        var routeData = _parseUrl(pageUrl);
-
-        var containerName = routeData.values.container || Application.DefaultContainerName;
-        var page = this.openPage(pageUrl, containerName, args);
+        var page = this.showPage(pageUrl, args);
         var url = this.createUrl(page.name, page.data);
         this.setLocationHash(url);
         return page;
@@ -187,11 +183,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
       value: function forward(pageUrl, args, setUrl) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
         if (setUrl == null) setUrl = true;
-
-        var routeData = _parseUrl(pageUrl);
-
-        var containerName = routeData.values.container || Application.DefaultContainerName;
-        var page = this.openPage(pageUrl, containerName, args, true);
+        var page = this.showPage(pageUrl, args, true);
 
         if (setUrl) {
           var url = this.createUrl(page.name, page.data);

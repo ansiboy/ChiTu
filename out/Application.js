@@ -125,9 +125,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         redirect(pageUrl, args) {
             if (!pageUrl)
                 throw Errors_1.Errors.argumentNull('pageUrl');
-            let routeData = parseUrl(pageUrl);
-            let containerName = routeData.values.container || Application.DefaultContainerName;
-            let page = this.openPage(pageUrl, containerName, args);
+            let page = this.showPage(pageUrl, args);
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);
             return page;
@@ -137,9 +135,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
                 throw Errors_1.Errors.argumentNull('pageNameOrUrl');
             if (setUrl == null)
                 setUrl = true;
-            let routeData = parseUrl(pageUrl);
-            let containerName = routeData.values.container || Application.DefaultContainerName;
-            let page = this.openPage(pageUrl, containerName, args, true);
+            let page = this.showPage(pageUrl, args, true);
             if (setUrl) {
                 let url = this.createUrl(page.name, page.data);
                 this.setLocationHash(url);

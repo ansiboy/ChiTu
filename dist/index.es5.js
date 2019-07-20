@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.5.0
+ *  maishu-chitu v3.4.6
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -278,11 +278,7 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
       key: "redirect",
       value: function redirect(pageUrl, args) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
-
-        var routeData = _parseUrl(pageUrl);
-
-        var containerName = routeData.values.container || Application.DefaultContainerName;
-        var page = this.openPage(pageUrl, containerName, args);
+        var page = this.showPage(pageUrl, args);
         var url = this.createUrl(page.name, page.data);
         this.setLocationHash(url);
         return page;
@@ -292,11 +288,7 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
       value: function forward(pageUrl, args, setUrl) {
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageNameOrUrl');
         if (setUrl == null) setUrl = true;
-
-        var routeData = _parseUrl(pageUrl);
-
-        var containerName = routeData.values.container || Application.DefaultContainerName;
-        var page = this.openPage(pageUrl, containerName, args, true);
+        var page = this.showPage(pageUrl, args, true);
 
         if (setUrl) {
           var url = this.createUrl(page.name, page.data);
@@ -998,10 +990,9 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
           for (var key in _this3.containers) {
             if (key == sender.container.name) {
               sender.container.element.style.removeProperty('display');
-              continue;
+            } else {
+              _this3.containers[key].style.display = 'none';
             }
-
-            _this3.containers[key].style.display == 'none';
           }
 
           _this3.pageShowing.fire(_this3, sender);
@@ -1032,11 +1023,6 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
     }, {
       key: "showPage",
       value: function showPage(pageUrl, args, forceRender) {
-        return this.openPage(pageUrl, Application_1.Application.DefaultContainerName, args, forceRender);
-      }
-    }, {
-      key: "openPage",
-      value: function openPage(pageUrl, containerName, args, forceRender) {
         args = args || {};
         forceRender = forceRender == null ? false : true;
         var values = {};
@@ -1057,6 +1043,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         pageUrl = Application_1.createPageUrl(r.pageName, values);
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
         if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
+        var containerName = values.container || Application_1.Application.DefaultContainerName;
 
         var _this$getPage = this.getPage(pageUrl, containerName, args),
             page = _this$getPage.page,

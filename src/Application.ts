@@ -211,9 +211,7 @@ export class Application extends PageMaster {
     public redirect<T>(pageUrl: string, args?: PageData): Page {
         if (!pageUrl) throw Errors.argumentNull('pageUrl')
 
-        let routeData = parseUrl(pageUrl)
-        let containerName = (routeData.values.container as string) || Application.DefaultContainerName
-        let page = this.openPage(pageUrl, containerName, args);
+        let page = this.showPage(pageUrl, args);
         let url = this.createUrl(page.name, page.data);
         this.setLocationHash(url);
 
@@ -231,9 +229,7 @@ export class Application extends PageMaster {
         if (setUrl == null)
             setUrl = true
 
-        let routeData = parseUrl(pageUrl)
-        let containerName = (routeData.values.container as string) || Application.DefaultContainerName
-        let page = this.openPage(pageUrl, containerName, args, true);
+        let page = this.showPage(pageUrl, args, true);
         if (setUrl) {
             let url = this.createUrl(page.name, page.data);
             this.setLocationHash(url);

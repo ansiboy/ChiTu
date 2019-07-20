@@ -222,10 +222,9 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
           for (var key in _this3.containers) {
             if (key == sender.container.name) {
               sender.container.element.style.removeProperty('display');
-              continue;
+            } else {
+              _this3.containers[key].style.display = 'none';
             }
-
-            _this3.containers[key].style.display == 'none';
           }
 
           _this3.pageShowing.fire(_this3, sender);
@@ -256,11 +255,6 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
     }, {
       key: "showPage",
       value: function showPage(pageUrl, args, forceRender) {
-        return this.openPage(pageUrl, Application_1.Application.DefaultContainerName, args, forceRender);
-      }
-    }, {
-      key: "openPage",
-      value: function openPage(pageUrl, containerName, args, forceRender) {
         args = args || {};
         forceRender = forceRender == null ? false : true;
         var values = {};
@@ -281,6 +275,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
         pageUrl = Application_1.createPageUrl(r.pageName, values);
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
         if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
+        var containerName = values.container || Application_1.Application.DefaultContainerName;
 
         var _this$getPage = this.getPage(pageUrl, containerName, args),
             page = _this$getPage.page,
