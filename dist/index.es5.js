@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.4.0
+ *  maishu-chitu v3.5.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -105,6 +105,8 @@ define(["maishu-chitu-service"], function(__WEBPACK_EXTERNAL_MODULE_maishu_chitu
 "use strict";
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
 
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -120,8 +122,6 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! maishu-chitu-service */ "maishu-chitu-service"), __webpack_require__(/*! ./PageMaster */ "./out-es5/PageMaster.js"), __webpack_require__(/*! ./Errors */ "./out-es5/Errors.js")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, maishu_chitu_service_1, PageMaster_1, Errors_1) {
   "use strict";
@@ -194,14 +194,9 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
     for (var key in params) {
       var value = params[key];
-
-      var type = _typeof(params[key]);
-
-      if (type != 'string' || value == null) {
-        continue;
-      }
-
-      paramsText = paramsText == '' ? "?".concat(key, "=").concat(params[key]) : paramsText + "&".concat(key, "=").concat(params[key]);
+      if (typeof value == "function" || value == null) continue;
+      value = encodeURI(value);
+      paramsText = paramsText == '' ? "?".concat(key, "=").concat(value) : paramsText + "&".concat(key, "=").concat(value);
     }
 
     return "".concat(path).concat(paramsText);

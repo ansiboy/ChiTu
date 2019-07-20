@@ -22,7 +22,7 @@ export declare function parseUrl(url: string): {
     pageName: string;
     values: PageData;
 };
-export declare function createPageUrl<T>(pageName: string, params?: T): string;
+export declare function createPageUrl(pageName: string, params?: PageData): string;
 export declare class Application extends PageMaster {
     private _runned;
     static DefaultContainerName: string;
@@ -37,7 +37,7 @@ export declare class Application extends PageMaster {
         pageName: string;
         values: PageData;
     };
-    createUrl<T>(pageName: string, values?: T): string;
+    createUrl<T>(pageName: string, values?: PageData): string;
     run(): void;
     setLocationHash(pageUrl: string): void;
     private readonly location;

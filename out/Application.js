@@ -51,11 +51,10 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         let paramsText = '';
         for (let key in params) {
             let value = params[key];
-            let type = typeof params[key];
-            if (type != 'string' || value == null) {
+            if (typeof value == "function" || value == null)
                 continue;
-            }
-            paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
+            value = encodeURI(value);
+            paramsText = paramsText == '' ? `?${key}=${value}` : paramsText + `&${key}=${value}`;
         }
         return `${path}${paramsText}`;
     }

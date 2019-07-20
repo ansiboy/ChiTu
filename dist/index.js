@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.4.0
+ *  maishu-chitu v3.5.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -155,11 +155,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         let paramsText = '';
         for (let key in params) {
             let value = params[key];
-            let type = typeof params[key];
-            if (type != 'string' || value == null) {
+            if (typeof value == "function" || value == null)
                 continue;
-            }
-            paramsText = paramsText == '' ? `?${key}=${params[key]}` : paramsText + `&${key}=${params[key]}`;
+            value = encodeURI(value);
+            paramsText = paramsText == '' ? `?${key}=${value}` : paramsText + `&${key}=${value}`;
         }
         return `${path}${paramsText}`;
     }
