@@ -66,7 +66,7 @@ function pareeUrlQuery(query: string): { [key: string]: string } {
     let match,
         pl = /\+/g,  // Regex for replacing addition symbol with a space
         search = /([^&=]+)=?([^&]*)/g,
-        decode = function (s: string) { return decodeURIComponent(s.replace(pl, " ")); };
+        decode = function (s: string) { return decodeURI(s.replace(pl, " ")); };
 
     let urlParams: { [key: string]: string } = {};
     while (match = search.exec(query))
