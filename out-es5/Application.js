@@ -69,7 +69,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         pl = /\+/g,
         search = /([^&=]+)=?([^&]*)/g,
         decode = function decode(s) {
-      return decodeURIComponent(s.replace(pl, " "));
+      return decodeURI(s.replace(pl, " "));
     };
 
     var urlParams = {};

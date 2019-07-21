@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.4.6
+ *  maishu-chitu v3.4.7
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -174,7 +174,7 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
         pl = /\+/g,
         search = /([^&=]+)=?([^&]*)/g,
         decode = function decode(s) {
-      return decodeURIComponent(s.replace(pl, " "));
+      return decodeURI(s.replace(pl, " "));
     };
 
     var urlParams = {};
@@ -825,44 +825,20 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       this.nodes = {};
       this.MAX_PAGE_COUNT = 100;
       this.error = maishu_chitu_service_1.Callbacks();
-      this.parser = parser || this.defaultPageNodeParser();
+      this._defaultPageNodeParser = null;
+      this.parser = parser || this.defaultPageNodeParser;
       if (!containers) throw Errors_1.Errors.argumentNull("containers");
       this.parser.actions = this.parser.actions || {};
       this.containers = containers;
     }
 
     _createClass(PageMaster, [{
-      key: "defaultPageNodeParser",
-      value: function defaultPageNodeParser() {
-        var _this = this;
-
-        var nodes = {};
-        var p = {
-          actions: {},
-          parse: function parse(pageName) {
-            var node = nodes[pageName];
-
-            if (node == null) {
-              var path = "modules_".concat(pageName).split('_').join('/');
-              node = {
-                action: _this.createDefaultAction(path, _this.loadjs),
-                name: pageName
-              };
-              nodes[pageName] = node;
-            }
-
-            return node;
-          }
-        };
-        return p;
-      }
-    }, {
       key: "createDefaultAction",
       value: function createDefaultAction(url, loadjs) {
-        var _this2 = this;
+        var _this = this;
 
         return function (page) {
-          return __awaiter(_this2, void 0, void 0,
+          return __awaiter(_this, void 0, void 0,
           /*#__PURE__*/
           regeneratorRuntime.mark(function _callee() {
             var actionExports, _action, result, action, _action2;
@@ -964,7 +940,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
     }, {
       key: "createPage",
       value: function createPage(pageUrl, containerName, values) {
-        var _this3 = this;
+        var _this2 = this;
 
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
         if (!containerName) throw Errors_1.Errors.argumentNull('containerName');
@@ -987,19 +963,19 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         });
 
         var showing = function showing(sender) {
-          for (var key in _this3.containers) {
+          for (var key in _this2.containers) {
             if (key == sender.container.name) {
               sender.container.element.style.removeProperty('display');
             } else {
-              _this3.containers[key].style.display = 'none';
+              _this2.containers[key].style.display = 'none';
             }
           }
 
-          _this3.pageShowing.fire(_this3, sender);
+          _this2.pageShowing.fire(_this2, sender);
         };
 
         var shown = function shown(sender) {
-          _this3.pageShown.fire(_this3, sender);
+          _this2.pageShown.fire(_this2, sender);
         };
 
         page.showing.add(showing);
@@ -1108,7 +1084,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         }
 
         if (node == null && this.parser.parse != null) {
-          node = this.parser.parse(pageName);
+          node = this.parser.parse(pageName, this);
           console.assert(node.action != null);
         }
 
@@ -1130,6 +1106,34 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
 
           this.currentPage.show();
         }
+      }
+    }, {
+      key: "defaultPageNodeParser",
+      get: function get() {
+        var _this3 = this;
+
+        if (this._defaultPageNodeParser == null) {
+          var nodes = {};
+          this._defaultPageNodeParser = {
+            actions: {},
+            parse: function parse(pageName) {
+              var node = nodes[pageName];
+
+              if (node == null) {
+                var path = "modules_".concat(pageName).split('_').join('/');
+                node = {
+                  action: _this3.createDefaultAction(path, _this3.loadjs),
+                  name: pageName
+                };
+                nodes[pageName] = node;
+              }
+
+              return node;
+            }
+          };
+        }
+
+        return this._defaultPageNodeParser;
       }
     }, {
       key: "currentPage",

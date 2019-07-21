@@ -66,8 +66,8 @@ export class Page {
         let routeData = parseUrl(params.url)
         this.data = Object.assign(routeData.values, params.data || {})
         this._name = routeData.pageName;
-        this._url = params.url
-        this._container = params.container
+        this._url = params.url;
+        this._container = params.container;
     }
     private on_showing() {
         return this.showing.fire(this, this.data);

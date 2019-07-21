@@ -17,7 +17,8 @@ export declare class PageMaster {
     constructor(containers: {
         [name: string]: HTMLElement;
     }, parser?: PageNodeParser);
-    protected defaultPageNodeParser(): PageNodeParser;
+    private _defaultPageNodeParser;
+    protected readonly defaultPageNodeParser: PageNodeParser;
     protected createDefaultAction(url: string, loadjs: (path: string) => Promise<any>): Action;
     protected loadjs(path: string): Promise<any[]>;
     private on_pageCreated;

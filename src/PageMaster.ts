@@ -43,7 +43,7 @@ export class PageMaster {
      * @param allowCachePage 是允许缓存页面，默认 true
      */
     constructor(containers: { [name: string]: HTMLElement }, parser?: PageNodeParser) {
-        this.parser = parser || this.defaultPageNodeParser();
+        this.parser = parser || this.defaultPageNodeParser;
         if (!containers)
             throw Errors.argumentNull("containers");
 
@@ -51,21 +51,25 @@ export class PageMaster {
         this.containers = containers;
     }
 
-    protected defaultPageNodeParser() {
-        let nodes: { [key: string]: PageNode } = {}
-        let p: PageNodeParser = {
-            actions: {},
-            parse: (pageName) => {
-                let node = nodes[pageName];
-                if (node == null) {
-                    let path = `modules_${pageName}`.split('_').join('/');
-                    node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
-                    nodes[pageName] = node;
+    private _defaultPageNodeParser: PageNodeParser | null = null;
+    protected get defaultPageNodeParser() {
+        if (this._defaultPageNodeParser == null) {
+            let nodes: { [key: string]: PageNode } = {}
+            this._defaultPageNodeParser = {
+                actions: {},
+                parse: (pageName) => {
+                    let node = nodes[pageName];
+                    if (node == null) {
+                        let path = `modules_${pageName}`.split('_').join('/');
+                        node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
+                        nodes[pageName] = node;
+                    }
+                    return node;
                 }
-                return node;
             }
         }
-        return p
+
+        return this._defaultPageNodeParser;
     }
 
     protected createDefaultAction(url: string, loadjs: (path: string) => Promise<any>): Action {
@@ -252,10 +256,6 @@ export class PageMaster {
         return page;
     }
 
-    // public openPage(pageUrl: string, containerName: string, args?: PageData, forceRender?: boolean) {
-
-    // }
-
     protected closePage(page: Page) {
         if (page == null)
             throw Errors.argumentNull('page')
@@ -276,10 +276,10 @@ export class PageMaster {
         }
     }
 
-    protected findPageAction(pageUrl: string): Action {
+    findPageAction(pageUrl: string): Action {
         let routeData = parseUrl(pageUrl)
         let pageName = routeData.pageName
-        let node = this.findSiteMapNode(pageName)
+        let node = this.findPageNode(pageName)
         if (node == null)
             throw Errors.pageNodeNotExists(pageName)
 
@@ -290,7 +290,7 @@ export class PageMaster {
         return node.action
     }
 
-    private findSiteMapNode(pageName: string): PageNode | null {
+    private findPageNode(pageName: string): PageNode | null {
         if (this.nodes[pageName])
             return this.nodes[pageName]
 
@@ -301,7 +301,7 @@ export class PageMaster {
         }
 
         if (node == null && this.parser.parse != null) {
-            node = this.parser.parse(pageName);
+            node = this.parser.parse(pageName, this);
             console.assert(node.action != null);
         }
 

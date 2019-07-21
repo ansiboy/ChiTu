@@ -16,7 +16,7 @@ export interface PageNodeParser {
     actions?: {
         [key: string]: Action;
     };
-    parse?: (pageName: string) => PageNode;
+    parse?: (pageName: string, pageMaster: PageMaster) => PageNode;
 }
 export declare function parseUrl(url: string): {
     pageName: string;

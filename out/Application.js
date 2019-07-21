@@ -37,7 +37,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     }
     exports.parseUrl = parseUrl;
     function pareeUrlQuery(query) {
-        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
+        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURI(s.replace(pl, " ")); };
         let urlParams = {};
         while (match = search.exec(query))
             urlParams[decode(match[1])] = decode(match[2]);

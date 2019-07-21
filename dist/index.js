@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.4.6
+ *  maishu-chitu v3.4.7
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -141,7 +141,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
     }
     exports.parseUrl = parseUrl;
     function pareeUrlQuery(query) {
-        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); };
+        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURI(s.replace(pl, " ")); };
         let urlParams = {};
         while (match = search.exec(query))
             urlParams[decode(match[1])] = decode(match[2]);
@@ -545,27 +545,30 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             this.nodes = {};
             this.MAX_PAGE_COUNT = 100;
             this.error = maishu_chitu_service_1.Callbacks();
-            this.parser = parser || this.defaultPageNodeParser();
+            this._defaultPageNodeParser = null;
+            this.parser = parser || this.defaultPageNodeParser;
             if (!containers)
                 throw Errors_1.Errors.argumentNull("containers");
             this.parser.actions = this.parser.actions || {};
             this.containers = containers;
         }
-        defaultPageNodeParser() {
-            let nodes = {};
-            let p = {
-                actions: {},
-                parse: (pageName) => {
-                    let node = nodes[pageName];
-                    if (node == null) {
-                        let path = `modules_${pageName}`.split('_').join('/');
-                        node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
-                        nodes[pageName] = node;
+        get defaultPageNodeParser() {
+            if (this._defaultPageNodeParser == null) {
+                let nodes = {};
+                this._defaultPageNodeParser = {
+                    actions: {},
+                    parse: (pageName) => {
+                        let node = nodes[pageName];
+                        if (node == null) {
+                            let path = `modules_${pageName}`.split('_').join('/');
+                            node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
+                            nodes[pageName] = node;
+                        }
+                        return node;
                     }
-                    return node;
-                }
-            };
-            return p;
+                };
+            }
+            return this._defaultPageNodeParser;
         }
         createDefaultAction(url, loadjs) {
             return (page) => __awaiter(this, void 0, void 0, function* () {
@@ -747,7 +750,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 node = { action, name: pageName };
             }
             if (node == null && this.parser.parse != null) {
-                node = this.parser.parse(pageName);
+                node = this.parser.parse(pageName, this);
                 console.assert(node.action != null);
             }
             if (node != null)

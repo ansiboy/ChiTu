@@ -21,27 +21,30 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             this.nodes = {};
             this.MAX_PAGE_COUNT = 100;
             this.error = maishu_chitu_service_1.Callbacks();
-            this.parser = parser || this.defaultPageNodeParser();
+            this._defaultPageNodeParser = null;
+            this.parser = parser || this.defaultPageNodeParser;
             if (!containers)
                 throw Errors_1.Errors.argumentNull("containers");
             this.parser.actions = this.parser.actions || {};
             this.containers = containers;
         }
-        defaultPageNodeParser() {
-            let nodes = {};
-            let p = {
-                actions: {},
-                parse: (pageName) => {
-                    let node = nodes[pageName];
-                    if (node == null) {
-                        let path = `modules_${pageName}`.split('_').join('/');
-                        node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
-                        nodes[pageName] = node;
+        get defaultPageNodeParser() {
+            if (this._defaultPageNodeParser == null) {
+                let nodes = {};
+                this._defaultPageNodeParser = {
+                    actions: {},
+                    parse: (pageName) => {
+                        let node = nodes[pageName];
+                        if (node == null) {
+                            let path = `modules_${pageName}`.split('_').join('/');
+                            node = { action: this.createDefaultAction(path, this.loadjs), name: pageName };
+                            nodes[pageName] = node;
+                        }
+                        return node;
                     }
-                    return node;
-                }
-            };
-            return p;
+                };
+            }
+            return this._defaultPageNodeParser;
         }
         createDefaultAction(url, loadjs) {
             return (page) => __awaiter(this, void 0, void 0, function* () {
@@ -223,7 +226,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
                 node = { action, name: pageName };
             }
             if (node == null && this.parser.parse != null) {
-                node = this.parser.parse(pageName);
+                node = this.parser.parse(pageName, this);
                 console.assert(node.action != null);
             }
             if (node != null)
