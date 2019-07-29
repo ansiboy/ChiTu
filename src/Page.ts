@@ -43,7 +43,7 @@ export class Page {
     private _url: string
     private _container: PageContainer
 
-    static tagName = 'div';
+    // static tagName = 'div';
 
     data: PageData = {}
 
@@ -128,6 +128,15 @@ export class Page {
         })
         return service;
     }
+
+    reload() {
+        this.app.reload(this);
+    }
+
+    // public reload(pageName: string, args?: PageData) {
+    //     let result = this.showPage(pageName, args, true)
+    //     return result
+    // }
 
     /**
      * 元素，与页面相对应的元素

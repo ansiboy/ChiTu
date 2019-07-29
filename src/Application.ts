@@ -66,7 +66,9 @@ function pareeUrlQuery(query: string): { [key: string]: string } {
     let match,
         pl = /\+/g,  // Regex for replacing addition symbol with a space
         search = /([^&=]+)=?([^&]*)/g,
-        decode = function (s: string) { return decodeURI(s.replace(pl, " ")); };
+        decode = function (s: string) {
+            return decodeURIComponent(s.replace(pl, " "));
+        };
 
     let urlParams: { [key: string]: string } = {};
     while (match = search.exec(query))
@@ -89,7 +91,7 @@ export function createPageUrl(pageName: string, params?: PageData) {
         if (typeof value == "function" || value == null)
             continue;
 
-        value = encodeURI(value);
+        value = encodeURIComponent(value);
         paramsText = paramsText == '' ? `?${key}=${value}` : paramsText + `&${key}=${value}`;
     }
     //==============================================
@@ -238,10 +240,10 @@ export class Application extends PageMaster {
         return page;
     }
 
-    public reload(pageName: string, args?: PageData) {
-        let result = this.showPage(pageName, args, true)
-        return result
-    }
+    // public reload(pageName: string, args?: PageData) {
+    //     let result = this.showPage(pageName, args, true)
+    //     return result
+    // }
 
 
     /**

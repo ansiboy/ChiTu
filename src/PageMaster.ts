@@ -30,6 +30,7 @@ export class PageMaster {
     private nodes: { [name: string]: PageNode } = {}
     private MAX_PAGE_COUNT = 100
 
+    protected pageTagName = "div";
 
     /** 
      * 错误事件 
@@ -153,7 +154,8 @@ export class PageMaster {
 
         values = values || {}
 
-        let element = this.createPageElement(pageUrl, containerName);
+        let r = parseUrl(pageUrl)
+        let element = this.createPageElement(r.pageName, containerName);
         let displayer = new this.pageDisplayType(this);
         let container = this.containers[containerName]
         if (!container)
@@ -200,7 +202,7 @@ export class PageMaster {
         if (!container)
             throw Errors.containerIsNotExists(containerName)
 
-        let element: HTMLElement = document.createElement(Page.tagName);
+        let element: HTMLElement = document.createElement(this.pageTagName);
         container.appendChild(element);
         return element;
     }
@@ -254,6 +256,12 @@ export class PageMaster {
         console.assert(page == this.currentPage, "page is not current page");
 
         return page;
+    }
+
+    reload(page: Page) {
+        let action = this.findPageAction(page.url);
+        console.assert(action != null);
+        action(page, this)
     }
 
     protected closePage(page: Page) {
