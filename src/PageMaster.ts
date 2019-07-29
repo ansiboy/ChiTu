@@ -31,6 +31,7 @@ export class PageMaster {
     private MAX_PAGE_COUNT = 100
 
     protected pageTagName = "div";
+    protected pagePlaceholder = "page-placeholder";
 
     /** 
      * 错误事件 
@@ -202,8 +203,12 @@ export class PageMaster {
         if (!container)
             throw Errors.containerIsNotExists(containerName)
 
+        let placeholder = container.querySelector(this.pagePlaceholder);
+        if (placeholder == null)
+            placeholder = container;
+
         let element: HTMLElement = document.createElement(this.pageTagName);
-        container.appendChild(element);
+        placeholder.appendChild(element);
         return element;
     }
 
