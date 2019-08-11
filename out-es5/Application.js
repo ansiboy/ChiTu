@@ -69,7 +69,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         pl = /\+/g,
         search = /([^&=]+)=?([^&]*)/g,
         decode = function decode(s) {
-      return decodeURI(s.replace(pl, " "));
+      return decodeURIComponent(s.replace(pl, " "));
     };
 
     var urlParams = {};
@@ -90,7 +90,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     for (var key in params) {
       var value = params[key];
       if (typeof value == "function" || value == null) continue;
-      value = encodeURI(value);
+      value = encodeURIComponent(value);
       paramsText = paramsText == '' ? "?".concat(key, "=").concat(value) : paramsText + "&".concat(key, "=").concat(value);
     }
 
@@ -191,12 +191,6 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
         }
 
         return page;
-      }
-    }, {
-      key: "reload",
-      value: function reload(pageName, args) {
-        var result = this.showPage(pageName, args, true);
-        return result;
       }
     }, {
       key: "back",

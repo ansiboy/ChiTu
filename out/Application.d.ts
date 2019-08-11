@@ -43,7 +43,6 @@ export declare class Application extends PageMaster {
     private readonly location;
     redirect<T>(pageUrl: string, args?: PageData): Page;
     forward(pageUrl: string, args?: PageData, setUrl?: boolean): Page;
-    reload(pageName: string, args?: PageData): Page;
     back(): void;
     createService<T extends IService>(type?: ServiceConstructor<T>): T;
 }

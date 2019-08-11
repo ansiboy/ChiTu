@@ -26,6 +26,7 @@ define(["require", "exports", "maishu-chitu-service", "./Errors", "./Application
       this.hidden = maishu_chitu_service_1.Callbacks();
       this.closing = maishu_chitu_service_1.Callbacks();
       this.closed = maishu_chitu_service_1.Callbacks();
+      this.messageReceived = maishu_chitu_service_1.Callbacks();
       this._element = params.element;
       this._app = params.app;
       this._displayer = params.displayer;
@@ -115,6 +116,11 @@ define(["require", "exports", "maishu-chitu-service", "./Errors", "./Application
         return service;
       }
     }, {
+      key: "reload",
+      value: function reload() {
+        this.app.reload(this);
+      }
+    }, {
       key: "element",
       get: function get() {
         return this._element;
@@ -144,7 +150,6 @@ define(["require", "exports", "maishu-chitu-service", "./Errors", "./Application
     return Page;
   }();
 
-  Page.tagName = 'div';
   exports.Page = Page;
 
   var PageDisplayerImplement =

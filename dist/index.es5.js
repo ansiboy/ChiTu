@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.4.7
+ *  maishu-chitu v3.9.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -174,7 +174,7 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
         pl = /\+/g,
         search = /([^&=]+)=?([^&]*)/g,
         decode = function decode(s) {
-      return decodeURI(s.replace(pl, " "));
+      return decodeURIComponent(s.replace(pl, " "));
     };
 
     var urlParams = {};
@@ -195,7 +195,7 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
     for (var key in params) {
       var value = params[key];
       if (typeof value == "function" || value == null) continue;
-      value = encodeURI(value);
+      value = encodeURIComponent(value);
       paramsText = paramsText == '' ? "?".concat(key, "=").concat(value) : paramsText + "&".concat(key, "=").concat(value);
     }
 
@@ -296,12 +296,6 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
         }
 
         return page;
-      }
-    }, {
-      key: "reload",
-      value: function reload(pageName, args) {
-        var result = this.showPage(pageName, args, true);
-        return result;
       }
     }, {
       key: "back",
@@ -595,6 +589,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       this.hidden = maishu_chitu_service_1.Callbacks();
       this.closing = maishu_chitu_service_1.Callbacks();
       this.closed = maishu_chitu_service_1.Callbacks();
+      this.messageReceived = maishu_chitu_service_1.Callbacks();
       this._element = params.element;
       this._app = params.app;
       this._displayer = params.displayer;
@@ -684,6 +679,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         return service;
       }
     }, {
+      key: "reload",
+      value: function reload() {
+        this.app.reload(this);
+      }
+    }, {
       key: "element",
       get: function get() {
         return this._element;
@@ -713,7 +713,6 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     return Page;
   }();
 
-  Page.tagName = 'div';
   exports.Page = Page;
 
   var PageDisplayerImplement =
@@ -824,6 +823,8 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       this.page_stack = new Array();
       this.nodes = {};
       this.MAX_PAGE_COUNT = 100;
+      this.pageTagName = "div";
+      this.pagePlaceholder = "page-placeholder";
       this.error = maishu_chitu_service_1.Callbacks();
       this._defaultPageNodeParser = null;
       this.parser = parser || this.defaultPageNodeParser;
@@ -833,6 +834,19 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
     }
 
     _createClass(PageMaster, [{
+      key: "sendMessage",
+      value: function sendMessage(sender, page, message) {
+        var pages;
+        if (typeof page == "string") pages = this.page_stack.filter(function (o) {
+          return o.name == page;
+        });else pages = this.page_stack.filter(function (o) {
+          return o instanceof page;
+        });
+        pages.forEach(function (p) {
+          p.messageReceived.fire(sender, message);
+        });
+      }
+    }, {
       key: "createDefaultAction",
       value: function createDefaultAction(url, loadjs) {
         var _this = this;
@@ -945,7 +959,8 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageUrl');
         if (!containerName) throw Errors_1.Errors.argumentNull('containerName');
         values = values || {};
-        var element = this.createPageElement(pageUrl, containerName);
+        var r = Application_1.parseUrl(pageUrl);
+        var element = this.createPageElement(r.pageName, containerName);
         var displayer = new this.pageDisplayType(this);
         var container = this.containers[containerName];
         if (!container) throw Errors_1.Errors.containerIsNotExists(containerName);
@@ -992,8 +1007,10 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         if (!containerName) throw Errors_1.Errors.argumentNull('containerName');
         var container = this.containers[containerName];
         if (!container) throw Errors_1.Errors.containerIsNotExists(containerName);
-        var element = document.createElement(Page_1.Page.tagName);
-        container.appendChild(element);
+        var placeholder = container.querySelector("class=[\"".concat(this.pagePlaceholder, "\"]"));
+        if (placeholder == null) placeholder = container;
+        var element = document.createElement(this.pageTagName);
+        placeholder.appendChild(element);
         return element;
       }
     }, {
@@ -1037,6 +1054,13 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         return page;
       }
     }, {
+      key: "reload",
+      value: function reload(page) {
+        var action = this.findPageAction(page.url);
+        console.assert(action != null);
+        action(page, this);
+      }
+    }, {
       key: "closePage",
       value: function closePage(page) {
         if (page == null) throw Errors_1.Errors.argumentNull('page');
@@ -1063,15 +1087,15 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       value: function findPageAction(pageUrl) {
         var routeData = Application_1.parseUrl(pageUrl);
         var pageName = routeData.pageName;
-        var node = this.findSiteMapNode(pageName);
+        var node = this.findPageNode(pageName);
         if (node == null) throw Errors_1.Errors.pageNodeNotExists(pageName);
         var action = node.action;
         if (action == null) throw Errors_1.Errors.actionCanntNull(pageName);
         return node.action;
       }
     }, {
-      key: "findSiteMapNode",
-      value: function findSiteMapNode(pageName) {
+      key: "findPageNode",
+      value: function findPageNode(pageName) {
         if (this.nodes[pageName]) return this.nodes[pageName];
         var node = null;
         var action = this.parser.actions ? this.parser.actions[pageName] : null;
@@ -1191,6 +1215,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
   });
   exports.Application = Application_1.Application;
   exports.parseUrl = Application_1.parseUrl;
+  exports.createPageUrl = Application_1.createPageUrl;
   exports.PageMaster = PageMaster_1.PageMaster;
   exports.Page = Page_1.Page;
   exports.Callback = maishu_chitu_service_1.Callback;

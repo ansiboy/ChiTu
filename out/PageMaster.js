@@ -20,6 +20,8 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             this.page_stack = new Array();
             this.nodes = {};
             this.MAX_PAGE_COUNT = 100;
+            this.pageTagName = "div";
+            this.pagePlaceholder = "page-placeholder";
             this.error = maishu_chitu_service_1.Callbacks();
             this._defaultPageNodeParser = null;
             this.parser = parser || this.defaultPageNodeParser;
@@ -27,6 +29,16 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
                 throw Errors_1.Errors.argumentNull("containers");
             this.parser.actions = this.parser.actions || {};
             this.containers = containers;
+        }
+        sendMessage(sender, page, message) {
+            let pages;
+            if (typeof page == "string")
+                pages = this.page_stack.filter(o => o.name == page);
+            else
+                pages = this.page_stack.filter(o => o instanceof page);
+            pages.forEach(p => {
+                p.messageReceived.fire(sender, message);
+            });
         }
         get defaultPageNodeParser() {
             if (this._defaultPageNodeParser == null) {
@@ -110,7 +122,8 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             if (!containerName)
                 throw Errors_1.Errors.argumentNull('containerName');
             values = values || {};
-            let element = this.createPageElement(pageUrl, containerName);
+            let r = Application_1.parseUrl(pageUrl);
+            let element = this.createPageElement(r.pageName, containerName);
             let displayer = new this.pageDisplayType(this);
             let container = this.containers[containerName];
             if (!container)
@@ -152,8 +165,11 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             let container = this.containers[containerName];
             if (!container)
                 throw Errors_1.Errors.containerIsNotExists(containerName);
-            let element = document.createElement(Page_1.Page.tagName);
-            container.appendChild(element);
+            let placeholder = container.querySelector(`class=["${this.pagePlaceholder}"]`);
+            if (placeholder == null)
+                placeholder = container;
+            let element = document.createElement(this.pageTagName);
+            placeholder.appendChild(element);
             return element;
         }
         showPage(pageUrl, args, forceRender) {
@@ -190,6 +206,11 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             console.assert(page == this.currentPage, "page is not current page");
             return page;
         }
+        reload(page) {
+            let action = this.findPageAction(page.url);
+            console.assert(action != null);
+            action(page, this);
+        }
         closePage(page) {
             if (page == null)
                 throw Errors_1.Errors.argumentNull('page');
@@ -209,7 +230,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
         findPageAction(pageUrl) {
             let routeData = Application_1.parseUrl(pageUrl);
             let pageName = routeData.pageName;
-            let node = this.findSiteMapNode(pageName);
+            let node = this.findPageNode(pageName);
             if (node == null)
                 throw Errors_1.Errors.pageNodeNotExists(pageName);
             let action = node.action;
@@ -217,7 +238,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
                 throw Errors_1.Errors.actionCanntNull(pageName);
             return node.action;
         }
-        findSiteMapNode(pageName) {
+        findPageNode(pageName) {
             if (this.nodes[pageName])
                 return this.nodes[pageName];
             let node = null;

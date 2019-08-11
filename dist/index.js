@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.4.7
+ *  maishu-chitu v3.9.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -141,7 +141,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
     }
     exports.parseUrl = parseUrl;
     function pareeUrlQuery(query) {
-        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURI(s.replace(pl, " ")); };
+        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) {
+            return decodeURIComponent(s.replace(pl, " "));
+        };
         let urlParams = {};
         while (match = search.exec(query))
             urlParams[decode(match[1])] = decode(match[2]);
@@ -157,7 +159,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             let value = params[key];
             if (typeof value == "function" || value == null)
                 continue;
-            value = encodeURI(value);
+            value = encodeURIComponent(value);
             paramsText = paramsText == '' ? `?${key}=${value}` : paramsText + `&${key}=${value}`;
         }
         return `${path}${paramsText}`;
@@ -245,10 +247,6 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                 this.setLocationHash(url);
             }
             return page;
-        }
-        reload(pageName, args) {
-            let result = this.showPage(pageName, args, true);
-            return result;
         }
         back() {
             this.closeCurrentPage();
@@ -414,6 +412,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             this.hidden = maishu_chitu_service_1.Callbacks();
             this.closing = maishu_chitu_service_1.Callbacks();
             this.closed = maishu_chitu_service_1.Callbacks();
+            this.messageReceived = maishu_chitu_service_1.Callbacks();
             this._element = params.element;
             this._app = params.app;
             this._displayer = params.displayer;
@@ -474,6 +473,9 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             });
             return service;
         }
+        reload() {
+            this.app.reload(this);
+        }
         get element() {
             return this._element;
         }
@@ -490,7 +492,6 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             return this._container;
         }
     }
-    Page.tagName = 'div';
     exports.Page = Page;
     class PageDisplayerImplement {
         show(page, previous) {
@@ -544,6 +545,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             this.page_stack = new Array();
             this.nodes = {};
             this.MAX_PAGE_COUNT = 100;
+            this.pageTagName = "div";
+            this.pagePlaceholder = "page-placeholder";
             this.error = maishu_chitu_service_1.Callbacks();
             this._defaultPageNodeParser = null;
             this.parser = parser || this.defaultPageNodeParser;
@@ -551,6 +554,16 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 throw Errors_1.Errors.argumentNull("containers");
             this.parser.actions = this.parser.actions || {};
             this.containers = containers;
+        }
+        sendMessage(sender, page, message) {
+            let pages;
+            if (typeof page == "string")
+                pages = this.page_stack.filter(o => o.name == page);
+            else
+                pages = this.page_stack.filter(o => o instanceof page);
+            pages.forEach(p => {
+                p.messageReceived.fire(sender, message);
+            });
         }
         get defaultPageNodeParser() {
             if (this._defaultPageNodeParser == null) {
@@ -634,7 +647,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             if (!containerName)
                 throw Errors_1.Errors.argumentNull('containerName');
             values = values || {};
-            let element = this.createPageElement(pageUrl, containerName);
+            let r = Application_1.parseUrl(pageUrl);
+            let element = this.createPageElement(r.pageName, containerName);
             let displayer = new this.pageDisplayType(this);
             let container = this.containers[containerName];
             if (!container)
@@ -676,8 +690,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             let container = this.containers[containerName];
             if (!container)
                 throw Errors_1.Errors.containerIsNotExists(containerName);
-            let element = document.createElement(Page_1.Page.tagName);
-            container.appendChild(element);
+            let placeholder = container.querySelector(`class=["${this.pagePlaceholder}"]`);
+            if (placeholder == null)
+                placeholder = container;
+            let element = document.createElement(this.pageTagName);
+            placeholder.appendChild(element);
             return element;
         }
         showPage(pageUrl, args, forceRender) {
@@ -714,6 +731,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
             console.assert(page == this.currentPage, "page is not current page");
             return page;
         }
+        reload(page) {
+            let action = this.findPageAction(page.url);
+            console.assert(action != null);
+            action(page, this);
+        }
         closePage(page) {
             if (page == null)
                 throw Errors_1.Errors.argumentNull('page');
@@ -733,7 +755,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
         findPageAction(pageUrl) {
             let routeData = Application_1.parseUrl(pageUrl);
             let pageName = routeData.pageName;
-            let node = this.findSiteMapNode(pageName);
+            let node = this.findPageNode(pageName);
             if (node == null)
                 throw Errors_1.Errors.pageNodeNotExists(pageName);
             let action = node.action;
@@ -741,7 +763,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 throw Errors_1.Errors.actionCanntNull(pageName);
             return node.action;
         }
-        findSiteMapNode(pageName) {
+        findPageNode(pageName) {
             if (this.nodes[pageName])
                 return this.nodes[pageName];
             let node = null;
@@ -805,6 +827,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Application = Application_1.Application;
     exports.parseUrl = Application_1.parseUrl;
+    exports.createPageUrl = Application_1.createPageUrl;
     exports.PageMaster = PageMaster_1.PageMaster;
     exports.Page = Page_1.Page;
     exports.Callback = maishu_chitu_service_1.Callback;

@@ -37,7 +37,9 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     }
     exports.parseUrl = parseUrl;
     function pareeUrlQuery(query) {
-        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) { return decodeURI(s.replace(pl, " ")); };
+        let match, pl = /\+/g, search = /([^&=]+)=?([^&]*)/g, decode = function (s) {
+            return decodeURIComponent(s.replace(pl, " "));
+        };
         let urlParams = {};
         while (match = search.exec(query))
             urlParams[decode(match[1])] = decode(match[2]);
@@ -53,7 +55,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
             let value = params[key];
             if (typeof value == "function" || value == null)
                 continue;
-            value = encodeURI(value);
+            value = encodeURIComponent(value);
             paramsText = paramsText == '' ? `?${key}=${value}` : paramsText + `&${key}=${value}`;
         }
         return `${path}${paramsText}`;
@@ -141,10 +143,6 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
                 this.setLocationHash(url);
             }
             return page;
-        }
-        reload(pageName, args) {
-            let result = this.showPage(pageName, args, true);
-            return result;
         }
         back() {
             this.closeCurrentPage();

@@ -29,7 +29,6 @@ export declare class Page {
     private _name;
     private _url;
     private _container;
-    static tagName: string;
     data: PageData;
     showing: Callback1<this, PageData>;
     shown: Callback1<this, PageData>;
@@ -37,6 +36,7 @@ export declare class Page {
     hidden: Callback1<this, PageData>;
     closing: Callback1<this, PageData>;
     closed: Callback1<this, PageData>;
+    messageReceived: Callback1<Object, any>;
     constructor(params: PageParams);
     private on_showing;
     private on_shown;
@@ -48,6 +48,7 @@ export declare class Page {
     hide(currentPage: Page | null): Promise<any>;
     close(): Promise<any>;
     createService<T extends IService>(type?: ServiceConstructor<T>): T;
+    reload(): void;
     readonly element: HTMLElement;
     readonly name: string;
     readonly url: string;
