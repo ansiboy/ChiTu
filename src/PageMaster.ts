@@ -3,8 +3,6 @@ import { Page, PageConstructor, PageDisplayConstructor, PageDisplayerImplement, 
 import { PageNodeParser, PageNode, StringPropertyNames, Action, parseUrl, Application, createPageUrl } from "./Application";
 import { Errors } from "./Errors";
 
-
-
 /**
  * 页面管理，用于管理各个页面
  */
@@ -26,12 +24,13 @@ export class PageMaster {
 
     private cachePages: { [key: string]: Page } = {};
     private page_stack = new Array<Page>();
-    private containers: { [name: string]: HTMLElement };
     private nodes: { [name: string]: PageNode } = {}
     private MAX_PAGE_COUNT = 100
 
     protected pageTagName = "div";
     protected pagePlaceholder = "page-placeholder";
+
+    containers: { [name: string]: HTMLElement };
 
     /** 
      * 错误事件 
@@ -51,6 +50,27 @@ export class PageMaster {
 
         this.parser.actions = this.parser.actions || {};
         this.containers = containers;
+    }
+
+    /**
+     * 发送消息到指定的页面
+     * @param 消息发送者
+     * @param page 指定的页面,页面名称或者类
+     * @param message 发送的消息
+     */
+    sendMessage(sender: object, page: typeof Page, message: any): void;
+    sendMessage(sender: object, page: string, message: any): void;
+    sendMessage(sender: object, page: string | typeof Page, message: any) {
+
+        let pages: Page[];
+        if (typeof page == "string")
+            pages = this.page_stack.filter(o => o.name == page);
+        else
+            pages = this.page_stack.filter(o => o instanceof page);
+
+        pages.forEach(p => {
+            p.messageReceived.fire(sender, message);
+        })
     }
 
     private _defaultPageNodeParser: PageNodeParser | null = null;
@@ -203,7 +223,7 @@ export class PageMaster {
         if (!container)
             throw Errors.containerIsNotExists(containerName)
 
-        let placeholder = container.querySelector(this.pagePlaceholder);
+        let placeholder = container.querySelector(`class=["${this.pagePlaceholder}"]`);
         if (placeholder == null)
             placeholder = container;
 

@@ -1,5 +1,5 @@
 import { PageMaster } from "./PageMaster";
-import { IService, ServiceConstructor, Service, Callbacks, Callback1 } from "maishu-chitu-service";
+import { IService, ServiceConstructor, Service, Callbacks, Callback1, Callback } from "maishu-chitu-service";
 import { Errors } from "./Errors";
 import { parseUrl } from "./Application";
 
@@ -38,12 +38,9 @@ export class Page {
     private _element: HTMLElement;
     private _app: PageMaster;
     private _displayer: PageDisplayer;
-    // private _action: Action;
     private _name: string
     private _url: string
     private _container: PageContainer
-
-    // static tagName = 'div';
 
     data: PageData = {}
 
@@ -58,6 +55,8 @@ export class Page {
 
     closing: Callback1<this, PageData> = Callbacks<this, PageData>();
     closed: Callback1<this, PageData> = Callbacks<this, PageData>();
+
+    messageReceived: Callback1<Object, any> = Callbacks<Object, any>();
 
     constructor(params: PageParams) {
         this._element = params.element;
@@ -105,7 +104,6 @@ export class Page {
     }
     close(): Promise<any> {
         this.on_closing();
-        // this._element.remove();
         let parentElement = this._element.parentElement as HTMLElement;
         if (parentElement == null)
             throw Errors.unexpectedNullValue()
