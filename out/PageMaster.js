@@ -21,7 +21,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             this.nodes = {};
             this.MAX_PAGE_COUNT = 100;
             this.pageTagName = "div";
-            this.pagePlaceholder = "page-placeholder";
+            this.pagePlaceholder = PageMaster.defaultPagePlaceholder;
             this.error = maishu_chitu_service_1.Callbacks();
             this._defaultPageNodeParser = null;
             this.parser = parser || this.defaultPageNodeParser;
@@ -156,6 +156,9 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             page.closed.add(() => {
                 page.showing.remove(showing);
                 page.shown.remove(shown);
+                let key = this.cachePageKey(page.container.name, page.url);
+                delete this.cachePages[key];
+                this.page_stack = this.page_stack.filter(o => o != page);
             });
             return page;
         }
@@ -165,7 +168,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             let container = this.containers[containerName];
             if (!container)
                 throw Errors_1.Errors.containerIsNotExists(containerName);
-            let placeholder = container.querySelector(`class=["${this.pagePlaceholder}"]`);
+            let placeholder = container.querySelector(`.${this.pagePlaceholder}`);
             if (placeholder == null)
                 placeholder = container;
             let element = document.createElement(this.pageTagName);
@@ -211,20 +214,13 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             console.assert(action != null);
             action(page, this);
         }
-        closePage(page) {
-            if (page == null)
-                throw Errors_1.Errors.argumentNull('page');
-            page.close();
-            let key = this.cachePageKey(page.container.name, page.url);
-            delete this.cachePages[key];
-            this.page_stack = this.page_stack.filter(o => o != page);
-        }
         pushPage(page) {
             this.page_stack.push(page);
             if (this.page_stack.length > this.MAX_PAGE_COUNT) {
                 let page = this.page_stack.shift();
-                if (page)
-                    this.closePage(page);
+                if (page) {
+                    page.close();
+                }
             }
         }
         findPageAction(pageUrl) {
@@ -258,7 +254,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             var page = this.page_stack.pop();
             if (page == null)
                 return;
-            this.closePage(page);
+            page.close();
             if (this.currentPage) {
                 if (passData) {
                     console.assert(this.currentPage.data != null);
@@ -271,6 +267,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
             return this.page_stack;
         }
     }
+    PageMaster.defaultPagePlaceholder = "page-placeholder";
     PageMaster.isClass = (function () {
         var toString = Function.prototype.toString;
         function fnBody(fn) {

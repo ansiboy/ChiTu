@@ -13,6 +13,7 @@ export declare class PageMaster {
     private MAX_PAGE_COUNT;
     protected pageTagName: string;
     protected pagePlaceholder: string;
+    static readonly defaultPagePlaceholder = "page-placeholder";
     containers: {
         [name: string]: HTMLElement;
     };
@@ -35,7 +36,6 @@ export declare class PageMaster {
     protected createPageElement(pageName: string, containerName: string): HTMLElement;
     showPage(pageUrl: string, args?: PageData, forceRender?: boolean): Page;
     reload(page: Page): void;
-    protected closePage(page: Page): void;
     private pushPage;
     findPageAction(pageUrl: string): Action;
     private findPageNode;

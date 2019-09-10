@@ -28,7 +28,9 @@ export class PageMaster {
     private MAX_PAGE_COUNT = 100
 
     protected pageTagName = "div";
-    protected pagePlaceholder = "page-placeholder";
+    protected pagePlaceholder = PageMaster.defaultPagePlaceholder;
+
+    static readonly defaultPagePlaceholder = "page-placeholder"
 
     containers: { [name: string]: HTMLElement };
 
@@ -212,6 +214,10 @@ export class PageMaster {
         page.closed.add(() => {
             page.showing.remove(showing)
             page.shown.remove(shown)
+
+            let key = this.cachePageKey(page.container.name, page.url)
+            delete this.cachePages[key];
+            this.page_stack = this.page_stack.filter(o => o != page);
         })
 
         return page;
@@ -223,7 +229,7 @@ export class PageMaster {
         if (!container)
             throw Errors.containerIsNotExists(containerName)
 
-        let placeholder = container.querySelector(`class=["${this.pagePlaceholder}"]`);
+        let placeholder = container.querySelector(`.${this.pagePlaceholder}`);
         if (placeholder == null)
             placeholder = container;
 
@@ -289,23 +295,25 @@ export class PageMaster {
         action(page, this)
     }
 
-    protected closePage(page: Page) {
-        if (page == null)
-            throw Errors.argumentNull('page')
+    // protected closePage(page: Page) {
+    //     if (page == null)
+    //         throw Errors.argumentNull('page')
 
-        page.close()
+    //     page.close()
 
-        let key = this.cachePageKey(page.container.name, page.url)
-        delete this.cachePages[key];
-        this.page_stack = this.page_stack.filter(o => o != page);
-    }
+    //     let key = this.cachePageKey(page.container.name, page.url)
+    //     delete this.cachePages[key];
+    //     this.page_stack = this.page_stack.filter(o => o != page);
+    // }
 
     private pushPage(page: Page) {
         this.page_stack.push(page);
         if (this.page_stack.length > this.MAX_PAGE_COUNT) {
             let page = this.page_stack.shift()
-            if (page)
-                this.closePage(page)
+            if (page) {
+                // this.closePage(page)
+                page.close();
+            }
         }
     }
 
@@ -353,7 +361,8 @@ export class PageMaster {
         if (page == null)
             return;
 
-        this.closePage(page)
+        // this.closePage(page)
+        page.close();
         if (this.currentPage) {
             if (passData) {
                 console.assert(this.currentPage.data != null);
