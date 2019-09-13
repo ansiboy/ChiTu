@@ -241,7 +241,7 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
     return Application;
   }(PageMaster_1.PageMaster);
 
-  Application.DefaultContainerName = 'default';
   exports.Application = Application;
+  Application.DefaultContainerName = 'default';
 });
 //# sourceMappingURL=Application.js.map

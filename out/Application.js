@@ -159,6 +159,6 @@ define(["require", "exports", "maishu-chitu-service", "./PageMaster", "./Errors"
             return service;
         }
     }
-    Application.DefaultContainerName = 'default';
     exports.Application = Application;
+    Application.DefaultContainerName = 'default';
 });
