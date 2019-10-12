@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.2.0
+ *  maishu-chitu v3.4.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -554,6 +554,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 throw Errors_1.Errors.argumentNull("containers");
             this.parser.actions = this.parser.actions || {};
             this.containers = containers;
+            this.pageContainers = {};
         }
         sendMessage(sender, page, message) {
             let pages;
@@ -721,7 +722,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __awaiter = 
                 throw Errors_1.Errors.argumentNull('pageName');
             if (this.currentPage != null && this.currentPage.url == pageUrl)
                 return this.currentPage;
-            let containerName = values.container || Application_1.Application.DefaultContainerName;
+            let containerName = values.container || this.pageContainers[r.pageName] || Application_1.Application.DefaultContainerName;
             let { page, isNew } = this.getPage(pageUrl, containerName, args);
             if (isNew || forceRender) {
                 let action = this.findPageAction(pageUrl);

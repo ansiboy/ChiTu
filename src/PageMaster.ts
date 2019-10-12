@@ -32,7 +32,9 @@ export class PageMaster {
 
     static readonly defaultPagePlaceholder = "page-placeholder"
 
-    containers: { [name: string]: HTMLElement };
+    private containers: { [name: string]: HTMLElement };
+    
+    pageContainers: { [name: string]: string };
 
     /** 
      * 错误事件 
@@ -52,6 +54,7 @@ export class PageMaster {
 
         this.parser.actions = this.parser.actions || {};
         this.containers = containers;
+        this.pageContainers = {};
     }
 
     /**
@@ -270,7 +273,7 @@ export class PageMaster {
         if (this.currentPage != null && this.currentPage.url == pageUrl)
             return this.currentPage;
 
-        let containerName = (values.container as string) || Application.DefaultContainerName
+        let containerName = (values.container as string) || this.pageContainers[r.pageName] || Application.DefaultContainerName
         let { page, isNew } = this.getPage(pageUrl, containerName, args);
         if (isNew || forceRender) {
             let action = this.findPageAction(pageUrl)

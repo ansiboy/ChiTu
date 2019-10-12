@@ -1,6 +1,6 @@
 /*!
  * 
- *  maishu-chitu v3.2.0
+ *  maishu-chitu v3.4.0
  *  https://github.com/ansiboy/chitu
  *  
  *  Copyright (c) 2016-2018, shu mai <ansiboy@163.com>
@@ -831,6 +831,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
       if (!containers) throw Errors_1.Errors.argumentNull("containers");
       this.parser.actions = this.parser.actions || {};
       this.containers = containers;
+      this.pageContainers = {};
     }
 
     _createClass(PageMaster, [{
@@ -1043,7 +1044,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
         pageUrl = Application_1.createPageUrl(r.pageName, values);
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
         if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
-        var containerName = values.container || Application_1.Application.DefaultContainerName;
+        var containerName = values.container || this.pageContainers[r.pageName] || Application_1.Application.DefaultContainerName;
 
         var _this$getPage = this.getPage(pageUrl, containerName, args),
             page = _this$getPage.page,

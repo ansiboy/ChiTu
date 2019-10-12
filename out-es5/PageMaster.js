@@ -64,6 +64,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
       if (!containers) throw Errors_1.Errors.argumentNull("containers");
       this.parser.actions = this.parser.actions || {};
       this.containers = containers;
+      this.pageContainers = {};
     }
 
     _createClass(PageMaster, [{
@@ -276,7 +277,7 @@ define(["require", "exports", "maishu-chitu-service", "./Page", "./Application",
         pageUrl = Application_1.createPageUrl(r.pageName, values);
         if (!pageUrl) throw Errors_1.Errors.argumentNull('pageName');
         if (this.currentPage != null && this.currentPage.url == pageUrl) return this.currentPage;
-        var containerName = values.container || Application_1.Application.DefaultContainerName;
+        var containerName = values.container || this.pageContainers[r.pageName] || Application_1.Application.DefaultContainerName;
 
         var _this$getPage = this.getPage(pageUrl, containerName, args),
             page = _this$getPage.page,

@@ -14,8 +14,9 @@ export declare class PageMaster {
     protected pageTagName: string;
     protected pagePlaceholder: string;
     static readonly defaultPagePlaceholder = "page-placeholder";
-    containers: {
-        [name: string]: HTMLElement;
+    private containers;
+    pageContainers: {
+        [name: string]: string;
     };
     error: Callback2<this, Error, Page | null>;
     parser: PageNodeParser;
