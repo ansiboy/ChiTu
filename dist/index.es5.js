@@ -7,7 +7,17 @@
  *  Licensed under the MIT License.
  * 
  */
-define(["maishu-chitu-service"], function(__WEBPACK_EXTERNAL_MODULE_maishu_chitu_service__) { return /******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory(require("maishu-chitu-service"));
+	else if(typeof define === 'function' && define.amd)
+		define(["maishu-chitu-service"], factory);
+	else {
+		var a = typeof exports === 'object' ? factory(require("maishu-chitu-service")) : factory(root["maishu-chitu-service"]);
+		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
+	}
+})(typeof window === 'undefined' ? global : window, function(__WEBPACK_EXTERNAL_MODULE_maishu_chitu_service__) {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -1241,5 +1251,6 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_maishu_chitu_service__;
 
 /***/ })
 
-/******/ })});;
+/******/ });
+});
 //# sourceMappingURL=index.es5.js.map
