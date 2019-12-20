@@ -125,7 +125,7 @@ export class PageMaster {
     }
 
     protected loadjs(path: string) {
-        return new Promise<Array<any>>((reslove, reject) => {
+        return new Promise<any>((reslove, reject) => {
             requirejs([path],
                 function (result: any) {
                     reslove(result);

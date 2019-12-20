@@ -3,3 +3,6 @@ node_modules
 .tscache
 .baseDir.*
 package-lock.json
+dist
+out
+out-es5

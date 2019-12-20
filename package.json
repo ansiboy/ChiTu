@@ -33,5 +33,12 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "grunt"
     },
-    "version": "3.4.0"
+    "version": "3.13.0",
+    "files": [
+        "dist",
+        "out",
+        "out-es5",
+        "src",
+        "test"
+    ]
 }
