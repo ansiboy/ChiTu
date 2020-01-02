@@ -1,17 +1,22 @@
 ﻿
-const webpack_es6_config = require('./webpack.config.js');
-let webpack_es6_min =  Object.assign({}, webpack_es6_config)
-webpack_es6_min.mode = "production";
-webpack_es6_min.output.filename = "index.min.js"
+const webpack_es6 = require('./webpack.config.js');
 
-let webpack_es5 = Object.assign({}, webpack_es6_config)
-webpack_es5.entry = __dirname + "/out-es5/index.js"//已多次提及的唯一入口文件
-webpack_es5.output = Object.assign({}, webpack_es5.output)
-webpack_es5.output.filename = "index.es5.js"
+let webpack_es6_min = Object.assign({}, webpack_es6, {
+    output: { filename: "index.min.js" },
+    mode: "production"
+})
 
-let webpack_es5_min = Object.assign({}, webpack_es5);
-webpack_es5_min.mode = "production";
-webpack_es5_min.output.filename = "index.es5.min.js";
+
+let webpack_es5 = Object.assign({}, webpack_es6, {
+    entry: __dirname + "/out-es5/index.js",
+    output: { filename: "index.es5.js" }
+})
+
+let webpack_es5_min = Object.assign({}, webpack_es6, {
+    entry: __dirname + "/out-es5/index.js",
+    output: { filename: "index.es5.min.js" },
+    mode: "production"
+})
 
 module.exports = function (grunt) {
 
@@ -24,7 +29,7 @@ module.exports = function (grunt) {
             },
         },
         webpack: {
-            es6: webpack_es6_config,
+            es6: webpack_es6,
             es6_min: webpack_es6_min,
             es5: webpack_es5,
             es5_min: webpack_es5_min,
