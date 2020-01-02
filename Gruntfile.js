@@ -1,9 +1,17 @@
 ﻿
-const webpackES6Config = require('./webpack.config.js');
-let webpackES5Config = Object.assign({}, webpackES6Config)
-webpackES5Config.entry = __dirname + "/out-es5/index.js"//已多次提及的唯一入口文件
-webpackES5Config.output = Object.assign({}, webpackES5Config.output)
-webpackES5Config.output.filename = "index.es5.js"
+const webpack_es6_config = require('./webpack.config.js');
+let webpack_es6_min =  Object.assign({}, webpack_es6_config)
+webpack_es6_min.mode = "production";
+webpack_es6_min.output.filename = "index.min.js"
+
+let webpack_es5 = Object.assign({}, webpack_es6_config)
+webpack_es5.entry = __dirname + "/out-es5/index.js"//已多次提及的唯一入口文件
+webpack_es5.output = Object.assign({}, webpack_es5.output)
+webpack_es5.output.filename = "index.es5.js"
+
+let webpack_es5_min = Object.assign({}, webpack_es5);
+webpack_es5_min.mode = "production";
+webpack_es5_min.output.filename = "index.es5.min.js";
 
 module.exports = function (grunt) {
 
@@ -16,8 +24,10 @@ module.exports = function (grunt) {
             },
         },
         webpack: {
-            es6: webpackES6Config,
-            es5: webpackES5Config,
+            es6: webpack_es6_config,
+            es6_min: webpack_es6_min,
+            es5: webpack_es5,
+            es5_min: webpack_es5_min,
         },
         babel: {
             options: {
@@ -40,6 +50,21 @@ module.exports = function (grunt) {
                 }]
             }
         },
+        requirejs: {
+            chitu: {
+                options: {
+                    baseUrl: "out",
+                    include: [
+                        "index", //"maishu-chitu-react", "maishu-dilu", "maishu-ui-toolkit",
+                    ],
+                    out: "dist/index.min.js",
+                    paths: {
+                        "maishu-chitu-service": "empty:"
+                    },
+                    // optimize: "none"
+                }
+            },
+        }
 
     });
 
