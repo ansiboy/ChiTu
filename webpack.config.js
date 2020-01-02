@@ -12,13 +12,13 @@ module.exports = {
     output: {
         path: __dirname + "/dist", //打包后的文件存放的地方
         filename: "index.js", //打包后输出文件的文件名
-        libraryTarget: 'umd',
+        libraryTarget: 'amd',
         globalObject: 'typeof window === \'undefined\' ? global : window'
     },
     mode: 'development',
     devtool: 'source-map',
     externals: {
-        "maishu-chitu-service": "maishu_chitu_service"
+        "maishu-chitu-service": "maishu-chitu-service"
     },
     plugins: [
         new webpack.BannerPlugin(license),
