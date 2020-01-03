@@ -2,24 +2,19 @@
 const webpack_es6 = require('./webpack.config.js');
 
 let webpack_es6_min = Object.assign({}, webpack_es6, {
-    output: { filename: "index.min.js" },
-    optimization: {
-        minimize: true
-    }
+    output: Object.assign({}, webpack_es6.output, { filename: "index.min.js" }),
+    mode: 'production',
 })
 
 
 let webpack_es5 = Object.assign({}, webpack_es6, {
     entry: __dirname + "/out-es5/index.js",
-    output: { filename: "index.es5.js" }
+    output: Object.assign({}, webpack_es6.output, { filename: "index.es5.js" }),
 })
 
-let webpack_es5_min = Object.assign({}, webpack_es6, {
-    entry: __dirname + "/out-es5/index.js",
-    output: { filename: "index.es5.min.js" },
-    optimization: {
-        minimize: true, 
-    }
+let webpack_es5_min = Object.assign({}, webpack_es5, {
+    output: Object.assign({}, webpack_es6.output, { filename: "index.es5.min.js" }),
+    mode: 'production',
 })
 
 module.exports = function (grunt) {

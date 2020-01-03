@@ -35,7 +35,7 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "grunt"
     },
-    "version": "3.26.0",
+    "version": "3.27.0",
     "files": [
         "dist",
         "out",
