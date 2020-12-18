@@ -108,14 +108,19 @@ export class Application extends PageMaster {
     // private tempPageData: PageData | undefined = undefined;
 
     static DefaultContainerName = 'default'
+    private indexPath: string;
 
     /**
      * 构造函数
      * @param parser 地图，描述站点各个页面结点
      * @param allowCachePage 是允许缓存页面，默认 true
      */
-    constructor(args?: { parser?: PageNodeParser, container?: HTMLElement | { [name: string]: HTMLElement } }) {
+    constructor(args?: {
+        parser?: PageNodeParser, container?: HTMLElement | { [name: string]: HTMLElement },
+        indexPath?: string,
+    }) {
         super(Application.containers((args || {}).container), (args || {}).parser);
+        this.indexPath = args?.indexPath || DefaultPageName;
     }
 
     private static containers(container: HTMLElement | { [name: string]: HTMLElement } | undefined): { [name: string]: HTMLElement } {
@@ -169,7 +174,7 @@ export class Application extends PageMaster {
 
             let sharpIndex = url.indexOf('#');
             if (sharpIndex < 0) {
-                url = '#' + DefaultPageName
+                url = '#' + this.indexPath;
             }
             else {
                 url = url.substr(sharpIndex + 1);
