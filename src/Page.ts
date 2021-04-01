@@ -3,7 +3,7 @@ import { IService, ServiceConstructor, Service, Callbacks, Callback1, Callback }
 import { Errors } from "./Errors";
 import { parseUrl } from "./Application";
 
-export type PageData = { [key: string]: string | Function }
+export type PageData = { [key: string]: string }
 
 export interface PageDisplayConstructor {
     new(app: PageMaster): PageDisplayer
