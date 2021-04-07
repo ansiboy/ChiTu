@@ -20,62 +20,8 @@ export interface PageNodeParser {
     parse?: (pageName: string, pageMaster: PageMaster) => PageNode,
 }
 
-const DefaultPageName = "index"
-export function parseUrl(url: string): { pageName: string, values: PageData } {
-    if (!url) throw Errors.argumentNull('url')
 
-    let sharpIndex = url.indexOf('#');
-    let routeString;
-    if (sharpIndex >= 0)
-        routeString = url.substr(sharpIndex + 1);
-    else
-        routeString = url
 
-    if (!routeString)
-        throw Errors.canntParseRouteString(url);
-
-    /** 以 ! 开头在 hash 忽略掉 */
-    if (routeString.startsWith('!')) {
-        throw Errors.canntParseRouteString(routeString);
-    }
-
-    let routePath: string;
-    let search: string | null = null;
-    let param_spliter_index: number = routeString.indexOf('?');
-    if (param_spliter_index >= 0) {
-        search = routeString.substr(param_spliter_index + 1);
-        routePath = routeString.substring(0, param_spliter_index);
-    }
-    else {
-        routePath = routeString;
-    }
-
-    if (!routePath)
-        routePath = DefaultPageName //throw Errors.canntParseRouteString(routeString);
-
-    let values: { [key: string]: string } = {};
-    if (search) {
-        values = pareeUrlQuery(search);
-    }
-
-    let pageName = routePath;
-    return { pageName, values };
-}
-
-function pareeUrlQuery(query: string): { [key: string]: string } {
-    let match,
-        pl = /\+/g,  // Regex for replacing addition symbol with a space
-        search = /([^&=]+)=?([^&]*)/g,
-        decode = function (s: string) {
-            return decodeURIComponent(s.replace(pl, " "));
-        };
-
-    let urlParams: { [key: string]: string } = {};
-    while (match = search.exec(query))
-        urlParams[decode(match[1])] = decode(match[2]);
-
-    return urlParams;
-}
 
 export function createPageUrl(pageName: string, params?: PageData) {
     let path_parts = pageName.split('.');
@@ -120,7 +66,7 @@ export class Application extends PageMaster {
         indexPath?: string,
     }) {
         super(Application.containers((args || {}).container), (args || {}).parser);
-        this.indexPath = args?.indexPath || DefaultPageName;
+        this.indexPath = args?.indexPath || this.DefaultPageName;
     }
 
     private static containers(container: HTMLElement | { [name: string]: HTMLElement } | undefined): { [name: string]: HTMLElement } {
@@ -143,18 +89,6 @@ export class Application extends PageMaster {
     }
 
     /**
-     * 解释路由，将路由字符串解释为 RouteData 对象
-     * @param url 要解释的 路由字符串
-     */
-    parseUrl(url: string) {
-        if (!url)
-            throw Errors.argumentNull('url')
-
-        let routeData = parseUrl(url);
-        return routeData;
-    }
-
-    /**
      * 创建 url
      * @param pageName 页面名称
      * @param values 页面参数
@@ -169,32 +103,13 @@ export class Application extends PageMaster {
     public run() {
         if (this._runned) return;
 
-        let showPage = () => {
-            let url = location.href;
-
-            let sharpIndex = url.indexOf('#');
-            if (sharpIndex < 0) {
-                url = '#' + this.indexPath;
-            }
-            else {
-                url = url.substr(sharpIndex + 1);
-            }
-            // let routeString = url.substr(sharpIndex + 1);
-            /** 以 ! 开头在 hash 忽略掉 */
-            if (url.startsWith('!')) {
-                return
-            }
-
-            this.showPage(url);
-        }
-
-        showPage()
+        this.showPage(location.href)
         window.addEventListener('hashchange', () => {
             if (this.location.skip) {
                 delete this.location.skip
                 return
             }
-            showPage()
+            this.showPage(location.href)
         })
 
         this._runned = true;
@@ -244,12 +159,6 @@ export class Application extends PageMaster {
 
         return page;
     }
-
-    // public reload(pageName: string, args?: PageData) {
-    //     let result = this.showPage(pageName, args, true)
-    //     return result
-    // }
-
 
     /**
      * 返回上一个页面

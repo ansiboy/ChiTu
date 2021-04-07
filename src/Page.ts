@@ -1,7 +1,6 @@
 import { PageMaster } from "./PageMaster";
 import { IService, ServiceConstructor, Service, Callbacks, Callback1, Callback } from "maishu-chitu-service";
 import { Errors } from "./Errors";
-import { parseUrl } from "./Application";
 
 export type PageData = { [key: string]: string }
 
@@ -62,7 +61,7 @@ export class Page {
         this._element = params.element;
         this._app = params.app;
         this._displayer = params.displayer;
-        let routeData = parseUrl(params.url)
+        let routeData = params.app.parseUrl(params.url)
         this.data = Object.assign(routeData.values, params.data || {})
         this._name = routeData.pageName;
         this._url = params.url;

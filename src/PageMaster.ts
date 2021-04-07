@@ -1,6 +1,6 @@
 import { Callbacks, Callback1, Callback2 } from "maishu-chitu-service";
 import { Page, PageConstructor, PageDisplayConstructor, PageDisplayerImplement, PageData } from "./Page";
-import { PageNodeParser, PageNode, StringPropertyNames, Action, parseUrl, Application, createPageUrl } from "./Application";
+import { PageNodeParser, PageNode, StringPropertyNames, Action, Application, createPageUrl } from "./Application";
 import { Errors } from "./Errors";
 
 /**
@@ -33,7 +33,7 @@ export class PageMaster {
     static readonly defaultPagePlaceholder = "page-placeholder"
 
     private containers: { [name: string]: HTMLElement };
-    
+
     pageContainers: { [name: string]: string };
 
     /** 
@@ -162,7 +162,7 @@ export class PageMaster {
         values = values || {};
         let cachePage = this.cachePages[key];
         if (cachePage != null) {
-            let r = parseUrl(pageUrl)
+            let r = this.parseUrl(pageUrl)
             cachePage.data = Object.assign(values || {}, r.values)
             return { page: cachePage, isNew: false };
         }
@@ -180,7 +180,7 @@ export class PageMaster {
 
         values = values || {}
 
-        let r = parseUrl(pageUrl)
+        let r = this.parseUrl(pageUrl)
         let element = this.createPageElement(r.pageName, containerName);
         let displayer = new this.pageDisplayType(this);
         let container = this.containers[containerName]
@@ -264,7 +264,7 @@ export class PageMaster {
             }
         }
 
-        let r = parseUrl(pageUrl)
+        let r = this.parseUrl(pageUrl)
         values = Object.assign(values, r.values)
         pageUrl = createPageUrl(r.pageName, values)
 
@@ -321,7 +321,7 @@ export class PageMaster {
     }
 
     findPageAction(pageUrl: string): Action {
-        let routeData = parseUrl(pageUrl)
+        let routeData = this.parseUrl(pageUrl)
         let pageName = routeData.pageName
         let node = this.findPageNode(pageName)
         if (node == null)
@@ -395,4 +395,68 @@ export class PageMaster {
 
         return isClass
     })()
+
+    /**
+     * 解释路由，将路由字符串解释为 RouteData 对象
+     * @param url 要解释的 路由字符串
+     */
+    protected DefaultPageName = "index"
+    parseUrl(url: string): { pageName: string, values: PageData } {
+        if (!url) throw Errors.argumentNull('url')
+
+        let sharpIndex = url.indexOf('#');
+        let routeString;
+        if (sharpIndex >= 0) {
+            routeString = url.substr(sharpIndex + 1);
+        }
+        else {
+            routeString = url.indexOf("http") >= 0 ? "" : url;
+        }
+
+        if (routeString == null)
+            throw Errors.canntParseRouteString(url);
+
+        /** 以 ! 开头在 hash 忽略掉 */
+        if (routeString.startsWith('!')) {
+            throw Errors.canntParseRouteString(routeString);
+        }
+
+        let routePath: string;
+        let search: string | null = null;
+        let param_spliter_index: number = routeString.indexOf('?');
+        if (param_spliter_index >= 0) {
+            search = routeString.substr(param_spliter_index + 1);
+            routePath = routeString.substring(0, param_spliter_index);
+        }
+        else {
+            routePath = routeString;
+        }
+
+        if (!routePath)
+            routePath = this.DefaultPageName //throw Errors.canntParseRouteString(routeString);
+
+        let values: { [key: string]: string } = {};
+        if (search) {
+            values = this.pareeUrlQuery(search);
+        }
+
+        let pageName = routePath;
+        return { pageName, values };
+    }
+
+    protected pareeUrlQuery(query: string): { [key: string]: string } {
+        let match,
+            pl = /\+/g,  // Regex for replacing addition symbol with a space
+            search = /([^&=]+)=?([^&]*)/g,
+            decode = function (s: string) {
+                return decodeURIComponent(s.replace(pl, " "));
+            };
+
+        let urlParams: { [key: string]: string } = {};
+        while (match = search.exec(query))
+            urlParams[decode(match[1])] = decode(match[2]);
+
+        return urlParams;
+    }
+
 }
