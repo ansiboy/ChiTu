@@ -253,15 +253,9 @@ export class PageMaster {
         forceRender = forceRender == null ? false : true
 
         let values: { [key: string]: string } = {}
-        let funs: { [key: string]: Function } = {}
         for (let key in args) {
             let arg = args[key]
-            if (typeof arg == 'function') {
-                funs[key] = arg
-            }
-            else {
-                values[key] = arg
-            }
+            values[key] = arg
         }
 
         let r = this.parseUrl(pageUrl)
